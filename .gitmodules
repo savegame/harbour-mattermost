@@ -1,0 +1,3 @@
+[submodule "libs/jsoncpp"]
+	path = libs/jsoncpp
+	url = git@github.com:savegame/jsoncpp.git
