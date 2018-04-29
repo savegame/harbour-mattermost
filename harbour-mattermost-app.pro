@@ -9,10 +9,15 @@
 #   - icon definition filename in desktop file must be changed
 #   - translation filenames have to be changed
 
-SERVER_URL=$$fromfile(api_secret.pri,SERVER_URL)
+SERVER_URL=$$fromfile(server.pri,SERVER_URL)
 
 # The name of your application
 TARGET = harbour-mattermost
+
+VERSION = 0.1.0
+
+DEFINES += SERVER_URL=\\\"$${SERVER_URL}\\\"
+DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
 CONFIG += sailfishapp
 CONFIG += qt

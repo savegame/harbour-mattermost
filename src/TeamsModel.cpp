@@ -10,10 +10,8 @@ TeamsModel::TeamsModel(QObject *parent)
     : QAbstractListModel(parent)
 {
 	// login URL
-	QUrl url(QString("http://192.168.20.114:8065/api/v4/users/login"));
-
 	MattermostQt *mm = new MattermostQt();
-	mm->login(QString("http://192.168.20.114:8065"),QString("testuser"),QString("testuser"));
+	mm->login(QString(SERVER_URL),QString("testuser"),QString("testuser"), true);
 }
 
 int TeamsModel::rowCount(const QModelIndex &) const
