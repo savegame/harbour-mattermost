@@ -30,13 +30,14 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-
+import harbour.sashikknox 1.0
 
 Page {
     id: page
 
     // The effective value will be restricted by ApplicationWindow.allowedOrientations
     allowedOrientations: Orientation.All
+
 
     // To enable PullDownMenu, place our content in a SilicaFlickable
     SilicaFlickable {
@@ -51,23 +52,28 @@ Page {
         }
 
         // Tell SilicaFlickable the height of its content.
-        contentHeight: column.height
+        contentHeight: teamlist.height
 
-        // Place our content in a Column.  The PageHeader is always placed at the top
-        // of the page, followed by our content.
-        Column {
-            id: column
+        SilicaListView {
+            id: teamlist
 
-            width: page.width
-            spacing: Theme.paddingLarge
-            PageHeader {
-                title: qsTr("UI Template")
+            anchors.fill: parent
+
+            model: TeamsModel {
+                id: teamsmodel
             }
-            Label {
-                x: Theme.horizontalPageMargin
-                text: qsTr("Hello Sailors")
-                color: Theme.secondaryHighlightColor
-                font.pixelSize: Theme.fontSizeExtraLarge
+
+            header: PageHeader {
+                id: header
+                title: qsTr("Choose team")
+            }
+
+            delegate: BackgroundItem {
+                Label {
+                    x: Theme.horizontalPageMargin
+                    text: name
+                }
+                onClicked: dmodel.activate(index)
             }
         }
     }

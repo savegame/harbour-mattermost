@@ -13,8 +13,12 @@
 TARGET = harbour-mattermost
 
 CONFIG += sailfishapp
+CONFIG += qt
+QT += gui qml quick network
 
-SOURCES += src/harbour-mattermost.cpp
+SOURCES += src/harbour-mattermost.cpp \
+    src/TeamsModel.cpp \
+    src/MattermostQt.cpp
 
 DISTFILES += qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
@@ -38,3 +42,7 @@ CONFIG += sailfishapp_i18n
 # following TRANSLATIONS line. And also do not forget to
 # modify the localized app name in the the .desktop file.
 TRANSLATIONS += translations/harbour-mattermost-de.ts
+
+HEADERS += \
+    src/TeamsModel.h \
+    src/MattermostQt.h
