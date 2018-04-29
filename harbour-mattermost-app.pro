@@ -9,6 +9,8 @@
 #   - icon definition filename in desktop file must be changed
 #   - translation filenames have to be changed
 
+SERVER_URL=$$fromfile(api_secret.pri,SERVER_URL)
+
 # The name of your application
 TARGET = harbour-mattermost
 
@@ -29,7 +31,8 @@ DISTFILES += qml/harbour-mattermost.qml \
     rpm/harbour-mattermost.spec \
     rpm/harbour-mattermost.yaml \
     translations/*.ts \
-    harbour-mattermost.desktop
+    harbour-mattermost.desktop \
+    server.pri
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 
