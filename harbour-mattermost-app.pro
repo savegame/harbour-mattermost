@@ -21,7 +21,7 @@ DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
 CONFIG += sailfishapp
 CONFIG += qt
-QT += gui qml quick network
+QT += gui qml quick network websockets
 
 SOURCES += src/harbour-mattermost.cpp \
     src/TeamsModel.cpp \
@@ -29,7 +29,6 @@ SOURCES += src/harbour-mattermost.cpp \
 
 DISTFILES += qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
-    qml/pages/FirstPage.qml \
     qml/pages/SecondPage.qml \
     rpm/harbour-mattermost.changes.in \
     rpm/harbour-mattermost.changes.run.in \
@@ -37,7 +36,9 @@ DISTFILES += qml/harbour-mattermost.qml \
     rpm/harbour-mattermost.yaml \
     translations/*.ts \
     harbour-mattermost.desktop \
-    server.pri
+    server.pri \
+    qml/pages/TeamsPage.qml \
+    qml/components/TeamLabel.qml
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 

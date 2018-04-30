@@ -9,17 +9,6 @@
     </message>
 </context>
 <context>
-    <name>FirstPage</name>
-    <message>
-        <source>Show Page 2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose team</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>SecondPage</name>
     <message>
         <source>Nested Page</source>
@@ -27,6 +16,17 @@
     </message>
     <message>
         <source>Item</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TeamsPage</name>
+    <message>
+        <source>Show Page 2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Server teams</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

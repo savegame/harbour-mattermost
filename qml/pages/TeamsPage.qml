@@ -31,19 +31,21 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import harbour.sashikknox 1.0
+import "../components"
 
 Page {
-    id: page
+    id: teamsPage
 
     // The effective value will be restricted by ApplicationWindow.allowedOrientations
     allowedOrientations: Orientation.All
 
+//    property string serverName: qsTr("Noname")
 
     // To enable PullDownMenu, place our content in a SilicaFlickable
     SilicaFlickable {
         anchors.fill: parent
 
-        // PullDownMenu and PushUpMenu must be declared in SilicaFlickable, SilicaListView or SilicaGridView
+//        // PullDownMenu and PushUpMenu must be declared in SilicaFlickable, SilicaListView or SilicaGridView
         PullDownMenu {
             MenuItem {
                 text: qsTr("Show Page 2")
@@ -51,29 +53,29 @@ Page {
             }
         }
 
-        // Tell SilicaFlickable the height of its content.
-        contentHeight: teamlist.height
+//        // Tell SilicaFlickable the height of its content.
+//        contentHeight: teamlist.height
 
         SilicaListView {
             id: teamlist
-
             anchors.fill: parent
+
+            header: PageHeader {
+                id: pageHeader
+                title: qsTr("Server teams")
+            }
 
             model: TeamsModel {
                 id: teamsmodel
             }
 
-            header: PageHeader {
-                id: header
-                title: qsTr("Choose team")
-            }
-
             delegate: BackgroundItem {
-                Label {
+                TeamLabel {
+                    name: display_name
                     x: Theme.horizontalPageMargin
-                    text: name
                 }
-                onClicked: dmodel.activate(index)
+                onClicked: teamsmodel.activate(index)
+//                onPressAndHold:
             }
         }
     }

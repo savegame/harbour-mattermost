@@ -6,6 +6,7 @@
 #include <QUrl>
 #include <QMap>
 #include <QNetworkAccessManager>
+#include <QtWebSockets/QWebSocket>
 
 class MattermostQt : public QObject
 {
@@ -13,6 +14,33 @@ class MattermostQt : public QObject
 public:
 	enum ReplyType : int {
 		Login,
+		Teams
+	};
+
+	struct TeamContainer
+	{
+		TeamContainer()
+		{
+			m_create_at = 0;
+			m_update_at = 0;
+			m_delete_at = 0;
+		}
+
+		TeamContainer(QJsonObject &object);
+
+		QString    m_id;
+		QString    m_display_name;
+		QString    m_name;
+		QString    m_description;
+		QString    m_type;
+		QString    m_email;
+		QString    m_invite_id;
+		QString    m_allowed_domains;
+		bool       m_allowed_open_invite;
+		qlonglong  m_create_at;
+		qlonglong  m_update_at;
+		qlonglong  m_delete_at;
+		int        m_serverId;
 	};
 
 	struct ServerContainer {
@@ -26,26 +54,38 @@ public:
 			m_trustCertificate = false;
 		}
 
-		QString            m_url;   /**< server URL */
-		int                m_api;   /**< server API version */
-		QString            m_token; /**< server access token*/
-		bool               m_trustCertificate; /**< trust self signed certificate */
-		QSslConfiguration  m_cert; /**< server certificate */
+		QString                     m_url;   /**< server URL */
+		int                         m_api;   /**< server API version */
+		QString                     m_token; /**< server access token*/
+		bool                        m_trustCertificate; /**< trust self signed certificate */
+		QSslConfiguration           m_cert;  /**< server certificate */
+		QSharedPointer<QWebSocket>  m_socket;/**< websocket connection */
+		QList<TeamContainer>        m_teams; /**< allowed teams */
 	};
+
 public:
 	MattermostQt();
 
 	~MattermostQt();
 
-	bool login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
+	void post_login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
+	void get_teams(int serverId);
+
+Q_SIGNALS:
+	void serverConnected(int id);
+	void teamAdded(MattermostQt::TeamContainer team);
 
 protected:
 	bool reply_login(QNetworkReply *reply);
+	void reply_getTeams(QNetworkReply *reply);
 
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
 	void replySSLErrors(QNetworkReply *reply, QList<QSslError> errors);
 
+	void onWebSocketConnected();
+	void onWebSocketSslError(QList<QSslError> errors);
+	void onWebSocketError(QAbstractSocket::SocketError error);
 protected:
 	QMap<int, ServerContainer>    m_server;
 

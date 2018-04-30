@@ -5,11 +5,13 @@
 
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 
 
 #define P_REPLY_TYPE        "reply_type"
 #define P_API               "api"
 #define P_SERVER_URL        "server_url"
+#define P_SERVER_ID         "server_id"
 #define P_TRUST_CERTIFICATE "trust_certificate"
 
 MattermostQt::MattermostQt()
@@ -28,7 +30,7 @@ MattermostQt::~MattermostQt()
 
 }
 
-void MattermostQt::login(QString server, QString login, QString password, bool trustCertificate, int api)
+void MattermostQt::post_login(QString server, QString login, QString password, bool trustCertificate, int api)
 {
 	if(api <= 3)
 		api = 4;
@@ -54,7 +56,7 @@ void MattermostQt::login(QString server, QString login, QString password, bool t
 	request.setHeader(QNetworkRequest::ServerHeader, "application/json; charset=utf-8");
 	request.setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number( json.toJson().size() ));
 	request.setHeader(QNetworkRequest::UserAgentHeader, QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION) );
-	request.setRawHeader("X-Custom-User-Agent", "My app name v0.1");
+	request.setRawHeader("X-Custom-User-Agent", QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION).toUtf8());
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson() );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Login) );
@@ -72,7 +74,45 @@ void MattermostQt::login(QString server, QString login, QString password, bool t
 //	configuration.setProtocol(QSsl::TlsV1_2);
 
 //	sslSocket->setSslConfiguration(configuration);
-//	reply->setSslConfiguration(configuration);
+	//	reply->setSslConfiguration(configuration);
+}
+
+void MattermostQt::get_teams(int serverId)
+{
+	QMap<int,ServerContainer>::iterator it = m_server.find(serverId);
+	if( it == m_server.end() )
+		return;
+	ServerContainer sc = it.value();
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc.m_api)
+	        + QLatin1String("/users/me/teams");
+
+	QUrl url(sc.m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+	QJsonDocument json;
+	QJsonObject data;
+
+//	data["page"] = 0;
+//	data["per_page"] = 10;
+
+	//json.setObject(data);
+
+	request.setUrl(url);
+	request.setHeader(QNetworkRequest::ServerHeader, "application/json");
+	request.setHeader(QNetworkRequest::UserAgentHeader, QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION) );
+//	request.setRawHeader("X-Custom-User-Agent", QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION).toUtf8());
+
+	request.setRawHeader("Authorization", QString("Bearer %0").arg(sc.m_token).toUtf8());
+//	request.setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number( json.toJson().size() ));
+
+	if(sc.m_trustCertificate)
+		request.setSslConfiguration(sc.m_cert);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Teams) );
+	reply->setProperty(P_SERVER_ID, QVariant(serverId) );
 }
 
 bool MattermostQt::reply_login(QNetworkReply *reply)
@@ -91,11 +131,92 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			newServer.m_url   = reply->property(P_SERVER_URL).toString();
 			newServer.m_token = reply->rawHeader(head).data();
 			newServer.m_cert  = reply->sslConfiguration();
+			newServer.m_trustCertificate = reply->property(P_TRUST_CERTIFICATE).toBool();
+
+//			// server get us authentificztion token, time to open WebSocket!
+//			QSharedPointer<QWebSocket> socket(new QWebSocket());
+//			socket->setProperty(P_SERVER_ID,servers_count);
+//			// ignore allready trusted certificate
+//			QList<QSslCertificate> cert = newServer.m_cert.caCertificates();
+//			QList<QSslError> expectedSslErrors;
+//			expectedSslErrors.append( QSslError(QSslError::SelfSignedCertificate, cert.at(0)) );
+//			// TODO - remove HostNameMistchmach
+//			expectedSslErrors.append( QSslError(QSslError::HostNameMismatch, cert.at(0)) );
+//;
+//			socket->ignoreSslErrors(expectedSslErrors);
+
+//			connect(socket.data(), SIGNAL(connected()), SLOT(onWebSocketConnected()));
+//			typedef void (QWebSocket:: *sslErrorsSignal)(const QList<QSslError> &);
+//			connect(socket.data(), static_cast<sslErrorsSignal>(&QWebSocket::sslErrors),
+//			        this, &MattermostQt::onWebSocketSslError);
+//			connect(socket.data(), SIGNAL(error(QAbstractSocket::SocketError)),
+//			        SLOT(onWebSocketError(QAbstractSocket::SocketError)));
+
+//			QString urlString = QLatin1String("/api/v")
+//			        + QString::number(newServer.m_api)
+//			        + QLatin1String("/websocket");
+
+////			{
+////			  "seq": 1,
+////			  "action": "authentication_challenge",
+////			  "data": {
+////			    "token": "mattermosttokengoeshere"
+////			  }
+////			}
+
+//			QUrl url(newServer.m_url);
+//			url.setPath(urlString);
+
+////			QNetworkRequest request;
+//			QJsonDocument json;
+//			QJsonObject root;
+//			QJsonObject data;
+
+//			root["seq"] = 1;
+//			root["action"] = "authentication_challenge";
+//			data["token"] = newServer.m_token;
+//			root["data"] = data;
+//			json.setObject(data);
+
+//			url.setScheme("application/json");
+////			url.setQuery(json.toJson().data());
+////			socket-
+//			socket->ping( json.toJson().data() );
+//			socket->open(url);
+//			socket->ping( json.toJson().data() );
+//			newServer.m_socket = socket;
 
 			m_server[servers_count++] = newServer;
 			emit serverConnected(servers_count - 1);
-			// server get us authentificztion token, time to open WebSocket!
 		}
+	}
+}
+
+void MattermostQt::reply_getTeams(QNetworkReply *reply)
+{
+	QJsonDocument json;
+	QByteArray rawData = reply->readAll();
+	int serverId = reply->property(P_SERVER_ID).toInt();
+	json = QJsonDocument::fromJson(rawData);
+
+	if( !json.isEmpty() && json.isArray() ) {
+		QJsonArray array = json.array();
+		for( int i = 0 ; i < array.size(); i ++ )
+		{
+			if( array.at(i).isObject() )
+			{
+				QJsonObject object = array.at(i).toObject();
+				TeamContainer team(object);
+				team.m_serverId = serverId;
+				m_server[serverId].m_teams << team;
+				emit teamAdded(team);
+			}
+			else
+				qDebug() << "array[" << i << "]: " << array.at(i);
+		}
+	}
+	else {
+		qWarning() << "Cant parse json: " << json;
 	}
 }
 
@@ -103,7 +224,6 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 {
 	if (reply->error() == QNetworkReply::NoError) {
 		//success
-		qDebug() << "Success" <<reply->readAll();
 
 		QVariant replyType;
 		replyType = reply->property(P_REPLY_TYPE);
@@ -114,6 +234,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			case ReplyType::Login:
 				reply_login(reply);
 				break;
+			case ReplyType::Teams:
+				reply_getTeams(reply);
+				break;
 			default:
 				qWarning() << "That can't be!";
 				break;
@@ -122,6 +245,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 		else
 		{
 			qWarning() << "Unknown reply type";
+			qDebug() << "Success" << QString::fromUtf8( reply->readAll() );
 		}
 	}
 	else {
@@ -146,6 +270,7 @@ void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 		{
 		//case QSslError::CertificateUntrusted:
 		case QSslError::SelfSignedCertificate:
+		// TODO - remove HostNameMistchmach
 		case QSslError::HostNameMismatch:
 		{
 			QVariant ts = reply->property(P_TRUST_CERTIFICATE);
@@ -158,4 +283,71 @@ void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 		}
 	}
 	reply->ignoreSslErrors(ignoreErrors);
+}
+
+void MattermostQt::onWebSocketConnected()
+{
+	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
+	if(!socket) // strange situation, if it happens
+		return;
+	QVariant sId = socket->property(P_SERVER_ID);
+	if(!sId.isValid()) // that too strange!!! that cant be!
+		return;
+	int id = sId.toInt();
+	QMap<int,ServerContainer>::iterator it = m_server.find(id);
+	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
+		return;
+
+//	ServerContainer sc = it.value();
+
+	emit serverConnected(id);
+}
+
+void MattermostQt::onWebSocketSslError(QList<QSslError> errors)
+{
+	foreach(QSslError error, errors)
+	{
+		qWarning() << error;
+	}
+}
+
+void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
+{
+	qWarning() << error;
+	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
+	if(!socket) // strange situation, if it happens
+		return;
+
+//	QNetworkRequest req = socket->request();
+//	req
+}
+
+MattermostQt::TeamContainer::TeamContainer(QJsonObject &object)
+{
+//	{
+//	"id": "string",
+//	"create_at": long long,
+//	"update_at": long long,
+//	"delete_at": long long,
+//	"display_name": "string",
+//	"name": "string",
+//	"description": "string",
+//	"email": "string",
+//	"type": "string",
+//	"allowed_domains": "string",
+//	"invite_id": "string",
+//	"allow_open_invite": true
+//	}
+	m_id = object["id"].toString();
+	m_create_at = (qlonglong)object["create_at"].toDouble();
+	m_update_at = (qlonglong)object["update_at"].toDouble();
+	m_delete_at = (qlonglong)object["delete_at"].toDouble();
+	m_display_name = object["display_name"].toString();
+	m_name = object["name"].toString();
+	m_description = object["description"].toString();
+	m_email = object["email"].toString();
+	m_type = object["type"].toString();
+	m_allowed_domains = object["allowed+domains"].toString();
+	m_invite_id = object["invite_id"].toString();
+	m_allowed_open_invite = object["allow_open_invite"].toBool();
 }
