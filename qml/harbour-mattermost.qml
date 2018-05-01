@@ -31,10 +31,20 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import "pages"
+import "model"
 
 ApplicationWindow
 {
-    initialPage: Component { TeamsPage { } }
+    property Mattermost context: Mattermost { }
+
+    id: mainwindow
+
+    initialPage: Component {
+        LoginPage {
+            context: mainwindow.context
+//            mainwindow.context.onS
+        }
+    }
     cover: Qt.resolvedUrl("cover/CoverPage.qml")
     allowedOrientations: defaultAllowedOrientations
 }

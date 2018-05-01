@@ -220,6 +220,20 @@ void MattermostQt::reply_getTeams(QNetworkReply *reply)
 	}
 }
 
+void MattermostQt::reply_error(QNetworkReply *reply)
+{
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	if( json.isObject() )
+	{
+		QJsonObject object = json.object();
+		QString error_id = object["id"].toString();
+		if( error_id.compare("api.user.check_user_password.invalid.app_error") == 0 )
+		{
+			emit connectionError(ConnectionError::WrongPassword, QObject::trUtf8("Login failed because of invalid password") );
+		}
+	}
+}
+
 void MattermostQt::replyFinished(QNetworkReply *reply)
 {
 	if (reply->error() == QNetworkReply::NoError) {
@@ -251,7 +265,8 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 	else {
 		//failure
 		qDebug() << "Failure" <<reply->errorString();
-		qDebug() << "Reply: " << reply->readAll();
+//		qDebug() << "Reply: " << reply->readAll();
+		reply_error(reply);
 	}
 	delete reply;
 }

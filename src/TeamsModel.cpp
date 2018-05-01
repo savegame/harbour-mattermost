@@ -10,13 +10,7 @@ TeamsModel::TeamsModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_serverId(-1)
 {
-	m_mattermost.reset(new MattermostQt());
 
-	connect(m_mattermost.data(), SIGNAL(serverConnected(int)) , SLOT(slot_serverConnected(int)) );
-	connect(m_mattermost.data(), &MattermostQt::teamAdded
-	        ,this , &TeamsModel::slot_teamAdded );
-
-	m_mattermost->post_login(QString(SERVER_URL),QString("testuser"),QString("testuser"), true);
 }
 
 int TeamsModel::rowCount(const QModelIndex &) const
@@ -79,17 +73,38 @@ void TeamsModel::setServerName(QString name)
 	emit serverNameChanged();
 }
 
+void TeamsModel::setServerId(int id)
+{
+	m_serverId = id;
+	emit serverIdChanged();
+}
+
 int TeamsModel::serverId() const
 {
 	return m_serverId;
 }
 
-void TeamsModel::slot_serverConnected(int id)
+MattermostQt *TeamsModel::getMattermostQt() const
 {
-	m_serverId = id;
-	m_mattermost->get_teams(id);
-	emit serverIdChanged();
+	return m_mattermost;
 }
+
+void TeamsModel::setMattermostQt(MattermostQt* mattermost)
+{
+	m_mattermost = mattermost;
+
+//	connect(m_mattermost, SIGNAL(serverConnected(int)) , SLOT(slot_serverConnected(int)) );
+	connect(m_mattermost, &MattermostQt::teamAdded
+	        ,this , &TeamsModel::slot_teamAdded );
+//	m_mattermost->post_login(QString(SERVER_URL),QString("testuser"),QString("testuser"), true);
+}
+
+//void TeamsModel::slot_serverConnected(int id)
+//{
+//	m_serverId = id;
+//	m_mattermost->get_teams(id);
+//	emit serverIdChanged();
+//}
 
 void TeamsModel::slot_teamAdded(MattermostQt::TeamContainer team)
 {

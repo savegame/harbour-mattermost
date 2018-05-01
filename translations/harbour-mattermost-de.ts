@@ -9,6 +9,24 @@
     </message>
 </context>
 <context>
+    <name>LoginPage</name>
+    <message>
+        <source>Username or Email address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trust certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>Login failed because of invalid password</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SecondPage</name>
     <message>
         <source>Nested Page</source>
@@ -17,6 +35,13 @@
     <message>
         <source>Item</source>
         <translation>Element</translation>
+    </message>
+</context>
+<context>
+    <name>TeamOptions</name>
+    <message>
+        <source>Team Options</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

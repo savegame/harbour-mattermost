@@ -32,16 +32,42 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import harbour.sashikknox 1.0
 import "../components"
+import "../model"
 
 Page {
     id: teamsPage
+    property Mattermost context
+    property int serverId
 
     // The effective value will be restricted by ApplicationWindow.allowedOrientations
     allowedOrientations: Orientation.All
 
+    signal serverConnected(int id)
+
+    onContextChanged: {
+        serverConnected(serverId);
+    }
+
     property TeamsModel teamsmodel : TeamsModel {
         id: teamsmodel_id
+        m_mattermost: context.mattermost
+        m_serverId: teamsPage.serverId
+//        onServerIdChanged: {
+//            teamsPage.serverConnected(m_serverId)
+//        }
     }
+
+    onStatusChanged: {
+        if( status === PageStatus.Active ) {
+            context.mattermost.get_teams(serverId);
+        }
+    }
+
+
+//    teamsmodel.onServerIdChanged {
+//        teamsPage.onSonServerConnected();
+//    }
+
 //    property string serverName: qsTr("Noname")
 
     // To enable PullDownMenu, place our content in a SilicaFlickable
@@ -76,7 +102,13 @@ Page {
                     x: Theme.horizontalPageMargin
                 }
                 onClicked: teamsmodel.activate(index)
-//                onPressAndHold:
+//                onPressAndHold: ComboBox {
+//                    id: teamOptions
+//                    MenuItem {
+//                        text: qsTr("Options")
+//                        onClicked: pageStack.push(Qt.resolvedUrl("TeamOpetions"))
+//                    }
+//                }
             }
         }
     }

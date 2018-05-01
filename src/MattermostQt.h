@@ -17,6 +17,11 @@ public:
 		Teams
 	};
 
+	enum ConnectionError {
+		WrongPassword,
+		SslError
+	};
+
 	struct TeamContainer
 	{
 		TeamContainer()
@@ -68,16 +73,18 @@ public:
 
 	~MattermostQt();
 
-	void post_login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
-	void get_teams(int serverId);
+	Q_INVOKABLE void post_login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
+	Q_INVOKABLE void get_teams(int serverId);
 
 Q_SIGNALS:
 	void serverConnected(int id);
+	void connectionError(int code, QString message);
 	void teamAdded(MattermostQt::TeamContainer team);
 
 protected:
 	bool reply_login(QNetworkReply *reply);
 	void reply_getTeams(QNetworkReply *reply);
+	void reply_error(QNetworkReply *reply);
 
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);

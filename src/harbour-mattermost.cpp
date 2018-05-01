@@ -34,6 +34,7 @@
 
 #include <sailfishapp.h>
 #include "TeamsModel.h"
+#include "MattermostQt.h"
 
 int main(int argc, char *argv[])
 {
@@ -46,6 +47,7 @@ int main(int argc, char *argv[])
 	   //
 	   // For details see:
 	   // https://harbour.jolla.com/faq#1.5.0
+	   qmlRegisterType<MattermostQt>("harbour.sashikknox", 1, 0, "MattermostQt");
 	   qmlRegisterType<TeamsModel>("harbour.sashikknox", 1, 0, "TeamsModel");
 
 	   // Start the application.

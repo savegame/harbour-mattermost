@@ -9,7 +9,8 @@ class TeamsModel : public QAbstractListModel
 	Q_OBJECT
 
 	Q_PROPERTY(QString m_serverName READ serverName WRITE setServerName NOTIFY serverNameChanged )
-	Q_PROPERTY(int m_serverId READ serverId NOTIFY serverIdChanged)
+	Q_PROPERTY(int m_serverId READ serverId NOTIFY serverIdChanged WRITE setServerId )
+	Q_PROPERTY(MattermostQt* m_mattermost WRITE setMattermostQt READ getMattermostQt )
 public:
 	enum DataRoles {
 //		"id": "string",
@@ -42,13 +43,17 @@ public:
 	QString serverName() const;
 	void setServerName(QString name);
 
+	void setServerId(int id);
 	int serverId() const;
+
+	MattermostQt* getMattermostQt() const;
+	void setMattermostQt(MattermostQt *mattermost);
 Q_SIGNALS:
 	void serverNameChanged();
 	void serverIdChanged();
 
 protected Q_SLOTS:
-	void slot_serverConnected(int id);
+//	void slot_serverConnected(int id);
 	void slot_teamAdded(MattermostQt::TeamContainer team);
 private:
 	QVector<QString> m_displayName;
@@ -56,7 +61,7 @@ private:
 	QVector<QString> m_email;
 	QVector<QString> m_id;
 
-	QSharedPointer<MattermostQt> m_mattermost;
+	MattermostQt *m_mattermost;
 
 	int m_serverId;
 
