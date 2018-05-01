@@ -39,6 +39,9 @@ Page {
     // The effective value will be restricted by ApplicationWindow.allowedOrientations
     allowedOrientations: Orientation.All
 
+    property TeamsModel teamsmodel : TeamsModel {
+        id: teamsmodel_id
+    }
 //    property string serverName: qsTr("Noname")
 
     // To enable PullDownMenu, place our content in a SilicaFlickable
@@ -65,9 +68,7 @@ Page {
                 title: qsTr("Server teams")
             }
 
-            model: TeamsModel {
-                id: teamsmodel
-            }
+            model: teamsmodel
 
             delegate: BackgroundItem {
                 TeamLabel {
