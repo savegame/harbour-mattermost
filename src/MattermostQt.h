@@ -14,12 +14,40 @@ class MattermostQt : public QObject
 public:
 	enum ReplyType : int {
 		Login,
-		Teams
+		Teams,
+		Team
 	};
 
 	enum ConnectionError {
 		WrongPassword,
 		SslError
+	};
+
+	struct ChannelContainer
+	{
+		ChannelContainer()
+		{
+
+		}
+
+		ChannelContainer(QJsonObject &object);
+
+		QString m_id;
+//		"create_at": 0,
+//		"update_at": 0,
+//		"delete_at": 0,
+		QString m_team_id;
+//		"type": "string",
+		QString m_display_name;
+		QString m_name;
+		QString m_header;
+		QString m_purpose;
+		qlonglong m_last_post_at;
+		qlonglong m_total_msg_count;
+		qlonglong m_extra_update_at;
+		QString m_creator_id;
+		int     m_teamId; /**< team index in QVector */
+		int     m_serverId; /**< server index in QVector */
 	};
 
 	struct TeamContainer
@@ -45,7 +73,9 @@ public:
 		qlonglong  m_create_at;
 		qlonglong  m_update_at;
 		qlonglong  m_delete_at;
-		int        m_serverId;
+		int        m_serverId; /**< server index in QVector */
+
+		QList<ChannelContainer> m_public_channels;
 	};
 
 	struct ServerContainer {
@@ -75,15 +105,20 @@ public:
 
 	Q_INVOKABLE void post_login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
 	Q_INVOKABLE void get_teams(int serverId);
+	Q_INVOKABLE void get_public_channels(int serverId, QString teamId);
+
+	void saveSettings();
 
 Q_SIGNALS:
 	void serverConnected(int id);
 	void connectionError(int code, QString message);
 	void teamAdded(MattermostQt::TeamContainer team);
+	void channelAdded(MattermostQt::ChannelContainer channel);
 
 protected:
 	bool reply_login(QNetworkReply *reply);
-	void reply_getTeams(QNetworkReply *reply);
+	void reply_get_teams(QNetworkReply *reply);
+	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
 
 protected Q_SLOTS:
@@ -95,7 +130,6 @@ protected Q_SLOTS:
 	void onWebSocketError(QAbstractSocket::SocketError error);
 protected:
 	QMap<int, ServerContainer>    m_server;
-
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
 };
 

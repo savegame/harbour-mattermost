@@ -38,6 +38,8 @@ Page {
     id: teamsPage
     property Mattermost context
     property int serverId
+    property string servername
+    property bool temsIsUpToDate: false
 
     // The effective value will be restricted by ApplicationWindow.allowedOrientations
     allowedOrientations: Orientation.All
@@ -52,23 +54,14 @@ Page {
         id: teamsmodel_id
         m_mattermost: context.mattermost
         m_serverId: teamsPage.serverId
-//        onServerIdChanged: {
-//            teamsPage.serverConnected(m_serverId)
-//        }
     }
 
     onStatusChanged: {
-        if( status === PageStatus.Active ) {
+        if( status === PageStatus.Active && temsIsUpToDate == false) {
             context.mattermost.get_teams(serverId);
+            temsIsUpToDate = true;
         }
     }
-
-
-//    teamsmodel.onServerIdChanged {
-//        teamsPage.onSonServerConnected();
-//    }
-
-//    property string serverName: qsTr("Noname")
 
     // To enable PullDownMenu, place our content in a SilicaFlickable
     SilicaFlickable {
@@ -82,12 +75,15 @@ Page {
             }
         }
 
+         VerticalScrollDecorator {}
 //        // Tell SilicaFlickable the height of its content.
-//        contentHeight: teamlist.height
+//        contentHeight: teamlist.height +
 
         SilicaListView {
             id: teamlist
             anchors.fill: parent
+//            anchors.top: parent.top
+            width: parent.width
 
             header: PageHeader {
                 id: pageHeader
@@ -98,19 +94,24 @@ Page {
 
             delegate: BackgroundItem {
                 TeamLabel {
+                    id: teamlabel
                     name: display_name
+                    teamid: teamid
                     x: Theme.horizontalPageMargin
                 }
-                onClicked: teamsmodel.activate(index)
-//                onPressAndHold: ComboBox {
-//                    id: teamOptions
+                onClicked: {
+                    pageStack.push( Qt.resolvedUrl("ChannelsPage.qml"),
+                                   {
+                                       context: teamsPage.context,
+                                       teamid: teamsmodel.getTeamId(index)
+                                   } )
+                }
+//                onPressAndHold: ContextMenu {
 //                    MenuItem {
-//                        text: qsTr("Options")
-//                        onClicked: pageStack.push(Qt.resolvedUrl("TeamOpetions"))
+//                        text: "cool"
 //                    }
 //                }
             }
         }
     }
 }
-

@@ -2,6 +2,13 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
+    <name>ChannelsPage</name>
+    <message>
+        <source>Channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CoverPage</name>
     <message>
         <source>My Cover</source>
@@ -15,7 +22,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Trust certificate</source>
+        <source>trust certificate</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

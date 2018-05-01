@@ -32,6 +32,9 @@ QVariant TeamsModel::data(const QModelIndex &index, int role) const
 	else if(role == DataRoles::Email) {
 		return QVariant(m_email[index.row()]);
 	}
+	else if(role == DataRoles::TeamId) {
+		return QVariant(m_id[index.row()]);
+	}
 	return QVariant();
 }
 
@@ -41,6 +44,7 @@ QHash<int, QByteArray> TeamsModel::roleNames() const
 	roleNames[DataRoles::DisplayName] = QLatin1String("display_name").data();
 	roleNames[DataRoles::Description] = QLatin1String("description").data();
 	roleNames[DataRoles::Email]       = QLatin1String("email").data();
+	roleNames[DataRoles::TeamId]      = QLatin1String("teamid").data();
 	return roleNames;
 }
 
@@ -49,6 +53,8 @@ void TeamsModel::activate(const int i)
 	if(i < 0 || i >= m_displayName.size()) {
 		return;
 	}
+
+//	m_mattermost->get_team(m_serverId, m_id[i]);
 //	QString value = backing[i];
 
 //	// Remove the value from the old location.
@@ -94,9 +100,16 @@ void TeamsModel::setMattermostQt(MattermostQt* mattermost)
 	m_mattermost = mattermost;
 
 //	connect(m_mattermost, SIGNAL(serverConnected(int)) , SLOT(slot_serverConnected(int)) );
-	connect(m_mattermost, &MattermostQt::teamAdded
+	connect(m_mattermost.data(), &MattermostQt::teamAdded
 	        ,this , &TeamsModel::slot_teamAdded );
-//	m_mattermost->post_login(QString(SERVER_URL),QString("testuser"),QString("testuser"), true);
+	//	m_mattermost->post_login(QString(SERVER_URL),QString("testuser"),QString("testuser"), true);
+}
+
+QString TeamsModel::getTeamId(int index) const
+{
+	if(index >= 0 && index < m_id.size())
+		return m_id[index];
+	return QString::null;
 }
 
 //void TeamsModel::slot_serverConnected(int id)
@@ -108,10 +121,14 @@ void TeamsModel::setMattermostQt(MattermostQt* mattermost)
 
 void TeamsModel::slot_teamAdded(MattermostQt::TeamContainer team)
 {
+//	bool noNeed;
+//	for(int i = 0; i < m_id.size(); i++)
+//	{
+//	}
 	beginInsertRows(QModelIndex(), m_id.size(), m_id.size());
+	m_id.append(team.m_id);
 	m_displayName.append(team.m_display_name);
 	m_description.append(team.m_description);
 	m_email.append(team.m_email);
-	m_id.append(team.m_id);
 	endInsertRows();
 }

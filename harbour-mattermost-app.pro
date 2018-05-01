@@ -23,9 +23,12 @@ CONFIG += sailfishapp
 CONFIG += qt
 QT += gui qml quick network websockets
 
+debug: DEFINES += _DEBUG
+
 SOURCES += src/harbour-mattermost.cpp \
     src/TeamsModel.cpp \
-    src/MattermostQt.cpp
+    src/MattermostQt.cpp \
+    src/ChannelsModel.cpp
 
 DISTFILES += qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
@@ -54,4 +57,5 @@ TRANSLATIONS += translations/harbour-mattermost-de.ts
 
 HEADERS += \
     src/TeamsModel.h \
-    src/MattermostQt.h
+    src/MattermostQt.h \
+    src/ChannelsModel.h

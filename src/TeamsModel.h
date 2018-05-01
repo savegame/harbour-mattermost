@@ -2,6 +2,7 @@
 #define TEAMSMODEL_H
 
 #include <QAbstractListModel>
+#include <QPointer>
 #include "MattermostQt.h"
 
 class TeamsModel : public QAbstractListModel
@@ -28,6 +29,7 @@ public:
 		DisplayName = Qt::UserRole + 1,
 		Description,
 		Email,
+		TeamId,
 	};
 
 public:
@@ -48,6 +50,8 @@ public:
 
 	MattermostQt* getMattermostQt() const;
 	void setMattermostQt(MattermostQt *mattermost);
+
+	Q_INVOKABLE QString getTeamId(int index) const;
 Q_SIGNALS:
 	void serverNameChanged();
 	void serverIdChanged();
@@ -61,7 +65,7 @@ private:
 	QVector<QString> m_email;
 	QVector<QString> m_id;
 
-	MattermostQt *m_mattermost;
+	QPointer<MattermostQt> m_mattermost;
 
 	int m_serverId;
 

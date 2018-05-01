@@ -42,7 +42,6 @@ ApplicationWindow
     initialPage: Component {
         LoginPage {
             context: mainwindow.context
-//            mainwindow.context.onS
         }
     }
     cover: Qt.resolvedUrl("cover/CoverPage.qml")

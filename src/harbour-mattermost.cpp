@@ -35,23 +35,25 @@
 #include <sailfishapp.h>
 #include "TeamsModel.h"
 #include "MattermostQt.h"
+#include "ChannelsModel.h"
 
 int main(int argc, char *argv[])
 {
 	// Set up QML engine.
-	   QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
-	   QScopedPointer<QQuickView> v(SailfishApp::createView());
+	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
+	QScopedPointer<QQuickView> v(SailfishApp::createView());
 
-	   // If you wish to publish your app on the Jolla harbour, it is recommended
-	   // that you prefix your internal namespaces with "harbour.".
-	   //
-	   // For details see:
-	   // https://harbour.jolla.com/faq#1.5.0
-	   qmlRegisterType<MattermostQt>("harbour.sashikknox", 1, 0, "MattermostQt");
-	   qmlRegisterType<TeamsModel>("harbour.sashikknox", 1, 0, "TeamsModel");
+	// If you wish to publish your app on the Jolla harbour, it is recommended
+	// that you prefix your internal namespaces with "harbour.".
+	//
+	// For details see:
+	// https://harbour.jolla.com/faq#1.5.0
+	qmlRegisterType<MattermostQt>("harbour.sashikknox", 1, 0, "MattermostQt");
+	qmlRegisterType<TeamsModel>("harbour.sashikknox", 1, 0, "TeamsModel");
+	qmlRegisterType<ChannelsModel>("harbour.sashikknox", 1, 0, "ChannelsModel");
 
-	   // Start the application.
-	   v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));
-	   v->show();
-	   return app->exec();
+	// Start the application.
+	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));
+	v->show();
+	return app->exec();
 }

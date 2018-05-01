@@ -12,6 +12,7 @@
 #define P_API               "api"
 #define P_SERVER_URL        "server_url"
 #define P_SERVER_ID         "server_id"
+#define P_TEAM_INDEX        "team_id"
 #define P_TRUST_CERTIFICATE "trust_certificate"
 
 MattermostQt::MattermostQt()
@@ -34,6 +35,13 @@ void MattermostQt::post_login(QString server, QString login, QString password, b
 {
 	if(api <= 3)
 		api = 4;
+
+#if defined(SERVER_URL) && defined(_DEBUG)
+	server = QString(SERVER_URL);
+	login = "testuser";
+	password = "testuser";
+	trustCertificate = true;
+#endif
 
 	// {"login_id":"someone@nowhere.com","password":"thisisabadpassword"}
 
@@ -115,6 +123,50 @@ void MattermostQt::get_teams(int serverId)
 	reply->setProperty(P_SERVER_ID, QVariant(serverId) );
 }
 
+void MattermostQt::get_public_channels(int serverId, QString teamId)
+{
+	if( teamId.isNull() || teamId.isEmpty() || serverId < 0 )
+	{
+		qWarning() << "Wrong team id";
+		return;
+	}
+
+	QMap<int,ServerContainer>::iterator it = m_server.find(serverId);
+	if( it == m_server.end() )
+		return;
+	ServerContainer sc = it.value();
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc.m_api)
+	        + QLatin1String("/users/me/teams/")
+	        + teamId
+	        + QLatin1String("/channels");
+
+	QUrl url(sc.m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request.setHeader(QNetworkRequest::ServerHeader, "application/json");
+	request.setHeader(QNetworkRequest::UserAgentHeader, QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION) );
+//	request.setRawHeader("X-Custom-User-Agent", QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION).toUtf8());
+
+	request.setRawHeader("Authorization", QString("Bearer %0").arg(sc.m_token).toUtf8());
+
+	if(sc.m_trustCertificate)
+		request.setSslConfiguration(sc.m_cert);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Team) );
+	reply->setProperty(P_SERVER_ID, QVariant(serverId) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(teamId) );
+}
+
+void MattermostQt::saveSettings()
+{
+
+}
+
 bool MattermostQt::reply_login(QNetworkReply *reply)
 {
 	QList<QByteArray> headerList = reply->rawHeaderList();
@@ -192,7 +244,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 	}
 }
 
-void MattermostQt::reply_getTeams(QNetworkReply *reply)
+void MattermostQt::reply_get_teams(QNetworkReply *reply)
 {
 	QJsonDocument json;
 	QByteArray rawData = reply->readAll();
@@ -217,6 +269,40 @@ void MattermostQt::reply_getTeams(QNetworkReply *reply)
 	}
 	else {
 		qWarning() << "Cant parse json: " << json;
+	}
+}
+
+void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
+{
+//"id": "string",
+//"create_at": 0,
+//"update_at": 0,
+//"delete_at": 0,
+//"display_name": "string",
+//"name": "string",
+//"description": "string",
+//"email": "string",
+//"type": "string",
+//"allowed_domains": "string",
+//"invite_id": "string",
+//"allow_open_invite": true
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	if(json.isArray())
+	{
+		QJsonArray array = json.array();
+		for(int i = 0; i < array.size(); i++ )
+		{
+			if(array.at(i).isObject())
+			{
+				QJsonObject object = array.at(i).toObject();
+				ChannelContainer ct(object);
+				// TODO not much secure, need test all parameters
+				ct.m_teamId = reply->property(P_TEAM_INDEX).toInt();
+				ct.m_serverId = reply->property(P_SERVER_ID).toInt();
+				m_server[ct.m_serverId].m_teams[ct.m_teamId].m_public_channels << ct;
+				emit channelAdded(ct);
+			}
+		}
 	}
 }
 
@@ -249,7 +335,10 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 				reply_login(reply);
 				break;
 			case ReplyType::Teams:
-				reply_getTeams(reply);
+				reply_get_teams(reply);
+				break;
+			case ReplyType::Team:
+				reply_get_public_channels(reply);
 				break;
 			default:
 				qWarning() << "That can't be!";
@@ -339,20 +428,6 @@ void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
 
 MattermostQt::TeamContainer::TeamContainer(QJsonObject &object)
 {
-//	{
-//	"id": "string",
-//	"create_at": long long,
-//	"update_at": long long,
-//	"delete_at": long long,
-//	"display_name": "string",
-//	"name": "string",
-//	"description": "string",
-//	"email": "string",
-//	"type": "string",
-//	"allowed_domains": "string",
-//	"invite_id": "string",
-//	"allow_open_invite": true
-//	}
 	m_id = object["id"].toString();
 	m_create_at = (qlonglong)object["create_at"].toDouble();
 	m_update_at = (qlonglong)object["update_at"].toDouble();
@@ -365,4 +440,24 @@ MattermostQt::TeamContainer::TeamContainer(QJsonObject &object)
 	m_allowed_domains = object["allowed+domains"].toString();
 	m_invite_id = object["invite_id"].toString();
 	m_allowed_open_invite = object["allow_open_invite"].toBool();
+
+	qDebug() << m_display_name << ":" << m_id;
+}
+
+MattermostQt::ChannelContainer::ChannelContainer(QJsonObject &object)
+{
+	m_id = object["id"].toString();
+//"create_at": 0,
+//"update_at": 0,
+//"delete_at": 0,
+	m_team_id = object["team_id"].toString();
+//"type": "string",
+	m_display_name = object["display_name"].toString();
+	m_name = object["name"].toString();
+	m_header = object["header"].toString();
+	m_purpose = object["purpose"].toString();
+	m_last_post_at = (qlonglong)object["last_post_at"].toDouble();
+	m_total_msg_count = (qlonglong)object["total_msg_count"].toDouble();
+	m_extra_update_at = (qlonglong)object["extra_update_at"].toDouble();
+	m_creator_id = object["creator_id"].toString();
 }

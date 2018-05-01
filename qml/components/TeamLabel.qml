@@ -6,7 +6,9 @@ Rectangle {
 //        id: icon
 //        source:
 //    }
-    property string name: "unnamed"
+    property string name
+    property string teamid
+
     Label {
         anchors.top: parent.top
         anchors.topMargin: Theme.horizontalPageMargin
