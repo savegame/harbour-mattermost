@@ -18,6 +18,7 @@ Item {
 
         Label {
             id: labelname
+            width: parent.width
 //            anchors.top: parent.top
             //anchors.topMargin: Theme.horizontalPageMargin
             font.pixelSize: Theme.fontSizeLarge
@@ -26,6 +27,7 @@ Item {
 
         Label {
             id:labelheader
+            width: parent.width
 //            anchors.top: labelname.bottom
             text: _header
             anchors.leftMargin: Theme.paddingLarge
@@ -34,6 +36,7 @@ Item {
 
         Label {
             id: labelpurpose
+            width: parent.width
             horizontalAlignment: parent.Right
             anchors.leftMargin: Theme.paddingLarge
 //            anchors.top: labelheader.bottom
