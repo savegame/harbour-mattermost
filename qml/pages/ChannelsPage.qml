@@ -29,8 +29,6 @@ Page {
     SilicaFlickable {
         id: flickable
         anchors.fill: parent
-        width : parent.width
-
 //        contentHeight: channelslist.height
 
         SilicaListView {
@@ -57,9 +55,11 @@ Page {
                     _index: m_index
                     _type: m_type
                     x: Theme.horizontalPageMargin
-                    width: parent.width
+//                    width: parent.width
+                    anchors {left: parent.left; right: parent.right}
                     anchors.topMargin: Theme.paddingSmall
-//                    height: Theme.itemSizeMedium
+                    anchors.leftMargin: Theme.paddingLarge
+                    anchors.rightMargin: Theme.paddingSmall
                 }
             }
         }

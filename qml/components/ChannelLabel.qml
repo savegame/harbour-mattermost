@@ -17,7 +17,16 @@ Item {
         id: channel
         Label {
             id: labelname
-            font.pixelSize: Theme.fontSizeLarge
+//            font.pixelSize: Theme.fontSizeLarge
+            text: _display_name
+        }
+    }
+
+    Component {
+        id: direct_channel
+        Label {
+            id: labelname
+//            font.pixelSize: Theme.fontSizeLarge
             text: _display_name
         }
     }
@@ -46,7 +55,8 @@ Item {
     Column {
         id: column
         spacing: Theme.paddingSmall
-        width: parent.width
+//        width: parent.width
+        anchors {left: parent.left; right: parent.right }
         Loader {
             width: parent.width
             sourceComponent:
