@@ -138,33 +138,33 @@ void ChannelsModel::setMattermost(MattermostQt *mattermost)
 	connect( m_mattermost.data(), &MattermostQt::channelAdded, this, &ChannelsModel::slot_channelAdded );
 }
 
-void ChannelsModel::slot_channelAdded(MattermostQt::ChannelContainer channel)
+void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 {
 	int insertIndex = m_header.size();
 
-	if( channel.m_type.compare("O") == 0 )
+	if( channel->m_type.compare("O") == 0 )
 		insertIndex = m_header_index[ItemType::HeaderPrivate]++;
-	else if( channel.m_type.compare("P") == 0 )
+	else if( channel->m_type.compare("P") == 0 )
 		insertIndex = m_header_index[ItemType::HeaderDirect]++;
-	else if( channel.m_type.compare("D") == 0 )
+	else if( channel->m_type.compare("D") == 0 )
 		insertIndex = m_header.size();//m_header_index[ItemType::HeaderDirect] + 1;
 
 	beginInsertRows(QModelIndex(), insertIndex, insertIndex);
 	if(insertIndex == m_header.size())
 	{
-		m_header.append(channel.m_header);
-		m_display_name.append(channel.m_display_name);
-		m_puprose.append(channel.m_purpose);
+		m_header.append(channel->m_header);
+		m_display_name.append(channel->m_display_name);
+		m_puprose.append(channel->m_purpose);
 		m_type.append(ItemType::Channel);
-		m_index.append( channel.m_selfId);
+		m_index.append( channel->m_self_index);
 	}
 	else
 	{
-		m_header.insert(insertIndex,channel.m_header);
-		m_display_name.insert(insertIndex,channel.m_display_name);
-		m_puprose.insert(insertIndex,channel.m_purpose);
+		m_header.insert(insertIndex,channel->m_header);
+		m_display_name.insert(insertIndex,channel->m_display_name);
+		m_puprose.insert(insertIndex,channel->m_purpose);
 		m_type.insert(insertIndex,ItemType::Channel);
-		m_index.insert(insertIndex, channel.m_selfId);
+		m_index.insert(insertIndex, channel->m_self_index);
 	}
 	endInsertRows();
 }

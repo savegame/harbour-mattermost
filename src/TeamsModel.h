@@ -58,7 +58,7 @@ Q_SIGNALS:
 
 protected Q_SLOTS:
 //	void slot_serverConnected(int id);
-	void slot_teamAdded(MattermostQt::TeamContainer team);
+	void slot_teamAdded(MattermostQt::TeamPtr team);
 private:
 	QVector<QString> m_displayName;
 	QVector<QString> m_description;

@@ -119,16 +119,16 @@ QString TeamsModel::getTeamId(int index) const
 //	emit serverIdChanged();
 //}
 
-void TeamsModel::slot_teamAdded(MattermostQt::TeamContainer team)
+void TeamsModel::slot_teamAdded(MattermostQt::TeamPtr team)
 {
 //	bool noNeed;
 //	for(int i = 0; i < m_id.size(); i++)
 //	{
 //	}
 	beginInsertRows(QModelIndex(), m_id.size(), m_id.size());
-	m_id.append(team.m_id);
-	m_displayName.append(team.m_display_name);
-	m_description.append(team.m_description);
-	m_email.append(team.m_email);
+	m_id.append(team->m_id);
+	m_displayName.append(team->m_display_name);
+	m_description.append(team->m_description);
+	m_email.append(team->m_email);
 	endInsertRows();
 }

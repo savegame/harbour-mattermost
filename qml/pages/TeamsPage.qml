@@ -106,11 +106,6 @@ Page {
                                        teamid: teamsmodel.getTeamId(index)
                                    } )
                 }
-//                onPressAndHold: ContextMenu {
-//                    MenuItem {
-//                        text: "cool"
-//                    }
-//                }
             }
         }
     }

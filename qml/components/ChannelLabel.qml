@@ -11,13 +11,13 @@ Item {
     property int  _index
     property int _type
 
-    height: column.height
+    height: loader.height
 
     Component {
         id: channel
         Label {
             id: labelname
-//            font.pixelSize: Theme.fontSizeLarge
+            font.pixelSize: Theme.fontSizeMedium
             text: _display_name
         }
     }
@@ -52,13 +52,21 @@ Item {
         }
     }
 
-    Column {
-        id: column
-        spacing: Theme.paddingSmall
+//    Column {
+//        id: column
+//        spacing: Theme.paddingMedium
 //        width: parent.width
-        anchors {left: parent.left; right: parent.right }
         Loader {
-            width: parent.width
+            id: loader
+//            width: parent.width
+
+            anchors {left: parent.left; right: parent.right; }
+//            anchors.fill: parent
+            anchors {
+                 topMargin: _type == ChannelsModel.Channel ? Theme.horizontalPageMargin : Theme.paddingSmall
+                 bottomMargin: loader.topMargin
+            }
+
             sourceComponent:
                 switch(_type)
                 {
@@ -75,5 +83,5 @@ Item {
                     channel;
                 }
         }
-    }
+//    }
 }

@@ -16,7 +16,8 @@ public:
 	enum ReplyType : int {
 		Login,
 		Teams,
-		Team
+		Team,
+		User
 	};
 
 	enum ConnectionError {
@@ -30,11 +31,62 @@ public:
 		Direct  // "D"
 	};
 
+	struct UserContainer
+	{
+		UserContainer() {
+			m_update_at = 0;
+		}
+
+		UserContainer(const QJsonObject &object);
+		//"id": "string",
+		QString m_id;
+		//"create_at": 0,
+		//"update_at": 0,
+		qlonglong m_update_at;
+		//"delete_at": 0,
+		//"username": "string",
+		QString m_username;
+		//"first_name": "string",
+		QString m_first_name;
+		//"last_name": "string",
+		QString m_last_name;
+		//"nickname": "string",
+		QString m_nickname;
+		//"email": "string",
+		//"email_verified": true,
+		//"auth_service": "string",
+		//"roles": "string",
+		//"locale": "string",
+		//"notify_props": {
+		//"email": "string",
+		//"push": "string",
+		//"desktop": "string",
+		//"desktop_sound": "string",
+		//"mention_keys": "string",
+		//"channel": "string",
+		//"first_name": "string"
+		//},
+		//"props": { },
+		//"last_password_update": 0,
+		qlonglong m_last_password_update;
+		//"last_picture_update": 0,
+		qlonglong m_last_picture_update;
+		//"failed_attempts": 0,
+		//"mfa_active": true
+
+		int m_self_index;
+	};
+
+	typedef QSharedPointer<UserContainer> UserPtr;
+
 	struct ChannelContainer
 	{
 		ChannelContainer()
 		{
-
+			m_teamId = -1;
+			m_serverId = -1;
+			m_self_index = -1;
+			m_update_at = 0;
 		}
 
 		ChannelContainer(QJsonObject &object);
@@ -55,8 +107,9 @@ public:
 		QString m_creator_id;
 		int     m_teamId;   /**< team index in QVector */
 		int     m_serverId; /**< server index in QVector */
-		int     m_selfId;   /**< self index in vector */
+		int     m_self_index;   /**< self index in vector */
 	};
+	typedef QSharedPointer<ChannelContainer> ChannelPtr;
 
 	struct TeamContainer
 	{
@@ -82,14 +135,17 @@ public:
 		qlonglong  m_update_at;
 		qlonglong  m_delete_at;
 		int        m_serverId; /**< server index in QVector */
-		int        m_selfId;   /**< self index in vector */
+		int        m_self_index;   /**< self index in vector */
 
-		QVector<ChannelContainer> m_public_channels;
-		QVector<ChannelContainer> m_private_channels;
-		QVector<ChannelContainer> m_direct_channels;
+		QVector<ChannelPtr> m_public_channels;
+		QVector<ChannelPtr> m_private_channels;
+		QVector<ChannelPtr> m_direct_channels;
 	};
+	typedef QSharedPointer<TeamContainer> TeamPtr;
 
-	struct ServerContainer {
+	struct ServerContainer
+	{
+	public:
 		ServerContainer() : m_api(4), m_trustCertificate(false) {}
 
 		ServerContainer(QString url, QString token, int api)
@@ -107,10 +163,13 @@ public:
 		bool                        m_trustCertificate; /**< trust self signed certificate */
 		QSslConfiguration           m_cert;  /**< server certificate */
 		QSharedPointer<QWebSocket>  m_socket;/**< websocket connection */
-		QList<TeamContainer>        m_teams; /**< allowed teams */
 		QString                     m_user_id;/**< user id */
-		int                         m_selfId;    /**< server index in QVector */
+		int                         m_selfId; /**< server index in QVector */
+		QList<TeamPtr>              m_teams; /**< allowed teams */
+
+		QString  m_config_path; /**< local config path */
 	};
+	typedef QSharedPointer<ServerContainer> ServerPtr;
 
 public:
 	MattermostQt();
@@ -118,23 +177,36 @@ public:
 	~MattermostQt();
 
 	Q_INVOKABLE void post_login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
+	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int serverId);
 	Q_INVOKABLE void get_public_channels(int serverId, QString teamId);
+	Q_INVOKABLE void get_user_image(int serverId, QString userId);
+	Q_INVOKABLE void get_user_info(int serverId, QString userId);
 
-	void saveSettings();
+	bool save_settings();
+	bool load_settings();
 
 Q_SIGNALS:
 	void serverConnected(int id);
 	void connectionError(int code, QString message);
-	void teamAdded(MattermostQt::TeamContainer team);
-	void channelAdded(MattermostQt::ChannelContainer channel);
+	void teamAdded(TeamPtr team);
+	void channelAdded(ChannelPtr channel);
 
 protected:
-	void websocket_connect(ServerContainer &server);
+	/**
+	 * @brief prepare_direct_channel
+	 * when we have direct channel? we need get user id, login and profile
+	 * image before we send to ChannelsModel
+	 * @param channel
+	 */
+	void prepare_direct_channel(int server_index, int tem_index, int channel_index);
+
+	void websocket_connect(ServerPtr server);
 
 	bool reply_login(QNetworkReply *reply);
 	void reply_get_teams(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
+	void reply_get_user(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
 
 protected Q_SLOTS:
@@ -145,11 +217,14 @@ protected Q_SLOTS:
 	void onWebSocketSslError(QList<QSslError> errors);
 	void onWebSocketError(QAbstractSocket::SocketError error);
 protected:
-	QMap<int, ServerContainer>    m_server;
+	QMap<int, ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
 
+	QString m_settings_path;
+//	QTimer  m_settings_timer;
+
 	/** channels, need update before put to model */
-	QList<ChannelContainer>   m_stackedChannels;
+//	QList<ChannelContainer>   m_stackedChannels;
 };
 
 #endif // MATTERMOSTQT_H

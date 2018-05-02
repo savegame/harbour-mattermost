@@ -61,7 +61,7 @@ public:
 	void setMattermost(MattermostQt *mattermost);
 
 protected Q_SLOTS:
-	void slot_channelAdded(MattermostQt::ChannelContainer channel);
+	void slot_channelAdded(MattermostQt::ChannelPtr channel);
 
 private:
 	QVector<QString> m_display_name;
