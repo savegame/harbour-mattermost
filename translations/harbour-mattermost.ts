@@ -2,6 +2,21 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
+    <name>ChannelLabel</name>
+    <message>
+        <source>Public channes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Private channes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Direct channes</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Channels</source>

@@ -3,6 +3,27 @@
 ChannelsModel::ChannelsModel(QObject *parent)
     : QAbstractListModel(parent)
 {
+	beginInsertRows(QModelIndex(), 0, 2);
+	m_header.append("Public channels:");
+	m_display_name.append("");
+	m_puprose.append("");
+	m_type.append(ItemType::HeaderPublic);
+	m_index.resize(3);
+
+	m_header.append("Private channels");
+	m_display_name.append("");
+	m_puprose.append("");
+	m_type.append(ItemType::HeaderPrivate);
+
+	m_header.append("Direct channels");
+	m_display_name.append("");
+	m_puprose.append("");
+	m_type.append(ItemType::HeaderDirect);
+
+	m_header_index[ItemType::HeaderPublic] = 0;
+	m_header_index[ItemType::HeaderPrivate] = 1;
+	m_header_index[ItemType::HeaderDirect] = 2;
+	endInsertRows();
 }
 
 //QVariant ChannelsModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -48,6 +69,12 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 	case Header:
 		return m_header[index.row()];
 		break;
+	case Type:
+		return m_type[index.row()];
+		break;
+	case Index:
+		return m_index[index.row()];
+		break;
 	}
 	return QVariant();
 }
@@ -62,13 +89,16 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 //	return false;
 //}
 
-//Qt::ItemFlags ChannelsModel::flags(const QModelIndex &index) const
-//{
-//	if (!index.isValid())
-//		return Qt::NoItemFlags;
+Qt::ItemFlags ChannelsModel::flags(const QModelIndex &index) const
+{
+	if (!index.isValid())
+		return Qt::NoItemFlags;
 
-//	return Qt::ItemIsEnabled; // FIXME: Implement me!
-//}
+	if( m_type[index.row()] <= ItemType::HeadersCount )
+		return Qt::NoItemFlags;
+	else
+		return Qt::ItemIsEnabled; // FIXME: Implement me!
+}
 
 //bool ChannelsModel::insertRows(int row, int count, const QModelIndex &parent)
 //{
@@ -91,6 +121,8 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	roleNames[DataRoles::Purpose] = QLatin1String("m_purpose").data();
 	roleNames[DataRoles::Header]  = QLatin1String("m_header").data();
 	roleNames[DataRoles::Email]  = QLatin1String("m_email").data();
+	roleNames[DataRoles::Index]  = QLatin1String("m_index").data();
+	roleNames[DataRoles::Type]  = QLatin1String("m_type").data();
 	return roleNames;
 }
 
@@ -108,10 +140,32 @@ void ChannelsModel::setMattermost(MattermostQt *mattermost)
 
 void ChannelsModel::slot_channelAdded(MattermostQt::ChannelContainer channel)
 {
-	beginInsertRows(QModelIndex(), m_header.size(), m_header.size());
-	m_header.append(channel.m_header);
-	m_display_name.append(channel.m_display_name);
-	m_puprose.append(channel.m_purpose);
+	int insertIndex = m_header.size();
+
+	if( channel.m_type.compare("O") == 0 )
+		insertIndex = m_header_index[ItemType::HeaderPrivate]++;
+	else if( channel.m_type.compare("P") == 0 )
+		insertIndex = m_header_index[ItemType::HeaderDirect]++;
+	else if( channel.m_type.compare("D") == 0 )
+		insertIndex = m_header.size();//m_header_index[ItemType::HeaderDirect] + 1;
+
+	beginInsertRows(QModelIndex(), insertIndex, insertIndex);
+	if(insertIndex == m_header.size())
+	{
+		m_header.append(channel.m_header);
+		m_display_name.append(channel.m_display_name);
+		m_puprose.append(channel.m_purpose);
+		m_type.append(ItemType::Channel);
+		m_index.append( channel.m_selfId);
+	}
+	else
+	{
+		m_header.insert(insertIndex,channel.m_header);
+		m_display_name.insert(insertIndex,channel.m_display_name);
+		m_puprose.insert(insertIndex,channel.m_purpose);
+		m_type.insert(insertIndex,ItemType::Channel);
+		m_index.insert(insertIndex, channel.m_selfId);
+	}
 	endInsertRows();
 }
 

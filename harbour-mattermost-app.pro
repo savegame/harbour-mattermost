@@ -23,6 +23,9 @@ CONFIG += sailfishapp
 CONFIG += qt
 QT += gui qml quick network websockets
 
+#LIBS += -Llibs -lqt5websockets
+#INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
+
 debug: DEFINES += _DEBUG
 
 SOURCES += src/harbour-mattermost.cpp \
@@ -41,7 +44,8 @@ DISTFILES += qml/harbour-mattermost.qml \
     harbour-mattermost.desktop \
     server.pri \
     qml/pages/TeamsPage.qml \
-    qml/components/TeamLabel.qml
+    qml/components/TeamLabel.qml \
+    translations/harbour-mattermost-ru.ts
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 
@@ -53,7 +57,8 @@ CONFIG += sailfishapp_i18n
 # planning to localize your app, remember to comment out the
 # following TRANSLATIONS line. And also do not forget to
 # modify the localized app name in the the .desktop file.
-TRANSLATIONS += translations/harbour-mattermost-de.ts
+TRANSLATIONS += translations/harbour-mattermost-de.ts \
+    translations/harbour-mattermost-ru.ts
 
 HEADERS += \
     src/TeamsModel.h \

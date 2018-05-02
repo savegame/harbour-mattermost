@@ -17,7 +17,20 @@ public:
 		Purpose,
 		Email,
 		Header,
+		Type,
+		Index
 	};
+
+	enum ItemType {
+		HeaderFavourites = 0,
+		HeaderPublic,
+		HeaderPrivate,
+		HeaderDirect,
+		HeadersCount,
+		Channel
+	};
+	Q_ENUMS(ItemType)
+
 public:
 	explicit ChannelsModel(QObject *parent = nullptr);
 
@@ -35,7 +48,7 @@ public:
 //	bool setData(const QModelIndex &index, const QVariant &value,
 //	             int role = Qt::EditRole) override;
 
-//	Qt::ItemFlags flags(const QModelIndex& index) const override;
+	Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 	QHash<int, QByteArray> roleNames() const;
 	// Add data:
@@ -54,7 +67,11 @@ private:
 	QVector<QString> m_display_name;
 	QVector<QString> m_header;
 	QVector<QString> m_puprose;
-
+	QVector<int>     m_index;
+	QVector<int>     m_type;
+//	QVector<QString> m
+	// indexes of headers
+	int m_header_index[HeadersCount];
 	QPointer<MattermostQt> m_mattermost;
 };
 

@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import harbour.sashikknox 1.0
 
 Item {
     id: channellabel
@@ -7,42 +8,62 @@ Item {
     property string _display_name
     property string _header
     property string _purpose
+    property int  _index
+    property int _type
 
     height: column.height
+
+    Component {
+        id: channel
+        Label {
+            id: labelname
+            font.pixelSize: Theme.fontSizeLarge
+            text: _display_name
+        }
+    }
+
+    Component {
+        id: header_public
+        SectionHeader {
+            text: qsTr("Public channes")
+        }
+    }
+
+    Component {
+        id: header_private
+        SectionHeader {
+            text: qsTr("Private channes")
+        }
+    }
+
+    Component {
+        id: header_direct
+        SectionHeader {
+            text: qsTr("Direct channes")
+        }
+    }
 
     Column {
         id: column
         spacing: Theme.paddingSmall
         width: parent.width
-//        anchors.fill: parent
-
-        Label {
-            id: labelname
+        Loader {
             width: parent.width
-//            anchors.top: parent.top
-            //anchors.topMargin: Theme.horizontalPageMargin
-            font.pixelSize: Theme.fontSizeLarge
-            text: _display_name
-        }
-
-        Label {
-            id:labelheader
-            width: parent.width
-//            anchors.top: labelname.bottom
-            text: _header
-            anchors.leftMargin: Theme.paddingLarge
-            font.pixelSize: Theme.fontSizeExtraSmall
-        }
-
-        Label {
-            id: labelpurpose
-            width: parent.width
-            horizontalAlignment: parent.Right
-            anchors.leftMargin: Theme.paddingLarge
-//            anchors.top: labelheader.bottom
-            font.pixelSize: Theme.fontSizeTiny
-            font.family: Theme.secondaryColor
-            text: _purpose
+            sourceComponent:
+                switch(_type)
+                {
+                case ChannelsModel.HeaderPublic:
+                    header_public;
+                    break;
+                case ChannelsModel.HeaderPrivate:
+                    header_private;
+                    break;
+                case ChannelsModel.HeaderDirect:
+                    header_direct;
+                    break;
+                default:
+                    channel;
+                }
         }
     }
 }

@@ -6,6 +6,7 @@
 #include <QUrl>
 #include <QMap>
 #include <QNetworkAccessManager>
+//#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
 #include <QtWebSockets/QWebSocket>
 
 class MattermostQt : public QObject
@@ -23,6 +24,12 @@ public:
 		SslError
 	};
 
+	enum ChannelType {
+		Open,   // "O"
+		Private,// "P"
+		Direct  // "D"
+	};
+
 	struct ChannelContainer
 	{
 		ChannelContainer()
@@ -34,10 +41,10 @@ public:
 
 		QString m_id;
 //		"create_at": 0,
-//		"update_at": 0,
+		qlonglong m_update_at;
 //		"delete_at": 0,
 		QString m_team_id;
-//		"type": "string",
+		QString m_type;
 		QString m_display_name;
 		QString m_name;
 		QString m_header;
@@ -46,8 +53,9 @@ public:
 		qlonglong m_total_msg_count;
 		qlonglong m_extra_update_at;
 		QString m_creator_id;
-		int     m_teamId; /**< team index in QVector */
+		int     m_teamId;   /**< team index in QVector */
 		int     m_serverId; /**< server index in QVector */
+		int     m_selfId;   /**< self index in vector */
 	};
 
 	struct TeamContainer
@@ -74,8 +82,11 @@ public:
 		qlonglong  m_update_at;
 		qlonglong  m_delete_at;
 		int        m_serverId; /**< server index in QVector */
+		int        m_selfId;   /**< self index in vector */
 
-		QList<ChannelContainer> m_public_channels;
+		QVector<ChannelContainer> m_public_channels;
+		QVector<ChannelContainer> m_private_channels;
+		QVector<ChannelContainer> m_direct_channels;
 	};
 
 	struct ServerContainer {
@@ -92,10 +103,13 @@ public:
 		QString                     m_url;   /**< server URL */
 		int                         m_api;   /**< server API version */
 		QString                     m_token; /**< server access token*/
+		QString                     m_cookie;/**< cookie */
 		bool                        m_trustCertificate; /**< trust self signed certificate */
 		QSslConfiguration           m_cert;  /**< server certificate */
 		QSharedPointer<QWebSocket>  m_socket;/**< websocket connection */
 		QList<TeamContainer>        m_teams; /**< allowed teams */
+		QString                     m_user_id;/**< user id */
+		int                         m_selfId;    /**< server index in QVector */
 	};
 
 public:
@@ -116,6 +130,8 @@ Q_SIGNALS:
 	void channelAdded(MattermostQt::ChannelContainer channel);
 
 protected:
+	void websocket_connect(ServerContainer &server);
+
 	bool reply_login(QNetworkReply *reply);
 	void reply_get_teams(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
@@ -131,6 +147,9 @@ protected Q_SLOTS:
 protected:
 	QMap<int, ServerContainer>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
+
+	/** channels, need update before put to model */
+	QList<ChannelContainer>   m_stackedChannels;
 };
 
 #endif // MATTERMOSTQT_H

@@ -5,47 +5,47 @@
     <name>ChannelLabel</name>
     <message>
         <source>Public channes</source>
-        <translation type="unfinished"></translation>
+        <translation>Публичные каналы</translation>
     </message>
     <message>
         <source>Private channes</source>
-        <translation type="unfinished"></translation>
+        <translation>Приватные каналы</translation>
     </message>
     <message>
         <source>Direct channes</source>
-        <translation type="unfinished"></translation>
+        <translation>Личные сообщения</translation>
     </message>
 </context>
 <context>
     <name>ChannelsPage</name>
     <message>
         <source>Channels</source>
-        <translation type="unfinished"></translation>
+        <translation>Каналы</translation>
     </message>
 </context>
 <context>
     <name>CoverPage</name>
     <message>
         <source>My Cover</source>
-        <translation>Mein Cover</translation>
+        <translation>Мой Кавэр</translation>
     </message>
 </context>
 <context>
     <name>LoginPage</name>
     <message>
         <source>Username or Email address</source>
-        <translation type="unfinished"></translation>
+        <translation>Логин или электронная почта</translation>
     </message>
     <message>
         <source>trust certificate</source>
-        <translation type="unfinished"></translation>
+        <translation>доверенный сервер</translation>
     </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
         <source>Login failed because of invalid password</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось подключиться к серверу, неверный пароль</translation>
     </message>
 </context>
 <context>
@@ -63,7 +63,7 @@
     <name>TeamOptions</name>
     <message>
         <source>Team Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки комманды</translation>
     </message>
 </context>
 <context>
@@ -74,7 +74,7 @@
     </message>
     <message>
         <source>Server teams</source>
-        <translation type="unfinished"></translation>
+        <translation>Комманды</translation>
     </message>
 </context>
 </TS>

@@ -29,6 +29,8 @@ Page {
     SilicaFlickable {
         id: flickable
         anchors.fill: parent
+        width : parent.width
+
 //        contentHeight: channelslist.height
 
         SilicaListView {
@@ -36,6 +38,8 @@ Page {
             width: parent.width
             anchors.fill: parent
             model: channelsmodel
+
+            VerticalScrollDecorator {}
 
             header: PageHeader {
                 id: pageheader
@@ -50,26 +54,13 @@ Page {
                     _display_name: m_display_name
                     _purpose: m_purpose
                     _header: m_header
+                    _index: m_index
+                    _type: m_type
                     x: Theme.horizontalPageMargin
                     width: parent.width
-                    height: Theme.itemSizeExtraLarge
+                    anchors.topMargin: Theme.paddingSmall
+//                    height: Theme.itemSizeMedium
                 }
-//                Column {
-//                    id: col
-//                    width: parent.width
-
-//                    Label {
-//                        id: labelname
-//                        text: m_display_name
-////                        anchors.top: parent.top
-//                        font.pixelSize: Theme.fontSizeLarge
-//                    }
-//                    Label {
-//                        text: m_purpose
-////                        anchors.top: labelname.bottom
-//                        font.pixelSize: Theme.fontSizeExtraLarge
-//                    }
-//                }
             }
         }
     }
