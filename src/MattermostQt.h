@@ -5,6 +5,7 @@
 #include <QString>
 #include <QUrl>
 #include <QMap>
+#include <QTimer>
 #include <QNetworkAccessManager>
 //#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
 #include <QtWebSockets/QWebSocket>
@@ -17,7 +18,8 @@ public:
 		Login,
 		Teams,
 		Channels,
-		User
+		User,
+		rt_get_team
 	};
 
 	enum ConnectionError {
@@ -134,7 +136,7 @@ public:
 		qlonglong  m_create_at;
 		qlonglong  m_update_at;
 		qlonglong  m_delete_at;
-		int        m_serverId; /**< server index in QVector */
+		int        m_server_index; /**< server index in QVector */
 		int        m_self_index;   /**< self index in vector */
 
 		QVector<ChannelPtr> m_public_channels;
@@ -155,6 +157,8 @@ public:
 			m_token = token;
 			m_trustCertificate = false;
 		}
+
+		int get_team_index(QString team_id);
 
 		QString                     m_url;   /**< server URL */
 		int                         m_api;   /**< server API version */
@@ -179,7 +183,9 @@ public:
 	Q_INVOKABLE void post_login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
 	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int serverId);
-	Q_INVOKABLE void get_public_channels(int serverId, QString teamId);
+	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
+//	void get_team(int server_index, QString team_id);
+	void get_team(int server_index, int team_index);
 	Q_INVOKABLE void get_user_image(int serverId, QString userId);
 	Q_INVOKABLE void get_user_info(int serverId, QString userId);
 
@@ -190,6 +196,7 @@ Q_SIGNALS:
 	void serverConnected(int id);
 	void connectionError(int code, QString message);
 	void teamAdded(TeamPtr team);
+	void channelsList(QList<ChannelPtr> list);
 	void channelAdded(ChannelPtr channel);
 
 protected:
@@ -205,6 +212,7 @@ protected:
 
 	bool reply_login(QNetworkReply *reply);
 	void reply_get_teams(QNetworkReply *reply);
+	void reply_get_team(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_get_user(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
@@ -222,6 +230,8 @@ protected:
 
 	QString m_settings_path;
 //	QTimer  m_settings_timer;
+
+	QTimer m_update_server;
 
 	/** channels, need update before put to model */
 //	QList<ChannelContainer>   m_stackedChannels;

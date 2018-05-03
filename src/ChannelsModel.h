@@ -60,9 +60,12 @@ public:
 	MattermostQt *mattermost();
 	void setMattermost(MattermostQt *mattermost);
 
+protected:
+	void clear();
+
 protected Q_SLOTS:
 	void slot_channelAdded(MattermostQt::ChannelPtr channel);
-
+	void slot_channelsList(QList<MattermostQt::ChannelPtr> list);
 private:
 	QVector<QString> m_display_name;
 	QVector<QString> m_header;

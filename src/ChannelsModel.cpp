@@ -136,6 +136,32 @@ void ChannelsModel::setMattermost(MattermostQt *mattermost)
 	m_mattermost = mattermost;
 
 	connect( m_mattermost.data(), &MattermostQt::channelAdded, this, &ChannelsModel::slot_channelAdded );
+	connect( m_mattermost.data(), &MattermostQt::channelsList, this, &ChannelsModel::slot_channelsList );
+}
+
+void ChannelsModel::clear()
+{
+	beginResetModel();
+	m_header.clear();
+	m_display_name.clear();
+	m_puprose.clear();
+	m_type.clear();
+//	m_index.resize(3);
+	endResetModel();
+
+	beginInsertRows(QModelIndex(), 0, 2);
+	m_header.resize(3);
+	m_display_name.resize(3);
+	m_puprose.resize(3);
+	m_index.resize(3);
+	m_type.resize(3);
+	m_type[0] = ItemType::HeaderPublic;
+	m_type[1] = ItemType::HeaderPrivate;
+	m_type[2] = ItemType::HeaderDirect;
+	m_header_index[ItemType::HeaderPublic] = 0;
+	m_header_index[ItemType::HeaderPrivate] = 1;
+	m_header_index[ItemType::HeaderDirect] = 2;
+	endInsertRows();
 }
 
 void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
@@ -167,6 +193,16 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 		m_index.insert(insertIndex, channel->m_self_index);
 	}
 	endInsertRows();
+}
+
+void ChannelsModel::slot_channelsList(QList<MattermostQt::ChannelPtr> list)
+{
+	clear();
+	foreach(MattermostQt::ChannelPtr channel, list)
+	{
+	// need optimize here, more effective code
+		slot_channelAdded(channel);
+	}
 }
 
 //void ChannelsModel::setMattermost(MattermostQt *mattermost)

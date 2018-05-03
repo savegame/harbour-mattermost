@@ -45,6 +45,28 @@ Page {
             }
 
             delegate: BackgroundItem {
+                id: bgitem
+                ParallelAnimation {
+                    id: panim
+                    running: true
+                    property int dur: 200
+                    NumberAnimation  {
+                        target: bgitem
+                        property: "height"
+                        easing.type: Easing.OutQuad
+                        from: 0
+                        to: col.height;
+                        duration: panim.dur
+                    }
+                    NumberAnimation {
+                        target: bgitem
+                        property: "opacity"
+                        easing.type: Easing.InExpo
+                        from: 0
+                        to: 1.0;
+                        duration: panim.dur
+                    }
+                }
                 width: parent.width
                 height: col.height
                 ChannelLabel {

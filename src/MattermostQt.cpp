@@ -15,8 +15,9 @@
 #define P_REPLY_TYPE        "reply_type"
 #define P_API               "api"
 #define P_SERVER_URL        "server_url"
-#define P_SERVER_ID         "server_id"
-#define P_TEAM_INDEX        "team_id"
+#define P_SERVER_INDEX         "server_index"
+#define P_TEAM_INDEX        "team_index"
+#define P_TEAM_ID           "team_id"
 #define P_CHANNEL_INDEX     "channel_id"
 #define P_CHANNEL_TYPE      "channel_type"
 #define P_TRUST_CERTIFICATE "trust_certificate"
@@ -27,6 +28,7 @@
 #define requset_set_headers(requset, server) \
 	request.setHeader(QNetworkRequest::ServerHeader, "application/json"); \
 	request.setHeader(QNetworkRequest::UserAgentHeader, QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION) ); \
+	request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
 	request.setRawHeader("Authorization", QString("Bearer %0").arg(server->m_token).toUtf8())
 
 MattermostQt::MattermostQt()
@@ -125,7 +127,7 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Login) );
-	reply->setProperty(P_SERVER_ID, sc->m_selfId);
+	reply->setProperty(P_SERVER_INDEX, sc->m_selfId);
 	reply->setProperty(P_TRUST_CERTIFICATE, sc->m_trustCertificate);
 }
 
@@ -160,26 +162,54 @@ void MattermostQt::get_teams(int serverId)
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Teams) );
-	reply->setProperty(P_SERVER_ID, QVariant(serverId) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(serverId) );
 }
 
-void MattermostQt::get_public_channels(int serverId, QString teamId)
+void MattermostQt::get_public_channels(int server_index, QString team_id)
 {
-	if( teamId.isNull() || teamId.isEmpty() || serverId < 0 )
+	if( team_id.isNull() || team_id.isEmpty() || server_index < 0 )
 	{
 		qWarning() << "Wrong team id";
 		return;
 	}
 
-	QMap<int,ServerPtr>::iterator it = m_server.find(serverId);
+	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
 	if( it == m_server.end() )
 		return;
 	ServerPtr sc = it.value();
+	// first check if team allready got channels
+	int team_index = sc->get_team_index(team_id);
+	if(team_index == -1)
+	{
+		qWarning() << "Team with id " << team_id << " not found";
+		return;
+	}
+
+	TeamPtr tc = sc->m_teams[team_index];
+	if( tc->m_private_channels.size() + tc->m_public_channels.size() + tc->m_direct_channels.size() > 0 )
+	{
+		QList<ChannelPtr> channels;
+
+		for(int i = 0; i < tc->m_public_channels.size(); i++ )
+			channels.append(tc->m_public_channels[i]);
+
+		for(int i = 0; i < tc->m_private_channels.size(); i++ )
+			channels.append(tc->m_private_channels[i]);
+
+		for(int i = 0; i < tc->m_direct_channels.size(); i++ )
+			channels.append(tc->m_direct_channels[i]);
+
+		emit channelsList( channels );
+		// after that send request for team info
+
+		get_team(server_index,team_index);
+		return;
+	}
 
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
 	        + QLatin1String("/users/me/teams/")
-	        + teamId
+	        + team_id
 	        + QLatin1String("/channels");
 
 	QUrl url(sc->m_url);
@@ -188,14 +218,45 @@ void MattermostQt::get_public_channels(int serverId, QString teamId)
 
 	request.setUrl(url);
 	requset_set_headers(request,sc);
-
 //	if(sc->m_trustCertificate && !sc->m_cert.isNull())
 //		request.setSslConfiguration(sc->m_cert);
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Channels) );
-	reply->setProperty(P_SERVER_ID, QVariant(serverId) );
-	reply->setProperty(P_TEAM_INDEX, QVariant(teamId) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+	reply->setProperty(P_TEAM_ID, QVariant(team_id) );
+}
+
+void MattermostQt::get_team(int server_index, int team_index)
+{
+	if( server_index < 0 || server_index >= m_server.size()
+	   || team_index < 0 || team_index >= m_server[server_index]->m_teams.size() )
+	{
+		qWarning() << "Wrond indexes";
+		return;
+	}
+	ServerPtr sc = m_server[server_index];
+	QString team_id = sc->m_teams[team_index]->m_id;
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/teams/")
+	        + team_id;
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+//	if(sc->m_trustCertificate && !sc->m_cert.isNull())
+//		request.setSslConfiguration(sc->m_cert);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_team) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 }
 
 void MattermostQt::get_user_image(int serverId, QString userId)
@@ -227,7 +288,7 @@ void MattermostQt::get_user_info(int serverId, QString userId)
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::User) );
-	reply->setProperty(P_SERVER_ID, QVariant(serverId) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(serverId) );
 }
 
 bool MattermostQt::save_settings()
@@ -337,7 +398,7 @@ void MattermostQt::prepare_direct_channel(int server_index, int tem_index, int c
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::User) );
-	reply->setProperty(P_SERVER_ID, QVariant(ct->m_serverId) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(ct->m_serverId) );
 	reply->setProperty(P_TEAM_INDEX, QVariant(ct->m_teamId) );
 }
 
@@ -345,7 +406,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 {
 	// server get us authentificztion token, time to open WebSocket!
 	QSharedPointer<QWebSocket> socket(new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this));
-	socket->setProperty(P_SERVER_ID,server->m_selfId);
+	socket->setProperty(P_SERVER_INDEX,server->m_selfId);
 	// ignore allready trusted certificate
 	QList<QSslCertificate> cert = server->m_cert.caCertificates();
 	QList<QSslError> expectedSslErrors;
@@ -401,11 +462,11 @@ void MattermostQt::websocket_connect(ServerPtr server)
 
 bool MattermostQt::reply_login(QNetworkReply *reply)
 {
-	if( reply->property(P_SERVER_ID).isValid() )
+	if( reply->property(P_SERVER_INDEX).isValid() )
 	{
 		ServerPtr server;
 
-		int server_id = reply->property(P_SERVER_ID).toInt();
+		int server_id = reply->property(P_SERVER_INDEX).toInt();
 		server = m_server[server_id];
 
 		server->m_cert  = reply->sslConfiguration();
@@ -477,7 +538,7 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 {
 	QJsonDocument json;
 	QByteArray rawData = reply->readAll();
-	int serverId = reply->property(P_SERVER_ID).toInt();
+	int serverId = reply->property(P_SERVER_INDEX).toInt();
 	json = QJsonDocument::fromJson(rawData);
 
 	if( !json.isEmpty() && json.isArray() ) {
@@ -488,7 +549,7 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 			{
 				QJsonObject object = array.at(i).toObject();
 				TeamPtr tc(new TeamContainer(object) );
-				tc->m_serverId = serverId;
+				tc->m_server_index = serverId;
 				tc->m_self_index = m_server[serverId]->m_teams.size();
 				m_server[serverId]->m_teams << tc;
 				emit teamAdded(tc);
@@ -500,6 +561,29 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 	else {
 		qWarning() << "Cant parse json: " << json;
 	}
+}
+
+void MattermostQt::reply_get_team(QNetworkReply *reply)
+{
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int team_index = reply->property(P_TEAM_INDEX).toInt();
+
+	if( json.isObject() )
+	{
+		QJsonObject object = json.object();
+		TeamPtr tc(new TeamContainer(object) );
+		TeamPtr tc_old = m_server[server_index]->m_teams[team_index];
+		if( tc->m_update_at > tc_old->m_update_at )
+		{// team is updated
+			qDebug() << "Need update Team";
+		}
+//		tc->m_server_index = server_index;
+//		tc->m_self_index = m_server[server_index]->m_teams.size();
+//		m_server[server_index]->m_teams << tc;
+	}
+	else
+		qWarning() << "Cant parse reply" << json;
 }
 
 void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
@@ -528,26 +612,27 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 				ChannelPtr ct( new ChannelContainer(object) );
 				// TODO not much secure, need test all parameters
 				ct->m_teamId = reply->property(P_TEAM_INDEX).toInt();
-				ct->m_serverId = reply->property(P_SERVER_ID).toInt();
+				ct->m_serverId = reply->property(P_SERVER_INDEX).toInt();
+				TeamPtr tc = m_server[ct->m_serverId]->m_teams[ct->m_teamId];
 				// open channels
 				if( ct->m_type.compare("O") == 0 )
 				{
-					ct->m_self_index = m_server[ct->m_serverId]->m_teams[ct->m_teamId]->m_public_channels.size();
-					m_server[ct->m_serverId]->m_teams[ct->m_teamId]->m_public_channels << ct;
+					ct->m_self_index = tc->m_public_channels.size();
+					tc->m_public_channels << ct;
 					emit channelAdded(ct);
 				}
 				// private channels
 				else if( ct->m_type.compare("P") == 0 )
 				{
-					ct->m_self_index = m_server[ct->m_serverId]->m_teams[ct->m_teamId]->m_private_channels.size();
-					m_server[ct->m_serverId]->m_teams[ct->m_teamId]->m_private_channels << ct;
+					ct->m_self_index = tc->m_private_channels.size();
+					tc->m_private_channels << ct;
 					emit channelAdded(ct);
 				}
 				// direct channel
 				else if ( ct->m_type.compare("D") == 0 )
 				{
-					ct->m_self_index = m_server[ct->m_serverId]->m_teams[ct->m_teamId]->m_direct_channels.size();
-					m_server[ct->m_serverId]->m_teams[ct->m_teamId]->m_direct_channels << ct;
+					ct->m_self_index = tc->m_direct_channels.size();
+					tc->m_direct_channels << ct;
 					prepare_direct_channel(ct->m_serverId, ct->m_teamId, ct->m_self_index);
 				}
 			}
@@ -613,6 +698,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			case ReplyType::User:
 				reply_get_user(reply);
 				break;
+			case ReplyType::rt_get_team:
+				reply_get_team(reply);
+				break;
 			default:
 				qWarning() << "That can't be!";
 				qDebug() << "Reply:" << QString::fromUtf8( reply->readAll() );
@@ -643,36 +731,37 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 
 void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 {
-	QList<QSslError> ignoreErrors;
-	foreach(QSslError error, errors)
+	bool trustCertificate = false;
+	QVariant ts = reply->property(P_TRUST_CERTIFICATE);
+	if( ts.isValid() )
+		trustCertificate = ts.toBool();
+	if(trustCertificate)
 	{
-		qWarning() << QLatin1String("SslError")
-		         << (int)error.error()
-		         << QLatin1String(":")
-		         << error.errorString();
+		QList<QSslError> ignoreErrors;
+		foreach(QSslError error, errors)
+		{
+			qWarning() << QLatin1String("SslError")
+			           << (int)error.error()
+			           << QLatin1String(":")
+			           << error.errorString();
 
-		switch( error.error() )
-		{
-		//case QSslError::CertificateUntrusted:
-		case QSslError::SelfSignedCertificate:
-		// TODO - remove HostNameMistchmach
-		case QSslError::HostNameMismatch:
-		{
-			QVariant ts = reply->property(P_TRUST_CERTIFICATE);
-			if( ts.isValid() && ts.toBool() )
+			switch( error.error() )
+			{
+			case QSslError::CertificateUntrusted:
+			case QSslError::SelfSignedCertificate:
+				// TODO - remove HostNameMistchmach
+			case QSslError::HostNameMismatch:
 				ignoreErrors << error;
-			break;
-		}
-		default:
-		{
-			QVariant ts = reply->property(P_TRUST_CERTIFICATE);
-			if( ts.isValid() && ts.toBool() )
+				break;
+			default:
 				ignoreErrors << error;
-			break;
+				break;
+			}
 		}
-		}
+//		reply->ignoreSslErrors(ignoreErrors);
+		reply->ignoreSslErrors(errors);
 	}
-	reply->ignoreSslErrors(ignoreErrors);
+
 }
 
 void MattermostQt::onWebSocketConnected()
@@ -680,7 +769,7 @@ void MattermostQt::onWebSocketConnected()
 	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
 	if(!socket) // strange situation, if it happens
 		return;
-	QVariant sId = socket->property(P_SERVER_ID);
+	QVariant sId = socket->property(P_SERVER_INDEX);
 	if(!sId.isValid()) // that too strange!!! that cant be!
 		return;
 	int id = sId.toInt();
@@ -786,4 +875,15 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	qlonglong m_last_picture_update;
 	//"failed_attempts": 0,
 	//"mfa_active": true
+}
+
+int MattermostQt::ServerContainer::get_team_index(QString team_id)
+{
+	for(int i = 0; i < m_teams.size(); i++)
+	{
+		TeamPtr tc = m_teams[i];
+		if( tc->m_id.compare(team_id) == 0 )
+			return i;
+	}
+	return -1;
 }
