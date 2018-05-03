@@ -16,7 +16,7 @@ public:
 	enum ReplyType : int {
 		Login,
 		Teams,
-		Team,
+		Channels,
 		User
 	};
 
@@ -37,7 +37,7 @@ public:
 			m_update_at = 0;
 		}
 
-		UserContainer(const QJsonObject &object);
+		UserContainer(QJsonObject object);
 		//"id": "string",
 		QString m_id;
 		//"create_at": 0,

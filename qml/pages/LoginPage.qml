@@ -12,6 +12,25 @@ Page {
     allowedOrientations: Orientation.All
 //    property bool trust_certificate
 
+    onStatusChanged: {
+        if( status == PageStatus.Active )
+        {
+            context.mattermost.serverConnected.connect( function onServerConnected(id){
+                var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
+                                                  {
+                                                      context: loginpage.context,
+                                                      serverId: id,
+                                                      server_name: server_name.text
+                                                  });
+            })
+
+            context.mattermost.connectionError.connect( function onConnectionError(id,message){
+                specialmessage.text = message;
+                specialmessage.visible = true;
+            })
+        }
+    }
+
     SilicaFlickable {
         anchors.fill: parent
         contentWidth: parent.width
@@ -73,18 +92,6 @@ Page {
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
                 EnterKey.onClicked:{
                     context.mattermost.post_login(server.text,login_id.text,text,trust_certificate.checked);
-                    context.mattermost.serverConnected.connect( function onServerConnected(id){
-                        var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
-                                                          {
-                                                              context: loginpage.context,
-                                                              serverId: id,
-                                                              server_name: server_name.text
-                                                          });
-                    })
-                    context.mattermost.connectionError.connect( function onConnectionError(id,message){
-                        specialmessage.text = message;
-                        specialmessage.visible = true;
-                    })
                 }
             }
 

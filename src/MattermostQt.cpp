@@ -189,12 +189,11 @@ void MattermostQt::get_public_channels(int serverId, QString teamId)
 	request.setUrl(url);
 	requset_set_headers(request,sc);
 
-
-	if(sc->m_trustCertificate)
-		request.setSslConfiguration(sc->m_cert);
+//	if(sc->m_trustCertificate && !sc->m_cert.isNull())
+//		request.setSslConfiguration(sc->m_cert);
 
 	QNetworkReply *reply = m_networkManager->get(request);
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Team) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Channels) );
 	reply->setProperty(P_SERVER_ID, QVariant(serverId) );
 	reply->setProperty(P_TEAM_INDEX, QVariant(teamId) );
 }
@@ -234,6 +233,7 @@ void MattermostQt::get_user_info(int serverId, QString userId)
 bool MattermostQt::save_settings()
 {
 	QJsonDocument json;
+	QJsonObject object;
 	QJsonArray servers;
 	for(int i = 0; i < m_server.size(); i ++ )
 	{
@@ -248,7 +248,8 @@ bool MattermostQt::save_settings()
 
 		servers.append(server);
 	}
-	json.setArray(servers);
+	object["servers"] = servers;
+	json.setObject(object);
 
 	QFile jsonFile( m_settings_path + QLatin1String(F_CONFIG_FILE) );
 	if( !jsonFile.open(QFile::WriteOnly) )
@@ -263,17 +264,26 @@ bool MattermostQt::load_settings()
 {
 	QJsonDocument json;
 	QFile jsonFile( m_settings_path + QLatin1String(F_CONFIG_FILE) );
-	if( !jsonFile.open(QFile::ReadOnly) )
+	if( !jsonFile.open(QFile::ReadOnly | QFile::Text) )
 		return false;
-	json.fromJson(jsonFile.readAll());
+
+	QJsonParseError error;
+	json = QJsonDocument::fromJson(jsonFile.readAll(), &error);
 	jsonFile.close();
 
-	if( json.isEmpty() || !json.isArray() )
+	if( json.isNull() || !json.isObject())
+	{
+		qWarning() << error.errorString();
+		return false;
+	}
+
+	QJsonArray servers;
+	if(json.object()["servers"].isArray())
+		servers = json.object()["servers"].toArray();
+	if(servers.isEmpty())
 		return false;
 
 	m_server.clear();
-
-	QJsonArray servers = json.array();
 	for( int i = 0; i < servers.size(); i ++ )
 	{
 		if( !servers[i].isObject() )
@@ -295,6 +305,7 @@ bool MattermostQt::load_settings()
 
 		server->m_selfId = m_server.size();
 		m_server[server->m_selfId] = server;
+		get_login(server);
 	}
 }
 
@@ -390,6 +401,27 @@ void MattermostQt::websocket_connect(ServerPtr server)
 
 bool MattermostQt::reply_login(QNetworkReply *reply)
 {
+	if( reply->property(P_SERVER_ID).isValid() )
+	{
+		ServerPtr server;
+
+		int server_id = reply->property(P_SERVER_ID).toInt();
+		server = m_server[server_id];
+
+		server->m_cert  = reply->sslConfiguration();
+		server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
+
+		QJsonDocument json = QJsonDocument::fromJson( reply->readAll() );
+		if( json.isObject() )
+		{
+			QJsonObject object = json.object();
+			qDebug() << object;
+			server->m_user_id = object["id"].toString();
+		}
+
+		emit serverConnected(server->m_selfId);
+		return true;
+	}
 	QList<QByteArray> headerList = reply->rawHeaderList();
 	foreach(QByteArray head, headerList) {
 		qDebug() << head << ":" << reply->rawHeader(head);
@@ -399,29 +431,29 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			//add server to server list
 
 			int server_id = -1;
-			bool is_new_server = false;
+//			bool is_new_server = false;
 			ServerPtr server;
-			if( reply->property(P_SERVER_ID).isValid() )
-			{
-				server_id = reply->property(P_SERVER_ID).toInt();
-				server = m_server[server_id];
-			}
-			else
-			{
-				server_id = m_server.size();
+//			if( reply->property(P_SERVER_ID).isValid() )
+//			{
+//				server_id = reply->property(P_SERVER_ID).toInt();
+//				server = m_server[server_id];
+//			}
+//			else
+//			{
+			    server_id = m_server.size();
 				server.reset(new ServerContainer());
 				server->m_api   = reply->property(P_API).toInt();
 				server->m_url   = reply->property(P_SERVER_URL).toString();
 				server->m_token = reply->rawHeader(head).data();
 				server->m_trustCertificate = reply->property(P_TRUST_CERTIFICATE).toBool();
 				server->m_selfId    = server_id;
-				is_new_server = true;
-			}
+//				is_new_server = true;
+//			}
 
 			server->m_cert  = reply->sslConfiguration();
 			server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
-			if(is_new_server)
-				m_server[server_id] = server;
+//			if(is_new_server)
+			    m_server[server_id] = server;
 
 			QJsonDocument json = QJsonDocument::fromJson( reply->readAll() );
 			if( json.isObject() )
@@ -431,12 +463,14 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 				server->m_user_id = object["id"].toString();
 			}
 //			websocket_connect(newServer);
-			if(is_new_server)
-				save_settings();
+//			if(is_new_server)
+			    save_settings();
 
 			emit serverConnected(server->m_selfId);
+			return true;
 		}
 	}
+	return false;
 }
 
 void MattermostQt::reply_get_teams(QNetworkReply *reply)
@@ -533,7 +567,7 @@ void MattermostQt::reply_get_user(QNetworkReply *reply)
 		return;
 	}
 
-
+	UserPtr user( new UserContainer(json.object()) );
 }
 
 void MattermostQt::reply_error(QNetworkReply *reply)
@@ -573,13 +607,21 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			case ReplyType::Teams:
 				reply_get_teams(reply);
 				break;
-			case ReplyType::Team:
+			case ReplyType::Channels:
 				reply_get_public_channels(reply);
 				break;
 			case ReplyType::User:
 				reply_get_user(reply);
+				break;
 			default:
 				qWarning() << "That can't be!";
+				qDebug() << "Reply:" << QString::fromUtf8( reply->readAll() );
+
+				QList<QByteArray> headers = reply->rawHeaderList();
+				foreach(QByteArray header, headers)
+				{
+					qDebug() << header;
+				}
 				break;
 			}
 		}
@@ -592,6 +634,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 	else {
 		//failure
 		qDebug() << "Failure: " << reply->error() << reply->errorString();
+		qDebug() << reply;
 //		qDebug() << "Reply: " << reply->readAll();
 		reply_error(reply);
 	}
@@ -621,7 +664,12 @@ void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 			break;
 		}
 		default:
+		{
+			QVariant ts = reply->property(P_TRUST_CERTIFICATE);
+			if( ts.isValid() && ts.toBool() )
+				ignoreErrors << error;
 			break;
+		}
 		}
 	}
 	reply->ignoreSslErrors(ignoreErrors);
@@ -701,22 +749,22 @@ MattermostQt::ChannelContainer::ChannelContainer(QJsonObject &object)
 	m_creator_id = object["creator_id"].toString();
 }
 
-MattermostQt::UserContainer::UserContainer(const QJsonObject &object)
+MattermostQt::UserContainer::UserContainer(QJsonObject object)
 {
 	//"id": "string",
 	m_id = object["id"].toString();
 	//"create_at": 0,
 	//"update_at": 0,
-	qlonglong m_update_at;
+	m_update_at = (qlonglong)object["update_at"].toDouble();
 	//"delete_at": 0,
 	//"username": "string",
-	QString m_username;
+	m_username = object["username"].toString();;
 	//"first_name": "string",
-	QString m_first_name;
+	m_first_name = object["first_name"].toString();
 	//"last_name": "string",
-	QString m_last_name;
+	m_last_name = object["last_name"].toString();
 	//"nickname": "string",
-	QString m_nickname;
+	m_nickname = object["nickname"].toString();
 	//"email": "string",
 	//"email_verified": true,
 	//"auth_service": "string",
