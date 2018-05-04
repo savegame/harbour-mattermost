@@ -7,8 +7,8 @@
 #include <QMap>
 #include <QTimer>
 #include <QNetworkAccessManager>
-//#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
-#include <QtWebSockets/QWebSocket>
+#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
+//#include <QtWebSockets/QWebSocket>
 
 class MattermostQt : public QObject
 {
@@ -230,6 +230,9 @@ protected Q_SLOTS:
 	void onWebSocketConnected();
 	void onWebSocketSslError(QList<QSslError> errors);
 	void onWebSocketError(QAbstractSocket::SocketError error);
+	void onWebSocketStateChanged(QAbstractSocket::SocketState state);
+//	void onWebSocketTextFrameReceived(const QString &frame, bool isLastFrame);
+	void onWebSocketTextMessageReceived(const QString &message);
 	/** slot for QTimer */
 	void slot_get_teams_unread();
 protected:

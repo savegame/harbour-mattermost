@@ -440,14 +440,31 @@ void MattermostQt::websocket_connect(ServerPtr server)
 {
 	// server get us authentificztion token, time to open WebSocket!
 	QSharedPointer<QWebSocket> socket(new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this));
+	server->m_socket = socket;
 	socket->setProperty(P_SERVER_INDEX,server->m_self_index);
 	// ignore allready trusted certificate
-	QList<QSslCertificate> cert = server->m_cert.caCertificates();
+	QList<QSslCertificate> certs = server->m_cert.caCertificates();
 	QList<QSslError> expectedSslErrors;
-	expectedSslErrors.append( QSslError(QSslError::SelfSignedCertificate, cert.at(0)) );
-	// TODO - remove HostNameMistchmach
-	expectedSslErrors.append( QSslError(QSslError::HostNameMismatch, cert.at(0)) );
-	socket->ignoreSslErrors(expectedSslErrors);
+//	foreach(QSslCertificate cert, certs)
+	{
+		expectedSslErrors.append( QSslError(QSslError::SelfSignedCertificate, certs[0]) );
+		expectedSslErrors.append( QSslError(QSslError::CertificateUntrusted, certs[0]) );
+		expectedSslErrors.append( QSslError(QSslError::SelfSignedCertificateInChain, certs[0]) );
+	}
+
+	// Load previosly saved certificate
+//	QFile certFile("/home/src/mattermost");
+//	certFile.open(QIODevice::ReadOnly);
+//	QSslCertificate cert(&certFile, QSsl::Pem);
+//	QSslSocket * sslSocket = new QSslSocket(this);
+//	sslSocket->addCaCertificate(cert);
+//	QSslConfiguration configuration = sslSocket->sslConfiguration();
+//	configuration.setProtocol(QSsl::TlsV1_2);
+
+//	sslSocket->setSslConfiguration(configuration);
+
+	//socket->ignoreSslErrors(expectedSslErrors);
+	socket->setSslConfiguration(server->m_cert);
 
 	connect(socket.data(), SIGNAL(connected()), SLOT(onWebSocketConnected()));
 	typedef void (QWebSocket:: *sslErrorsSignal)(const QList<QSslError> &);
@@ -456,42 +473,26 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	connect(socket.data(), SIGNAL(error(QAbstractSocket::SocketError)),
 	        SLOT(onWebSocketError(QAbstractSocket::SocketError)));
 
+	connect(socket.data(), SIGNAL(stateChanged(QAbstractSocket::SocketState)),
+	        SLOT(onWebSocketStateChanged(QAbstractSocket::SocketState)) );
+	connect(socket.data(), SIGNAL(textMessageReceived(QString)),
+	        SLOT(onWebSocketTextMessageReceived(QString)) );
+
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(server->m_api)
 	        + QLatin1String("/websocket");
-/// requset json sample
-//			{
-//			  "seq": 1,
-//			  "action": "authentication_challenge",
-//			  "data": {
-//			    "token": "mattermosttokengoeshere"
-//			  }
-//			}
-	QString serUrl = server->m_url.replace("https://","wss://")
+
+	QString serUrl = server->m_url;
+	serUrl.replace("https://","wss://")
 	        .replace("http://","ws://");
-	QUrl url("ws://echo.websocket.org");
-	//url.setPath(urlString.append("/"));
+	QUrl url(serUrl);
+	url.setPath(urlString);
 
 	QNetworkRequest request;
-//			QJsonDocument json;
-//			QJsonObject root;
-//			QJsonObject data;
-
-//			root["seq"] = 1;
-//			root["action"] = "authentication_challenge";
-//			data["token"] = newServer.m_token;
-//			root["data"] = data;
-//			json.setObject(data);
-
+	requset_set_headers(request,server);
 	request.setUrl(url);
-//			request.setHeader(QNetworkRequest::ServerHeader, "application/json");
-//	request.setHeader(QNetworkRequest::UserAgentHeader, QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION) );
-//	request.setHeader(QNetworkRequest::CookieHeader, server.m_cookie );
-//			request.setRawHeader("Authorization", QString("Bearer %0").arg(newServer.m_token).toUtf8());
-//			request.setHeader(QNetworkRequest::ContentLengthHeader, QByteArray::number( json.toJson().size() ));
 
-	socket->open(url);
-	//server.m_socket = socket;
+	socket->open(request);
 }
 
 bool MattermostQt::reply_login(QNetworkReply *reply)
@@ -513,7 +514,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			qDebug() << object;
 			server->m_user_id = object["id"].toString();
 		}
-
+		websocket_connect(server);
 		emit serverConnected(server->m_self_index);
 		return true;
 	}
@@ -557,7 +558,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 				qDebug() << object;
 				server->m_user_id = object["id"].toString();
 			}
-//			websocket_connect(newServer);
+//			websocket_connect(server);
 //			if(is_new_server)
 			    save_settings();
 
@@ -825,8 +826,8 @@ void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 			{
 			case QSslError::CertificateUntrusted:
 			case QSslError::SelfSignedCertificate:
+			case QSslError::SelfSignedCertificateInChain:
 				// TODO - remove HostNameMistchmach
-			case QSslError::HostNameMismatch:
 				ignoreErrors << error;
 				break;
 			default:
@@ -834,8 +835,8 @@ void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 				break;
 			}
 		}
-//		reply->ignoreSslErrors(ignoreErrors);
-		reply->ignoreSslErrors(errors);
+		reply->ignoreSslErrors(ignoreErrors);
+//		reply->ignoreSslErrors(errors);
 	}
 
 }
@@ -848,22 +849,42 @@ void MattermostQt::onWebSocketConnected()
 	QVariant sId = socket->property(P_SERVER_INDEX);
 	if(!sId.isValid()) // that too strange!!! that cant be!
 		return;
-	int id = sId.toInt();
-	QMap<int,ServerPtr>::iterator it = m_server.find(id);
+	int server_index = sId.toInt();
+	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
 	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
 		return;
+	ServerPtr sc = it.value();
+//	{
+//	  "seq": 1,
+//	  "action": "authentication_challenge",
+//	  "data": {
+//	    "token": "mattermosttokengoeshere"
+//	  }
+//	}
+	QJsonDocument json;
+	QJsonObject root;
+	QJsonObject data;
 
-//	ServerPtr sc = it.value();
+	data["token"] = sc->m_token;
+	root["seq"] = 1;
+	root["action"] = QString("authentication_challenge");
+	root["data"] = data;
+	json.setObject(root);
 
-	emit serverConnected(id);
+	sc->m_socket->sendTextMessage(json.toJson().data());
+//	emit serverConnected(server_index);
 }
 
 void MattermostQt::onWebSocketSslError(QList<QSslError> errors)
 {
+	int err = 0;
 	foreach(QSslError error, errors)
 	{
-		qWarning() << error;
+		err = error.error();
+		qWarning() << error.errorString();
 	}
+
+	qDebug() << err;
 }
 
 void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
@@ -874,8 +895,39 @@ void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
 		return;
 
 	qWarning() << socket->errorString();
-//	QNetworkRequest req = socket->request();
-	//	req
+}
+
+void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
+{
+	qDebug() << state;
+	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
+	if(!socket) // strange situation, if it happens
+		return;
+	QVariant sId = socket->property(P_SERVER_INDEX);
+	if(!sId.isValid()) // that too strange!!! that cant be!
+		return;
+	int server_index = sId.toInt();
+//	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
+//	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
+//		return;
+	ServerPtr sc = m_server[server_index];
+}
+
+void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
+{
+	qDebug() << message;
+
+	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
+	if(!socket) // strange situation, if it happens
+		return;
+	QVariant sId = socket->property(P_SERVER_INDEX);
+	if(!sId.isValid()) // that too strange!!! that cant be!
+		return;
+	int server_index = sId.toInt();
+//	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
+//	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
+//		return;
+	ServerPtr sc = m_server[server_index];
 }
 
 void MattermostQt::slot_get_teams_unread()

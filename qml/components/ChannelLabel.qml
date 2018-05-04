@@ -52,36 +52,31 @@ Item {
         }
     }
 
-//    Column {
-//        id: column
-//        spacing: Theme.paddingMedium
-//        width: parent.width
-        Loader {
-            id: loader
-//            width: parent.width
+    Loader {
+        id: loader
+        //            width: parent.width
 
-            anchors {left: parent.left; right: parent.right; }
-//            anchors.fill: parent
-            anchors {
-                 topMargin: _type == ChannelsModel.Channel ? Theme.horizontalPageMargin : Theme.paddingSmall
-                 bottomMargin: loader.topMargin
-            }
-
-            sourceComponent:
-                switch(_type)
-                {
-                case ChannelsModel.HeaderPublic:
-                    header_public;
-                    break;
-                case ChannelsModel.HeaderPrivate:
-                    header_private;
-                    break;
-                case ChannelsModel.HeaderDirect:
-                    header_direct;
-                    break;
-                default:
-                    channel;
-                }
+        anchors {left: parent.left; right: parent.right; }
+        //            anchors.fill: parent
+        anchors {
+            topMargin: _type == ChannelsModel.Channel ? Theme.horizontalPageMargin : Theme.paddingSmall
+            bottomMargin: loader.topMargin
         }
-//    }
+
+        sourceComponent:
+            switch(_type)
+            {
+            case ChannelsModel.HeaderPublic:
+                header_public;
+                break;
+            case ChannelsModel.HeaderPrivate:
+                header_private;
+                break;
+            case ChannelsModel.HeaderDirect:
+                header_direct;
+                break;
+            default:
+                channel;
+            }
+    }
 }

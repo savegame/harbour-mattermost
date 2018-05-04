@@ -21,10 +21,10 @@ DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
 CONFIG += sailfishapp
 CONFIG += qt
-QT += gui qml quick network websockets
+QT += gui qml quick network #websockets
 
-#LIBS += -Llibs -lqt5websockets
-#INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
+LIBS += -Llibs -lqt5websockets
+INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
 
 debug: DEFINES += _DEBUG
 
