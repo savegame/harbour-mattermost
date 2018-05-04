@@ -28,7 +28,7 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import QtQuick 2.0
+import QtQuick 2.5
 import Sailfish.Silica 1.0
 import harbour.sashikknox 1.0
 import "../components"
@@ -93,7 +93,8 @@ Page {
             model: teamsmodel
 
             delegate: BackgroundItem {
-//                id: bgitem
+                id: bgitem
+                anchors { left:parent.left; right:parent.right; }
 //                ParallelAnimation {
 //                    id: panim
 //                    running: true
@@ -120,7 +121,10 @@ Page {
                     id: teamlabel
                     name: display_name
                     teamid: teamid
+                    messages: msg_count
+                    mentions: mention_count
                     anchors.leftMargin: Theme.horizontalPageMargin
+                    anchors.rightMargin: Theme.horizontalPageMargin
                     anchors { left:parent.left; right:parent.right; }
                 }
                 onClicked: {

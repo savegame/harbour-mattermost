@@ -19,7 +19,8 @@ public:
 		Teams,
 		Channels,
 		User,
-		rt_get_team
+		rt_get_team,
+		rt_get_teams_unread
 	};
 
 	enum ConnectionError {
@@ -85,8 +86,8 @@ public:
 	{
 		ChannelContainer()
 		{
-			m_teamId = -1;
-			m_serverId = -1;
+			m_team_index = -1;
+			m_server_index = -1;
 			m_self_index = -1;
 			m_update_at = 0;
 		}
@@ -107,8 +108,8 @@ public:
 		qlonglong m_total_msg_count;
 		qlonglong m_extra_update_at;
 		QString m_creator_id;
-		int     m_teamId;   /**< team index in QVector */
-		int     m_serverId; /**< server index in QVector */
+		int     m_team_index;   /**< team index in QVector */
+		int     m_server_index; /**< server index in QVector */
 		int     m_self_index;   /**< self index in vector */
 	};
 	typedef QSharedPointer<ChannelContainer> ChannelPtr;
@@ -148,14 +149,14 @@ public:
 	struct ServerContainer
 	{
 	public:
-		ServerContainer() : m_api(4), m_trustCertificate(false) {}
+		ServerContainer() : m_api(4), m_trust_cert(false) {}
 
 		ServerContainer(QString url, QString token, int api)
 		{
 			m_url = url;
 			m_api = api;
 			m_token = token;
-			m_trustCertificate = false;
+			m_trust_cert = false;
 		}
 
 		int get_team_index(QString team_id);
@@ -163,12 +164,12 @@ public:
 		QString                     m_url;   /**< server URL */
 		int                         m_api;   /**< server API version */
 		QString                     m_token; /**< server access token*/
-		QString                     m_cookie;/**< cookie */
-		bool                        m_trustCertificate; /**< trust self signed certificate */
+		QString                     m_cookie;/**< cookie if needed */
+		bool                        m_trust_cert; /**< trust self signed certificate */
 		QSslConfiguration           m_cert;  /**< server certificate */
 		QSharedPointer<QWebSocket>  m_socket;/**< websocket connection */
 		QString                     m_user_id;/**< user id */
-		int                         m_selfId; /**< server index in QVector */
+		int                         m_self_index; /**< server index in QVector */
 		QList<TeamPtr>              m_teams; /**< allowed teams */
 
 		QString  m_config_path; /**< local config path */
@@ -188,6 +189,7 @@ public:
 	void get_team(int server_index, int team_index);
 	Q_INVOKABLE void get_user_image(int serverId, QString userId);
 	Q_INVOKABLE void get_user_info(int serverId, QString userId);
+	Q_INVOKABLE void get_teams_unread(int server_index);
 
 	bool save_settings();
 	bool load_settings();
@@ -198,6 +200,7 @@ Q_SIGNALS:
 	void teamAdded(TeamPtr team);
 	void channelsList(QList<ChannelPtr> list);
 	void channelAdded(ChannelPtr channel);
+	void teamUnread(QString team_id, int msg, int mention);
 
 protected:
 	/**
@@ -206,13 +209,16 @@ protected:
 	 * image before we send to ChannelsModel
 	 * @param channel
 	 */
-	void prepare_direct_channel(int server_index, int tem_index, int channel_index);
+	void prepare_direct_channel(int server_index, int team_index, int channel_index);
+
+	void get_teams_unread(ServerPtr server);
 
 	void websocket_connect(ServerPtr server);
 
 	bool reply_login(QNetworkReply *reply);
 	void reply_get_teams(QNetworkReply *reply);
 	void reply_get_team(QNetworkReply *reply);
+	void reply_get_teams_unread(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_get_user(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
@@ -224,6 +230,8 @@ protected Q_SLOTS:
 	void onWebSocketConnected();
 	void onWebSocketSslError(QList<QSslError> errors);
 	void onWebSocketError(QAbstractSocket::SocketError error);
+	/** slot for QTimer */
+	void slot_get_teams_unread();
 protected:
 	QMap<int, ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
@@ -231,6 +239,7 @@ protected:
 	QString m_settings_path;
 //	QTimer  m_settings_timer;
 
+	int    m_update_server_timeout;
 	QTimer m_update_server;
 
 	/** channels, need update before put to model */

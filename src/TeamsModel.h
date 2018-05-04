@@ -30,6 +30,10 @@ public:
 		Description,
 		Email,
 		TeamId,
+		MsgCount,
+		MentionCount,
+		ActiveUsers,
+		UserCount
 	};
 
 public:
@@ -59,10 +63,15 @@ Q_SIGNALS:
 protected Q_SLOTS:
 //	void slot_serverConnected(int id);
 	void slot_teamAdded(MattermostQt::TeamPtr team);
+	void slot_teamUnread(QString team_id, int msg, int mention);
 private:
 	QVector<QString> m_displayName;
 	QVector<QString> m_description;
 	QVector<QString> m_email;
+	QVector<int>     m_msg_count;
+	QVector<int>     m_mention_count;
+	QVector<int>     m_active_users;
+	QVector<int>     m_user_count;
 	QVector<QString> m_id;
 
 	QPointer<MattermostQt> m_mattermost;

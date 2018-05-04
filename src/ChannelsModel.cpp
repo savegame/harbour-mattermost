@@ -4,22 +4,14 @@ ChannelsModel::ChannelsModel(QObject *parent)
     : QAbstractListModel(parent)
 {
 	beginInsertRows(QModelIndex(), 0, 2);
-	m_header.append("Public channels:");
-	m_display_name.append("");
-	m_puprose.append("");
-	m_type.append(ItemType::HeaderPublic);
+	m_header.resize(3);
+	m_display_name.resize(3);
+	m_puprose.resize(3);
 	m_index.resize(3);
-
-	m_header.append("Private channels");
-	m_display_name.append("");
-	m_puprose.append("");
-	m_type.append(ItemType::HeaderPrivate);
-
-	m_header.append("Direct channels");
-	m_display_name.append("");
-	m_puprose.append("");
-	m_type.append(ItemType::HeaderDirect);
-
+	m_type.resize(3);
+	m_type[0] = ItemType::HeaderPublic;
+	m_type[1] = ItemType::HeaderPrivate;
+	m_type[2] = ItemType::HeaderDirect;
 	m_header_index[ItemType::HeaderPublic] = 0;
 	m_header_index[ItemType::HeaderPrivate] = 1;
 	m_header_index[ItemType::HeaderDirect] = 2;
@@ -141,6 +133,8 @@ void ChannelsModel::setMattermost(MattermostQt *mattermost)
 
 void ChannelsModel::clear()
 {
+	if( m_header.size() == 3 )
+		return;
 	beginResetModel();
 	m_header.clear();
 	m_display_name.clear();

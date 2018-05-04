@@ -17,7 +17,7 @@ Item {
         id: channel
         Label {
             id: labelname
-            font.pixelSize: Theme.fontSizeMedium
+//            font.pixelSize: Theme.fontSizeMedium
             text: _display_name
         }
     }
