@@ -30,12 +30,19 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import harbour.sashikknox 1.0
 
 CoverBackground {
+    property MattermostQt context
+
+    property string status_text: qsTr("Disconnected")
+
+//    context.mattermost.serverStateChanged
+
     Label {
         id: label
         anchors.centerIn: parent
-        text: qsTr("My Cover")
+        text: status_text
     }
 
     CoverActionList {

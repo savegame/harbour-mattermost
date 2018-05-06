@@ -26,8 +26,8 @@
 <context>
     <name>CoverPage</name>
     <message>
-        <source>My Cover</source>
-        <translation>Мой Кавэр</translation>
+        <source>Disconnected</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

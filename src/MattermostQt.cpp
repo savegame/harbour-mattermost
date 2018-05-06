@@ -52,7 +52,7 @@ MattermostQt::MattermostQt()
 
 MattermostQt::~MattermostQt()
 {
-
+	m_server.clear();
 }
 
 void MattermostQt::post_login(QString server, QString login, QString password, bool trustCertificate, int api)
@@ -515,7 +515,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			server->m_user_id = object["id"].toString();
 		}
 		websocket_connect(server);
-		emit serverConnected(server->m_self_index);
+//		emit serverConnected(server->m_self_index);
 		return true;
 	}
 	QList<QByteArray> headerList = reply->rawHeaderList();
@@ -558,11 +558,11 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 				qDebug() << object;
 				server->m_user_id = object["id"].toString();
 			}
-//			websocket_connect(server);
+			websocket_connect(server);
 //			if(is_new_server)
 			    save_settings();
 
-			emit serverConnected(server->m_self_index);
+//			emit serverConnected(server->m_self_index);
 			return true;
 		}
 	}
@@ -911,6 +911,21 @@ void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 //	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
 //		return;
 	ServerPtr sc = m_server[server_index];
+	switch(state) {
+	case QAbstractSocket::UnconnectedState:
+	case QAbstractSocket::ConnectingState:
+	case QAbstractSocket::ConnectedState:
+		emit serverStateChanged(server_index, (int)state);
+		break;
+	case QAbstractSocket::HostLookupState:
+		break;
+	case QAbstractSocket::BoundState:
+		break;
+	case QAbstractSocket::ListeningState:
+		break;
+	case QAbstractSocket::ClosingState:
+		break;
+	}
 }
 
 void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
@@ -928,6 +943,55 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 //	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
 //		return;
 	ServerPtr sc = m_server[server_index];
+	QJsonDocument json = QJsonDocument::fromJson(message.toUtf8());
+	QJsonObject object = json.object();
+	QString event = object["event"].toString();
+
+#define comare(string) if( event.compare(#string) == 0)
+
+	comare(hello) // that mean we are logged in
+	{
+		qDebug() << event;
+		emit serverConnected(sc->m_self_index);
+	}
+	else
+	    qWarning() << event;
+//typing
+//posted
+//post_edited
+//post_deleted
+//response
+//channel_created
+//channel_deleted
+//channel_updated
+//direct_added
+//group_added
+
+//leave_team
+//update_team
+//delete_team
+//reaction_added
+//reaction_removed
+//emoji_added
+
+//ephemeral_message
+//events
+//channel_viewed
+//added_to_team
+//new_user
+//user_added
+//user_updated
+//user_role_updated
+//memberrole_updated
+//user_removed
+//preference_changed
+//preferences_changed
+//preferences_deleted
+//status_change
+//webrtc
+//authentication_challenge
+//license_changed
+//config_changed
 }
 
 void MattermostQt::slot_get_teams_unread()
@@ -1011,6 +1075,12 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	qlonglong m_last_picture_update;
 	//"failed_attempts": 0,
 	//"mfa_active": true
+}
+
+MattermostQt::ServerContainer::~ServerContainer()
+{
+	if( m_socket )
+		m_socket->close(QWebSocketProtocol::CloseCodeGoingAway, QString("Client closing") );
 }
 
 int MattermostQt::ServerContainer::get_team_index(QString team_id)

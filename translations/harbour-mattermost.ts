@@ -26,7 +26,7 @@
 <context>
     <name>CoverPage</name>
     <message>
-        <source>My Cover</source>
+        <source>Disconnected</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

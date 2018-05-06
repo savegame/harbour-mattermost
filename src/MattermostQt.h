@@ -28,11 +28,18 @@ public:
 		SslError
 	};
 
-	enum ChannelType {
-		Open,   // "O"
-		Private,// "P"
-		Direct  // "D"
+	enum ChannelType : int {
+		ChannelOpen,   // "O"
+		ChannelPrivate,// "P"
+		ChannelDirect  // "D"
 	};
+
+	enum ServerState : int {
+		ServerConnected = QAbstractSocket::ConnectedState,
+		ServerConnecting = QAbstractSocket::ConnectingState,
+		ServerUnconnected = QAbstractSocket::UnconnectedState
+	};
+	Q_ENUMS(ServerState)
 
 	struct UserContainer
 	{
@@ -159,6 +166,8 @@ public:
 			m_trust_cert = false;
 		}
 
+		~ServerContainer() ;
+
 		int get_team_index(QString team_id);
 
 		QString                     m_url;   /**< server URL */
@@ -171,7 +180,7 @@ public:
 		QString                     m_user_id;/**< user id */
 		int                         m_self_index; /**< server index in QVector */
 		QList<TeamPtr>              m_teams; /**< allowed teams */
-
+		ServerState                 m_state; /**< server state (from WebSocket) */
 		QString  m_config_path; /**< local config path */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
@@ -195,7 +204,8 @@ public:
 	bool load_settings();
 
 Q_SIGNALS:
-	void serverConnected(int id);
+	void serverConnected(int server_index);
+	void serverStateChanged(int server_index, int state);
 	void connectionError(int code, QString message);
 	void teamAdded(TeamPtr team);
 	void channelsList(QList<ChannelPtr> list);

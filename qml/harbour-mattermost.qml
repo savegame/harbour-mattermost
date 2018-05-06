@@ -32,6 +32,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import "pages"
 import "model"
+import "cover"
 
 ApplicationWindow
 {
@@ -44,7 +45,10 @@ ApplicationWindow
             context: mainwindow.context
         }
     }
-    cover: Qt.resolvedUrl("cover/CoverPage.qml")
+    cover: CoverPage {
+        context: mainwindow.context
+    }
+
     allowedOrientations: defaultAllowedOrientations
 }
 
