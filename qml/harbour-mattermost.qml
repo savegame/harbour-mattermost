@@ -30,13 +30,14 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import harbour.sashikknox 1.0
 import "pages"
 import "model"
 import "cover"
 
 ApplicationWindow
 {
-    property Mattermost context: Mattermost { }
+    property Context context: Context { }
 
     id: mainwindow
 
@@ -45,6 +46,7 @@ ApplicationWindow
             context: mainwindow.context
         }
     }
+
     cover: CoverPage {
         context: mainwindow.context
     }

@@ -36,29 +36,23 @@ import "../model"
 
 Page {
     id: teamsPage
-    property Mattermost context
-    property int serverId
+    property Context context
+    property int server_index
     property string servername
     property bool temsIsUpToDate: false
 
     // The effective value will be restricted by ApplicationWindow.allowedOrientations
     allowedOrientations: Orientation.All
 
-    signal serverConnected(int id)
-
-    onContextChanged: {
-        serverConnected(serverId);
-    }
-
     property TeamsModel teamsmodel : TeamsModel {
         id: teamsmodel_id
-        m_mattermost: context.mattermost
-        m_serverId: teamsPage.serverId
+        mattermost: context.mattermost
+        server_index: teamsPage.server_index
     }
 
     onStatusChanged: {
         if( status === PageStatus.Active && temsIsUpToDate == false) {
-            context.mattermost.get_teams(serverId);
+            context.mattermost.get_teams(server_index);
             temsIsUpToDate = true;
         }
     }
@@ -95,27 +89,6 @@ Page {
             delegate: BackgroundItem {
                 id: bgitem
                 anchors { left:parent.left; right:parent.right; }
-//                ParallelAnimation {
-//                    id: panim
-//                    running: true
-//                    property int dur: 200
-//                    NumberAnimation  {
-//                        target: bgitem
-//                        property: "height"
-//                        easing.type: Easing.OutQuad
-//                        from: 0
-//                        to: teamlabel.height;
-//                        duration: panim.dur
-//                    }
-//                    NumberAnimation {
-//                        target: bgitem
-//                        property: "opacity"
-//                        easing.type: Easing.InExpo
-//                        from: 0
-//                        to: 1.0;
-//                        duration: panim.dur
-//                    }
-//                }
 
                 TeamLabel {
                     id: teamlabel

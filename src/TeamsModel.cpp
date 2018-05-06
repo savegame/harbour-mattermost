@@ -8,7 +8,7 @@
 
 TeamsModel::TeamsModel(QObject *parent)
     : QAbstractListModel(parent)
-    , m_serverId(-1)
+    , m_server_index(-1)
 {
 
 }
@@ -95,15 +95,15 @@ void TeamsModel::setServerName(QString name)
 	emit serverNameChanged();
 }
 
-void TeamsModel::setServerId(int id)
+void TeamsModel::setServerIndex(int id)
 {
-	m_serverId = id;
-	emit serverIdChanged();
+	m_server_index = id;
+	emit serverIndexChanged();
 }
 
-int TeamsModel::serverId() const
+int TeamsModel::serverIndex() const
 {
-	return m_serverId;
+	return m_server_index;
 }
 
 MattermostQt *TeamsModel::getMattermostQt() const

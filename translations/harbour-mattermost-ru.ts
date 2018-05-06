@@ -27,7 +27,19 @@
     <name>CoverPage</name>
     <message>
         <source>Disconnected</source>
-        <translation type="unfinished"></translation>
+        <translation>Не в сети</translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation>В сети</translation>
+    </message>
+    <message>
+        <source>Connecting</source>
+        <translation>Соединение</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Ошибка соединеия</translation>
     </message>
 </context>
 <context>

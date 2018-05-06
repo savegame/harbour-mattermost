@@ -5,7 +5,7 @@ import "../model"
 
 Page {
     id: loginpage
-    property Mattermost context
+    property Context context
 
     property string server_url
     property string username_
@@ -26,7 +26,7 @@ Page {
                     var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
                                                       {
                                                           context: loginpage.context,
-                                                          serverId: server_index,
+                                                          server_index: server_index,
                                                           server_name: server_name.text
                                                       });
                 }
@@ -99,7 +99,7 @@ Page {
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
                 EnterKey.onClicked:{
-                    context.mattermost.post_login(server.text,login_id.text,text,trust_certificate.checked);
+                    mattermost.post_login(server.text,login_id.text,text,trust_certificate.checked);
                 }
             }
 

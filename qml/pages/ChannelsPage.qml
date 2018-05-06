@@ -6,7 +6,7 @@ import harbour.sashikknox 1.0
 
 Page {
     id: teampage
-    property Mattermost context
+    property Context context
     property bool isuptodate: false
 
     property int serverid
@@ -29,7 +29,6 @@ Page {
     SilicaFlickable {
         id: flickable
         anchors.fill: parent
-//        contentHeight: channelslist.height
 
         SilicaListView {
             id: channelslist
@@ -77,7 +76,6 @@ Page {
                     _index: m_index
                     _type: m_type
                     x: Theme.horizontalPageMargin
-//                    width: parent.width
                     anchors {left: parent.left; right: parent.right}
                     anchors.topMargin: Theme.paddingSmall
                     anchors.leftMargin: Theme.paddingLarge

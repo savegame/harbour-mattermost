@@ -31,13 +31,40 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import harbour.sashikknox 1.0
+import "../model"
 
 CoverBackground {
-    property MattermostQt context
+    property Context context
 
     property string status_text: qsTr("Disconnected")
 
-//    context.mattermost.serverStateChanged
+    property int status_server_connected: MattermostQt.ServerConnected
+    property int status_server_connecting: MattermostQt.ServerConnecting
+    property int status_server_unconnected: MattermostQt.ServerUnconnected
+
+    onStatusChanged: {
+        if( status == PageStatus.Active )
+        {
+            context.mattermost.serverStateChanged.connect( function onServerConnected(server_index,state){
+                switch(state){
+                case status_server_connected:
+                    status_text = qsTr("Connected")
+                    break;
+                case status_server_connecting:
+                    status_text = qsTr("Connecting")
+                    break;
+                case status_server_unconnected:
+                    status_text = qsTr("Disconnected")
+                    break;
+                }
+            })
+
+            context.mattermost.connectionError.connect( function onConnectionError(id,message){
+                status_text = qsTr("Error")
+            })
+        }
+    }
+
 
     Label {
         id: label
@@ -45,16 +72,17 @@ CoverBackground {
         text: status_text
     }
 
-    CoverActionList {
-        id: coverAction
+//    onStatus_textChanged:
+//        label.text = status_text
 
-        CoverAction {
-            iconSource: "image://theme/icon-cover-next"
-        }
-
-        CoverAction {
-            iconSource: "image://theme/icon-cover-pause"
-        }
-    }
+//    CoverActionList {
+//        id: coverAction
+//        CoverAction {
+//            iconSource: "image://theme/icon-cover-next"
+//        }
+//        CoverAction {
+//            iconSource: "image://theme/icon-cover-pause"
+//        }
+//    }
 }
 
