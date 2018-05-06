@@ -45,6 +45,7 @@ Page {
 
             delegate: BackgroundItem {
                 id: bgitem
+                enabled: enabled
                 ParallelAnimation {
                     id: panim
                     running: true

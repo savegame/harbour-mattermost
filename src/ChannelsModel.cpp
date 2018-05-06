@@ -67,6 +67,16 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 	case Index:
 		return m_index[index.row()];
 		break;
+	case Enabled:
+	    {
+		    for(int i = 0; i < HeadersCount; i++)
+			{
+				if( m_header_index[i] == index.row() )
+					return QVariant(false);
+			}
+			return QVariant(true);
+	    }
+		break;
 	}
 	return QVariant();
 }
@@ -115,6 +125,7 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	roleNames[DataRoles::Email]  = QLatin1String("m_email").data();
 	roleNames[DataRoles::Index]  = QLatin1String("m_index").data();
 	roleNames[DataRoles::Type]  = QLatin1String("m_type").data();
+	roleNames[DataRoles::Enabled]  = QLatin1String("enabled").data();
 	return roleNames;
 }
 

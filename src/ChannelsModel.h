@@ -18,7 +18,8 @@ public:
 		Email,
 		Header,
 		Type,
-		Index
+		Index,
+		Enabled
 	};
 
 	enum ItemType {

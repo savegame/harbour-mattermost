@@ -34,6 +34,9 @@ Item {
     Component {
         id: header_public
         SectionHeader {
+            TouchBlocker {
+                     anchors.fill: parent
+            }
             text: qsTr("Public channes")
         }
     }
@@ -41,6 +44,9 @@ Item {
     Component {
         id: header_private
         SectionHeader {
+            TouchBlocker {
+                     anchors.fill: parent
+            }
             text: qsTr("Private channes")
         }
     }
@@ -48,6 +54,9 @@ Item {
     Component {
         id: header_direct
         SectionHeader {
+            TouchBlocker {
+                     anchors.fill: parent
+            }
             text: qsTr("Direct channes")
         }
     }
