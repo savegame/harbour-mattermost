@@ -13,12 +13,15 @@
 class MattermostQt : public QObject
 {
 	Q_OBJECT
+
+//	Q_PROPERTY(int serverState READ get_server_state NOTIFY serverStateChanged)
+//	Q_PROPERTY(type name READ name WRITE setName NOTIFY nameChanged)
 public:
 	enum ReplyType : int {
 		Login,
 		Teams,
 		Channels,
-		User,
+		get_user,
 		rt_get_team,
 		rt_get_teams_unread
 	};
@@ -48,13 +51,10 @@ public:
 		}
 
 		UserContainer(QJsonObject object);
-		//"id": "string",
 		QString m_id;
-		//"create_at": 0,
-		//"update_at": 0,
+//		qlonglong m_create_at;
 		qlonglong m_update_at;
 		//"delete_at": 0,
-		//"username": "string",
 		QString m_username;
 		//"first_name": "string",
 		QString m_first_name;
@@ -66,15 +66,15 @@ public:
 		//"email_verified": true,
 		//"auth_service": "string",
 		//"roles": "string",
-		//"locale": "string",
+		QString m_locale;
 		//"notify_props": {
-		//"email": "string",
-		//"push": "string",
-		//"desktop": "string",
-		//"desktop_sound": "string",
-		//"mention_keys": "string",
-		//"channel": "string",
-		//"first_name": "string"
+		//	"email": "string",
+		//	"push": "string",
+		//	"desktop": "string",
+		//	"desktop_sound": "string",
+		//	"mention_keys": "string",
+		//	"channel": "string",
+		//	"first_name": "string"
 		//},
 		//"props": { },
 		//"last_password_update": 0,
@@ -97,6 +97,7 @@ public:
 			m_server_index = -1;
 			m_self_index = -1;
 			m_update_at = 0;
+			m_dc_user_index = -1;
 		}
 
 		ChannelContainer(QJsonObject &object);
@@ -118,6 +119,9 @@ public:
 		int     m_team_index;   /**< team index in QVector */
 		int     m_server_index; /**< server index in QVector */
 		int     m_self_index;   /**< self index in vector */
+
+		// direct channel data
+		int m_dc_user_index; /**< if it direct channel, is index*/
 	};
 	typedef QSharedPointer<ChannelContainer> ChannelPtr;
 
@@ -180,8 +184,9 @@ public:
 		QString                     m_user_id;/**< user id */
 		int                         m_self_index; /**< server index in QVector */
 		QList<TeamPtr>              m_teams; /**< allowed teams */
-		ServerState                 m_state; /**< server state (from WebSocket) */
-		QString  m_config_path; /**< local config path */
+		int                         m_state; /**< server state (from WebSocket) */
+		QString                     m_config_path; /**< local config path */
+		QVector<UserPtr>            m_user;/**< list of users by theirs id's */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -190,14 +195,17 @@ public:
 
 	~MattermostQt();
 
+	Q_INVOKABLE int get_server_state(int server_index);
+	Q_INVOKABLE int get_server_count() const;
+
 	Q_INVOKABLE void post_login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
 	void get_login(ServerPtr sc);
-	Q_INVOKABLE void get_teams(int serverId);
+	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
 //	void get_team(int server_index, QString team_id);
 	void get_team(int server_index, int team_index);
-	Q_INVOKABLE void get_user_image(int serverId, QString userId);
-	Q_INVOKABLE void get_user_info(int serverId, QString userId);
+	Q_INVOKABLE void get_user_image(int server_index, QString user_id);
+	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
 
 	bool save_settings();
@@ -210,6 +218,7 @@ Q_SIGNALS:
 	void teamAdded(TeamPtr team);
 	void channelsList(QList<ChannelPtr> list);
 	void channelAdded(ChannelPtr channel);
+//	void updateChannel()
 	void teamUnread(QString team_id, int msg, int mention);
 
 protected:
@@ -246,7 +255,7 @@ protected Q_SLOTS:
 	/** slot for QTimer */
 	void slot_get_teams_unread();
 protected:
-	QMap<int, ServerPtr>    m_server;
+	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
 
 	QString m_settings_path;

@@ -12,15 +12,16 @@
 //#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
 //#include <QtWebSockets>
 
-#define P_REPLY_TYPE        "reply_type"
-#define P_API               "api"
-#define P_SERVER_URL        "server_url"
-#define P_SERVER_INDEX         "server_index"
-#define P_TEAM_INDEX        "team_index"
-#define P_TEAM_ID           "team_id"
-#define P_CHANNEL_INDEX     "channel_id"
-#define P_CHANNEL_TYPE      "channel_type"
-#define P_TRUST_CERTIFICATE "trust_certificate"
+#define P_REPLY_TYPE         "reply_type"
+#define P_API                "api"
+#define P_SERVER_URL         "server_url"
+#define P_SERVER_INDEX       "server_index"
+#define P_TEAM_INDEX         "team_index"
+#define P_TEAM_ID            "team_id"
+#define P_CHANNEL_INDEX      "channel_id"
+#define P_CHANNEL_TYPE       "channel_type"
+#define P_TRUST_CERTIFICATE  "trust_certificate"
+#define P_DIRECT_CHANNEL     "direct_channel"
 
 #define F_CONFIG_FILE       "config.json"
 
@@ -53,6 +54,18 @@ MattermostQt::MattermostQt()
 MattermostQt::~MattermostQt()
 {
 	m_server.clear();
+}
+
+int MattermostQt::get_server_state(int server_index)
+{
+	if(server_index < 0 || server_index >= m_server.size() )
+		return -1;
+	return m_server[server_index]->m_state;
+}
+
+int MattermostQt::get_server_count() const
+{
+	return m_server.size();
 }
 
 void MattermostQt::post_login(QString server, QString login, QString password, bool trustCertificate, int api)
@@ -134,12 +147,11 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 	reply->setProperty(P_TRUST_CERTIFICATE, sc->m_trust_cert);
 }
 
-void MattermostQt::get_teams(int serverId)
+void MattermostQt::get_teams(int server_index)
 {
-	QMap<int,ServerPtr>::iterator it = m_server.find(serverId);
-	if( it == m_server.end() )
+	if( server_index < 0 || server_index >= m_server.size() )
 		return;
-	ServerPtr sc = it.value();
+	ServerPtr sc = m_server[server_index];
 
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
@@ -165,7 +177,7 @@ void MattermostQt::get_teams(int serverId)
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Teams) );
-	reply->setProperty(P_SERVER_INDEX, QVariant(serverId) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 }
 
 void MattermostQt::get_public_channels(int server_index, QString team_id)
@@ -176,10 +188,10 @@ void MattermostQt::get_public_channels(int server_index, QString team_id)
 		return;
 	}
 
-	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
-	if( it == m_server.end() )
+	if( server_index < 0 || server_index >= m_server.size() )
 		return;
-	ServerPtr sc = it.value();
+	ServerPtr sc = m_server[server_index];
+
 	// first check if team allready got channels
 	int team_index = sc->get_team_index(team_id);
 	if(team_index == -1)
@@ -205,7 +217,7 @@ void MattermostQt::get_public_channels(int server_index, QString team_id)
 		emit channelsList( channels );
 		// after that send request for team info
 
-		get_team(server_index,team_index);
+//		get_team(server_index,team_index);
 		return;
 	}
 
@@ -262,21 +274,21 @@ void MattermostQt::get_team(int server_index, int team_index)
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 }
 
-void MattermostQt::get_user_image(int serverId, QString userId)
+void MattermostQt::get_user_image(int server_index, QString user_id)
 {
 	// TODO
 }
 
-void MattermostQt::get_user_info(int serverId, QString userId)
+void MattermostQt::get_user_info(int server_index, QString userId, int team_index)
 {
-	QMap<int,ServerPtr>::iterator it = m_server.find(serverId);
-	if( it == m_server.end() )
+	bool direct_channel = (team_index >= 0);
+	if( server_index < 0 || server_index >= m_server.size() )
 		return;
-	ServerPtr sc = it.value();
+	ServerPtr sc = m_server[server_index];
 
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/me/teams/")
+	        + QLatin1String("/users/")
 	        + userId;
 
 	QUrl url(sc->m_url);
@@ -290,16 +302,17 @@ void MattermostQt::get_user_info(int serverId, QString userId)
 		request.setSslConfiguration(sc->m_cert);
 
 	QNetworkReply *reply = m_networkManager->get(request);
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::User) );
-	reply->setProperty(P_SERVER_INDEX, QVariant(serverId) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::get_user) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+	reply->setProperty(P_DIRECT_CHANNEL, QVariant(direct_channel) );
 }
 
 void MattermostQt::get_teams_unread(int server_index)
 {
-	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
-	if( it == m_server.end() )
+	if( server_index < 0 || server_index >= m_server.size() )
 		return;
-	get_teams_unread(it.value());
+	get_teams_unread(m_server[server_index]);
 }
 
 void MattermostQt::get_teams_unread(MattermostQt::ServerPtr server)
@@ -399,7 +412,7 @@ bool MattermostQt::load_settings()
 		server->m_trust_cert = trust_certificate;
 
 		server->m_self_index = m_server.size();
-		m_server[server->m_self_index] = server;
+		m_server.append(server);
 		get_login(server);
 	}
 }
@@ -410,30 +423,15 @@ void MattermostQt::prepare_direct_channel(int server_index, int team_index, int 
 	ServerPtr sc = m_server[ct->m_server_index];
 	/** in name we have two ids, separated with '__' */
 	int index = ct->m_name.indexOf("__");
-	QString id1 = ct->m_name.left( index );
-	if( id1 == sc->m_user_id )
-		id1 = ct->m_name.right( ct->m_name.length() - index - 2  );
+	QString user_id = ct->m_name.left( index );
+	if( user_id == sc->m_user_id )
+		user_id = ct->m_name.right( ct->m_name.length() - index - 2  );
 	// first search in cached users
 
 	// send request for user credentials first
-	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/")
-	        + id1;
-	QUrl url(sc->m_url);
-	url.setPath(urlString);
-
-	QNetworkRequest request;
-
-	request.setUrl(url);
-	requset_set_headers(request,sc);
-	if(sc->m_trust_cert)
-		request.setSslConfiguration(sc->m_cert);
-
-	QNetworkReply *reply = m_networkManager->get(request);
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::User) );
-	reply->setProperty(P_SERVER_INDEX, QVariant(ct->m_server_index) );
-	reply->setProperty(P_TEAM_INDEX, QVariant(ct->m_team_index) );
+	get_user_info(sc->m_self_index, user_id, team_index);
+	// and send request for user picture
+	get_user_image(sc->m_self_index, user_id);
 }
 
 void MattermostQt::websocket_connect(ServerPtr server)
@@ -526,7 +524,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 		{// yes, auth token founded!
 			//add server to server list
 
-			int server_id = -1;
+//			int server_index = -1;
 //			bool is_new_server = false;
 			ServerPtr server;
 //			if( reply->property(P_SERVER_ID).isValid() )
@@ -536,20 +534,20 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 //			}
 //			else
 //			{
-			    server_id = m_server.size();
-				server.reset(new ServerContainer());
+//			    server_index =;
+			    server.reset(new ServerContainer());
 				server->m_api   = reply->property(P_API).toInt();
 				server->m_url   = reply->property(P_SERVER_URL).toString();
 				server->m_token = reply->rawHeader(head).data();
 				server->m_trust_cert = reply->property(P_TRUST_CERTIFICATE).toBool();
-				server->m_self_index    = server_id;
 //				is_new_server = true;
 //			}
 
 			server->m_cert  = reply->sslConfiguration();
 			server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
 //			if(is_new_server)
-			    m_server[server_id] = server;
+			server->m_self_index =  m_server.size();
+			m_server.append( server );
 
 			QJsonDocument json = QJsonDocument::fromJson( reply->readAll() );
 			if( json.isObject() )
@@ -709,6 +707,17 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 
 void MattermostQt::reply_get_user(QNetworkReply *reply)
 {
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int team_index = reply->property(P_TEAM_INDEX).toInt();
+	bool direct_channel = reply->property(P_DIRECT_CHANNEL).toBool();
+
+	if( server_index < 0 || server_index >= m_server.size() )
+	{
+		qWarning() << "Error! Cant find server in servers list!";
+		return;
+	}
+	ServerPtr sc = m_server[server_index];
+
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
 
 	qDebug() << json;
@@ -720,6 +729,28 @@ void MattermostQt::reply_get_user(QNetworkReply *reply)
 	}
 
 	UserPtr user( new UserContainer(json.object()) );
+
+//	for(int)
+	// maby need check if user laready exists in list
+	user->m_self_index = sc->m_user.size();
+	sc->m_user.append(user);
+
+	if(direct_channel && team_index >= 0)
+	{
+		TeamPtr tc = sc->m_teams[team_index];
+
+		for(int i = 0; i < tc->m_direct_channels.size(); i++)
+		{
+			ChannelPtr channel = tc->m_direct_channels[i];
+			if( channel->m_name.indexOf(user->m_id) >= 0  )
+			{
+				channel->m_display_name = user->m_username;
+				channel->m_dc_user_index = user->m_self_index;
+				emit channelAdded(channel);
+				break;
+			}
+		}
+	}
 }
 
 void MattermostQt::reply_error(QNetworkReply *reply)
@@ -769,7 +800,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			case ReplyType::Channels:
 				reply_get_public_channels(reply);
 				break;
-			case ReplyType::User:
+			case ReplyType::get_user:
 				reply_get_user(reply);
 				break;
 			case ReplyType::rt_get_team:
@@ -846,14 +877,16 @@ void MattermostQt::onWebSocketConnected()
 	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
 	if(!socket) // strange situation, if it happens
 		return;
+
 	QVariant sId = socket->property(P_SERVER_INDEX);
 	if(!sId.isValid()) // that too strange!!! that cant be!
 		return;
+
 	int server_index = sId.toInt();
-	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
-	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
+	if( server_index < 0 || server_index >= m_server.size() )
 		return;
-	ServerPtr sc = it.value();
+	ServerPtr sc = m_server[server_index];
+
 //	{
 //	  "seq": 1,
 //	  "action": "authentication_challenge",
@@ -907,14 +940,15 @@ void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 	if(!sId.isValid()) // that too strange!!! that cant be!
 		return;
 	int server_index = sId.toInt();
-//	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
-//	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
-//		return;
+
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
 	ServerPtr sc = m_server[server_index];
 	switch(state) {
 	case QAbstractSocket::UnconnectedState:
 	case QAbstractSocket::ConnectingState:
 	case QAbstractSocket::ConnectedState:
+		sc->m_state = (int)state;
 		emit serverStateChanged(server_index, (int)state);
 		break;
 	case QAbstractSocket::HostLookupState:
@@ -1036,6 +1070,7 @@ MattermostQt::ChannelContainer::ChannelContainer(QJsonObject &object)
 	m_total_msg_count = (qlonglong)object["total_msg_count"].toDouble();
 	m_extra_update_at = (qlonglong)object["extra_update_at"].toDouble();
 	m_creator_id = object["creator_id"].toString();
+	m_dc_user_index = -1;
 }
 
 MattermostQt::UserContainer::UserContainer(QJsonObject object)
@@ -1059,6 +1094,7 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	//"auth_service": "string",
 	//"roles": "string",
 	//"locale": "string",
+	m_locale = object["locale"].toString();
 	//"notify_props": {
 	//"email": "string",
 	//"push": "string",
@@ -1070,17 +1106,19 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	//},
 	//"props": { },
 	//"last_password_update": 0,
-	qlonglong m_last_password_update;
+	m_last_password_update = (qlonglong)object["last_password_update"].toDouble();
 	//"last_picture_update": 0,
-	qlonglong m_last_picture_update;
+	m_last_picture_update = (qlonglong)object["last_picture_update"].toDouble();
 	//"failed_attempts": 0,
 	//"mfa_active": true
 }
 
 MattermostQt::ServerContainer::~ServerContainer()
 {
-	if( m_socket )
+	if( m_socket ){
+		m_socket->blockSignals(true);
 		m_socket->close(QWebSocketProtocol::CloseCodeGoingAway, QString("Client closing") );
+	}
 }
 
 int MattermostQt::ServerContainer::get_team_index(QString team_id)

@@ -34,46 +34,59 @@ import harbour.sashikknox 1.0
 import "../model"
 
 CoverBackground {
+    id: cover
     property Context context
 
     property string status_text: qsTr("Disconnected")
+    property string error: ""
 
     property int status_server_connected: MattermostQt.ServerConnected
     property int status_server_connecting: MattermostQt.ServerConnecting
     property int status_server_unconnected: MattermostQt.ServerUnconnected
 
+    property int server_state: MattermostQt.ServerUnconnected
+
     onStatusChanged: {
         if( status == PageStatus.Active )
         {
-            context.mattermost.serverStateChanged.connect( function onServerConnected(server_index,state){
-                switch(state){
-                case status_server_connected:
-                    status_text = qsTr("Connected")
-                    break;
-                case status_server_connecting:
-                    status_text = qsTr("Connecting")
-                    break;
-                case status_server_unconnected:
-                    status_text = qsTr("Disconnected")
-                    break;
-                }
+            // for now, we have just 1 server, and his index is 0
+            server_state = context.mattermost.get_server_state(0);
+
+            context.mattermost.serverStateChanged.connect( function onServerStateChanged(server_index, state) {
+                server_state = state;
             })
 
             context.mattermost.connectionError.connect( function onConnectionError(id,message){
                 status_text = qsTr("Error")
+                error = message
             })
         }
     }
 
+    onServer_stateChanged: {
+        switch(server_state){
+        case status_server_connected:
+            status_text = qsTr("Connected")
+            break;
+        case status_server_connecting:
+            status_text = qsTr("Connecting")
+            break;
+        case status_server_unconnected:
+            status_text = qsTr("Disconnected")
+            break;
+        }
+    }
 
     Label {
         id: label
         anchors.centerIn: parent
         text: status_text
     }
-
-//    onStatus_textChanged:
-//        label.text = status_text
+    Label {
+        id: error_label
+        anchors.top: label.bottom
+        text: error
+    }
 
 //    CoverActionList {
 //        id: coverAction
