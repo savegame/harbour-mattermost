@@ -15,6 +15,7 @@
 #define P_REPLY_TYPE         "reply_type"
 #define P_API                "api"
 #define P_SERVER_URL         "server_url"
+#define P_SERVER_NAME        "server_name"
 #define P_SERVER_INDEX       "server_index"
 #define P_TEAM_INDEX         "team_index"
 #define P_TEAM_ID            "team_id"
@@ -68,7 +69,8 @@ int MattermostQt::get_server_count() const
 	return m_server.size();
 }
 
-void MattermostQt::post_login(QString server, QString login, QString password, bool trustCertificate, int api)
+void MattermostQt::post_login(QString server, QString login, QString password,
+                              bool trustCertificate, int api, QString display_name)
 {
 	if(api <= 3)
 		api = 4;
@@ -107,6 +109,7 @@ void MattermostQt::post_login(QString server, QString login, QString password, b
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Login) );
 	reply->setProperty(P_API, QVariant(api) );
 	reply->setProperty(P_SERVER_URL, server);
+	reply->setProperty(P_SERVER_NAME, display_name);
 	reply->setProperty(P_TRUST_CERTIFICATE, trustCertificate);
 
 //	// Load previosly saved certificate
@@ -353,7 +356,9 @@ bool MattermostQt::save_settings()
 		server["api"] = (double)sc->m_api;
 		server["token"] = sc->m_token;
 		server["trust_certificate"] = sc->m_trust_cert;
-
+		server["name"] = sc->m_display_name;
+		server["ca_cert_path"] = QString("");
+		server["cert_path"] = QString("");
 		servers.append(server);
 	}
 	object["servers"] = servers;
@@ -402,6 +407,9 @@ bool MattermostQt::load_settings()
 		QString url = object["url"].toString();
 		int api = (int)object["api"].toDouble();
 		QString token = object["token"].toString();
+		QString display_name = object["name"].toString();
+		QString ca_cert_path = object["ca_cert_path"].toString();
+		QString cert_path = object["cert_path"].toString();
 		bool trust_certificate = object["trust_certificate"].toBool();
 
 		if( user_id.isEmpty() || url.isEmpty() || token.isEmpty() )
@@ -410,7 +418,7 @@ bool MattermostQt::load_settings()
 		// create server container
 		ServerPtr server( new ServerContainer(url,token,api) );
 		server->m_trust_cert = trust_certificate;
-
+		server->m_display_name = display_name;
 		server->m_self_index = m_server.size();
 		m_server.append(server);
 		get_login(server);
@@ -523,29 +531,16 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 		if( strcmp(head.data(),"Token") == 0 )
 		{// yes, auth token founded!
 			//add server to server list
-
-//			int server_index = -1;
-//			bool is_new_server = false;
 			ServerPtr server;
-//			if( reply->property(P_SERVER_ID).isValid() )
-//			{
-//				server_id = reply->property(P_SERVER_ID).toInt();
-//				server = m_server[server_id];
-//			}
-//			else
-//			{
-//			    server_index =;
-			    server.reset(new ServerContainer());
-				server->m_api   = reply->property(P_API).toInt();
-				server->m_url   = reply->property(P_SERVER_URL).toString();
-				server->m_token = reply->rawHeader(head).data();
-				server->m_trust_cert = reply->property(P_TRUST_CERTIFICATE).toBool();
-//				is_new_server = true;
-//			}
+			server.reset(new ServerContainer());
+			server->m_api   = reply->property(P_API).toInt();
+			server->m_url   = reply->property(P_SERVER_URL).toString();
+			server->m_display_name = reply->property(P_SERVER_NAME).toString();
+			server->m_token = reply->rawHeader(head).data();
+			server->m_trust_cert = reply->property(P_TRUST_CERTIFICATE).toBool();
 
 			server->m_cert  = reply->sslConfiguration();
 			server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
-//			if(is_new_server)
 			server->m_self_index =  m_server.size();
 			m_server.append( server );
 
@@ -557,10 +552,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 				server->m_user_id = object["id"].toString();
 			}
 			websocket_connect(server);
-//			if(is_new_server)
-			    save_settings();
-
-//			emit serverConnected(server->m_self_index);
+			save_settings();
 			return true;
 		}
 	}

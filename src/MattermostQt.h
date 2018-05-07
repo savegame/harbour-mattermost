@@ -187,6 +187,7 @@ public:
 		int                         m_state; /**< server state (from WebSocket) */
 		QString                     m_config_path; /**< local config path */
 		QVector<UserPtr>            m_user;/**< list of users by theirs id's */
+		QString                     m_display_name; /**< custom server name */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -198,7 +199,9 @@ public:
 	Q_INVOKABLE int get_server_state(int server_index);
 	Q_INVOKABLE int get_server_count() const;
 
-	Q_INVOKABLE void post_login(QString server, QString login, QString password, bool trustCertificate = false, int api = 4);
+	Q_INVOKABLE void post_login(QString server, QString login, QString password,
+	                            bool trustCertificate = false, int api = 4,
+	                            QString display_name = QString("Mattermost Server"));
 	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);

@@ -99,7 +99,7 @@ Page {
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
                 EnterKey.onClicked:{
-                    mattermost.post_login(server.text,login_id.text,text,trust_certificate.checked);
+                    context.mattermost.post_login(server.text,login_id.text,text,trust_certificate.checked,4,server_name.text);
                 }
             }
 
