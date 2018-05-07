@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Pickers 1.0
 import harbour.sashikknox 1.0
 import "../model"
 
@@ -42,23 +43,24 @@ Page {
     SilicaFlickable {
         anchors.fill: parent
         contentWidth: parent.width
-        contentHeight: column.height + Theme.paddingLarge
+        contentHeight: column.height + Theme.paddingLarge;
 
         VerticalScrollDecorator {}
 
         Column {
             id: column
             spacing: Theme.paddingSmall
+            anchors {left: parent.left; right: parent.right; }
             width: parent.width
 
             PageHeader {
-                title: "Sign in"
+                title: qsTr("Login")
             }
 
             TextField {
                 id: server_name
                 focus: true;
-                label: "server custom name";
+                label: qsTr("server custom name");
                 placeholderText: label
                 anchors { left: parent.left; right: parent.right }
                 EnterKey.enabled: text || inputMethodComposing
@@ -69,7 +71,7 @@ Page {
             TextField {
                 id: server
                 focus: true;
-                label: "server address";
+                label: qsTr("server address");
                 placeholderText: label
                 anchors { left: parent.left; right: parent.right }
                 EnterKey.enabled: text || inputMethodComposing
@@ -77,10 +79,6 @@ Page {
                 EnterKey.onClicked: login_id.focus = true
             }
 
-            TextSwitch {
-                id: trust_certificate
-                text: qsTr("trust certificate")
-            }
 
             TextField {
                 id: login_id
@@ -95,11 +93,66 @@ Page {
                 id: password
                 anchors { left: parent.left; right: parent.right }
                 echoMode: TextInput.Password
-                label: "Password"; placeholderText: label
+                label: qsTr("Password"); placeholderText: label
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
                 EnterKey.onClicked:{
                     context.mattermost.post_login(server.text,login_id.text,text,trust_certificate.checked,4,server_name.text);
+                }
+            }
+
+            SectionHeader {
+                TouchBlocker {
+                         anchors.fill: parent
+                }
+                text: qsTr("Certificate options")
+            }
+
+            TextSwitch {
+                id: trust_certificate_switcher
+                text: qsTr("trust certificate")
+                onCheckedChanged: {
+                    ca_cert_row.visible = checked
+                    cert_row.visible = checked
+                    if( checked === true )
+                        ca_cert_text_field.focus = true
+                }
+            }
+
+            Row {
+                id: ca_cert_row
+                visible: false
+                TextField {
+                    id: ca_cert_text_field
+                    label: qsTr("CA certificate path");
+                    placeholderText: label
+                    anchors.leftMargin: Theme.paddingMedium
+                    width: loginpage.width - Theme.paddingMedium - button_ca_cert.width
+                    EnterKey.enabled: text || inputMethodComposing
+                    EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                    EnterKey.onClicked:{
+                        cert_text_field.focus = true;
+                    }
+                }
+                IconButton {
+                    id:button_ca_cert
+                    icon.source: "image://theme/icon-s-attach"
+                }
+            }
+
+            Row {
+                id: cert_row
+                visible: false
+                TextField {
+                    id: cert_text_field
+                    label: qsTr("Server certificate path");
+                    placeholderText: label
+                    anchors.leftMargin: Theme.paddingMedium
+                    width: loginpage.width - Theme.paddingMedium - button_cert.width
+                }
+                IconButton {
+                    id:button_cert
+                    icon.source: "image://theme/icon-s-attach"
                 }
             }
 

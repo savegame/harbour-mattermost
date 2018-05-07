@@ -2,6 +2,17 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
+    <name>CertLoader</name>
+    <message>
+        <source>Certificates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose trusted servers certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ChannelLabel</name>
     <message>
         <source>Public channes</source>
@@ -50,6 +61,34 @@
     </message>
     <message>
         <source>trust certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Login</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>server custom name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>server address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Certificate options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CA certificate path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Server certificate path</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
