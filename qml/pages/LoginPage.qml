@@ -4,7 +4,7 @@ import Sailfish.Pickers 1.0
 import harbour.sashikknox 1.0
 import "../model"
 
-Page {
+Dialog {
     id: loginpage
     property Context context
 
@@ -18,6 +18,21 @@ Page {
     property int status_server_connected: MattermostQt.ServerConnected
     property int status_server_connecting: MattermostQt.ServerConnecting
     property int status_server_unconnected: MattermostQt.ServerUnconnected
+
+
+    canAccept : server_name.isComplete &
+                server.isComplete &
+                login_id.isComplete &
+                password.isComplete &
+                ( !trust_certificate_switcher.checked
+                 ? true
+                 : ca_cert_text_field.isComplete & cert_text_field.isComplete )
+
+    property int api: 4
+    onAccepted: {
+        context.mattermost.post_login( server.text, login_id.text, password.text,
+                                      trust_certificate_switcher.checked, api, server_name.text )
+    }
 
     onStatusChanged: {
         if( status == PageStatus.Active )
@@ -53,52 +68,68 @@ Page {
             anchors {left: parent.left; right: parent.right; }
             width: parent.width
 
-            PageHeader {
+            DialogHeader {
+                id: header
                 title: qsTr("Login")
             }
 
             TextField {
                 id: server_name
-                focus: true;
+                property bool isComplete: false
                 label: qsTr("server custom name");
                 placeholderText: label
                 anchors { left: parent.left; right: parent.right }
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                EnterKey.onClicked: server.focus = true
+                EnterKey.onClicked: {
+                    server.focus = true;
+                    isComplete = true;
+//                    computeAccept();
+                }
+                onTextChanged: isComplete = true;
             }
 
             TextField {
                 id: server
-                focus: true;
+                property bool isComplete: false
                 label: qsTr("server address");
                 placeholderText: label
                 anchors { left: parent.left; right: parent.right }
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                EnterKey.onClicked: login_id.focus = true
+                EnterKey.onClicked: {
+                    isComplete = true;
+                    login_id.focus = true;
+//                    computeAccept();
+                }
+                onTextChanged: isComplete = true;
             }
 
 
             TextField {
                 id: login_id
+                property bool isComplete: false
                 anchors { left: parent.left; right: parent.right }
                 label: qsTr("Username or Email address"); placeholderText: label
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                EnterKey.onClicked: password.focus = true
+                EnterKey.onClicked: {
+                    isComplete = true;
+                    password.focus = true;
+//                    computeAccept();
+                }
+                onTextChanged: isComplete = true;
             }
 
             TextField {
                 id: password
-                anchors { left: parent.left; right: parent.right }
+                property bool isComplete: false
                 echoMode: TextInput.Password
+                anchors { left: parent.left; right: parent.right }
                 label: qsTr("Password"); placeholderText: label
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                EnterKey.onClicked:{
-                    context.mattermost.post_login(server.text,login_id.text,text,trust_certificate.checked,4,server_name.text);
-                }
+                onTextChanged: isComplete = true;
             }
 
             SectionHeader {
@@ -124,6 +155,7 @@ Page {
                 visible: false
                 TextField {
                     id: ca_cert_text_field
+                    property bool isComplete: false
                     label: qsTr("CA certificate path");
                     placeholderText: label
                     anchors.leftMargin: Theme.paddingMedium
@@ -133,6 +165,7 @@ Page {
                     EnterKey.onClicked:{
                         cert_text_field.focus = true;
                     }
+                    onTextChanged: isComplete = true;
                 }
                 IconButton {
                     id:button_ca_cert
@@ -145,10 +178,12 @@ Page {
                 visible: false
                 TextField {
                     id: cert_text_field
+                    property bool isComplete: false
                     label: qsTr("Server certificate path");
                     placeholderText: label
                     anchors.leftMargin: Theme.paddingMedium
                     width: loginpage.width - Theme.paddingMedium - button_cert.width
+                    onTextChanged: isComplete = true;
                 }
                 IconButton {
                     id:button_cert
