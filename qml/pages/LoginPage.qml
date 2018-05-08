@@ -171,7 +171,7 @@ Dialog {
                     id: ca_picker
                     FilePickerPage {
                         title: qsTr("Choose CA certificate")
-
+                        nameFilters: [ '*.crt', '*.pem' ]
                         onSelectedContentPropertiesChanged: {
                             loginpage.caCertPath = selectedContentProperties.filePath;
                         }
@@ -209,6 +209,7 @@ Dialog {
                     id: cert_picker
                     FilePickerPage {
                         title: qsTr("Choose server certificate")
+                        nameFilters: [ '*.crt', '*.pem' ]
                         onSelectedContentPropertiesChanged: {
                             loginpage.certPath = selectedContentProperties.filePath;
                         }
