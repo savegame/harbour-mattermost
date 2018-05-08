@@ -178,7 +178,6 @@ public:
 		int                         m_api;   /**< server API version */
 		QString                     m_token; /**< server access token*/
 		QString                     m_cookie;/**< cookie if needed */
-		bool                        m_trust_cert; /**< trust self signed certificate */
 		QSslConfiguration           m_cert;  /**< server certificate */
 		QSharedPointer<QWebSocket>  m_socket;/**< websocket connection */
 		QString                     m_user_id;/**< user id */
@@ -188,6 +187,9 @@ public:
 		QString                     m_config_path; /**< local config path */
 		QVector<UserPtr>            m_user;/**< list of users by theirs id's */
 		QString                     m_display_name; /**< custom server name */
+		bool                        m_trust_cert; /**< trust self signed certificate */
+		QString                     m_ca_cert_path;
+		QString                     m_cert_path;
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -200,8 +202,8 @@ public:
 	Q_INVOKABLE int get_server_count() const;
 
 	Q_INVOKABLE void post_login(QString server, QString login, QString password,
-	                            bool trustCertificate = false, int api = 4,
-	                            QString display_name = QString("Mattermost Server"));
+	                            int api = 4,QString display_name = QString("Mattermost Server"),
+	                            bool trustCertificate = false, QString ca_cert_path = QString(), QString cert_path = QString());
 	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);

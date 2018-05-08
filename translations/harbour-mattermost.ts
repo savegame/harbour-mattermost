@@ -2,6 +2,17 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
+    <name>CertLoader</name>
+    <message>
+        <source>Certificates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose trusted servers certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ChannelLabel</name>
     <message>
         <source>Public channes</source>
@@ -26,19 +37,19 @@
 <context>
     <name>CoverPage</name>
     <message>
-        <source>Disconnected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Connected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Connecting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Online</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -78,6 +89,14 @@
     </message>
     <message>
         <source>Server certificate path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose CA certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose server certificate</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

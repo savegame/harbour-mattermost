@@ -37,7 +37,7 @@ CoverBackground {
     id: cover
     property Context context
 
-    property string status_text: qsTr("Disconnected")
+    property string status_text: qsTr("Offline")
     property string error: ""
 
     property int status_server_connected: MattermostQt.ServerConnected
@@ -66,13 +66,13 @@ CoverBackground {
     onServer_stateChanged: {
         switch(server_state){
         case status_server_connected:
-            status_text = qsTr("Connected")
+            status_text = qsTr("Online")
             break;
         case status_server_connecting:
             status_text = qsTr("Connecting")
             break;
         case status_server_unconnected:
-            status_text = qsTr("Disconnected")
+            status_text = qsTr("Offline")
             break;
         }
     }

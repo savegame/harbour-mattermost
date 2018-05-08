@@ -29,9 +29,22 @@ Dialog {
                  : ca_cert_text_field.isComplete & cert_text_field.isComplete )
 
     property int api: 4
+    property string caCertPath
+    property string certPath
+    property string lastFolder
+
+    onCaCertPathChanged: {
+        ca_cert_text_field.text = caCertPath;
+    }
+
+    onCertPathChanged: {
+        cert_text_field.text = certPath;
+    }
+
     onAccepted: {
         context.mattermost.post_login( server.text, login_id.text, password.text,
-                                      trust_certificate_switcher.checked, api, server_name.text )
+                                      api, server_name.text, trust_certificate_switcher.checked,
+                                      ca_cert_text_field.text, cert_text_field.text )
     }
 
     onStatusChanged: {
@@ -145,14 +158,26 @@ Dialog {
                 onCheckedChanged: {
                     ca_cert_row.visible = checked
                     cert_row.visible = checked
-                    if( checked === true )
-                        ca_cert_text_field.focus = true
+//                    if( checked === true )
+//                        ca_cert_text_field.focus = true
                 }
             }
 
             Row {
                 id: ca_cert_row
                 visible: false
+
+                Component {
+                    id: ca_picker
+                    FilePickerPage {
+                        title: qsTr("Choose CA certificate")
+
+                        onSelectedContentPropertiesChanged: {
+                            loginpage.caCertPath = selectedContentProperties.filePath;
+                        }
+                    }
+                }
+
                 TextField {
                     id: ca_cert_text_field
                     property bool isComplete: false
@@ -170,12 +195,26 @@ Dialog {
                 IconButton {
                     id:button_ca_cert
                     icon.source: "image://theme/icon-s-attach"
+                    onClicked: {
+                        pageStack.push(ca_picker)
+                    }
                 }
             }
 
             Row {
                 id: cert_row
                 visible: false
+
+                Component {
+                    id: cert_picker
+                    FilePickerPage {
+                        title: qsTr("Choose server certificate")
+                        onSelectedContentPropertiesChanged: {
+                            loginpage.certPath = selectedContentProperties.filePath;
+                        }
+                    }
+                }
+
                 TextField {
                     id: cert_text_field
                     property bool isComplete: false
@@ -188,6 +227,7 @@ Dialog {
                 IconButton {
                     id:button_cert
                     icon.source: "image://theme/icon-s-attach"
+                    onClicked: pageStack.push(cert_picker)
                 }
             }
 
