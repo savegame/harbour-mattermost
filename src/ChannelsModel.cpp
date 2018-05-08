@@ -7,7 +7,7 @@ ChannelsModel::ChannelsModel(QObject *parent)
 	m_header.resize(3);
 	m_display_name.resize(3);
 	m_puprose.resize(3);
-	m_index.resize(3);
+	m_index.resize(4);
 	m_type.resize(3);
 	m_type[0] = ItemType::HeaderPublic;
 	m_type[1] = ItemType::HeaderPrivate;
@@ -158,7 +158,7 @@ void ChannelsModel::clear()
 	m_header.resize(3);
 	m_display_name.resize(3);
 	m_puprose.resize(3);
-	m_index.resize(3);
+	m_index.resize(4);
 	m_type.resize(3);
 	m_type[0] = ItemType::HeaderPublic;
 	m_type[1] = ItemType::HeaderPrivate;
@@ -174,7 +174,10 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 	int insertIndex = m_header.size();
 
 	if( channel->m_type.compare("O") == 0 )
+	{
 		insertIndex = m_header_index[ItemType::HeaderPrivate]++;
+		m_header_index[ItemType::HeaderDirect]++;
+	}
 	else if( channel->m_type.compare("P") == 0 )
 		insertIndex = m_header_index[ItemType::HeaderDirect]++;
 	else if( channel->m_type.compare("D") == 0 )
