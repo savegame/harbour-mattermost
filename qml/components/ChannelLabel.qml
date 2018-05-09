@@ -10,6 +10,7 @@ Item {
     property string _purpose
     property int  _index
     property int _type
+    property int channelType
 
     height: loader.height
 

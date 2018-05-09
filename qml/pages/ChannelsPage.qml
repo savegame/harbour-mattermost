@@ -5,12 +5,17 @@ import "../components"
 import harbour.sashikknox 1.0
 
 Page {
-    id: teampage
+    id: channelspage
     property Context context
     property bool isuptodate: false
 
-    property int serverid
+    property int server_index
+    property int team_index
     property string teamid
+
+    property int ct_public: MattermostQt.ChannelPublic
+    property int ct_private: MattermostQt.ChannelPrivate
+    property int ct_direct: MattermostQt.ChannelDirect
 
     allowedOrientations: Orientation.All
 
@@ -22,7 +27,7 @@ Page {
         if( status == PageStatus.Active && isuptodate == false )
         {
             isuptodate = true;
-            context.mattermost.get_public_channels(serverid,teamid)
+            context.mattermost.get_public_channels(server_index,teamid)
         }
     }
 
@@ -45,7 +50,6 @@ Page {
 
             delegate: BackgroundItem {
                 id: bgitem
-                enabled: enabled
                 ParallelAnimation {
                     id: panim
                     running: true
@@ -76,11 +80,24 @@ Page {
                     _header: m_header
                     _index: m_index
                     _type: m_type
+                    channelType: channel_type
                     x: Theme.horizontalPageMargin
                     anchors {left: parent.left; right: parent.right}
                     anchors.topMargin: Theme.paddingSmall
                     anchors.leftMargin: Theme.paddingLarge
                     anchors.rightMargin: Theme.paddingSmall
+                }
+                onClicked: {
+                    var messages = pageStack.pushAttached(
+                                Qt.resolvedUrl("MessagesPage.qml"),
+                                {
+                                    context: channelspage.context,
+                                    team_index: channelspage.team_index,
+                                    server_index: channelspage.server_index,
+                                    channel_index: col._index,
+                                    channel_type: col.channelType
+                                } );
+                    pageStack.navigateForward(PageStackAction.Animated);
                 }
             }
         }

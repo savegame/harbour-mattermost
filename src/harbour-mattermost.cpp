@@ -33,6 +33,7 @@
 #include "TeamsModel.h"
 #include "MattermostQt.h"
 #include "ChannelsModel.h"
+#include "MessagesModel.h"
 
 int main(int argc, char *argv[])
 {
@@ -48,6 +49,7 @@ int main(int argc, char *argv[])
 	qmlRegisterType<MattermostQt>("harbour.sashikknox", 1, 0, "MattermostQt");
 	qmlRegisterType<TeamsModel>("harbour.sashikknox", 1, 0, "TeamsModel");
 	qmlRegisterType<ChannelsModel>("harbour.sashikknox", 1, 0, "ChannelsModel");
+	qmlRegisterType<MessagesModel>("harbour.sashikknox", 1, 0, "MessagesModel");
 
 	// Start the application.
 	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));

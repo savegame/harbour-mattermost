@@ -47,6 +47,12 @@ QVariant TeamsModel::data(const QModelIndex &index, int role) const
 	else if(role == DataRoles::UserCount) {
 		return QVariant(m_user_count[index.row()]);
 	}
+	else if(role == DataRoles::Index) {
+		return QVariant(m_team[index.row()]->m_self_index);
+	}
+	else if(role == DataRoles::ServerIndex) {
+		return QVariant(m_team[index.row()]->m_server_index);
+	}
 	return QVariant();
 }
 
@@ -61,6 +67,8 @@ QHash<int, QByteArray> TeamsModel::roleNames() const
 	roleNames[DataRoles::MentionCount] = QLatin1String("mention_count").data();
 	roleNames[DataRoles::ActiveUsers]  = QLatin1String("active_users").data();
 	roleNames[DataRoles::UserCount]    = QLatin1String("user_count").data();
+	roleNames[DataRoles::Index]        = QLatin1String("self_index").data();
+	roleNames[DataRoles::ServerIndex]  = QLatin1String("server_index").data();
 	return roleNames;
 }
 
@@ -126,8 +134,15 @@ void TeamsModel::setMattermostQt(MattermostQt* mattermost)
 QString TeamsModel::getTeamId(int index) const
 {
 	if(index >= 0 && index < m_id.size())
-		return m_id[index];
+		return m_team[index]->m_id;
 	return QString::null;
+}
+
+int TeamsModel::getTeamIndex(int index) const
+{
+	if(index >= 0 && index < m_id.size())
+		return m_team[index]->m_self_index;
+	return -1;
 }
 
 //void TeamsModel::slot_serverConnected(int id)
@@ -148,6 +163,7 @@ void TeamsModel::slot_teamAdded(MattermostQt::TeamPtr team)
 	m_displayName.append(team->m_display_name);
 	m_description.append(team->m_description);
 	m_email.append(team->m_email);
+	m_team.append(team);
 	m_msg_count.append(0);
 	m_mention_count.append(0);
 	m_active_users.append(0);

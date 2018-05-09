@@ -23,7 +23,8 @@ public:
 		Channels,
 		get_user,
 		rt_get_team,
-		rt_get_teams_unread
+		rt_get_teams_unread,
+		rt_get_posts
 	};
 
 	enum ConnectionError {
@@ -32,10 +33,11 @@ public:
 	};
 
 	enum ChannelType : int {
-		ChannelOpen,   // "O"
+		ChannelPublic,   // "O"
 		ChannelPrivate,// "P"
 		ChannelDirect  // "D"
 	};
+	Q_ENUMS(ChannelType)
 
 	enum ServerState : int {
 		ServerConnected = QAbstractSocket::ConnectedState,
@@ -43,6 +45,36 @@ public:
 		ServerUnconnected = QAbstractSocket::UnconnectedState
 	};
 	Q_ENUMS(ServerState)
+
+	struct FileContainer {
+		QString m_id;
+		QString m_name;
+	};
+	typedef QSharedPointer<FileContainer> FilePtr;
+
+	struct MessageContainer {
+		MessageContainer()
+		{}
+
+		MessageContainer(QJsonObject object);
+
+		QString          m_message;
+//		QVector<FilePtr> m_file;
+		QVector<QString> m_filenames;
+		QVector<QString> m_file_ids;
+		QString          m_id;
+		QString          m_channel_id;
+		QString          m_type;
+		QString          m_user_id;
+
+		// inside types
+		ChannelType      m_channel_type;
+		int              m_server_index;
+		int              m_team_index;
+		int              m_channel_index;
+		int              m_self_index;
+	};
+	typedef QSharedPointer<MessageContainer> MessagePtr;
 
 	struct UserContainer
 	{
@@ -86,7 +118,6 @@ public:
 
 		int m_self_index;
 	};
-
 	typedef QSharedPointer<UserContainer> UserPtr;
 
 	struct ChannelContainer
@@ -107,7 +138,7 @@ public:
 		qlonglong m_update_at;
 //		"delete_at": 0,
 		QString m_team_id;
-		QString m_type;
+		ChannelType m_type;
 		QString m_display_name;
 		QString m_name;
 		QString m_header;
@@ -122,6 +153,8 @@ public:
 
 		// direct channel data
 		int m_dc_user_index; /**< if it direct channel, is index*/
+
+		QVector<MessagePtr> m_message;
 	};
 	typedef QSharedPointer<ChannelContainer> ChannelPtr;
 
@@ -153,7 +186,6 @@ public:
 
 		QVector<ChannelPtr> m_public_channels;
 		QVector<ChannelPtr> m_private_channels;
-		QVector<ChannelPtr> m_direct_channels;
 	};
 	typedef QSharedPointer<TeamContainer> TeamPtr;
 
@@ -186,6 +218,7 @@ public:
 		int                         m_state; /**< server state (from WebSocket) */
 		QString                     m_config_path; /**< local config path */
 		QVector<UserPtr>            m_user;/**< list of users by theirs id's */
+		QVector<ChannelPtr>         m_direct_channels; /**< direct channels */
 		QString                     m_display_name; /**< custom server name */
 		bool                        m_trust_cert; /**< trust self signed certificate */
 		QString                     m_ca_cert_path;
@@ -200,6 +233,7 @@ public:
 
 	Q_INVOKABLE int get_server_state(int server_index);
 	Q_INVOKABLE int get_server_count() const;
+	Q_INVOKABLE QString get_server_name(int server_index) const;
 
 	Q_INVOKABLE void post_login(QString server, QString login, QString password,
 	                            int api = 4,QString display_name = QString("Mattermost Server"),
@@ -212,6 +246,8 @@ public:
 	Q_INVOKABLE void get_user_image(int server_index, QString user_id);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
+//	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
+	Q_INVOKABLE void get_posts(int server_index, int team_index, int channel_index, int channel_type);
 
 	bool save_settings();
 	bool load_settings();
@@ -225,7 +261,8 @@ Q_SIGNALS:
 	void channelAdded(ChannelPtr channel);
 //	void updateChannel()
 	void teamUnread(QString team_id, int msg, int mention);
-
+	void messagesAdded(ChannelPtr channel);
+	void messageAdded(QList<MessagePtr> messages);
 protected:
 	/**
 	 * @brief prepare_direct_channel
@@ -243,6 +280,7 @@ protected:
 	void reply_get_teams(QNetworkReply *reply);
 	void reply_get_team(QNetworkReply *reply);
 	void reply_get_teams_unread(QNetworkReply *reply);
+	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_get_user(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
@@ -259,6 +297,7 @@ protected Q_SLOTS:
 	void onWebSocketTextMessageReceived(const QString &message);
 	/** slot for QTimer */
 	void slot_get_teams_unread();
+	void slot_recconect_servers();
 protected:
 	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
@@ -267,7 +306,7 @@ protected:
 //	QTimer  m_settings_timer;
 
 	int    m_update_server_timeout;
-	QTimer m_update_server;
+	QTimer m_reconnect_server;
 
 	/** channels, need update before put to model */
 //	QList<ChannelContainer>   m_stackedChannels;

@@ -33,7 +33,9 @@ public:
 		MsgCount,
 		MentionCount,
 		ActiveUsers,
-		UserCount
+		UserCount,
+		Index,
+		ServerIndex
 	};
 
 public:
@@ -56,6 +58,7 @@ public:
 	void setMattermostQt(MattermostQt *mattermost);
 
 	Q_INVOKABLE QString getTeamId(int index) const;
+	Q_INVOKABLE int getTeamIndex(int index) const;
 Q_SIGNALS:
 	void serverNameChanged();
 	void serverIndexChanged();
@@ -72,6 +75,7 @@ private:
 	QVector<int>     m_mention_count;
 	QVector<int>     m_active_users;
 	QVector<int>     m_user_count;
+	QVector<MattermostQt::TeamPtr>     m_team;
 	QVector<QString> m_id;
 
 	QPointer<MattermostQt> m_mattermost;

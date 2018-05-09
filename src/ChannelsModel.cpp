@@ -7,7 +7,7 @@ ChannelsModel::ChannelsModel(QObject *parent)
 	m_header.resize(3);
 	m_display_name.resize(3);
 	m_puprose.resize(3);
-	m_index.resize(4);
+	m_channel.resize(3);
 	m_type.resize(3);
 	m_type[0] = ItemType::HeaderPublic;
 	m_type[1] = ItemType::HeaderPrivate;
@@ -65,17 +65,23 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 		return m_type[index.row()];
 		break;
 	case Index:
-		return m_index[index.row()];
+		if( m_channel[index.row()].isNull() )
+			return QVariant(-1);
+		return QVariant(m_channel[index.row()]->m_self_index);
 		break;
-	case Enabled:
-	    {
-		    for(int i = 0; i < HeadersCount; i++)
-			{
-				if( m_header_index[i] == index.row() )
-					return QVariant(false);
-			}
-			return QVariant(true);
-	    }
+	case ServerIndex:
+		if( m_channel[index.row()].isNull() )
+			return QVariant(-1);
+		return QVariant(m_channel[index.row()]->m_server_index);
+	case TeamIndex:
+		if( m_channel[index.row()].isNull() )
+			return QVariant(-1);
+		return QVariant(m_channel[index.row()]->m_team_index);
+		break;
+	case ChannelType:
+		if( m_channel[index.row()].isNull() )
+			return QVariant(-1);
+		return QVariant((int)m_channel[index.row()]->m_type);
 		break;
 	}
 	return QVariant();
@@ -125,7 +131,9 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	roleNames[DataRoles::Email]  = QLatin1String("m_email").data();
 	roleNames[DataRoles::Index]  = QLatin1String("m_index").data();
 	roleNames[DataRoles::Type]  = QLatin1String("m_type").data();
-	roleNames[DataRoles::Enabled]  = QLatin1String("enabled").data();
+	roleNames[DataRoles::ServerIndex]  = QLatin1String("server_index").data();
+	roleNames[DataRoles::TeamIndex]  = QLatin1String("team_index").data();
+	roleNames[DataRoles::ChannelType]  = QLatin1String("channel_type").data();
 	return roleNames;
 }
 
@@ -158,7 +166,7 @@ void ChannelsModel::clear()
 	m_header.resize(3);
 	m_display_name.resize(3);
 	m_puprose.resize(3);
-	m_index.resize(4);
+	m_channel.resize(3);
 	m_type.resize(3);
 	m_type[0] = ItemType::HeaderPublic;
 	m_type[1] = ItemType::HeaderPrivate;
@@ -173,15 +181,19 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 {
 	int insertIndex = m_header.size();
 
-	if( channel->m_type.compare("O") == 0 )
+	switch( channel->m_type )
 	{
+	case MattermostQt::ChannelPublic:
 		insertIndex = m_header_index[ItemType::HeaderPrivate]++;
 		m_header_index[ItemType::HeaderDirect]++;
-	}
-	else if( channel->m_type.compare("P") == 0 )
+		break;
+	case MattermostQt::ChannelPrivate:
 		insertIndex = m_header_index[ItemType::HeaderDirect]++;
-	else if( channel->m_type.compare("D") == 0 )
-		insertIndex = m_header.size();//m_header_index[ItemType::HeaderDirect] + 1;
+		break;
+	case MattermostQt::ChannelDirect:
+		insertIndex = m_header.size();
+		break;
+	}
 
 	beginInsertRows(QModelIndex(), insertIndex, insertIndex);
 	if(insertIndex == m_header.size())
@@ -190,7 +202,7 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 		m_display_name.append(channel->m_display_name);
 		m_puprose.append(channel->m_purpose);
 		m_type.append(ItemType::Channel);
-		m_index.append( channel->m_self_index);
+		m_channel.append( channel);
 	}
 	else
 	{
@@ -198,7 +210,7 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 		m_display_name.insert(insertIndex,channel->m_display_name);
 		m_puprose.insert(insertIndex,channel->m_purpose);
 		m_type.insert(insertIndex,ItemType::Channel);
-		m_index.insert(insertIndex, channel->m_self_index);
+		m_channel.insert(insertIndex, channel);
 	}
 	endInsertRows();
 }

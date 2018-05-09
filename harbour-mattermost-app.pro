@@ -31,7 +31,8 @@ debug: DEFINES += _DEBUG
 SOURCES += src/harbour-mattermost.cpp \
     src/TeamsModel.cpp \
     src/MattermostQt.cpp \
-    src/ChannelsModel.cpp
+    src/ChannelsModel.cpp \
+    src/MessagesModel.cpp
 
 DISTFILES += qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
@@ -63,4 +64,5 @@ TRANSLATIONS += translations/harbour-mattermost-de.ts \
 HEADERS += \
     src/TeamsModel.h \
     src/MattermostQt.h \
-    src/ChannelsModel.h
+    src/ChannelsModel.h \
+    src/MessagesModel.h

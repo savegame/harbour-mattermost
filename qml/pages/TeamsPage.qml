@@ -79,9 +79,11 @@ Page {
 //            anchors.top: parent.top
             width: parent.width
 
+            VerticalScrollDecorator {}
+
             header: PageHeader {
                 id: pageHeader
-                title: qsTr("Server teams")
+                title: servername
             }
 
             model: teamsmodel
@@ -104,7 +106,9 @@ Page {
                     pageStack.push( Qt.resolvedUrl("ChannelsPage.qml"),
                                    {
                                        context: teamsPage.context,
-                                       teamid: teamsmodel.getTeamId(index)
+                                       teamid: teamsmodel.getTeamId(index),
+                                       server_index: teamsPage.server_index,
+                                       team_index: teamsmodel.getTeamId(index)
                                    } )
                 }
             }

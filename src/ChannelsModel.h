@@ -19,7 +19,9 @@ public:
 		Header,
 		Type,
 		Index,
-		Enabled
+		ServerIndex,
+		TeamIndex,
+		ChannelType,
 	};
 
 	enum ItemType {
@@ -71,7 +73,7 @@ private:
 	QVector<QString> m_display_name;
 	QVector<QString> m_header;
 	QVector<QString> m_puprose;
-	QVector<int>     m_index;
+	QVector<MattermostQt::ChannelPtr> m_channel;
 	QVector<int>     m_type;
 //	QVector<QString> m
 	// indexes of headers
