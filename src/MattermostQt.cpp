@@ -19,6 +19,7 @@
 #define P_SERVER_NAME        "server_name"
 #define P_SERVER_INDEX       "server_index"
 #define P_TEAM_INDEX         "team_index"
+#define P_MESSAGE_INDEX      "message_index"
 #define P_TEAM_ID            "team_id"
 #define P_CHANNEL_INDEX      "channel_id"
 #define P_CHANNEL_TYPE       "channel_type"
@@ -319,6 +320,35 @@ void MattermostQt::get_team(int server_index, int team_index)
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 }
 
+void MattermostQt::get_file_thumbnail(int server_index, int team_index, int channel_type,
+                                      int channel_index, int message_index, QString file_id)
+{
+	// we think all indexes is right
+	ServerPtr sc = m_server[server_index];
+	//files/{file_id}/thumbnail
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/files/")
+	        + file_id
+	        + QLatin1String("/thumbnail");
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_file_thumbnail) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
+	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
+	reply->setProperty(P_MESSAGE_INDEX, QVariant(message_index) );
+}
+
 void MattermostQt::get_user_image(int server_index, QString user_id)
 {
 	Q_UNUSED(server_index)
@@ -430,7 +460,7 @@ void MattermostQt::get_posts(int server_index, int team_index, int channel_index
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_posts) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
-	reply->setProperty(P_CHANNEL_TYPE, QVariant(channel->m_type) );
+	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel->m_type) );
 	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
 }
 
@@ -863,6 +893,10 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 			else
 				message->m_type = MessageOther;
 		}
+		for(int i = 0; i < message->m_file_ids.size(); i++ )
+		{
+
+		}
 		new_messages = true;
 	}
 	if(new_messages)
@@ -1034,6 +1068,35 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 		qDebug() << replyData.data();
 }
 
+void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
+{
+	// we think all indexes right
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int team_index = reply->property(P_TEAM_INDEX).toInt();
+	int channel_type = reply->property(P_CHANNEL_TYPE).toInt();
+	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
+	int message_index = reply->property(P_MESSAGE_INDEX).toInt();
+
+	ServerPtr sc = m_server[server_index];
+	ChannelPtr channel;
+	if(team_index >= 0)
+	{
+		TeamPtr tc = sc->m_teams[team_index];
+		if( channel_type == ChannelType::ChannelPublic )
+			channel = tc->m_public_channels[channel_index];
+		else// if( channel_type == ChannelType::ChannelPublic )
+			channel = tc->m_private_channels[channel_index];
+	}
+	else
+		channel = sc->m_direct_channels[channel_index];
+
+	MessagePtr mc = channel->m_message[message_index];
+
+	QJsonDocument json = QJsonDocument::fromJson(reply);
+	qDebug() << json;
+	return;
+}
+
 void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 {
 	ChannelType type = ChannelType::ChannelTypeCount;
@@ -1196,6 +1259,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 				break;
 			case ReplyType::rt_get_posts:
 				reply_get_posts(reply);
+				break;
+			case ReplyType::rt_get_file_thumbnail:
+				reply_get_file_thumbnail(reply);
 				break;
 			default:
 				qWarning() << "That can't be!";

@@ -23,7 +23,10 @@ public:
 		get_user,
 		rt_get_team,
 		rt_get_teams_unread,
-		rt_get_posts
+		rt_get_posts,
+		rt_get_file_thumbnail,
+		rt_get_file,
+		rt_get_file_mime,
 	};
 
 	enum ConnectionError {
@@ -252,6 +255,8 @@ public:
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
 //	void get_team(int server_index, QString team_id);
 	void get_team(int server_index, int team_index);
+	void get_file_thumbnail(int server_index, int team_index, int channel_type,
+	                        int channel_index, int message_index, QString file_id);
 	Q_INVOKABLE void get_user_image(int server_index, QString user_id);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
