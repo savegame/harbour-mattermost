@@ -1208,6 +1208,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file->m_channel_type = channel_type;
 	file->m_message_index = message_index;
 
+	// TODO Here need save file info to json in file's directory
 	get_file_thumbnail(server_index,file->m_self_sc_index);
 	return;
 }
