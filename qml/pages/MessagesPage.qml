@@ -25,27 +25,30 @@ Page {
 
     SilicaListView {
         anchors.fill:  parent;
-
-
-
-        header: PageHeader {
-            title: "Channel Title"
-        }
-
+        VerticalScrollDecorator {}
         model: messagesmodel
+
+//        onContentHeightChanged: {
+//            scrollToBottom();
+//        }
 
         delegate: BackgroundItem {
             anchors { left:parent.left; right:parent.right; }
             width: messages.width
-//            Text {
-//                id: txt
-//                text: message
-//            }
+            height: item.height + Theme.paddingMedium + Theme.paddingMedium
+            anchors {
+                topMargin: Theme.paddingMedium;
+                bottomMargin: Theme.paddingMedium;
+            }
             MessageLabel {
-                anchors.fill: parent
-                anchors.leftMargin: Theme.paddingMedium
-                anchors.rightMargin: Theme.paddingLarge
+                id: item
+                width: messages.width
+                anchors.verticalCenter: parent.verticalCenter
+                anchors { left:parent.left; right:parent.right; }
+                anchors.leftMargin: Theme.paddingSmall
+                anchors.rightMargin: Theme.paddingSmall
                 text: message
+                myMessage: mymessage
             }
         }
     }

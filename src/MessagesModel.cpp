@@ -20,6 +20,12 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	case MessagesModel::Text:
 		return QVariant(m_messages[index.row()]->m_message);
 		break;
+	case MessagesModel::MineMessage:
+		{
+			QString me = m_mattermost->m_server[m_messages[index.row()]->m_server_index]->m_user_id;
+			return QVariant(m_messages[index.row()]->m_user_id.compare(me) == 0);
+		}
+		break;
 	default:
 		break;
 	}
@@ -30,6 +36,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 {
 	QHash<int, QByteArray> names;
 	names[MessagesModel::Text] = QLatin1String("message").data();
+	names[MessagesModel::MineMessage] = QLatin1String("mymessage").data();
 	return names;
 }
 

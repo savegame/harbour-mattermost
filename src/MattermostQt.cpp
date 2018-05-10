@@ -243,7 +243,7 @@ void MattermostQt::get_public_channels(int server_index, QString team_id)
 	}
 
 	TeamPtr tc = sc->m_teams[team_index];
-	if( tc->m_private_channels.size() + tc->m_public_channels.size() + sc->m_direct_channels.size() > 0 )
+	if( tc->m_private_channels.size() + tc->m_public_channels.size() > 0 )
 	{
 		QList<ChannelPtr> channels;
 
@@ -841,7 +841,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 	qDebug() << json;
 
 	QJsonArray order = json.object()["order"].toArray();
-	qDebug() << order;
+//	qDebug() << order;
 	QJsonObject posts = json.object()["posts"].toObject();
 	QJsonObject::iterator it = posts.begin(),
 	        end = posts.end();
@@ -862,7 +862,25 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 		new_messages = true;
 	}
 	if(new_messages)
+	{
+		QVector<MessagePtr> sort_messages;
+		for(int i = 0, j2 = channel->m_message.size() - 1; i < order.size(); i++, j2 = channel->m_message.size() - 1 - i)
+		{
+			QString id = order[i].toString();
+			for(int j = channel->m_message.size() - i - 1; j >= 0  ; j--)
+			{
+				if( channel->m_message[j]->m_id.compare(id) == 0 )
+				{
+					MessagePtr temp;
+					temp = channel->m_message[j];
+					channel->m_message[j] = channel->m_message[j2];
+					channel->m_message[j2] = temp;
+					break;
+				}
+			}
+		}
 		emit messagesAdded(channel);
+	}
 }
 
 void MattermostQt::reply_get_public_channels(QNetworkReply *reply)

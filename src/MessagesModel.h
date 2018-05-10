@@ -17,7 +17,7 @@ class MessagesModel : public QAbstractListModel
 
 	enum DataRoles : int {
 		Text = Qt::UserRole,
-		UserID
+		MineMessage //if it mine message
 	};
 
 public:

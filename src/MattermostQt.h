@@ -14,8 +14,7 @@ class MattermostQt : public QObject
 {
 	Q_OBJECT
 
-//	Q_PROPERTY(int serverState READ get_server_state NOTIFY serverStateChanged)
-//	Q_PROPERTY(type name READ name WRITE setName NOTIFY nameChanged)
+	friend class MessagesModel;
 public:
 	enum ReplyType : int {
 		Login,
