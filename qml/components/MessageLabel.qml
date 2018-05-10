@@ -6,11 +6,11 @@ Item {
     property string text
     property bool myMessage
     property int message_type: 0
-    height: tmessage.height + Theme.paddingSmall + Theme.paddingSmall
+    height: tmessage.height + Theme.paddingSmall
 
     Rectangle {
-        color: Theme.secondaryColor
-        opacity: 0.1;
+        color: Theme.highlightBackground
+        opacity: 0.08;
         anchors.fill: parent
         radius: 6.0
     }//Rectangle
@@ -18,14 +18,14 @@ Item {
     Row {
         anchors.fill: parent
         height: tmessage.height
-        y: messageitem.y + Theme.paddingSmall;
         anchors {
-            topMargin: Theme.paddingSmall;
-            bottomMargin: Theme.paddingSmall;
+            topMargin: Theme.paddingSmall * 0.5;
+            bottomMargin: topMargin;
             leftMargin: Theme.paddingSmall;
-            rightMargin: Theme.paddingSmall;
+            rightMargin: leftMargin;
             verticalCenter: messageitem.verticalCenter
         }//anchors
+        y: messageitem.y + anchors.topMargin;
 
         Label {
             id: tmessage

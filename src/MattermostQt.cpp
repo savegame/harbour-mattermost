@@ -732,7 +732,7 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 				TeamPtr tc(new TeamContainer(object) );
 				tc->m_server_index = serverId;
 				tc->m_self_index = m_server[serverId]->m_teams.size();
-				m_server[serverId]->m_teams << tc;
+				m_server[serverId]->m_teams.append(tc);
 				emit teamAdded(tc);
 			}
 			else
@@ -885,6 +885,8 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 
 void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 {
+	ServerPtr sc;
+	TeamPtr tc;
 //"id": "string",
 //"create_at": 0,
 //"update_at": 0,
@@ -907,28 +909,34 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 			{
 				QJsonObject object = array.at(i).toObject();
 				ChannelPtr ct( new ChannelContainer(object) );
+
 				// TODO not much secure, need test all parameters
-				ct->m_team_index = reply->property(P_TEAM_INDEX).toInt();
 				ct->m_server_index = reply->property(P_SERVER_INDEX).toInt();
-				TeamPtr tc = m_server[ct->m_server_index]->m_teams[ct->m_team_index];
+				sc = m_server[ct->m_server_index];
+
 				switch( ct->m_type )
 				{
 				// open channels
 				case MattermostQt::ChannelPublic:
+					ct->m_team_index = reply->property(P_TEAM_INDEX).toInt();
+					tc = sc->m_teams[ct->m_team_index];
 					ct->m_self_index = tc->m_public_channels.size();
-					tc->m_public_channels << ct;
+					tc->m_public_channels.append(ct);
 					emit channelAdded(ct);
 					break;
 				// private channels
 				case MattermostQt::ChannelPrivate:
+					ct->m_team_index = reply->property(P_TEAM_INDEX).toInt();
+					tc = sc->m_teams[ct->m_team_index];
 					ct->m_self_index = tc->m_private_channels.size();
-					tc->m_private_channels << ct;
+					tc->m_private_channels.append(ct);
 					emit channelAdded(ct);
 					break;
 				// direct channel
 				case MattermostQt::ChannelDirect:
+					ct->m_team_index = -1;
 					ct->m_self_index = m_server[ct->m_server_index]->m_direct_channels.size();
-					m_server[ct->m_server_index]->m_direct_channels << ct;
+					m_server[ct->m_server_index]->m_direct_channels.append(ct);
 					prepare_direct_channel(ct->m_server_index, ct->m_team_index, ct->m_self_index);
 					break;
 				}

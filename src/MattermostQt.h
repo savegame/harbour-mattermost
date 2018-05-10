@@ -213,7 +213,7 @@ public:
 		QSharedPointer<QWebSocket>  m_socket;/**< websocket connection */
 		QString                     m_user_id;/**< user id */
 		int                         m_self_index; /**< server index in QVector */
-		QList<TeamPtr>              m_teams; /**< allowed teams */
+		QVector<TeamPtr>            m_teams; /**< allowed teams */
 		int                         m_state; /**< server state (from WebSocket) */
 		QString                     m_config_path; /**< local config path */
 		QVector<UserPtr>            m_user;/**< list of users by theirs id's */

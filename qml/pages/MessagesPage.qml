@@ -12,6 +12,7 @@ Page {
     property int team_index
     property int channel_index
     property int channel_type
+    property string display_name
 
     property MessagesModel messagesmodel: MessagesModel {
         mattermost: context.mattermost
@@ -23,8 +24,29 @@ Page {
         }
     }
 
+    Rectangle {
+        id: headerrect
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.15) }
+            GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
+        }
+        implicitHeight: Theme.itemSizeSmall + Theme.paddingSmall + Theme.paddingSmall
+        Label {
+            anchors.fill: parent
+            anchors.leftMargin: Theme.paddingLarge
+            anchors.rightMargin: Theme.paddingLarge
+            anchors.verticalCenter: parent.verticalCenter
+            text: display_name
+        }
+    }
+
     SilicaListView {
-        anchors.fill:  parent;
+        anchors{
+            left: parent.left;
+            right: parent.right;
+            top: headerrect.bottom
+            bottom: parent.bottom
+        }
         VerticalScrollDecorator {}
         model: messagesmodel
 

@@ -108,7 +108,8 @@ Page {
                                        context: teamsPage.context,
                                        teamid: teamsmodel.getTeamId(index),
                                        server_index: teamsPage.server_index,
-                                       team_index: teamsmodel.getTeamId(index)
+                                       team_index: teamsmodel.getTeamIndex(index),
+                                       display_name: teamlabel.name
                                    } )
                 }
             }

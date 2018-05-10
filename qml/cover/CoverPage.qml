@@ -81,6 +81,7 @@ CoverBackground {
         id: label
         anchors.centerIn: parent
         text: status_text
+        font.pixelSize: Theme.fontSizeLarge
     }
     Label {
         id: error_label
