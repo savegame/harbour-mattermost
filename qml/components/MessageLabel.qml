@@ -11,8 +11,11 @@ Item {
 
     property string text
     property int message_type: MattermostQt.MessageTypeCount
+    property int files_count: 0
+    property int row_index: 0
+    property MessagesModel messagesmodel
 
-    height: tmessage.height + Theme.paddingSmall
+    height: tmessage.height + Theme.paddingSmall + image.height * image.scale
 
     property double margin_left: Theme.paddingLarge * 2
     property double margin_right: Theme.paddingMedium
@@ -27,6 +30,13 @@ Item {
             margin_right = Theme.paddingMedium
         }
     }
+
+//    Component {
+//        id: thumblist
+//        Column {
+
+//        }
+//    }
 
     BackgroundItem{
         id: bgitem
@@ -50,10 +60,10 @@ Item {
             }
             height: tmessage.height
             anchors {
-                topMargin: Theme.paddingSmall * 0.5;
-                bottomMargin: Theme.paddingSmall * 0.5;
-                leftMargin: Theme.paddingSmall;
-                rightMargin: Theme.paddingSmall;
+//                topMargin: Theme.paddingSmall * 0.5;
+//                bottomMargin: Theme.paddingSmall * 0.5;
+//                leftMargin: Theme.paddingSmall;
+//                rightMargin: Theme.paddingSmall;
                 verticalCenter: bgrect.verticalCenter
             }//anchors
             //y: messageitem.y + anchors.topMargin;
@@ -61,7 +71,7 @@ Item {
             Label {
                 id: tmessage
                 text: messageitem.text
-                width: bgrect.width
+                width: bgrect.width - Theme.paddingSmall - Theme.paddingSmall
     //            anchors.verticalCenter: messageitem.verticalCenter
                 font.family: Theme.fontFamily
                 font.pixelSize: message_type !== messagetype_system ? Theme.fontSizeMedium : Theme.fontSizeSmall
@@ -70,5 +80,25 @@ Item {
                 wrapMode: Text.Wrap
             }//Label
         }//Row
+
+        Image {
+            id: image
+            anchors{
+                right: bgrect.right
+                left: bgrect.left
+            }
+            anchors {
+                topMargin: Theme.paddingSmall * 0.5;
+                bottomMargin: Theme.paddingSmall * 0.5;
+                leftMargin: Theme.paddingSmall * 0.5;
+                rightMargin: Theme.paddingSmall * 0.5;
+                verticalCenter: bgrect.verticalCenter
+            }//anchors
+            visible: files_count > 0
+            fillMode: Image.PreserveAspectFit
+            scale: 2
+            width: bgrect.width - Theme.paddingSmall - Theme.paddingSmall
+            source: messagesmodel.getThumbPath(row_index,0)
+        }
     }
 }

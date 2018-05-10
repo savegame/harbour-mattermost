@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QSize>
 #include <QUrl>
 #include <QMap>
 #include <QTimer>
@@ -26,13 +27,20 @@ public:
 		rt_get_posts,
 		rt_get_file_thumbnail,
 		rt_get_file,
-		rt_get_file_mime,
+		rt_get_file_info,
 	};
 
 	enum ConnectionError {
 		WrongPassword,
 		SslError
 	};
+
+	enum FileType {
+		FileUnknown,
+		FileDocument,
+		FileImage,
+	};
+	Q_ENUMS(FileType)
 
 	enum ChannelType : int {
 		ChannelPublic,   // "O"
@@ -57,9 +65,37 @@ public:
 	};
 	Q_ENUMS(ServerState)
 
+	/**
+	 * @brief The FileContainer struct
+	 * all files list stored in serverptr
+	 */
 	struct FileContainer {
+		FileContainer() {}
+
+		FileContainer(QJsonObject object);
+
+		// file info
 		QString m_id;
+		QString m_post_id; // message id
+		QString m_user_id;
+		bool m_has_preview_image;
 		QString m_name;
+		QString m_extension;
+		QString m_mime_type;
+		qlonglong m_file_size;
+		FileType m_file_type;
+		// if it image
+		QSize   m_image_size;
+		QString m_thumb_path;
+
+		int m_server_index;
+		int m_team_index;
+		int m_channel_type;
+		int m_channel_index;
+		int m_message_index; // post index
+		int m_self_index; // in message files list
+		int m_self_sc_index; // in server files list
+//		MessagePtr m_message;// test
 	};
 	typedef QSharedPointer<FileContainer> FilePtr;
 
@@ -80,11 +116,14 @@ public:
 		QString          m_user_id;
 
 		// inside types
+		QVector<FilePtr>     m_file;
 		ChannelType      m_channel_type;
 		int              m_server_index;
 		int              m_team_index;
 		int              m_channel_index;
 		int              m_self_index;
+
+//		ChannelPtr       m_channel;// test
 	};
 	typedef QSharedPointer<MessageContainer> MessagePtr;
 
@@ -235,6 +274,7 @@ public:
 		bool                        m_trust_cert; /**< trust self signed certificate */
 		QString                     m_ca_cert_path;
 		QString                     m_cert_path;
+		QVector<FilePtr>            m_file;
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -255,8 +295,11 @@ public:
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
 //	void get_team(int server_index, QString team_id);
 	void get_team(int server_index, int team_index);
-	void get_file_thumbnail(int server_index, int team_index, int channel_type,
-	                        int channel_index, int message_index, QString file_id);
+	void get_file_thumbnail(int server_index, int file_sc_index);
+//	void get_file_thumbnail(int server_index, int team_index, int channel_type,
+//	                        int channel_index, int message_index, QString file_id);
+	Q_INVOKABLE void get_file_info(int server_index, int team_index, int channel_type,
+	                   int channel_index, int message_index, QString file_id);
 	Q_INVOKABLE void get_user_image(int server_index, QString user_id);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
@@ -277,6 +320,7 @@ Q_SIGNALS:
 	void teamUnread(QString team_id, int msg, int mention);
 	void messagesAdded(ChannelPtr channel);
 	void messageAdded(QList<MessagePtr> messages);
+	void messageUpdated(QList<MessagePtr> messages);
 protected:
 	/**
 	 * @brief prepare_direct_channel
@@ -298,6 +342,8 @@ protected:
 	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_get_user(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
+	void reply_get_file_thumbnail(QNetworkReply *reply);
+	void reply_get_file_info(QNetworkReply *reply);
 
 	void event_posted(ServerPtr sc, QJsonObject data);
 

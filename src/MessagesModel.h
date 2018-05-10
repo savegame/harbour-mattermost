@@ -17,7 +17,11 @@ class MessagesModel : public QAbstractListModel
 
 	enum DataRoles : int {
 		Text = Qt::UserRole,
-		Type //if it mine message
+		Type,
+		FilesCount,
+		Thumbinal,
+		FileIcon,
+		RowIndex
 	};
 
 public:
@@ -34,9 +38,13 @@ public:
 	void setMattermost(MattermostQt *mattermost);
 	MattermostQt *getMattermost() const;
 
+	Q_INVOKABLE int getFileType(int row, int i) const;
+	Q_INVOKABLE QString getThumbPath(int row, int i) const;
+
 protected slots:
 	void slot_messagesAdded(MattermostQt::ChannelPtr channel);
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);
+	void slot_messageUpdated(QList<MattermostQt::MessagePtr> messages);
 private:
 	QString                            m_channel_id;
 	QVector<MattermostQt::MessagePtr>  m_messages;

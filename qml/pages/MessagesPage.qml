@@ -90,6 +90,9 @@ Page {
                 anchors.rightMargin: Theme.paddingSmall
                 text: message
                 message_type: type
+                files_count: filescount
+                messagesmodel: messages.messagesmodel
+                row_index: rowindex
             }
         }
     }

@@ -23,8 +23,17 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::Type:
 		{
-			//QString me = m_mattermost->m_server[m_messages[index.row()]->m_server_index]->m_user_id;
 			return QVariant( (int)m_messages[index.row()]->m_type );
+		}
+		break;
+	case MessagesModel::FilesCount:
+		{
+			return QVariant( (int)m_messages[index.row()]->m_file.size() );
+		}
+		break;
+	case MessagesModel::RowIndex:
+		{
+			return QVariant( (int)index.row() );
 		}
 		break;
 	default:
@@ -38,6 +47,9 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	QHash<int, QByteArray> names;
 	names[MessagesModel::Text] = QLatin1String("message").data();
 	names[MessagesModel::Type] = QLatin1String("type").data();
+	names[MessagesModel::FilesCount] = QLatin1String("filescount").data();
+	names[MessagesModel::RowIndex] = QLatin1String("rowindex").data();
+//	names[MessagesModel::FileIcon] = QLatin1String("fileicon").data();
 	return names;
 }
 
@@ -56,11 +68,27 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 	        this, &MessagesModel::slot_messagesAdded );
 	connect(m_mattermost.data(), &MattermostQt::messageAdded,
 	        this, &MessagesModel::slot_messageAdded );
+	connect(m_mattermost.data(), &MattermostQt::messageUpdated,
+	        this, &MessagesModel::slot_messageUpdated );
 }
 
 MattermostQt *MessagesModel::getMattermost() const
 {
 	return m_mattermost;
+}
+
+int MessagesModel::getFileType(int row,int i) const
+{
+	if(row < 0 || i < 0 || row > m_messages.size() || i > m_messages[row]->m_file.size() )
+		return (int)MattermostQt::FileUnknown;
+	return (int)m_messages[row]->m_file[i]->m_file_type;
+}
+
+QString MessagesModel::getThumbPath(int row,int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return "";//add path for bad thumb
+	return m_messages[row]->m_file[i]->m_thumb_path;
 }
 
 void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
@@ -86,4 +114,10 @@ void MessagesModel::slot_messageAdded(QList<MattermostQt::MessagePtr> messages)
 		m_messages.append(message);
 	}
 	endInsertRows();
+}
+
+void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages)
+{
+	beginResetModel();
+	endResetModel();
 }
