@@ -318,6 +318,8 @@ void MattermostQt::get_team(int server_index, int team_index)
 
 void MattermostQt::get_user_image(int server_index, QString user_id)
 {
+	Q_UNUSED(server_index)
+	Q_UNUSED(user_id)
 	// TODO
 }
 
@@ -492,7 +494,7 @@ bool MattermostQt::save_settings()
 					server_dir.mkpath(server_dir_path);
 				}
 				QString new_ca_path = server_dir_path + QString("/ca.crt");
-				if( QFile::copy(sc->m_ca_cert_path , new_ca_path) );
+				if( QFile::copy(sc->m_ca_cert_path , new_ca_path) )
 				    sc->m_ca_cert_path = new_ca_path;
 //				QFile save_cert( new_ca_path );
 //				save_cert.open(QIODevice::WriteOnly);
@@ -503,7 +505,7 @@ bool MattermostQt::save_settings()
 //			if( cert_file.open(QIODevice::ReadOnly) )
 //			{
 				QString new_cert_path = server_dir_path + QString("/server.crt");
-				if( QFile::copy(sc->m_ca_cert_path , new_cert_path) );
+				if( QFile::copy(sc->m_ca_cert_path , new_cert_path) )
 				    sc->m_cert_path = new_cert_path;
 //				QFile save_cert( new_cert_path );
 //				save_cert.open(QIODevice::WriteOnly);
@@ -579,6 +581,7 @@ bool MattermostQt::load_settings()
 		m_server.append(server);
 		get_login(server);
 	}
+	return true;
 }
 
 void MattermostQt::prepare_direct_channel(int server_index, int team_index, int channel_index)
@@ -774,6 +777,7 @@ void MattermostQt::reply_get_teams_unread(QNetworkReply *reply)
 {
 	bool is_ok;
 	int server_index = reply->property(P_SERVER_INDEX).toInt(&is_ok);
+	Q_UNUSED(server_index)
 	if(!is_ok)
 		return;
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
@@ -1266,20 +1270,21 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	}
 	else comare(posted)
 	{
-		ChannelType type;
+		ChannelType type = ChannelType::ChannelTypeCount;
 		QString ch_type = data["channel_type"].toString();
 
 		if( cmp(ch_type,O) )
-			type = ChannelPublic;
+			type = ChannelType::ChannelPublic;
 		else if( cmp(ch_type,P) )
-			type = ChannelPrivate;
+			type = ChannelType::ChannelPrivate;
 		else if( cmp(ch_type,D) )
-			type = ChannelDirect;
-		if( type == ChannelDirect )
+			type = ChannelType::ChannelDirect;
+
+		if( type == ChannelType::ChannelDirect )
 		{
 			QString channel_name = data["channel_name"].toString();
 			ChannelPtr channel;
-			int channel_index;
+			int channel_index = -1;
 			for(int i = 0; i < sc->m_direct_channels.size(); i++ )
 			{
 				if( scmp(sc->m_direct_channels[i]->m_name,channel_name) )
@@ -1289,7 +1294,7 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 					break;
 				}
 			}
-			if( channel )
+			if( channel && channel_index >= 0)
 			{
 				QJsonObject post = data["post"].toObject();
 				if( post.isEmpty() )

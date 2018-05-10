@@ -13,7 +13,7 @@ class MessagesModel : public QAbstractListModel
 {
 	Q_OBJECT
 
-	Q_PROPERTY(MattermostQt *mattermost WRITE setMattermost)
+	Q_PROPERTY(MattermostQt *mattermost READ getMattermost WRITE setMattermost)
 
 	enum DataRoles : int {
 		Text = Qt::UserRole,
@@ -32,6 +32,8 @@ public:
 	Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 	void setMattermost(MattermostQt *mattermost);
+	MattermostQt *getMattermost() const;
+
 protected slots:
 	void slot_messagesAdded(MattermostQt::ChannelPtr channel);
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);

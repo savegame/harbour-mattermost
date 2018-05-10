@@ -8,6 +8,7 @@ MessagesModel::MessagesModel(QObject *parent)
 
 int MessagesModel::rowCount(const QModelIndex &parent) const
 {
+	Q_UNUSED(parent)
 	return m_messages.size();
 }
 
@@ -42,6 +43,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 
 Qt::ItemFlags MessagesModel::flags(const QModelIndex &index) const
 {
+	Q_UNUSED(index)
 //	if (!index.isValid())
 //		return Qt::NoItemFlags;
 	return Qt::ItemIsEnabled; // FIXME: Implement me!
@@ -54,6 +56,11 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 	        this, &MessagesModel::slot_messagesAdded );
 	connect(m_mattermost.data(), &MattermostQt::messageAdded,
 	        this, &MessagesModel::slot_messageAdded );
+}
+
+MattermostQt *MessagesModel::getMattermost() const
+{
+	return m_mattermost;
 }
 
 void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)

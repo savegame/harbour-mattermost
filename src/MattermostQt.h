@@ -34,7 +34,8 @@ public:
 	enum ChannelType : int {
 		ChannelPublic,   // "O"
 		ChannelPrivate,// "P"
-		ChannelDirect  // "D"
+		ChannelDirect,  // "D"
+		ChannelTypeCount
 	};
 	Q_ENUMS(ChannelType)
 

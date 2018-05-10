@@ -35,6 +35,7 @@ ChannelsModel::ChannelsModel(QObject *parent)
 
 int ChannelsModel::rowCount(const QModelIndex &parent) const
 {
+	Q_UNUSED(parent)
 	// For list models only the root node (an invalid parent) should return the list's size. For all
 	// other (valid) parents, rowCount() should return 0 so that it does not become a tree model.
 //	if (!parent.isValid())
@@ -192,6 +193,9 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 		break;
 	case MattermostQt::ChannelDirect:
 		insertIndex = m_header.size();
+		break;
+//	case MattermostQt::ChannelTypeCount:
+	default:
 		break;
 	}
 
