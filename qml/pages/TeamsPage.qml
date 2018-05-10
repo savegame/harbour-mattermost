@@ -109,7 +109,7 @@ Page {
                                        teamid: teamsmodel.getTeamId(index),
                                        server_index: teamsPage.server_index,
                                        team_index: teamsmodel.getTeamIndex(index),
-                                       display_name: teamlabel.name
+                                       team_label: teamlabel.name
                                    } )
                 }
             }

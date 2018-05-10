@@ -17,13 +17,6 @@
     </message>
 </context>
 <context>
-    <name>ChannelsPage</name>
-    <message>
-        <source>Channels</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>CoverPage</name>
     <message>
         <source>Connecting</source>

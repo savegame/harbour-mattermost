@@ -24,19 +24,38 @@ Page {
         }
     }
 
-    Rectangle {
-        id: headerrect
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.15) }
-            GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
+    BackgroundItem {
+        id: headitem
+        height: background.height
+        anchors {
+            left: messages.left
+            right: messages.right
+            top: messages.top
         }
-        implicitHeight: Theme.itemSizeSmall + Theme.paddingSmall + Theme.paddingSmall
+
+        Rectangle {
+            id: background
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.15) }
+                GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
+            }
+            implicitHeight: Theme.itemSizeSmall + Theme.paddingMedium
+        }
+
         Label {
-            anchors.fill: parent
+            anchors{
+                right: parent.right
+                left: parent.left
+            }
             anchors.leftMargin: Theme.paddingLarge
             anchors.rightMargin: Theme.paddingLarge
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: background.verticalCenter
             text: display_name
+            font.pixelSize: Theme.fontSizeLarge
+            elide: Text.ElideRight
         }
     }
 
@@ -44,7 +63,7 @@ Page {
         anchors{
             left: parent.left;
             right: parent.right;
-            top: headerrect.bottom
+            top: headitem.bottom
             bottom: parent.bottom
         }
         VerticalScrollDecorator {}
@@ -70,7 +89,7 @@ Page {
                 anchors.leftMargin: Theme.paddingSmall
                 anchors.rightMargin: Theme.paddingSmall
                 text: message
-                myMessage: mymessage
+                message_type: type
             }
         }
     }

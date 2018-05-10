@@ -12,6 +12,7 @@ Page {
     property int server_index
     property int team_index
     property string teamid
+    property string team_label
 
     property int ct_public: MattermostQt.ChannelPublic
     property int ct_private: MattermostQt.ChannelPrivate
@@ -45,7 +46,7 @@ Page {
 
             header: PageHeader {
                 id: pageheader
-                title: qsTr("Channels")
+                title: team_label
             }
 
             delegate: BackgroundItem {
@@ -59,7 +60,7 @@ Page {
                         property: "height"
                         easing.type: Easing.OutQuad
                         from: 0
-                        to: col.height;
+                        to: channellabel.height;
                         duration: panim.dur
                     }
                     NumberAnimation {
@@ -72,9 +73,9 @@ Page {
                     }
                 }
                 width: parent.width
-                height: col.height
+                height: channellabel.height
                 ChannelLabel {
-                    id: col
+                    id: channellabel
                     _display_name: m_display_name
                     _purpose: m_purpose
                     _header: m_header
@@ -94,8 +95,9 @@ Page {
                                     context: channelspage.context,
                                     team_index: channelspage.team_index,
                                     server_index: channelspage.server_index,
-                                    channel_index: col._index,
-                                    channel_type: col.channelType
+                                    channel_index: channellabel._index,
+                                    channel_type: channellabel.channelType,
+                                    display_name: channellabel._display_name
                                 } );
                     pageStack.navigateForward(PageStackAction.Animated);
                 }

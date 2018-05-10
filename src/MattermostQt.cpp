@@ -30,6 +30,9 @@
 
 #define F_CONFIG_FILE       "config.json"
 
+#define cmp(s,t) s.compare(#t) == 0
+#define scmp(s1,s2) s1.compare(s2) == 0
+#define comare(string) if( cmp(event,string) )
 
 #define requset_set_headers(requset, server) \
 	request.setHeader(QNetworkRequest::ServerHeader, "application/json"); \
@@ -325,7 +328,7 @@ void MattermostQt::get_user_image(int server_index, QString user_id)
 
 void MattermostQt::get_user_info(int server_index, QString userId, int team_index)
 {
-	bool direct_channel = (team_index >= 0);
+	bool direct_channel = (bool)(team_index == -1);
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	ServerPtr sc = m_server[server_index];
@@ -358,16 +361,6 @@ void MattermostQt::get_teams_unread(int server_index)
 		return;
 	get_teams_unread(m_server[server_index]);
 }
-
-//void MattermostQt::get_posts(int server_index, int team_index,  QString channel_id)
-//{
-//	if( server_index < 0 || server_index >= m_server.size() )
-//		return;
-//	ServerPtr sc = m_server[server_index];
-//	if( team_index < 0 || team_index >= sc->m_teams.size() )
-//		return;
-//	TeamPtr tc =  sc->m_teams[server_index];
-//}
 
 void MattermostQt::get_posts(int server_index, int team_index, int channel_index, int channel_type )
 {
@@ -815,7 +808,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 	ServerPtr sc = m_server[server_index];
 	if( team_index < 0 || team_index >= sc->m_teams.size() )
 		return;
-	TeamPtr tc =  sc->m_teams[server_index];
+	TeamPtr tc =  sc->m_teams[team_index];
 	ChannelPtr channel;
 //	ChannelType channelType;
 	if( channel_type == ChannelPublic )
@@ -863,6 +856,13 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 		message->m_channel_index = channel->m_self_index;
 		message->m_self_index = channel->m_message.size();
 		channel->m_message.append(message);
+		if(message->m_type == MessageType::MessageTypeCount)
+		{
+			if(message->m_user_id.compare(sc->m_user_id) == 0 )
+				message->m_type = MessageMine;
+			else
+				message->m_type = MessageOther;
+		}
 		new_messages = true;
 	}
 	if(new_messages)
@@ -916,6 +916,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 
 				// TODO not much secure, need test all parameters
 				ct->m_server_index = reply->property(P_SERVER_INDEX).toInt();
+				sc.reset();
 				sc = m_server[ct->m_server_index];
 
 				switch( ct->m_type )
@@ -923,6 +924,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 				// open channels
 				case MattermostQt::ChannelPublic:
 					ct->m_team_index = reply->property(P_TEAM_INDEX).toInt();
+					tc.reset();
 					tc = sc->m_teams[ct->m_team_index];
 					ct->m_self_index = tc->m_public_channels.size();
 					tc->m_public_channels.append(ct);
@@ -931,6 +933,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 				// private channels
 				case MattermostQt::ChannelPrivate:
 					ct->m_team_index = reply->property(P_TEAM_INDEX).toInt();
+					tc.reset();
 					tc = sc->m_teams[ct->m_team_index];
 					ct->m_self_index = tc->m_private_channels.size();
 					tc->m_private_channels.append(ct);
@@ -942,6 +945,8 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 					ct->m_self_index = m_server[ct->m_server_index]->m_direct_channels.size();
 					m_server[ct->m_server_index]->m_direct_channels.append(ct);
 					prepare_direct_channel(ct->m_server_index, ct->m_team_index, ct->m_self_index);
+					break;
+				default:
 					break;
 				}
 			}
@@ -993,10 +998,8 @@ void MattermostQt::reply_get_user(QNetworkReply *reply)
 		sc->m_user.append(user);
 	}
 
-	if(direct_channel && team_index >= 0)
+	if(direct_channel && team_index == -1)
 	{
-		TeamPtr tc = sc->m_teams[team_index];
-
 		for(int i = 0; i < sc->m_direct_channels.size(); i++)
 		{
 			ChannelPtr channel = sc->m_direct_channels[i];
@@ -1029,6 +1032,129 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 	}
 	else if ( replyData.size() > 0 )
 		qDebug() << replyData.data();
+}
+
+void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
+{
+	ChannelType type = ChannelType::ChannelTypeCount;
+	QString ch_type = data["channel_type"].toString();
+
+	QJsonObject post = data["post"].toObject();
+	if( post.isEmpty() )
+	{
+		QJsonValue value = data.value("post");
+		if( value.type() == QJsonValue::String )
+		{
+			QString s = value.toString();
+			QJsonDocument j = QJsonDocument::fromJson( s.toUtf8() );
+			post = j.object();
+			if(post.isEmpty())
+				return;
+		}
+		else
+			return;
+	}
+	MessagePtr message( new MessageContainer(post) );
+	if(!message)
+		return;
+
+	if( cmp(ch_type,O) )
+		type = ChannelType::ChannelPublic;
+	else if( cmp(ch_type,P) )
+		type = ChannelType::ChannelPrivate;
+	else if( cmp(ch_type,D) )
+		type = ChannelType::ChannelDirect;
+
+	if( type == ChannelType::ChannelDirect )
+	{
+		QString channel_name = data["channel_name"].toString();
+		ChannelPtr channel;
+		int channel_index = -1;
+		for(int i = 0; i < sc->m_direct_channels.size(); i++ )
+		{
+			if( scmp(sc->m_direct_channels[i]->m_name,channel_name) )
+			{
+				channel = sc->m_direct_channels[i];
+				channel_index = i;
+				break;
+			}
+		}
+		if( channel && channel_index >= 0)
+		{
+			message->m_channel_type  = channel->m_type;
+			message->m_channel_id = channel->m_id;
+			message->m_server_index  = sc->m_self_index;
+			message->m_team_index    = -1;
+			message->m_channel_index = channel_index;
+			message->m_self_index    = channel->m_message.size();
+			channel->m_message.append(message);
+			if(message->m_type == MessageType::MessageTypeCount)
+			{
+				if(message->m_user_id.compare(sc->m_user_id) == 0 )
+					message->m_type = MessageMine;
+				else
+					message->m_type = MessageOther;
+			}
+			QList<MessagePtr> new_messages;
+			new_messages << message;
+			emit messageAdded(new_messages);
+		}
+	}
+	else
+	{
+		QString team_id = data["team_id"].toString();
+		QString channel_id = message->m_channel_id;
+		ChannelPtr channel;
+		int channel_index = -1;
+
+		for(int i = 0; i < sc->m_teams.size(); i++ )
+		{
+			if( scmp(sc->m_teams[i]->m_id,team_id) )
+			{
+				TeamPtr tc = sc->m_teams[i];
+				QVector<ChannelPtr> *channels;
+				if( type == ChannelType::ChannelPublic )
+					channels = &tc->m_public_channels;
+				else if( type == ChannelType::ChannelPrivate )
+					channels = &tc->m_private_channels;
+				if(!channels)
+				{
+					qWarning() << "Wrong channel type" << type;
+					return;
+				}
+				for(int j = 0; j < channels->size(); j++ )
+				{
+					if( channels->at(j)->m_id.compare(channel_id) == 0 )
+					{
+						channel = channels->at(j);
+						channel_index = j;
+						break;
+					}
+				}
+				break;
+			}
+		}
+		if( channel && channel_index >= 0)
+		{
+			// TODO refactoring, move all creation parameters to constructor
+			message->m_channel_type  = channel->m_type;
+			message->m_server_index  = sc->m_self_index;
+			message->m_team_index    = -1;
+			message->m_channel_index = channel_index;
+			message->m_self_index    = channel->m_message.size();
+			channel->m_message.append(message);
+			if(message->m_type == MessageType::MessageTypeCount)
+			{
+				if(message->m_user_id.compare(sc->m_user_id) == 0 )
+					message->m_type = MessageMine;
+				else
+					message->m_type = MessageOther;
+			}
+			QList<MessagePtr> new_messages;
+			new_messages << message;
+			emit messageAdded(new_messages);
+		}
+	}
 }
 
 void MattermostQt::replyFinished(QNetworkReply *reply)
@@ -1258,9 +1384,6 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	QJsonObject object = json.object();
 	QString event = object["event"].toString();
 	QJsonObject data = object["data"].toObject();
-#define cmp(s,t) s.compare(#t) == 0
-#define scmp(s1,s2) s1.compare(s2) == 0
-#define comare(string) if( cmp(event,string) )
 
 	comare(hello) // that mean we are logged in
 	{
@@ -1269,66 +1392,7 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 		emit serverConnected(sc->m_self_index);
 	}
 	else comare(posted)
-	{
-		ChannelType type = ChannelType::ChannelTypeCount;
-		QString ch_type = data["channel_type"].toString();
-
-		if( cmp(ch_type,O) )
-			type = ChannelType::ChannelPublic;
-		else if( cmp(ch_type,P) )
-			type = ChannelType::ChannelPrivate;
-		else if( cmp(ch_type,D) )
-			type = ChannelType::ChannelDirect;
-
-		if( type == ChannelType::ChannelDirect )
-		{
-			QString channel_name = data["channel_name"].toString();
-			ChannelPtr channel;
-			int channel_index = -1;
-			for(int i = 0; i < sc->m_direct_channels.size(); i++ )
-			{
-				if( scmp(sc->m_direct_channels[i]->m_name,channel_name) )
-				{
-					channel = sc->m_direct_channels[i];
-					channel_index = i;
-					break;
-				}
-			}
-			if( channel && channel_index >= 0)
-			{
-				QJsonObject post = data["post"].toObject();
-				if( post.isEmpty() )
-				{
-					QJsonValue value = data.value("post");
-					if( value.type() == QJsonValue::String )
-					{
-						QString s = value.toString();
-						QJsonDocument j = QJsonDocument::fromJson( s.toUtf8() );
-						post = j.object();
-						if(post.isEmpty())
-							return;
-					}
-					else
-						return;
-				}
-				MessagePtr message( new MessageContainer(post) );
-				message->m_channel_type  = type;
-				message->m_channel_id = channel->m_id;
-				message->m_server_index  = sc->m_self_index;
-				message->m_team_index    = -1;
-				message->m_channel_index = channel_index;
-				message->m_self_index    = channel->m_message.size();
-				channel->m_message.append(message);
-				QList<MessagePtr> new_messages;
-				new_messages << message;
-				emit messageAdded(new_messages);
-			}
-			else // new channel?
-			{
-				// send requset for channel
-			}
-		}
-	}
+	    event_posted(sc,data);
 	else
 	    qWarning() << event;
 //typing
@@ -1510,9 +1574,13 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 	m_id = object["id"].toString();
 	m_channel_id = object["channel_id"].toString();
 	m_message = object["message"].toString();
-	m_type = object["type"].toString();
+	m_type_string = object["type"].toString();
 	m_user_id = object["user_id"].toString();
-	QString sender_name = object["sender_name"].toString();
+	if( m_type_string.indexOf("system_") >= 0 )
+		m_type = MessageType::MessageSystem;
+	else
+		m_type = MessageType::MessageTypeCount;
+//	QString sender_name = object["sender_name"].toString();
 	QJsonArray filenames = object["filenames"].toArray();
 	QJsonArray file_ids = object["file_ids"].toArray();
 	for(int i = 0; i < filenames.size(); i++ )
@@ -1520,7 +1588,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 	for(int i = 0; i < file_ids.size(); i++ )
 		m_file_ids.append( file_ids.at(i).toString() );
 
-	qDebug() << QString("%0 : %1").arg(sender_name).arg(m_message);
+	qDebug() << QString("%0 : %1").arg(m_user_id).arg(m_message);
 //	QVector<FilePtr> m_file;
 //	QString          m_id;
 //	QString          m_channel_id;

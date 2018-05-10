@@ -39,6 +39,14 @@ public:
 	};
 	Q_ENUMS(ChannelType)
 
+	enum MessageType {
+		MessageSystem,// system message
+		MessageOther ,// when ither posted message
+		MessageMine,  // when message posted by myself
+		MessageTypeCount
+	};
+	Q_ENUMS(MessageType)
+
 	enum ServerState : int {
 		ServerConnected = QAbstractSocket::ConnectedState,
 		ServerConnecting = QAbstractSocket::ConnectingState,
@@ -64,7 +72,8 @@ public:
 		QVector<QString> m_file_ids;
 		QString          m_id;
 		QString          m_channel_id;
-		QString          m_type;
+		QString          m_type_string;
+		MessageType      m_type;
 		QString          m_user_id;
 
 		// inside types
@@ -284,6 +293,8 @@ protected:
 	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_get_user(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
+
+	void event_posted(ServerPtr sc, QJsonObject data);
 
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
