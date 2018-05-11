@@ -1,8 +1,9 @@
-import QtQuick 2.0
+import QtQuick 2.5
 import Sailfish.Silica 1.0
 import "../model"
 import "../components"
 import harbour.sashikknox 1.0
+import QtGraphicalEffects 1.0
 
 Page {
     id: messages
@@ -59,7 +60,25 @@ Page {
         }
     }
 
+    Rectangle {
+        id: mask
+        visible: false
+        anchors{
+            left: parent.left;
+            right: parent.right;
+            top: headitem.bottom
+            bottom: parent.bottom
+        }
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Theme.rgba(0.0,0.0,0.0, 0.3) }
+            GradientStop { position: 0.025; color: Theme.rgba(1.0,1.0,1.0, 1.0) }
+            GradientStop { position: 0.975; color: Theme.rgba(1.0,1.0,1.0, 1.0) }
+            GradientStop { position: 1.0; color: Theme.rgba(0.0,0.0,0.0, 0.3) }
+        }
+    }
+
     SilicaListView {
+        id: listview
         anchors{
             left: parent.left;
             right: parent.right;
@@ -68,10 +87,6 @@ Page {
         }
         VerticalScrollDecorator {}
         model: messagesmodel
-
-//        onContentHeightChanged: {
-//            scrollToBottom();
-//        }
 
         delegate: BackgroundItem {
             anchors { left:parent.left; right:parent.right; }
@@ -95,5 +110,11 @@ Page {
                 row_index: rowindex
             }
         }
+        layer.enabled: true
+        layer.effect: OpacityMask {
+            source: listview
+            maskSource: mask
+        }
     }
+
 }
