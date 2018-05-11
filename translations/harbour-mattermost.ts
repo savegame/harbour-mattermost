@@ -83,6 +83,13 @@
     </message>
 </context>
 <context>
+    <name>MessageEditorBar</name>
+    <message>
+        <source>Message...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <source>Login failed because of invalid password</source>

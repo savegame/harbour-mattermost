@@ -25,57 +25,25 @@ Page {
         }
     }
 
-    BackgroundItem {
-        id: headitem
-        height: background.height
-        anchors {
-            left: messages.left
-            right: messages.right
-            top: messages.top
-        }
-
-        Rectangle {
-            id: background
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.15) }
-                GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
-            }
-            implicitHeight: Theme.itemSizeSmall + Theme.paddingMedium
-        }
-
-        Label {
-            anchors{
-                right: parent.right
-                left: parent.left
-            }
-            anchors.leftMargin: Theme.paddingLarge
-            anchors.rightMargin: Theme.paddingLarge
-            anchors.verticalCenter: background.verticalCenter
-            text: display_name
-            font.pixelSize: Theme.fontSizeLarge
-            elide: Text.ElideRight
-        }
-    }
-
-    Rectangle {
-        id: mask
-        visible: false
-        anchors{
-            left: parent.left;
-            right: parent.right;
-            top: headitem.bottom
-            bottom: parent.bottom
-        }
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.rgba(0.0,0.0,0.0, 0.3) }
-            GradientStop { position: 0.025; color: Theme.rgba(1.0,1.0,1.0, 1.0) }
-            GradientStop { position: 0.975; color: Theme.rgba(1.0,1.0,1.0, 1.0) }
-            GradientStop { position: 1.0; color: Theme.rgba(0.0,0.0,0.0, 0.3) }
-        }
-    }
+    // not looks good, but nice effec,
+    // more good make a shadow gradient
+//    Rectangle {
+//        id: mask
+//        visible: false
+//        anchors{
+//            left: parent.left;
+//            right: parent.right;
+//            top: headitem.bottom
+//            bottom: parent.bottom
+//            topMargin: -Theme.paddingSmall
+//        }
+//        gradient: Gradient {
+//            GradientStop { position: 0.0; color: Theme.rgba(0.0,0.0,0.0, 0.3) }
+//            GradientStop { position: 0.05; color: Theme.rgba(1.0,1.0,1.0, 1.0) }
+//            GradientStop { position: 0.975; color: Theme.rgba(1.0,1.0,1.0, 1.0) }
+//            GradientStop { position: 1.0; color: Theme.rgba(0.0,0.0,0.0, 0.3) }
+//        }
+//    }
 
     SilicaListView {
         id: listview
@@ -83,7 +51,7 @@ Page {
             left: parent.left;
             right: parent.right;
             top: headitem.bottom
-            bottom: parent.bottom
+            bottom: messageeditor.top
         }
         VerticalScrollDecorator {}
         model: messagesmodel
@@ -111,10 +79,59 @@ Page {
             }
         }
         layer.enabled: true
-        layer.effect: OpacityMask {
-            source: listview
-            maskSource: mask
+        // uncomment this too, for gradient hide
+//        layer.effect: OpacityMask {
+//            source: listview
+//            maskSource: mask
+//        }
+    }
+
+    BackgroundItem {
+        id: headitem
+        height: background.height
+        anchors {
+            left: messages.left
+            right: messages.right
+            top: messages.top
+        }
+
+        Rectangle {
+            id: background
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.15) }
+                GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
+            }
+            implicitHeight: Theme.itemSizeSmall + Theme.paddingMedium
+        }
+
+        Row {
+            layoutDirection: Qt.RightToLeft
+            anchors{
+                right: parent.right
+                left: parent.left
+            }
+            anchors.verticalCenter: background.verticalCenter
+            anchors.rightMargin: Theme.paddingLarge
+            anchors.leftMargin: Theme.paddingLarge
+            Label {
+                text: display_name
+                font.pixelSize: Theme.fontSizeLarge
+                elide: Text.ElideRight
+            }// Label
         }
     }
 
+    MessageEditorBar {
+        id: messageeditor
+        context: context
+        implicitHeight: Theme.itemSizeSmall + Theme.paddingMedium
+        anchors {
+                    left: messages.left
+                    right: messages.right
+                    bottom: messages.bottom
+                }
+    }
 }
