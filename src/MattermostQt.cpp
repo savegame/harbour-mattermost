@@ -862,7 +862,7 @@ void MattermostQt::reply_get_teams_unread(QNetworkReply *reply)
 void MattermostQt::reply_get_posts(QNetworkReply *reply)
 {
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
-	int team_index = -1; reply->property(P_TEAM_INDEX).toInt();
+	int team_index = -1; // reply->property(P_TEAM_INDEX).toInt();
 	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
 	int channel_type =reply-> property(P_CHANNEL_TYPE).toInt();
 
@@ -873,7 +873,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 
 	if( channel_type == ChannelPublic )
 	{
-		int team_index = reply->property(P_TEAM_INDEX).toInt();
+		team_index = reply->property(P_TEAM_INDEX).toInt();
 		if( team_index < 0 || team_index >= sc->m_teams.size() )
 			return;
 		TeamPtr tc =  sc->m_teams[team_index];
@@ -883,7 +883,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 	}
 	else if( channel_type == ChannelPrivate)
 	{
-		int team_index = reply->property(P_TEAM_INDEX).toInt();
+		team_index = reply->property(P_TEAM_INDEX).toInt();
 		if( team_index < 0 || team_index >= sc->m_teams.size() )
 			return;
 		TeamPtr tc =  sc->m_teams[team_index];
@@ -949,8 +949,13 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 
 					for(int k = 0; k < temp->m_file_ids.size(); k++ )
 					{
-						get_file_info(server_index,team_index,channel_type,channel_index,
-						                   temp->m_self_index, temp->m_file_ids[k]);
+						get_file_info(
+						            server_index,
+						            team_index,    //temp->m_team_index,
+						            channel_type,  //temp->m_channel_type,
+						            channel_index, //temp->m_channel_index,
+						            temp->m_self_index,
+						            temp->m_file_ids[k]);
 					}
 					break;
 				}
