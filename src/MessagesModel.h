@@ -43,14 +43,18 @@ public:
 	Q_INVOKABLE QSize   getImageSize(int row, int i) const;
 	Q_INVOKABLE QString getFileName(int row, int i) const;
 	Q_INVOKABLE QString getSenderName(int row) const;
+	Q_INVOKABLE bool    atEnd() const;
 //	Q_INVOKABLE int   getImageSize(int row, int i) const;
 
+Q_SIGNALS:
+	void messagesInitialized();
 protected slots:
 	void slot_messagesAdded(MattermostQt::ChannelPtr channel);
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageUpdated(QList<MattermostQt::MessagePtr> messages);
+	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
 private:
-	QString                            m_channel_id;
+	MattermostQt::ChannelPtr           m_channel;
 	QVector<MattermostQt::MessagePtr>  m_messages;
 	QVector<MattermostQt::UserPtr>     m_users;
 	QPointer<MattermostQt>             m_mattermost;

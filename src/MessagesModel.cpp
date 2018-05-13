@@ -17,6 +17,13 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	if ( !index.isValid() || index.row() < 0 || index.row() >= m_messages.size() )
 		return QVariant();
 
+//	if(index.row() == 0 && m_channel->m_message.size() < m_channel->m_total_msg_count && m_channel->m_message.size() > 0)
+//		m_mattermost->get_posts_before(
+//		            m_channel->m_server_index,
+//		            m_channel->m_team_index,
+//		            m_channel->m_self_index,
+//		            m_channel->m_type
+//		            );
 	switch (role) {
 	case MessagesModel::Text:
 		return QVariant(m_messages[index.row()]->m_message);
@@ -68,6 +75,8 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 	        this, &MessagesModel::slot_messagesAdded );
 	connect(m_mattermost.data(), &MattermostQt::messageAdded,
 	        this, &MessagesModel::slot_messageAdded );
+	connect(m_mattermost.data(), &MattermostQt::messagesAddedBefore,
+	        this, &MessagesModel::slot_messageAddedBefore );
 	connect(m_mattermost.data(), &MattermostQt::messageUpdated,
 	        this, &MessagesModel::slot_messageUpdated );
 }
@@ -112,28 +121,38 @@ QString MessagesModel::getSenderName(int row) const
 	return m_messages[row]->m_user_id;
 }
 
+bool MessagesModel::atEnd() const
+{
+	return m_channel->m_message.size() == m_channel->m_total_msg_count;
+}
+
 void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 {
 	if(channel->m_message.size() > 0)
 	{
+//		m_messages.reserve(channel->m_message.size());
 		beginInsertRows(QModelIndex(),0,channel->m_message.size()-1);
-		m_messages.append(channel->m_message);
+//		m_messages.append(channel->m_message);
+		m_messages = channel->m_message;
 		endInsertRows();
 	}
-	m_channel_id = channel->m_id;
+	m_channel = channel;
+	emit messagesInitialized();
 }
 
 void MessagesModel::slot_messageAdded(QList<MattermostQt::MessagePtr> messages)
 {
 	if(messages.isEmpty())
 		return;
-	if(messages.begin()->data()->m_channel_id.compare(m_channel_id) != 0)
+	if(messages.begin()->data()->m_channel_id.compare(m_channel->m_id) != 0)
 		return;
 	beginInsertRows(QModelIndex(),m_messages.size(),m_messages.size() + messages.size() - 1);
+//	m_messages.reserve();
 	foreach( MattermostQt::MessagePtr message, messages)
 	{
 		m_messages.append(message);
 	}
+//	m_messages.swap(m_channel->m_message);
 	endInsertRows();
 }
 
@@ -141,4 +160,18 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 {
 	beginResetModel();
 	endResetModel();
+}
+
+void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count)
+{
+	if( channel != m_channel )
+		return;
+//	QVector messages;
+//	messages.reserve(channel->m_me
+//	if(channel->m_message.size() > 0)
+	{
+		beginInsertRows(QModelIndex(),0,count);
+		m_messages = channel->m_message;
+		endInsertRows();
+	}
 }

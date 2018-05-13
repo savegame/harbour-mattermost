@@ -25,6 +25,9 @@ public:
 		rt_get_team,
 		rt_get_teams_unread,
 		rt_get_posts,
+		rt_get_posts_since,
+		rt_get_posts_before,
+		rt_get_posts_after,
 		rt_get_file_thumbnail,
 		rt_get_file,
 		rt_get_file_info,
@@ -320,6 +323,7 @@ public:
 	Q_INVOKABLE void get_teams_unread(int server_index);
 //	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
 	Q_INVOKABLE void get_posts(int server_index, int team_index, int channel_index, int channel_type);
+	Q_INVOKABLE void get_posts_before(int server_index, int team_index, int channel_index, int channel_type);
 
 	bool save_settings();
 	bool load_settings();
@@ -334,6 +338,7 @@ Q_SIGNALS:
 //	void updateChannel()
 	void teamUnread(QString team_id, int msg, int mention);
 	void messagesAdded(ChannelPtr channel);
+	void messagesAddedBefore(ChannelPtr channel, int count);
 	void messageAdded(QList<MessagePtr> messages);
 	void messageUpdated(QList<MessagePtr> messages);
 protected:
@@ -354,6 +359,7 @@ protected:
 	void reply_get_team(QNetworkReply *reply);
 	void reply_get_teams_unread(QNetworkReply *reply);
 	void reply_get_posts(QNetworkReply *reply);
+	void reply_get_posts_before(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_get_user(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);

@@ -17,6 +17,10 @@ Page {
 
     property MessagesModel messagesmodel: MessagesModel {
         mattermost: context.mattermost
+        onMessagesInitialized: {
+            // nothing
+            listview.scrollToBottom()
+        }
     }
 
     onStatusChanged: {
@@ -48,8 +52,8 @@ Page {
     Label {
         id: debuglabel
 
-        verticalCenter: parent.verticalCenter
-        horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
     }
 
     SilicaListView {
@@ -62,17 +66,37 @@ Page {
         }
         VerticalScrollDecorator {}
         model: messagesmodel
+        spacing: Theme.paddingSmall
+
+        PullDownMenu {
+            id:pullMenu
+            quickSelect: true
+            visible: true// !messagesmodel.atEnd
+            MenuItem{
+                text:qsTr("get older")
+                onClicked:
+                {
+                    context.mattermost.get_posts_before(
+                                server_index,
+                                team_index,
+                                channel_index,
+                                channel_type
+                                )
+                }
+            }// MenuItem
+        }// PullDownMenu
 
 //        onCurrentSection
+//        onContentItemChanged: {
+//            positionViewAtIndex(1,ListView.End);
+////            contentItem.
+//        }
 
-        delegate: BackgroundItem {
+        delegate: ListItem {
             anchors { left:parent.left; right:parent.right; }
             width: messages.width
-            height: item.height + Theme.paddingMedium + Theme.paddingMedium
-            anchors {
-                topMargin: Theme.paddingMedium;
-                bottomMargin: Theme.paddingMedium;
-            }
+            contentHeight: item.height
+
             MessageLabel {
                 id: item
                 width: messages.width
@@ -144,6 +168,6 @@ Page {
                     left: messages.left
                     right: messages.right
                     bottom: messages.bottom
-                }
-    }
+                } //an
+    } // MessageEditorBar
 }
