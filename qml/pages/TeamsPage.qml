@@ -51,9 +51,8 @@ Page {
     }
 
     onStatusChanged: {
-        if( status === PageStatus.Active && temsIsUpToDate == false) {
-            context.mattermost.get_teams(server_index);
-            temsIsUpToDate = true;
+        if( status === PageStatus.Active ) {
+            context.mattermost.get_teams(server_index)
         }
     }
 

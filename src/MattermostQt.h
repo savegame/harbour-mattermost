@@ -28,6 +28,7 @@ public:
 		rt_get_file_thumbnail,
 		rt_get_file,
 		rt_get_file_info,
+		rt_post_send_message
 	};
 
 	enum ConnectionError {
@@ -39,6 +40,7 @@ public:
 		FileUnknown,
 		FileDocument,
 		FileImage,
+		FileAnimatedImage,
 	};
 	Q_ENUMS(FileType)
 
@@ -184,6 +186,9 @@ public:
 
 		ChannelContainer(QJsonObject &object);
 
+		bool save_json(QString server_dir_path) const;
+		bool load_json(QString server_dir_path);
+
 		QString m_id;
 //		"create_at": 0,
 		qlonglong m_update_at;
@@ -219,6 +224,14 @@ public:
 		}
 
 		TeamContainer(QJsonObject &object);
+		/**
+		 * @brief save_json
+		 * @param server_dir_path   directory where all teams data stored
+		 * ~/.config/{mattermost_config_dir}/{server_dir}
+		 * @return
+		 */
+		bool save_json(QString server_dir_path) const;
+		bool load_json(QString server_dir_path);
 
 		QString    m_id;
 		QString    m_display_name;
@@ -300,6 +313,8 @@ public:
 //	                        int channel_index, int message_index, QString file_id);
 	Q_INVOKABLE void get_file_info(int server_index, int team_index, int channel_type,
 	                   int channel_index, int message_index, QString file_id);
+	Q_INVOKABLE void post_send_message(QString message, int server_index, int team_index, int channel_type,
+	                                   int channel_index);
 	Q_INVOKABLE void get_user_image(int server_index, QString user_id);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
@@ -344,8 +359,11 @@ protected:
 	void reply_error(QNetworkReply *reply);
 	void reply_get_file_thumbnail(QNetworkReply *reply);
 	void reply_get_file_info(QNetworkReply *reply);
+	void reply_post_send_message(QNetworkReply *reply);
 
 	void event_posted(ServerPtr sc, QJsonObject data);
+	void event_post_edited(ServerPtr sc, QJsonObject data);
+	void event_post_deleted(ServerPtr sc, QJsonObject data);
 
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);

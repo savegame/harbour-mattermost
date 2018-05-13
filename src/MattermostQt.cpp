@@ -34,7 +34,7 @@
 
 #define cmp(s,t) s.compare(#t) == 0
 #define scmp(s1,s2) s1.compare(s2) == 0
-#define comare(string) if( cmp(event,string) )
+#define _compare(string) if( cmp(event,string) )
 
 #define requset_set_headers(requset, server) \
 	request.setHeader(QNetworkRequest::ServerHeader, "application/json"); \
@@ -196,6 +196,8 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 
 void MattermostQt::get_teams(int server_index)
 {
+	/* TODO first, check teams from filesystem,
+	 then send request about lst change date    */
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	ServerPtr sc = m_server[server_index];
@@ -375,6 +377,55 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
 	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
 	reply->setProperty(P_MESSAGE_INDEX, QVariant(message_index) );
+}
+
+void MattermostQt::post_send_message(QString message, int server_index, int team_index, int channel_type,
+                                     int channel_index)
+{
+	ServerPtr sc = m_server[server_index];
+	//files/{file_id}/thumbnail
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/posts");
+	ChannelPtr channel;
+	if(channel_type == ChannelType::ChannelDirect)
+	{
+		channel = sc->m_direct_channels[channel_index];
+	}
+	else {
+		TeamPtr tc = sc->m_teams[team_index];
+		QVector<ChannelPtr> *channels = nullptr;
+		if(channel_type == ChannelType::ChannelPublic)
+			channels = &tc->m_public_channels;
+		else if(channel_type == ChannelType::ChannelPrivate)
+			channels = &tc->m_private_channels;
+		if(!channels)
+			return;
+		channel = channels->at(channel_index);
+	}
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+
+	QJsonDocument json;
+	QJsonObject root;
+	root["channel_id"] = channel->m_id;
+	root["message"] = message;
+	root["files_ids"] = QJsonArray();
+	root["props"] = "";
+	json.setObject(root);
+
+	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_send_message) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
+	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
 }
 
 void MattermostQt::get_user_image(int server_index, QString user_id)
@@ -778,7 +829,7 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 {
 	QJsonDocument json;
 	QByteArray rawData = reply->readAll();
-	int serverId = reply->property(P_SERVER_INDEX).toInt();
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
 	json = QJsonDocument::fromJson(rawData);
 
 	if( !json.isEmpty() && json.isArray() ) {
@@ -789,9 +840,12 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 			{
 				QJsonObject object = array.at(i).toObject();
 				TeamPtr tc(new TeamContainer(object) );
-				tc->m_server_index = serverId;
-				tc->m_self_index = m_server[serverId]->m_teams.size();
-				m_server[serverId]->m_teams.append(tc);
+				tc->m_server_index = server_index;
+				tc->m_self_index = m_server[server_index]->m_teams.size();
+				m_server[server_index]->m_teams.append(tc);
+				// TODO move to Thread all filesystem operations
+				tc->save_json( m_server[server_index]->m_config_path );
+				// ---------------------------------------------
 				emit teamAdded(tc);
 			}
 			else
@@ -1214,8 +1268,21 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file->m_message_index = message_index;
 
 	// TODO Here need save file info to json in file's directory
-	get_file_thumbnail(server_index,file->m_self_sc_index);
+	QString file_thumb_path = sc->m_config_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
+	if( !QFile::exists(file_thumb_path) )
+		get_file_thumbnail(server_index,file->m_self_sc_index);
+	else {
+		file->m_thumb_path = file_thumb_path;
+		QList<MessagePtr> messages;
+		messages << mc;
+		emit messageUpdated(messages);
+	}
 	return;
+}
+
+void MattermostQt::reply_post_send_message(QNetworkReply *reply)
+{
+	qDebug() << reply->readAll();
 }
 
 void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
@@ -1239,8 +1306,6 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			return;
 	}
 	MessagePtr message( new MessageContainer(post) );
-	if(!message)
-		return;
 
 	if( cmp(ch_type,O) )
 		type = ChannelType::ChannelPublic;
@@ -1353,6 +1418,97 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 	}
 }
 
+void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject data)
+{
+	ChannelType type = ChannelType::ChannelTypeCount;
+	QString ch_type = data["channel_type"].toString();
+
+	QJsonObject post = data["post"].toObject();
+	if( post.isEmpty() )
+	{
+		QJsonValue value = data.value("post");
+		if( value.type() == QJsonValue::String )
+		{
+			QString s = value.toString();
+			QJsonDocument j = QJsonDocument::fromJson( s.toUtf8() );
+			post = j.object();
+			if(post.isEmpty())
+				return;
+		}
+		else
+			return;
+	}
+	MessagePtr message( new MessageContainer(post) );
+
+	if( cmp(ch_type,O) )
+		type = ChannelType::ChannelPublic;
+	else if( cmp(ch_type,P) )
+		type = ChannelType::ChannelPrivate;
+	else if( cmp(ch_type,D) )
+		type = ChannelType::ChannelDirect;
+
+	ChannelPtr channel;
+	int channel_index = -1;
+
+	if( type == ChannelType::ChannelDirect )
+	{
+		QString channel_name = data["channel_name"].toString();
+		for(int i = 0; i < sc->m_direct_channels.size(); i++ )
+		{
+			if( scmp(sc->m_direct_channels[i]->m_name,channel_name) )
+			{
+				channel = sc->m_direct_channels[i];
+				channel_index = i;
+				break;
+			}
+		}
+	}
+	else
+	{
+		QString team_id = data["team_id"].toString();
+		QString channel_id = message->m_channel_id;
+		int team_index = -1;
+
+		for(int i = 0; i < sc->m_teams.size(); i++ )
+		{
+			if( scmp(sc->m_teams[i]->m_id,team_id) )
+			{
+				TeamPtr tc = sc->m_teams[i];
+				QVector<ChannelPtr> *channels;
+				if( type == ChannelType::ChannelPublic )
+					channels = &tc->m_public_channels;
+				else if( type == ChannelType::ChannelPrivate )
+					channels = &tc->m_private_channels;
+				if(!channels)
+				{
+					qWarning() << "Wrong channel type" << type;
+					return;
+				}
+				for(int j = 0; j < channels->size(); j++ )
+				{
+					if( channels->at(j)->m_id.compare(channel_id) == 0 )
+					{
+						channel = channels->at(j);
+						channel_index = j;
+						team_index = i;
+						break;
+					}
+				}
+				break;
+			}
+		}
+	}
+	if( channel && channel_index >= 0)
+	{
+		return;
+	}
+}
+
+void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject data)
+{
+
+}
+
 void MattermostQt::replyFinished(QNetworkReply *reply)
 {
 	if (reply->error() == QNetworkReply::NoError) {
@@ -1398,6 +1554,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 				break;
 			case ReplyType::rt_get_file_info:
 				reply_get_file_info(reply);
+				break;
+			case ReplyType::rt_post_send_message:
+				reply_post_send_message(reply);
 				break;
 			default:
 				qWarning() << "That can't be!";
@@ -1587,14 +1746,16 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	QString event = object["event"].toString();
 	QJsonObject data = object["data"].toObject();
 
-	comare(hello) // that mean we are logged in
+	_compare(hello) // that mean we are logged in
 	{
 		qDebug() << event;
 		save_settings();
 		emit serverConnected(sc->m_self_index);
 	}
-	else comare(posted)
+	else _compare(posted)
 	    event_posted(sc,data);
+	else _compare(post_edited)
+	    event_post_edited(sc,data);
 	else
 	    qWarning() << event;
 //typing
@@ -1686,6 +1847,98 @@ MattermostQt::TeamContainer::TeamContainer(QJsonObject &object)
 	qDebug() << m_display_name << ":" << m_id;
 }
 
+bool MattermostQt::TeamContainer::save_json(QString server_dir_path) const
+{// server_dir_path ~/.config/{mattermost_config_dir}/{server_dir}/
+	QString path = server_dir_path + QDir::separator()
+	        + QLatin1String("teams") + QDir::separator()
+	        + m_id + QDir::separator();
+	QDir dir;
+	if(!dir.exists(path))
+		dir.mkpath(path);
+	QString info_file = path + QLatin1String("info.json");
+
+	QJsonObject root;
+	root["id"] = m_id;
+	root["display_name"] = m_display_name;
+	root["name"] = m_name;
+	root["description"] = m_description;
+	root["type"] = m_type;
+	root["email"] = m_email;
+	root["invite_id"] = m_invite_id;
+	root["allowed_domains"] = m_allowed_domains;
+	root["allowed_open_invite"] = m_allowed_open_invite;
+	root["create_at"] = (double)m_create_at;
+	root["update_at"] = (double)m_update_at;
+	root["delete_at"] = (double)m_delete_at;
+
+	root["server_index"] = m_server_index; /**< server index in QVector */
+	root["self_index"] = m_self_index;   /**< self index in vector */
+
+	QJsonArray public_channels;
+	QJsonArray private_channels;
+	for(int i = 0; i < m_public_channels.size(); i++)
+	{
+		if(m_public_channels[i]->save_json(server_dir_path))
+			public_channels.append( m_public_channels[i]->m_id );
+	}
+	root["public_channels"] = public_channels;
+	for(int i = 0; i < m_private_channels.size(); i++)
+		private_channels.append( m_private_channels[i]->m_id );
+	root["private_channels"] = private_channels;
+
+	QJsonDocument json;
+	json.setObject(root);
+
+	QFile file(info_file);
+	if( file.open(QIODevice::WriteOnly) )
+		file.write( json.toJson() );
+	else
+		return false;
+	file.close();
+	return true;
+}
+
+bool MattermostQt::TeamContainer::load_json(QString server_dir_path)
+{// server_dir_path ~/.config/{mattermost_config_dir}/{server_dir}/
+	QString path = server_dir_path + QDir::separator()
+	        + QLatin1String("teams") + QDir::separator()
+	        + m_id + QDir::separator();
+	QDir dir;
+	if(!dir.exists(path))
+		return false;
+	QString info_file = path + QLatin1String("info.json");
+	QFile file(info_file);
+	QJsonDocument json;
+	if( !file.open(QIODevice::ReadOnly) )
+		return false;
+	json = QJsonDocument::fromJson( file.readAll() );
+	file.close();
+
+	QJsonObject root;
+
+	m_id = root["id"].toString();
+	m_display_name = root["display_name"].toString();
+	m_name = root["name"].toString();
+	m_description = root["description"].toString();
+	m_type = root["type"].toString();
+	m_email = root["email"].toString();
+	m_invite_id = root["invite_id"].toString();
+	m_allowed_domains = root["allowed_domains"].toString();
+	m_allowed_open_invite = root["allowed_open_invite"].toBool();
+	m_create_at = (qlonglong)root["create_at"].toDouble();
+	m_update_at = (qlonglong)root["update_at"].toDouble();
+	m_delete_at = (qlonglong)root["delete_at"].toDouble();
+
+	m_server_index = (int)root["server_index"].toDouble();
+	m_self_index = (int)root["self_index"].toDouble();
+
+	// TODO make Channels loading
+	QVector<ChannelPtr> m_public_channels;
+	QVector<ChannelPtr> m_private_channels;
+
+	return true;
+}
+
 MattermostQt::ChannelContainer::ChannelContainer(QJsonObject &object)
 {
 	m_id = object["id"].toString();
@@ -1711,6 +1964,20 @@ MattermostQt::ChannelContainer::ChannelContainer(QJsonObject &object)
 	m_dc_user_index = -1;
 }
 
+bool MattermostQt::ChannelContainer::save_json(QString server_dir_path) const
+{
+	// TODO
+
+	return true;
+}
+
+bool MattermostQt::ChannelContainer::load_json(QString server_dir_path)
+{
+	// TODO
+
+	return true;
+}
+
 MattermostQt::UserContainer::UserContainer(QJsonObject object)
 {
 	//"id": "string",
@@ -1734,13 +2001,13 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	//"locale": "string",
 	m_locale = object["locale"].toString();
 	//"notify_props": {
-	//"email": "string",
-	//"push": "string",
-	//"desktop": "string",
-	//"desktop_sound": "string",
-	//"mention_keys": "string",
-	//"channel": "string",
-	//"first_name": "string"
+	//  "email": "string",
+	//  "push": "string",
+	//  "desktop": "string",
+	//  "desktop_sound": "string",
+	//  "mention_keys": "string",
+	//  "channel": "string",
+	//  "first_name": "string"
 	//},
 	//"props": { },
 	//"last_password_update": 0,
@@ -1782,19 +2049,12 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 		m_type = MessageType::MessageSystem;
 	else
 		m_type = MessageType::MessageTypeCount;
-//	QString sender_name = object["sender_name"].toString();
 	QJsonArray filenames = object["filenames"].toArray();
 	QJsonArray file_ids = object["file_ids"].toArray();
 	for(int i = 0; i < filenames.size(); i++ )
 		m_filenames.append( filenames.at(i).toString() );
 	for(int i = 0; i < file_ids.size(); i++ )
 		m_file_ids.append( file_ids.at(i).toString() );
-
-//	qDebug() << QString("%0 : %1").arg(m_user_id).arg(m_message);
-//	QVector<FilePtr> m_file;
-//	QString          m_id;
-//	QString          m_channel_id;
-//	QString          m_type
 }
 
 MattermostQt::FileContainer::FileContainer(QJsonObject object)
@@ -1809,10 +2069,16 @@ MattermostQt::FileContainer::FileContainer(QJsonObject object)
 	m_file_size = (qlonglong)object["size"].toDouble(0);
 	m_extension = object["extension"].toString("");
 
-	m_image_size.setWidth((int)object["width"].toDouble(0));
-	m_image_size.setWidth((int)object["height"].toDouble(0));
+	double width = object["width"].toDouble(0);
+	double height = object["height"].toDouble(0);
+	m_image_size.setWidth((int)width);
+	m_image_size.setHeight((int)height);
 	if( m_mime_type.indexOf("image/") >= 0 )
+	{
 		m_file_type = FileImage;
+		if( m_mime_type.compare("image/gif") == 0 )
+			m_file_type = FileAnimatedImage;
+	}
 	else
 		m_file_type = FileUnknown;
 }

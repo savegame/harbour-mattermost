@@ -87,8 +87,29 @@ int MessagesModel::getFileType(int row,int i) const
 QString MessagesModel::getThumbPath(int row,int i) const
 {
 	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
-		return "";//add path for bad thumb
+		return "";//TODO add path for bad thumb (default error image)
 	return m_messages[row]->m_file[i]->m_thumb_path;
+}
+
+QSize MessagesModel::getImageSize(int row, int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return QSize();
+	return m_messages[row]->m_file[i]->m_image_size;
+}
+
+QString MessagesModel::getFileName(int row, int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return "";
+	return m_messages[row]->m_file[i]->m_name;
+}
+
+QString MessagesModel::getSenderName(int row) const
+{
+	if(row < 0 || row >= m_messages.size())
+		return "";
+	return m_messages[row]->m_user_id;
 }
 
 void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)

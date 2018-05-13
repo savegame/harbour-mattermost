@@ -40,6 +40,10 @@ public:
 
 	Q_INVOKABLE int getFileType(int row, int i) const;
 	Q_INVOKABLE QString getThumbPath(int row, int i) const;
+	Q_INVOKABLE QSize   getImageSize(int row, int i) const;
+	Q_INVOKABLE QString getFileName(int row, int i) const;
+	Q_INVOKABLE QString getSenderName(int row) const;
+//	Q_INVOKABLE int   getImageSize(int row, int i) const;
 
 protected slots:
 	void slot_messagesAdded(MattermostQt::ChannelPtr channel);

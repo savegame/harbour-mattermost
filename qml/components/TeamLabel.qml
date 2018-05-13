@@ -34,6 +34,7 @@ Item {
                 text: name
             }
             Row {
+                layoutDirection: Qt.RightToLeft
                 id: label_row
                 //width:parent.width
 //                anchors.bottomMargin: Theme.paddingMedium

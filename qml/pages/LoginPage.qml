@@ -57,7 +57,7 @@ Dialog {
                                                           context: loginpage.context,
                                                           server_index: server_index,
                                                           servername: context.mattermost.get_server_name(server_index)
-                                                      });
+                                                      })
                 }
             })
 
