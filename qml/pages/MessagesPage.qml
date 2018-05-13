@@ -71,7 +71,8 @@ Page {
         PullDownMenu {
             id:pullMenu
             quickSelect: true
-            visible: true// !messagesmodel.atEnd
+            visible: !messagesmodel.atEnd
+
             MenuItem{
                 text:qsTr("get older")
                 onClicked:

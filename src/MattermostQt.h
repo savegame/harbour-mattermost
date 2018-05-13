@@ -333,6 +333,7 @@ Q_SIGNALS:
 	void serverStateChanged(int server_index, int state);
 	void connectionError(int code, QString message);
 	void teamAdded(TeamPtr team);
+	void teamsExists(const QVector<MattermostQt::TeamPtr> &teams);
 	void channelsList(QList<ChannelPtr> list);
 	void channelAdded(ChannelPtr channel);
 //	void updateChannel()

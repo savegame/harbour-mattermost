@@ -87,9 +87,14 @@ Page {
 
             model: teamsmodel
 
-            delegate: BackgroundItem {
+            delegate: ListItem {
                 id: bgitem
                 anchors { left:parent.left; right:parent.right; }
+                contentHeight: Theme.itemSizeMedium
+
+                TouchBlocker {
+                    anchors.fill: parent
+                }
 
                 TeamLabel {
                     id: teamlabel
@@ -100,16 +105,17 @@ Page {
                     anchors.leftMargin: Theme.horizontalPageMargin
                     anchors.rightMargin: Theme.horizontalPageMargin
                     anchors { left:parent.left; right:parent.right; }
-                }
-                onClicked: {
-                    pageStack.push( Qt.resolvedUrl("ChannelsPage.qml"),
-                                   {
-                                       context: teamsPage.context,
-                                       teamid: teamsmodel.getTeamId(index),
-                                       server_index: teamsPage.server_index,
-                                       team_index: teamsmodel.getTeamIndex(index),
-                                       team_label: teamlabel.name
-                                   } )
+
+                    onClicked: {
+                        pageStack.push( Qt.resolvedUrl("ChannelsPage.qml"),
+                                       {
+                                           context: teamsPage.context,
+                                           teamid: teamsmodel.getTeamId(index),
+                                           server_index: teamsPage.server_index,
+                                           team_index: teamsmodel.getTeamIndex(index),
+                                           team_label: teamlabel.name
+                                       } )
+                    }
                 }
             }
         }

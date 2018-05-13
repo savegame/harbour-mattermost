@@ -205,8 +205,8 @@ void MattermostQt::get_teams(int server_index)
 
 	if( !sc->m_teams.isEmpty() )
 	{
-		for(int i = 0; i < sc->m_teams.size(); i++)
-			emit teamAdded(sc->m_teams[i]);
+		emit teamsExists(sc->m_teams);
+		return;
 	}
 
 	QString urlString = QLatin1String("/api/v")
@@ -1726,7 +1726,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 //					connect( &m_update_server, SIGNAL(timeout()), SLOT(slot_get_teams_unread()) );
 //					m_update_server.setTimerType(Qt::/*TimerType*/);
 //					m_update_server.start();
-					slot_get_teams_unread();
+//					slot_get_teams_unread();
 				}
 				break;
 			case ReplyType::Teams:

@@ -1,7 +1,7 @@
 import QtQuick 2.5
 import Sailfish.Silica 1.0
 
-Item {
+BackgroundItem {
     property string name
     property string teamid
     property int messages

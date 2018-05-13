@@ -66,18 +66,18 @@ Q_SIGNALS:
 protected Q_SLOTS:
 //	void slot_serverConnected(int id);
 	void slot_teamAdded(MattermostQt::TeamPtr team);
+	void slot_teamsExists(const QVector<MattermostQt::TeamPtr> &teams);
 	void slot_teamUnread(QString team_id, int msg, int mention);
 private:
-	QVector<QString> m_displayName;
-	QVector<QString> m_description;
-	QVector<QString> m_email;
+//	QVector<QString> m_displayName;
+//	QVector<QString> m_description;
+//	QVector<QString> m_email;
 	QVector<int>     m_msg_count;
 	QVector<int>     m_mention_count;
-	QVector<int>     m_active_users;
-	QVector<int>     m_user_count;
-	QVector<MattermostQt::TeamPtr>     m_team;
-	QVector<QString> m_id;
-
+//	QVector<int>     m_active_users;
+//	QVector<int>     m_user_count;
+	QVector<MattermostQt::TeamPtr> m_team;
+//	QVector<QString> m_id;
 	QPointer<MattermostQt> m_mattermost;
 
 	int m_server_index;

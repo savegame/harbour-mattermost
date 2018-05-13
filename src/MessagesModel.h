@@ -14,6 +14,7 @@ class MessagesModel : public QAbstractListModel
 	Q_OBJECT
 
 	Q_PROPERTY(MattermostQt *mattermost READ getMattermost WRITE setMattermost)
+	Q_PROPERTY(bool atEnd READ atEnd NOTIFY atEndChanged)
 
 	enum DataRoles : int {
 		Text = Qt::UserRole,
@@ -43,11 +44,13 @@ public:
 	Q_INVOKABLE QSize   getImageSize(int row, int i) const;
 	Q_INVOKABLE QString getFileName(int row, int i) const;
 	Q_INVOKABLE QString getSenderName(int row) const;
-	Q_INVOKABLE bool    atEnd() const;
+	bool    atEnd() const;
 //	Q_INVOKABLE int   getImageSize(int row, int i) const;
 
 Q_SIGNALS:
 	void messagesInitialized();
+	void newMessage();
+	void atEndChanged();
 protected slots:
 	void slot_messagesAdded(MattermostQt::ChannelPtr channel);
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);

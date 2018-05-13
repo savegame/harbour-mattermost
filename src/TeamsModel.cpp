@@ -15,25 +15,25 @@ TeamsModel::TeamsModel(QObject *parent)
 
 int TeamsModel::rowCount(const QModelIndex &) const
 {
-	return m_displayName.size();
+	return m_team.size();
 }
 
 QVariant TeamsModel::data(const QModelIndex &index, int role) const
 {
-	if(!index.isValid()) {
+	if(index.row() < 0 || index.row() >= m_team.size()) {
 		return QVariant();
 	}
 	if(role == DataRoles::DisplayName) {
-		return QVariant(m_displayName[index.row()]);
+		return QVariant(m_team[index.row()]->m_display_name);
 	}
 	else if(role == DataRoles::Description) {
-		return QVariant(m_description[index.row()]);
+		return QVariant(m_team[index.row()]->m_description);
 	}
 	else if(role == DataRoles::Email) {
-		return QVariant(m_email[index.row()]);
+		return QVariant(m_team[index.row()]->m_email);
 	}
 	else if(role == DataRoles::TeamId) {
-		return QVariant(m_id[index.row()]);
+		return QVariant(m_team[index.row()]->m_id);
 	}
 	else if(role == DataRoles::MsgCount) {
 		return QVariant(m_msg_count[index.row()]);
@@ -42,10 +42,12 @@ QVariant TeamsModel::data(const QModelIndex &index, int role) const
 		return QVariant(m_mention_count[index.row()]);
 	}
 	else if(role == DataRoles::ActiveUsers) {
-		return QVariant(m_active_users[index.row()]);
+//		return QVariant(m_team[index.row()]);
+		return QVariant(0);
 	}
 	else if(role == DataRoles::UserCount) {
-		return QVariant(m_user_count[index.row()]);
+//		return QVariant(m_team[index.row()]);
+		return QVariant(0);
 	}
 	else if(role == DataRoles::Index) {
 		return QVariant(m_team[index.row()]->m_self_index);
@@ -74,7 +76,7 @@ QHash<int, QByteArray> TeamsModel::roleNames() const
 
 void TeamsModel::activate(const int i)
 {
-	if(i < 0 || i >= m_displayName.size()) {
+	if(i < 0 || i >= m_team.size()) {
 		return;
 	}
 
@@ -128,19 +130,21 @@ void TeamsModel::setMattermostQt(MattermostQt* mattermost)
 	        ,this , &TeamsModel::slot_teamAdded );
 	connect(m_mattermost.data(), &MattermostQt::teamUnread
 	        , this, &TeamsModel::slot_teamUnread );
+	connect(m_mattermost.data(), &MattermostQt::teamsExists
+	        , this, &TeamsModel::slot_teamsExists );
 	//	m_mattermost->post_login(QString(SERVER_URL),QString("testuser"),QString("testuser"), true);
 }
 
 QString TeamsModel::getTeamId(int index) const
 {
-	if(index >= 0 && index < m_id.size())
+	if(index >= 0 && index < m_team.size())
 		return m_team[index]->m_id;
 	return QString::null;
 }
 
 int TeamsModel::getTeamIndex(int index) const
 {
-	if(index >= 0 && index < m_id.size())
+	if(index >= 0 && index < m_team.size())
 		return m_team[index]->m_self_index;
 	return -1;
 }
@@ -154,28 +158,27 @@ int TeamsModel::getTeamIndex(int index) const
 
 void TeamsModel::slot_teamAdded(MattermostQt::TeamPtr team)
 {
-//	bool noNeed;
-//	for(int i = 0; i < m_id.size(); i++)
-//	{
-//	}
-	beginInsertRows(QModelIndex(), m_id.size(), m_id.size());
-	m_id.append(team->m_id);
-	m_displayName.append(team->m_display_name);
-	m_description.append(team->m_description);
-	m_email.append(team->m_email);
-	m_team.append(team);
+	beginInsertRows(QModelIndex(), m_team.size(), m_team.size());
 	m_msg_count.append(0);
 	m_mention_count.append(0);
-	m_active_users.append(0);
-	m_user_count.append(0);
+	m_team.append(team);
 	endInsertRows();
+}
+
+void TeamsModel::slot_teamsExists(const QVector<MattermostQt::TeamPtr> &teams)
+{
+	beginResetModel();
+	m_team = teams;
+	m_msg_count.fill(0,teams.size());
+	m_mention_count.fill(0,teams.size());
+	endResetModel();
 }
 
 void TeamsModel::slot_teamUnread(QString team_id, int msg, int mention)
 {
-	for(int i = 0; i < m_id.size(); i++)
+	for(int i = 0; i < m_team.size(); i++)
 	{
-		if( m_id[i].compare(team_id) == 0 )
+		if( m_team[i]->m_id.compare(team_id) == 0 )
 		{
 			bool update = false;
 			update = m_msg_count[i] != msg || m_mention_count[i] != mention;

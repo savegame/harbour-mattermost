@@ -24,9 +24,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 //		            m_channel->m_self_index,
 //		            m_channel->m_type
 //		            );
+	int row = index.row();
 	switch (role) {
 	case MessagesModel::Text:
-		return QVariant(m_messages[index.row()]->m_message);
+		return QVariant(m_messages[row]->m_message);
 		break;
 	case MessagesModel::Type:
 		{
@@ -123,6 +124,8 @@ QString MessagesModel::getSenderName(int row) const
 
 bool MessagesModel::atEnd() const
 {
+	if(!m_channel)
+		return false;
 	return m_channel->m_message.size() == m_channel->m_total_msg_count;
 }
 
@@ -137,6 +140,8 @@ void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 		endInsertRows();
 	}
 	m_channel = channel;
+	if(atEnd())
+		emit atEndChanged();
 	emit messagesInitialized();
 }
 
@@ -154,6 +159,7 @@ void MessagesModel::slot_messageAdded(QList<MattermostQt::MessagePtr> messages)
 	}
 //	m_messages.swap(m_channel->m_message);
 	endInsertRows();
+	emit newMessage();
 }
 
 void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages)
@@ -170,8 +176,10 @@ void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, in
 //	messages.reserve(channel->m_me
 //	if(channel->m_message.size() > 0)
 	{
-		beginInsertRows(QModelIndex(),0,count);
+		beginInsertRows(QModelIndex(),0,count-1);
 		m_messages = channel->m_message;
 		endInsertRows();
 	}
+	if(atEnd())
+		emit atEndChanged();
 }
