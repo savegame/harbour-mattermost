@@ -21,7 +21,8 @@ public:
 		Login,
 		Teams,
 		Channels,
-		get_user,
+		rt_get_user_info,
+		rt_get_user_image,
 		rt_get_team,
 		rt_get_teams_unread,
 		rt_get_posts,
@@ -173,6 +174,7 @@ public:
 		//"mfa_active": true
 
 		int m_self_index;
+		QString m_image_path;
 	};
 	typedef QSharedPointer<UserContainer> UserPtr;
 
@@ -318,7 +320,7 @@ public:
 	                   int channel_index, int message_index, QString file_id);
 	Q_INVOKABLE void post_send_message(QString message, int server_index, int team_index, int channel_type,
 	                                   int channel_index);
-	Q_INVOKABLE void get_user_image(int server_index, QString user_id);
+	Q_INVOKABLE void get_user_image(int server_index, int user_index);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
 //	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
@@ -362,7 +364,7 @@ protected:
 	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_posts_before(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
-	void reply_get_user(QNetworkReply *reply);
+	void reply_get_user_info(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
 	void reply_get_file_thumbnail(QNetworkReply *reply);
 	void reply_get_file_info(QNetworkReply *reply);

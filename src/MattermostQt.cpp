@@ -19,6 +19,7 @@
 #define P_SERVER_URL         "server_url"
 #define P_SERVER_NAME        "server_name"
 #define P_SERVER_INDEX       "server_index"
+#define P_USER_INDEX         "user_index"
 #define P_FILE_SC_INDEX      "file_sc_index"
 #define P_TEAM_INDEX         "team_index"
 #define P_MESSAGE_INDEX      "message_index"
@@ -431,11 +432,46 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
 }
 
-void MattermostQt::get_user_image(int server_index, QString user_id)
+void MattermostQt::get_user_image(int server_index, int user_index)
 {
-	Q_UNUSED(server_index)
-	Q_UNUSED(user_id)
-	// TODO
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
+	ServerPtr sc = m_server[server_index];
+	if( user_index < 0 || user_index >= sc->m_user.size() )
+		return;
+	UserPtr user = sc->m_user[user_index];
+
+	user->m_image_path = sc->m_config_path +
+	        QString("/users/") +
+	        user->m_id +
+	        QString("/image.jpeg");
+	// check if user has image
+	QFile user_image(user->m_image_path);
+
+	if( user_image.exists() ) {
+		return;
+	}
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/users/")
+	        + user->m_id
+	        + QLatin1String("/image");
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+
+	if(sc->m_trust_cert)
+		request.setSslConfiguration(sc->m_cert);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_user_image) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_USER_INDEX, QVariant(user_index) );
 }
 
 void MattermostQt::get_user_info(int server_index, QString userId, int team_index)
@@ -461,7 +497,7 @@ void MattermostQt::get_user_info(int server_index, QString userId, int team_inde
 		request.setSslConfiguration(sc->m_cert);
 
 	QNetworkReply *reply = m_networkManager->get(request);
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::get_user) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_user_info) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 	reply->setProperty(P_DIRECT_CHANNEL, QVariant(direct_channel) );
@@ -786,7 +822,7 @@ void MattermostQt::prepare_direct_channel(int server_index, int team_index, int 
 	// send request for user credentials first
 	get_user_info(sc->m_self_index, user_id, team_index);
 	// and send request for user picture
-	get_user_image(sc->m_self_index, user_id);
+//	get_user_image(sc->m_self_index, user_id);
 }
 
 void MattermostQt::websocket_connect(ServerPtr server)
@@ -1284,7 +1320,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 	}
 }
 
-void MattermostQt::reply_get_user(QNetworkReply *reply)
+void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 {
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
 	int team_index = reply->property(P_TEAM_INDEX).toInt();
@@ -1326,6 +1362,7 @@ void MattermostQt::reply_get_user(QNetworkReply *reply)
 	{
 		user->m_self_index = sc->m_user.size();
 		sc->m_user.append(user);
+		get_user_image(server_index,user->m_self_index);
 	}
 
 	if(direct_channel && team_index == -1)
@@ -1735,8 +1772,8 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			case ReplyType::Channels:
 				reply_get_public_channels(reply);
 				break;
-			case ReplyType::get_user:
-				reply_get_user(reply);
+			case ReplyType::rt_get_user_info:
+				reply_get_user_info(reply);
 				break;
 			case ReplyType::rt_get_team:
 				reply_get_team(reply);

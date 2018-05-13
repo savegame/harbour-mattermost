@@ -98,11 +98,11 @@ BackgroundItem {
                     rightMargin: paddingHalfSmall;
                 }//anchors
                 fillMode: Image.PreserveAspectFit
-                source: "image://theme/icon-m-file-document"
-                sourceSize.width: Theme.iconSizeMedium
-                sourceSize.height: Theme.iconSizeMedium
-                height: Theme.iconSizeMedium
-                width: Theme.iconSizeMedium
+                source: "image://theme/icon-l-file-document"
+                sourceSize.width: Theme.iconSizeLarge
+                sourceSize.height: Theme.iconSizeLarge
+                height: Theme.iconSizeLarge
+                width: Theme.iconSizeLarge
             }//image
             Label {
                 text: messagesmodel.getFileName(row_index,modelIndex)
@@ -112,6 +112,7 @@ BackgroundItem {
                 font.italic:  true
                 truncationMode: TruncationMode.Fade
                 width: bgrect.width - messageitem.margin_left - messageitem.margin_left - image.width
+                height: contentHeight
             }
         }
 
@@ -126,20 +127,19 @@ BackgroundItem {
     }
 
     height: imagescolumn.height
+    contentHeight: imagescolumn.height
 
     Rectangle {
         id: bgrect
         visible: message_type !== messagetype_system
         color: Theme.highlightBackgroundColor
-        opacity: Theme.highlightBackgroundOpacity * 0.2
+        opacity: Theme.highlightBackgroundOpacity * 0.3
         anchors {
             top : parent.top
             left: parent.left
             right: parent.right
         }
         height: parent.height
-//        border.color: Theme.secondaryColor
-//        border.width: 6
         radius: 6.0
         anchors.leftMargin: messageitem.margin_left
         anchors.rightMargin: messageitem.margin_right
@@ -160,23 +160,26 @@ BackgroundItem {
         }
         Repeater {
             id: filesrepeater
-            model: files_count
+            model: messageitem.files_count
             visible: files_count  > 0
+            onVisibleChanged:
+                if(!visible)
+                    height = 0
             Loader {
                 property int modelIndex: model.index
                 sourceComponent:
-                    switch(messagesmodel.getFileType(row_index,model.index))
-                    {
+                switch(messagesmodel.getFileType(row_index,model.index))
+                {
                     case MattermostQt.FileImage:
                     case MattermostQt.FileAnimatedImage:
-                        fileimage
-                        break
+                    fileimage
+                    break
                     case MattermostQt.FileDocument:
-                        filedocument
-                        break
+                    filedocument
+                    break
                     default:
-                        filedocument
-                    }
+                    filedocument
+                }
             }
         }
     }

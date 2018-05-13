@@ -24,24 +24,24 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 //		            m_channel->m_self_index,
 //		            m_channel->m_type
 //		            );
-	int row = index.row();
+	int row = m_messages.size() - 1 - index.row();
 	switch (role) {
 	case MessagesModel::Text:
 		return QVariant(m_messages[row]->m_message);
 		break;
 	case MessagesModel::Type:
 		{
-			return QVariant( (int)m_messages[index.row()]->m_type );
+			return QVariant( (int)m_messages[row]->m_type );
 		}
 		break;
 	case MessagesModel::FilesCount:
 		{
-			return QVariant( (int)m_messages[index.row()]->m_file.size() );
+			return QVariant( (int)m_messages[row]->m_file.size() );
 		}
 		break;
 	case MessagesModel::RowIndex:
 		{
-			return QVariant( (int)index.row() );
+			return QVariant( row );
 		}
 		break;
 	default:
@@ -151,7 +151,10 @@ void MessagesModel::slot_messageAdded(QList<MattermostQt::MessagePtr> messages)
 		return;
 	if(messages.begin()->data()->m_channel_id.compare(m_channel->m_id) != 0)
 		return;
-	beginInsertRows(QModelIndex(),m_messages.size(),m_messages.size() + messages.size() - 1);
+	// remeber: we has iverted messages order outside the model ;) that mean?
+	// we add messages in end of array? but in bigen of model (!)
+	// need refator it!
+	beginInsertRows(QModelIndex(),0,messages.size() - 1);
 //	m_messages.reserve();
 	foreach( MattermostQt::MessagePtr message, messages)
 	{
@@ -176,7 +179,7 @@ void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, in
 //	messages.reserve(channel->m_me
 //	if(channel->m_message.size() > 0)
 	{
-		beginInsertRows(QModelIndex(),0,count-1);
+		beginInsertRows(QModelIndex(),m_messages.size(),m_messages.size() + count-1);
 		m_messages = channel->m_message;
 		endInsertRows();
 	}

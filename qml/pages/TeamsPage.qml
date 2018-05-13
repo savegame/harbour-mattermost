@@ -107,7 +107,7 @@ Page {
                     anchors { left:parent.left; right:parent.right; }
 
                     onClicked: {
-                        pageStack.push( Qt.resolvedUrl("ChannelsPage.qml"),
+                        pageStack.pushAttached( Qt.resolvedUrl("ChannelsPage.qml"),
                                        {
                                            context: teamsPage.context,
                                            teamid: teamsmodel.getTeamId(index),
@@ -115,6 +115,7 @@ Page {
                                            team_index: teamsmodel.getTeamIndex(index),
                                            team_label: teamlabel.name
                                        } )
+                        pageStack.navigateForward(PageStackAction.Animated);
                     }
                 }
             }

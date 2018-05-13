@@ -90,13 +90,6 @@
     </message>
 </context>
 <context>
-    <name>MessagesPage</name>
-    <message>
-        <source>get older</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>QObject</name>
     <message>
         <source>Login failed because of invalid password</source>

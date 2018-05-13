@@ -64,63 +64,124 @@ Page {
             top: headitem.bottom
             bottom: messageeditor.top
         }
-        VerticalScrollDecorator {}
-        model: messagesmodel
         spacing: Theme.paddingSmall
 
-        PullDownMenu {
-            id:pullMenu
-            quickSelect: true
-            visible: !messagesmodel.atEnd
+        VerticalScrollDecorator {}
 
-            MenuItem{
-                text:qsTr("get older")
-                onClicked:
-                {
-                    context.mattermost.get_posts_before(
-                                server_index,
-                                team_index,
-                                channel_index,
-                                channel_type
-                                )
-                }
-            }// MenuItem
-        }// PullDownMenu
+        model: messagesmodel
 
-//        onCurrentSection
-//        onContentItemChanged: {
-//            positionViewAtIndex(1,ListView.End);
-////            contentItem.
+        verticalLayoutDirection: ListView.BottomToTop
+
+//        PullDownMenu {
+//            id:pullMenu
+//            quickSelect: true
+//            visible: !messagesmodel.atEnd
+
+//            MenuItem{
+//                text:qsTr("get older")
+//                onClicked:
+//                {
+//                    context.mattermost.get_posts_before(
+//                                server_index,
+//                                team_index,
+//                                channel_index,
+//                                channel_type
+//                                )
+//                }
+//            }// MenuItem
+//        }// PullDownMenu
+
+//        Component {
+//            id: footeritem
+//            BackgroundItem {
+//                height: Theme.paddingMedium
+//                visible: false;
+//                TouchBlocker {
+//                    anchors.fill: parent
+//                }
+//            }
 //        }
+//        header: footeritem
+
+        Component {
+            id: messagelabel
+            Column {
+                width: contentwidth
+                height: textlabel.height
+                Label {
+                    id: textlabel
+                    text: messagetext
+                    anchors {
+                        left:parent.left
+                        right: parent.right
+                    }
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: switch(messagetype) {
+                           case MattermostQt.MessageSystem:
+                               Theme.secondaryColor
+                               break
+                           case MattermostQt.MessageMine:
+                               Theme.highlightColor
+                               break
+                           case MattermostQt.MessageOther:
+                           default:
+                               Theme.primaryColor
+                               break
+                           }
+                    font.italic: messagetype == MattermostQt.MessageSystem ? true : false
+                }//Label
+            }//Column
+        }
 
         delegate: ListItem {
             anchors { left:parent.left; right:parent.right; }
-            width: messages.width
-            contentHeight: item.height
+//            width: messages.width
+            height: item.height
 
-            MessageLabel {
+            Column {
                 id: item
-                width: messages.width
-                anchors.verticalCenter: parent.verticalCenter
+                height: itemloader.height
                 anchors {
                     left:parent.left
-                    right:parent.right
+                    right: parent.right
                     leftMargin: Theme.paddingSmall
                     rightMargin: Theme.paddingSmall
                 }
-                text: message
-                message_type: type
-                files_count: filescount
-                messagesmodel: messages.messagesmodel
-                row_index: rowindex
+                Loader {
+                    id: itemloader
+                    property string messagetext : message
+                    property int    messagetype : type
+                    property int    countfiles  : filescount
+                    property int    indexrow    : rowindex
+                    property real   contentwidth: parent.width
+                    sourceComponent: messagelabel
+                }
             }
+
+//            MessageLabel {
+//                id: item
+//                width: messages.width
+//                anchors.verticalCenter: parent.verticalCenter
+//                anchors {
+//                    left:parent.left
+//                    right:parent.right
+//                    leftMargin: Theme.paddingSmall
+//                    rightMargin: Theme.paddingSmall
+//                }
+//                text: message
+//                message_type: type
+//                files_count: filescount
+//                messagesmodel: messages.messagesmodel
+//                row_index: rowindex
+//            }
         }
         layer.enabled: true
         // uncomment this too, for gradient hide
-        layer.effect: OpacityMask {
-            source: listview
-            maskSource: mask
-        }
+//        layer.effect: OpacityMask {
+//            source: listview
+//            maskSource: mask
+//        }
     }
 
     BackgroundItem {
