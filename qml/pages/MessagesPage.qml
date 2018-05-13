@@ -138,6 +138,7 @@ Page {
             anchors { left:parent.left; right:parent.right; }
 //            width: messages.width
             height: item.height
+            contentHeight: item.height
 
             Column {
                 id: item
@@ -145,8 +146,8 @@ Page {
                 anchors {
                     left:parent.left
                     right: parent.right
-                    leftMargin: Theme.paddingSmall
-                    rightMargin: Theme.paddingSmall
+                    leftMargin: Theme.paddingMedium
+                    rightMargin: Theme.paddingMedium
                 }
                 Loader {
                     id: itemloader
