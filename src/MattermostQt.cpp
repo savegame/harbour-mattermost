@@ -799,11 +799,17 @@ void MattermostQt::prepare_direct_channel(int server_index, int team_index, int 
 	if( user_id == sc->m_user_id )
 		user_id = ct->m_name.right( ct->m_name.length() - index - 2  );
 	// first search in cached users
-
+	for(int i = 0; i < sc->m_user.size(); i++ )
+	{
+		if( sc->m_user[i]->m_id.compare(user_id) == 0 )
+		{
+			sc->m_direct_channels[channel_index]->m_display_name = sc->m_user[i]->m_username;
+			sc->m_direct_channels[channel_index]->m_dc_user_index = sc->m_user[i]->m_self_index;
+			return;
+		}
+	}
 	// send request for user credentials first
 	get_user_info(sc->m_self_index, user_id, team_index);
-	// and send request for user picture
-	//	get_user_image(sc->m_self_index, user_id);
 }
 
 void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr message)
@@ -831,6 +837,10 @@ void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr
 			message->m_user_index = k;
 			break;
 		}
+	}
+	if( message->m_user_index == -1 )
+	{
+		get_user_info(server_index, message->m_user_id);
 	}
 }
 
@@ -1701,6 +1711,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 				else
 					message->m_type = MessageOther;
 			}
+			prepare_user_index(sc->m_self_index, message);
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
 				get_file_info(sc->m_self_index,team_index,type,channel_index,

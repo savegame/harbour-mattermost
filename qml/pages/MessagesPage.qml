@@ -120,6 +120,16 @@ Page {
                        Theme.primaryColor
                        break
                     }
+                property color sectextcolor :
+                    switch(messagetype) {
+                    case MattermostQt.MessageMine:
+                       Theme.secondaryHighlightColor
+                       break
+                    case MattermostQt.MessageOther:
+                    default:
+                       Theme.secondaryColor
+                       break
+                    }
                 BackgroundItem {
                     id: avataritem
                     height: Theme.iconSizeMedium
@@ -135,16 +145,17 @@ Page {
                 Column {
                     id: textcolumn
                     width: contentwidth - Theme.paddingSmall - avataritem.width
-                    height: username_row.height + textlabel.height + Theme.paddingSmall + timestamp.height
+                    height: username_row.height + textlabel.height + Theme.paddingSmall
                     spacing: Theme.paddingSmall
                     Row {
                         id: username_row
                         height: usernamelabel.height
+                        width: textcolumn.width
                         spacing: Theme.paddingSmall
                         Label {
                             id: usernamelabel
                             text: username
-                            width: textcolumn.width - timestamp.width - Theme.paddingSmall
+                            width: Math.min(textcolumn.width - timestamp.width - Theme.paddingSmall, contentWidth)
                             font.pixelSize: Theme.fontSizeTiny
                             font.family: Theme.fontFamilyHeading
                             font.bold: true
@@ -155,11 +166,11 @@ Page {
                             text: createat
                             font.pixelSize: Theme.fontSizeTiny
                             font.family: Theme.fontFamilyHeading
-                            color: Theme.secondaryColor
+                            color: sectextcolor
                             elide: Text.ElideRight
-                            horizontalAlignment: Text.AlignRight
+                            horizontalAlignment: Text.AlignLeft
                         }// Label timestamp
-                    }//Row
+                    }//Row username and timestamp
                     Label {
                         id: textlabel
                         text: messagetext
