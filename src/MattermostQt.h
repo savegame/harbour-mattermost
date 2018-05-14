@@ -124,6 +124,7 @@ public:
 		// inside types
 		QVector<FilePtr>     m_file;
 		ChannelType      m_channel_type;
+		int              m_user_index;
 		int              m_server_index;
 		int              m_team_index;
 		int              m_channel_index;
@@ -344,6 +345,7 @@ Q_SIGNALS:
 	void messagesAddedBefore(ChannelPtr channel, int count);
 	void messageAdded(QList<MessagePtr> messages);
 	void messageUpdated(QList<MessagePtr> messages);
+	void userUpdated(UserPtr user);
 protected:
 	/**
 	 * @brief prepare_direct_channel
@@ -352,6 +354,12 @@ protected:
 	 * @param channel
 	 */
 	void prepare_direct_channel(int server_index, int team_index, int channel_index);
+	/**
+	 * @brief prepare_user_index
+	 * @param server_index
+	 * @param message
+	 */
+	void prepare_user_index(int server_index, MessagePtr message);
 
 	void get_teams_unread(ServerPtr server);
 
@@ -368,6 +376,7 @@ protected:
 	void reply_error(QNetworkReply *reply);
 	void reply_get_file_thumbnail(QNetworkReply *reply);
 	void reply_get_file_info(QNetworkReply *reply);
+	void reply_get_user_image(QNetworkReply *reply);
 	void reply_post_send_message(QNetworkReply *reply);
 
 	void event_posted(ServerPtr sc, QJsonObject data);

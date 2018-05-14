@@ -72,24 +72,24 @@ Page {
 
         verticalLayoutDirection: ListView.BottomToTop
 
-//        PullDownMenu {
-//            id:pullMenu
-//            quickSelect: true
-//            visible: !messagesmodel.atEnd
+        PullDownMenu {
+            id:pullMenu
+            quickSelect: true
+            visible: !messagesmodel.atEnd
 
-//            MenuItem{
-//                text:qsTr("get older")
-//                onClicked:
-//                {
-//                    context.mattermost.get_posts_before(
-//                                server_index,
-//                                team_index,
-//                                channel_index,
-//                                channel_type
-//                                )
-//                }
-//            }// MenuItem
-//        }// PullDownMenu
+            MenuItem{
+                text:qsTr("get older")
+                onClicked:
+                {
+                    context.mattermost.get_posts_before(
+                                server_index,
+                                team_index,
+                                channel_index,
+                                channel_type
+                                )
+                }
+            }// MenuItem
+        }// PullDownMenu
 
 //        Component {
 //            id: footeritem
@@ -104,35 +104,82 @@ Page {
 //        header: footeritem
 
         Component {
+            /* message from users */
             id: messagelabel
-            Column {
+            Row {
                 width: contentwidth
-                height: textlabel.height
-                Label {
-                    id: textlabel
-                    text: messagetext
-                    anchors {
-                        left:parent.left
-                        right: parent.right
+                height: Math.max(textcolumn.height, avataritem.height)
+                spacing: Theme.paddingSmall
+                property color textcolor :
+                    switch(messagetype) {
+                    case MattermostQt.MessageMine:
+                       Theme.highlightColor
+                       break
+                    case MattermostQt.MessageOther:
+                    default:
+                       Theme.primaryColor
+                       break
                     }
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.fontSizeSmall
-                    color: switch(messagetype) {
-                           case MattermostQt.MessageSystem:
-                               Theme.secondaryColor
-                               break
-                           case MattermostQt.MessageMine:
-                               Theme.highlightColor
-                               break
-                           case MattermostQt.MessageOther:
-                           default:
-                               Theme.primaryColor
-                               break
-                           }
-                    font.italic: messagetype == MattermostQt.MessageSystem ? true : false
-                }//Label
-            }//Column
-        }
+                BackgroundItem {
+                    id: avataritem
+                    height: Theme.iconSizeMedium
+                    width: Theme.iconSizeMedium
+                    Image{
+                        source: imagepath
+                        anchors.fill: parent
+                        fillMode: Image.PreserveAspectFit
+                        height: Theme.iconSizeMedium
+                        width: Theme.iconSizeMedium
+                    }
+                }//BackgroundItem
+                Column {
+                    id: textcolumn
+                    width: contentwidth - Theme.paddingSmall - avataritem.width
+                    height: username_row.height + textlabel.height
+//                    spacing: Theme.paddingSmall
+                    Row {
+                        id: username_row
+                        height: usernamelabel.height
+                        Label {
+                            id: usernamelabel
+                            text: username
+                            font.pixelSize: Theme.fontSizeTiny
+                            font.family: Theme.fontFamilyHeading
+                            color: textcolor
+                        }
+                    }//Row
+                    Label {
+                        id: textlabel
+                        text: messagetext
+                        anchors {
+                            left:parent.left
+                            right: parent.right
+                        }
+                        wrapMode: Text.Wrap
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: textcolor
+                    }//Label
+                }//Column
+            }// Row
+        }// Component messagelabel
+
+        Component {
+            /* System message, from server */
+            id: messagesystem
+            Label {
+                width: contentwidth
+                text: messagetext
+                wrapMode: Text.Wrap
+                elide: Text.ElideRight
+                font.pixelSize: Theme.fontSizeSmall
+                color: Theme.secondaryColor
+                font.italic: true
+
+                TouchBlocker{
+                    anchors.fill: parent;
+                }
+            }
+        }// Component messagesystem
 
         delegate: ListItem {
             anchors { left:parent.left; right:parent.right; }
@@ -156,7 +203,11 @@ Page {
                     property int    countfiles  : filescount
                     property int    indexrow    : rowindex
                     property real   contentwidth: parent.width
-                    sourceComponent: messagelabel
+                    property string imagepath   : userimagepath
+                    property string username    : user
+                    sourceComponent:
+                        type == MattermostQt.MessageSystem ?
+                           messagesystem:messagelabel
                 }
             }
 

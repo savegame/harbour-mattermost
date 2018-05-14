@@ -44,6 +44,36 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			return QVariant( row );
 		}
 		break;
+	case MessagesModel::SenderImagePath:
+		{
+			if( m_messages[row]->m_user_index >= 0
+			         &&  m_messages[row]->m_user_index < m_mattermost->m_server[m_messages[row]->m_server_index]->m_user.size())
+			{
+				MattermostQt::UserPtr user =
+				        m_mattermost->
+				        m_server[m_messages[row]->m_server_index]->
+				        m_user[m_messages[row]->m_user_index];
+				return QVariant(user->m_image_path);
+			}
+			else
+				return QVariant("");
+		}
+		break;
+	case MessagesModel::SenderUserName:
+		{
+			if( m_messages[row]->m_user_index >= 0
+			        &&  m_messages[row]->m_user_index < m_mattermost->m_server[m_messages[row]->m_server_index]->m_user.size())
+			{
+				MattermostQt::UserPtr user =
+				        m_mattermost->
+				        m_server[m_messages[row]->m_server_index]->
+				        m_user[m_messages[row]->m_user_index];
+				return QVariant(user->m_username);
+			}
+			else
+				return QVariant("");
+		}
+		break;
 	default:
 		break;
 	}
@@ -57,7 +87,9 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	names[MessagesModel::Type] = QLatin1String("type").data();
 	names[MessagesModel::FilesCount] = QLatin1String("filescount").data();
 	names[MessagesModel::RowIndex] = QLatin1String("rowindex").data();
-//	names[MessagesModel::FileIcon] = QLatin1String("fileicon").data();
+	names[MessagesModel::SenderImagePath] = QLatin1String("userimagepath").data();
+	names[MessagesModel::SenderUserName] = QLatin1String("user").data();
+
 	return names;
 }
 

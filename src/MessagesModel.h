@@ -22,7 +22,9 @@ class MessagesModel : public QAbstractListModel
 		FilesCount,
 		Thumbinal,
 		FileIcon,
-		RowIndex
+		RowIndex,
+		SenderImagePath, // user avatar
+		SenderUserName
 	};
 
 public:

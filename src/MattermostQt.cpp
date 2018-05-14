@@ -441,14 +441,15 @@ void MattermostQt::get_user_image(int server_index, int user_index)
 		return;
 	UserPtr user = sc->m_user[user_index];
 
-	user->m_image_path = sc->m_config_path +
+	QString path = sc->m_config_path +
 	        QString("/users/") +
 	        user->m_id +
-	        QString("/image.jpeg");
+	        QString("/image.png");
 	// check if user has image
-	QFile user_image(user->m_image_path);
+	QFile user_image(path);
 
 	if( user_image.exists() ) {
+		user->m_image_path = path;
 		return;
 	}
 
@@ -822,7 +823,35 @@ void MattermostQt::prepare_direct_channel(int server_index, int team_index, int 
 	// send request for user credentials first
 	get_user_info(sc->m_self_index, user_id, team_index);
 	// and send request for user picture
-//	get_user_image(sc->m_self_index, user_id);
+	//	get_user_image(sc->m_self_index, user_id);
+}
+
+void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr message)
+{
+	ServerPtr sc;
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
+	sc = m_server[server_index];
+
+	if( message->m_user_id.isEmpty() )
+	{// system message
+		message->m_user_index = -1;
+		return;
+	}
+//	else if( message->m_user_id.compare(sc->m_user_id) == 0 )
+//	{// my message
+//		message->m_user_index = -1;
+//		return;
+//	}
+	else // other users messages
+	for(int k = 0; k < sc->m_user.size(); k++)
+	{
+		if( message->m_user_id.compare(sc->m_user[k]->m_id) == 0)
+		{
+			message->m_user_index = k;
+			break;
+		}
+	}
 }
 
 void MattermostQt::websocket_connect(ServerPtr server)
@@ -1129,6 +1158,9 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 						            temp->m_self_index,
 						            temp->m_file_ids[k]);
 					}
+
+					// get user_index for post
+					prepare_user_index(sc->m_self_index, temp);
 					break;
 				}
 			}
@@ -1225,6 +1257,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 				messages[j2] = temp;
 				messages[j2]->m_self_index = j2;
 				messages[j]->m_self_index = j;
+				prepare_user_index(server_index,temp);
 				break;
 			}
 		}
@@ -1238,7 +1271,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 	// get files info from new messages
 	for(int i = 0; i < size; i++)
 	{
-		MessagePtr temp = messages[i];
+		MessagePtr temp = channel->m_message[i];
 		for(int k = 0; k < temp->m_file_ids.size(); k++ )
 		{
 			get_file_info(
@@ -1428,13 +1461,8 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 	MessagePtr mc = channel->m_message[message_index];
 
 	QByteArray replyData = reply->readAll();
-//	QJsonDocument json = QJsonDocument::fromJson(replyData);
-//	qDebug() << replyData;
-	// save thumb in file storage
-//	if()
 	{
 		QString file_path = sc->m_config_path
-//		        + QString("/%0_%1").arg(sc->m_self_index).arg(sc->m_user_id)
 		        + QLatin1String("/files/")
 		        + file->m_id;
 		QDir dir;
@@ -1515,6 +1543,57 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	return;
 }
 
+void MattermostQt::reply_get_user_image(QNetworkReply *reply)
+{
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int user_index = reply->property(P_USER_INDEX).toInt();
+
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
+	ServerPtr sc = m_server[server_index];
+	if( user_index < 0 || user_index >= sc->m_user.size() )
+		return;
+	UserPtr user = sc->m_user[user_index];
+
+//	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+
+	QByteArray replyData = reply->readAll();
+	qDebug() << replyData;
+	{
+		QString file_path = sc->m_config_path
+		        + QLatin1String("/users/")
+		        + user->m_id;
+		QDir dir;
+		if( !QFile::exists(file_path + QLatin1String("/image.png")) )
+		{
+			dir.mkpath(file_path);
+			file_path += QLatin1String("/image.png");
+			QFile save(file_path);
+			if(save.open(QIODevice::WriteOnly | QIODevice::Truncate))
+			{
+				save.write( replyData );
+				save.close();
+				user->m_image_path = file_path;
+			}
+			else
+				qDebug() << file_path;
+		}
+		else
+			user->m_image_path = file_path + QLatin1String("/image.png");
+	}
+	if(!user->m_image_path.isEmpty())
+	{
+
+//		QList<MessagePtr> messages;
+//		messages << mc;
+//		emit messageUpdated(messages);
+		emit userUpdated(user);
+	}
+//	qDebug() << reply->readAll();
+
+	qDebug() << "get user image";
+}
+
 void MattermostQt::reply_post_send_message(QNetworkReply *reply)
 {
 	qDebug() << reply->readAll();
@@ -1579,6 +1658,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 				else
 					message->m_type = MessageOther;
 			}
+			prepare_user_index(sc->m_self_index, message);
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
 				get_file_info(sc->m_self_index,-1,(int)ChannelType::ChannelDirect,channel_index,
@@ -1774,6 +1854,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 				break;
 			case ReplyType::rt_get_user_info:
 				reply_get_user_info(reply);
+				break;
+			case ReplyType::rt_get_user_image:
+				reply_get_user_image(reply);
 				break;
 			case ReplyType::rt_get_team:
 				reply_get_team(reply);
@@ -2277,6 +2360,10 @@ int MattermostQt::ServerContainer::get_team_index(QString team_id)
 
 MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 {
+	m_user_index = -1;
+	m_server_index = -1;
+	m_channel_index  = -1;
+	m_team_index = -1;
 //	qDebug() << object;
 	m_id = object["id"].toString();
 	m_channel_id = object["channel_id"].toString();
