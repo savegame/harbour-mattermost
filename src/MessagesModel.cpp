@@ -1,4 +1,5 @@
 #include "MessagesModel.h"
+#include <QDateTime>
 
 MessagesModel::MessagesModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -74,6 +75,21 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				return QVariant("");
 		}
 		break;
+	case MessagesModel::CreateAt:
+	    {
+		    QDateTime time;
+			if( m_messages[row]->m_update_at  == m_messages[row]->m_create_at )
+				time = QDateTime::fromMSecsSinceEpoch(m_messages[row]->m_create_at);
+			else
+				time = QDateTime::fromMSecsSinceEpoch(m_messages[row]->m_update_at);
+			return time.toString("hh:mm:ss");
+	    }
+		    break;
+	case MessagesModel::IsEdited:
+	    {
+		    return QVariant(m_messages[row]->m_update_at  > 0);
+	    }
+		break;
 	default:
 		break;
 	}
@@ -89,7 +105,8 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	names[MessagesModel::RowIndex] = QLatin1String("rowindex").data();
 	names[MessagesModel::SenderImagePath] = QLatin1String("userimagepath").data();
 	names[MessagesModel::SenderUserName] = QLatin1String("user").data();
-
+	names[MessagesModel::CreateAt] = QLatin1String("messagecreateat").data();
+	names[MessagesModel::IsEdited] = QLatin1String("messageisedited").data();
 	return names;
 }
 

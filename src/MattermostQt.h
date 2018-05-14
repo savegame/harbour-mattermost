@@ -120,6 +120,9 @@ public:
 		QString          m_type_string;
 		MessageType      m_type;
 		QString          m_user_id;
+		qlonglong        m_create_at;
+		qlonglong        m_update_at;
+		qlonglong        m_delete_at;
 
 		// inside types
 		QVector<FilePtr>     m_file;

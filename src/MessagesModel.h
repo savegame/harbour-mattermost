@@ -24,7 +24,9 @@ class MessagesModel : public QAbstractListModel
 		FileIcon,
 		RowIndex,
 		SenderImagePath, // user avatar
-		SenderUserName
+		SenderUserName,
+		CreateAt,
+		IsEdited
 	};
 
 public:

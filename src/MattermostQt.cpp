@@ -702,36 +702,16 @@ bool MattermostQt::save_settings()
 		server["trust_certificate"] = sc->m_trust_cert;
 		if(sc->m_trust_cert)
 		{
-//			QFile ca_cert_file(sc->m_ca_cert_path);
 			sc->m_config_path = m_settings_path + QString("%0_%1").arg(i).arg(sc->m_user_id);
-//			QFile::exists()
-//			if( ca_cert_file.open(QIODevice::ReadOnly) )
-//			{
-			    QDir server_dir(sc->m_config_path);
-
-				if(! server_dir.exists() )
-				{
-					server_dir.mkpath(sc->m_config_path);
-				}
-				QString new_ca_path = sc->m_config_path + QString("/ca.crt");
-				if( QFile::copy(sc->m_ca_cert_path , new_ca_path) )
-				    sc->m_ca_cert_path = new_ca_path;
-//				QFile save_cert( new_ca_path );
-//				save_cert.open(QIODevice::WriteOnly);
-//				save_cert.write( ca_cert_file.readAll() );
-//				save_cert.close();
-//			}
-//			QFile cert_file(sc->m_cert_path);
-//			if( cert_file.open(QIODevice::ReadOnly) )
-//			{
-				QString new_cert_path = sc->m_config_path + QString("/server.crt");
-				if( QFile::copy(sc->m_ca_cert_path , new_cert_path) )
-				    sc->m_cert_path = new_cert_path;
-//				QFile save_cert( new_cert_path );
-//				save_cert.open(QIODevice::WriteOnly);
-//				save_cert.write( cert_file.readAll() );
-//				save_cert.close();
-//			}
+			QDir server_dir(sc->m_config_path);
+			if(! server_dir.exists() )
+				server_dir.mkpath(sc->m_config_path);
+			QString new_ca_path = sc->m_config_path + QString("/ca.crt");
+			if( QFile::copy(sc->m_ca_cert_path , new_ca_path) )
+				sc->m_ca_cert_path = new_ca_path;
+			QString new_cert_path = sc->m_config_path + QString("/server.crt");
+			if( QFile::copy(sc->m_ca_cert_path , new_cert_path) )
+				sc->m_cert_path = new_cert_path;
 		}
 		server["ca_cert_path"] = sc->m_ca_cert_path;
 		server["cert_path"] = sc->m_cert_path;
@@ -2370,6 +2350,9 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 	m_message = object["message"].toString();
 	m_type_string = object["type"].toString();
 	m_user_id = object["user_id"].toString();
+	m_create_at = (qlonglong)object["create_at"].toDouble(0);
+	m_update_at = (qlonglong)object["update_at"].toDouble(0);
+	m_delete_at = (qlonglong)object["delete_at"].toDouble(0);
 	if( m_type_string.indexOf("system_") >= 0 )
 		m_type = MessageType::MessageSystem;
 	else

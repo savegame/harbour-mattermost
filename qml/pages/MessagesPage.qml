@@ -135,18 +135,30 @@ Page {
                 Column {
                     id: textcolumn
                     width: contentwidth - Theme.paddingSmall - avataritem.width
-                    height: username_row.height + textlabel.height
-//                    spacing: Theme.paddingSmall
+                    height: username_row.height + textlabel.height + Theme.paddingSmall + timestamp.height
+                    spacing: Theme.paddingSmall
                     Row {
                         id: username_row
                         height: usernamelabel.height
+                        spacing: Theme.paddingSmall
                         Label {
                             id: usernamelabel
                             text: username
+                            width: textcolumn.width - timestamp.width - Theme.paddingSmall
                             font.pixelSize: Theme.fontSizeTiny
                             font.family: Theme.fontFamilyHeading
+                            font.bold: true
                             color: textcolor
                         }
+                        Label {
+                            id: timestamp
+                            text: createat
+                            font.pixelSize: Theme.fontSizeTiny
+                            font.family: Theme.fontFamilyHeading
+                            color: Theme.secondaryColor
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignRight
+                        }// Label timestamp
                     }//Row
                     Label {
                         id: textlabel
@@ -205,6 +217,7 @@ Page {
                     property real   contentwidth: parent.width
                     property string imagepath   : userimagepath
                     property string username    : user
+                    property string createat    : messagecreateat
                     sourceComponent:
                         type == MattermostQt.MessageSystem ?
                            messagesystem:messagelabel
