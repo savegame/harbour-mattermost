@@ -247,6 +247,7 @@ Page {
                         Component {
                             id: filedocument
                             Row {
+                                id: fdrow
                                 height: Math.max(image.height, imagelabel.height)
                                 width: widthcontent
                                 spacing: Theme.paddingSmall
@@ -275,14 +276,16 @@ Page {
                                     font.italic:  true
                                     color: fontcolor
                                     truncationMode: TruncationMode.Fade
-                                    width: widthcontent - Theme.paddingSmall - image.width
+                                    width: widthcontent - fdrow.spacing*2 - image.width /*- downloadfilebutton.width*/
                                     height: contentHeight
                                 } // label with filename
 
-                //                IconButton {
-                //                    id: downloadfilebutton
-                //                    icon.source: "image://icon-m-device-download"
-                //                }// download button
+//                                IconButton {
+//                                    id: downloadfilebutton
+//                                    icon.source: "image://theme/icon-m-device-download"
+//                                    width: Theme.iconSizeMedium
+//                                    height: Theme.iconSizeMedium
+//                                }// download button
                             }
                         }
 
