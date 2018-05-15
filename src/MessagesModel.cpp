@@ -138,7 +138,7 @@ MattermostQt *MessagesModel::getMattermost() const
 
 int MessagesModel::getFileType(int row,int i) const
 {
-	if(row < 0 || i < 0 || row > m_messages.size() || i > m_messages[row]->m_file.size() )
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
 		return (int)MattermostQt::FileUnknown;
 	return (int)m_messages[row]->m_file[i]->m_file_type;
 }
