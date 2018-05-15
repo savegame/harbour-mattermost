@@ -37,13 +37,13 @@ DISTFILES += qml/harbour-mattermost.qml \
     rpm/harbour-mattermost.changes.in \
     rpm/harbour-mattermost.changes.run.in \
     rpm/harbour-mattermost.spec \
-    rpm/harbour-mattermost.yaml \
     translations/*.ts \
     harbour-mattermost.desktop \
     server.pri \
     qml/pages/TeamsPage.qml \
     qml/components/TeamLabel.qml \
-    translations/harbour-mattermost-ru.ts
+    translations/harbour-mattermost-ru.ts \
+    rpm/harbour-mattermost.yaml.backup
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 

@@ -16,21 +16,9 @@ BackgroundItem {
 
     height: textedit.height
 
-//    Rectangle {
-//        id: background
-////        anchors.bottom: parent.bottom
-////        anchors.left: parent.left
-////        anchors.right: parent.right
-//        anchors.fill: parent
-//        gradient: Gradient {
-//            GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
-//            GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.15) }
-//        }
-//        implicitHeight: textedit.height
-//        TouchBlocker {
-//            anchors.fill: parent
-//        }
-//    }
+    TouchBlocker {
+        anchors.fill: parent
+    }
 
     TextArea  {
         id: textedit

@@ -34,7 +34,6 @@ PkgConfigBR:
 # Runtime dependencies which are not automatically detected
 Requires:
   - sailfishsilica-qt5 >= 0.10.9 
-  - qt5-qtwebsockets
 
 # All installed files
 Files:
@@ -45,3 +44,8 @@ Files:
 
 # For more information about yaml and what's supported in Sailfish OS
 # build system, please see https://wiki.merproject.org/wiki/Spectacle
+
+# >> macros
+# list here all the libraries your RPM installs
+# %define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*$
+# << macros

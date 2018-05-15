@@ -416,6 +416,9 @@ Page {
 //            }
 //            anchors.fill: parent
 //        }
+        TouchBlocker {
+            anchors.fill: parent
+        }
 
         Row {
             layoutDirection: Qt.RightToLeft

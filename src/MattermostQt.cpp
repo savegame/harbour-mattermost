@@ -10,8 +10,8 @@
 #include <QFile>
 #include <QDir>
 #include <QUrlQuery>
-
-//#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
+#include <QCoreApplication>
+#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
 //#include <QtWebSockets>
 
 #define P_REPLY_TYPE         "reply_type"
@@ -58,9 +58,13 @@ MattermostQt::MattermostQt()
 	connect(m_networkManager.data(),SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
 	        this, SLOT(replySSLErrors(QNetworkReply*,QList<QSslError>)));
 
-	m_settings_path = QStandardPaths::displayName(QStandardPaths::AppDataLocation)
-	        + QLatin1String("/mattermostqt/");
-	m_settings_path = "/home/nemo/.config/mattermostqt/";
+	m_settings_path = QDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
+	        .filePath(QCoreApplication::applicationName());
+
+	QString data_dir = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+	QString cache_dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+
+	//m_settings_path = "/home/nemo/.config/mattermostqt/";
 	load_settings();
 }
 
@@ -693,6 +697,7 @@ bool MattermostQt::save_settings()
 	{
 		ServerPtr sc = m_server[i];
 		QJsonObject server;
+		QString server_dir_path;
 //		server["id"] = (double)sc->m_selfId;
 		server["user_id"] = sc->m_user_id;
 		server["url"] = sc->m_url;
@@ -702,7 +707,8 @@ bool MattermostQt::save_settings()
 		server["trust_certificate"] = sc->m_trust_cert;
 		if(sc->m_trust_cert)
 		{
-			sc->m_config_path = m_settings_path + QString("%0_%1").arg(i).arg(sc->m_user_id);
+			server_dir_path = QString("%0_%1").arg(i).arg(sc->m_user_id);
+			sc->m_config_path = m_settings_path + QDir::separator() + server_dir_path;
 			QDir server_dir(sc->m_config_path);
 			if(! server_dir.exists() )
 				server_dir.mkpath(sc->m_config_path);
@@ -713,15 +719,15 @@ bool MattermostQt::save_settings()
 			if( QFile::copy(sc->m_ca_cert_path , new_cert_path) )
 				sc->m_cert_path = new_cert_path;
 		}
-		server["ca_cert_path"] = sc->m_ca_cert_path;
-		server["cert_path"] = sc->m_cert_path;
-		server["server_dir"] = sc->m_config_path;
+		server["ca_cert_path"] = QString("ca.crt");
+		server["cert_path"] = QString("server.crt");
+		server["server_dir"] = server_dir_path;
 		servers.append(server);
 	}
 	object["servers"] = servers;
 	json.setObject(object);
 
-	QFile jsonFile( m_settings_path + QLatin1String(F_CONFIG_FILE) );
+	QFile jsonFile( m_settings_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
 	if( !jsonFile.open(QFile::WriteOnly) )
 		return false;
 	jsonFile.write(json.toJson());
@@ -733,7 +739,7 @@ bool MattermostQt::save_settings()
 bool MattermostQt::load_settings()
 {
 	QJsonDocument json;
-	QFile jsonFile( m_settings_path + QLatin1String(F_CONFIG_FILE) );
+	QFile jsonFile( m_settings_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
 	if( !jsonFile.open(QFile::ReadOnly | QFile::Text) )
 		return false;
 
@@ -774,15 +780,15 @@ bool MattermostQt::load_settings()
 
 		// create server container
 		ServerPtr server( new ServerContainer(url,token,api) );
+		server->m_config_path = m_settings_path + QDir::separator() +  object["server_dir"].toString("");
+		if(server->m_config_path.isEmpty())
+			server->m_config_path = m_settings_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
 		server->m_trust_cert = trust_certificate;
 		server->m_display_name = display_name;
 		server->m_self_index = m_server.size();
-		server->m_ca_cert_path = ca_cert_path;
-		server->m_cert_path = cert_path;
-		server->m_config_path = object["server_dir"].toString("");
+		server->m_ca_cert_path = server->m_config_path + QDir::separator() +  ca_cert_path;
+		server->m_cert_path = server->m_config_path + QDir::separator() + cert_path;
 		server->m_user_id = user_id;
-		if(server->m_config_path.isEmpty())
-			server->m_config_path = m_settings_path + QString("%0_%1").arg(i).arg(user_id);
 		m_server.append(server);
 		get_login(server);
 	}
