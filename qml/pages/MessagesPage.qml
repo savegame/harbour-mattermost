@@ -14,13 +14,17 @@ Page {
     property int channel_index
     property int channel_type
     property string display_name
+    property bool noMoreMessages: true
 
     property MessagesModel messagesmodel: MessagesModel {
         mattermost: context.mattermost
         onMessagesInitialized: {
             // nothing
-            listview.scrollToBottom()
+//            listview.scrollToBottom()
+
         }
+        onAtEndChanged:
+            messages.noMoreMessages = atEnd
     }
 
     onStatusChanged: {
@@ -75,7 +79,7 @@ Page {
         PullDownMenu {
             id:pullMenu
             quickSelect: true
-            visible: !messagesmodel.atEnd
+            visible: !messages.noMoreMessages
 
             MenuItem{
                 text:qsTr("get older")
@@ -102,6 +106,66 @@ Page {
 //            }
 //        }
 //        header: footeritem
+        Component {
+            id: fileimage
+            Image {
+                id: image
+                fillMode: Image.PreserveAspectFit
+                source: messagesmodel.getThumbPath(rowindex,fileindex)
+                sourceSize: messagesmodel.getImageSize(rowindex,fileindex)
+                height: ( (sourceSize.width > sourceSize.height) ?
+                            (widthcontent)/sourceSize.width * sourceSize.height :
+                            widthcontent
+                         ) + Theme.paddingSmall
+                width: ( sourceSize.width > sourceSize.height ) ?
+                           widthcontent :
+                           (widthcontent)/sourceSize.height * sourceSize.width
+                onHeightChanged:
+                    cheight = height
+            }//image
+        }
+
+        Component {
+            id: filedocument
+            Row {
+                height: Math.max(image.height, imagelabel.height)
+                width: widthcontent
+                spacing: Theme.paddingSmall
+
+                onHeightChanged: {
+                    cheight = height
+                }
+
+                Image {
+                    id: image
+//                    anchors {
+//                        topMargin: paddingHalfSmall;
+//                        bottomMargin: paddingHalfSmall;
+//                        leftMargin: paddingHalfSmall;
+//                        rightMargin: paddingHalfSmall;
+//                    }//anchors
+                    fillMode: Image.PreserveAspectFit
+                    source: "image://theme/icon-m-file-document"
+                    sourceSize.width: Theme.iconSizeMedium
+                    sourceSize.height: Theme.iconSizeMedium
+                    height: Theme.iconSizeMedium
+                    width: Theme.iconSizeMedium
+                }//image
+
+                Label {
+                    id: imagelabel
+                    text: messagesmodel.getFileName(rowindex,fileindex)
+                    anchors.verticalCenter: image.verticalCenter
+                    font.family: Theme.fontFamily
+                    font.pixelSize: textMessageFontSize
+                    font.italic:  true
+                    color: fontcolor
+                    truncationMode: TruncationMode.Fade
+                    width: widthcontent - Theme.paddingSmall - image.width
+                    height: contentHeight
+                } // label with filename
+            }
+        }
 
         Component {
             /* message from users */
@@ -109,6 +173,8 @@ Page {
             Row {
                 width: contentwidth
                 height: Math.max(textcolumn.height, avataritem.height)
+                onHeightChanged:
+                    outtotalheight = height
                 spacing: Theme.paddingSmall
                 property color textcolor :
                     switch(messagetype) {
@@ -141,11 +207,10 @@ Page {
                         height: Theme.iconSizeMedium
                         width: Theme.iconSizeMedium
                     }
-                }//BackgroundItem
+                }//BackgroundItem avataritem
                 Column {
                     id: textcolumn
                     width: contentwidth - Theme.paddingSmall - avataritem.width
-                    height: username_row.height + textlabel.height + Theme.paddingSmall
                     spacing: Theme.paddingSmall
                     Row {
                         id: username_row
@@ -154,8 +219,8 @@ Page {
                         spacing: Theme.paddingSmall
                         Label {
                             id: usernamelabel
-                            text: username
-                            width: Math.min(textcolumn.width - timestamp.width - Theme.paddingSmall, contentWidth)
+                            text: username + " " + countfiles + " " + filesrepeater.height
+                            width: Math.min(textcolumn.width - timestamp.width - Theme.paddingSmall, contentwidth)
                             font.pixelSize: Theme.fontSizeTiny
                             font.family: Theme.fontFamilyHeading
                             font.bold: true
@@ -174,6 +239,12 @@ Page {
                     Label {
                         id: textlabel
                         text: messagetext
+
+//                        onTextChanged: {
+//                            if( messagetext.length === 0 )
+//                                height = 0;
+//                        }
+
                         anchors {
                             left:parent.left
                             right: parent.right
@@ -181,7 +252,53 @@ Page {
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.fontSizeSmall
                         color: textcolor
-                    }//Label
+                    }//Label message
+                    Repeater {
+                        id: filesrepeater
+                        property real oheight: 0
+//                        height: oheight
+                        model: countfiles
+
+                        onOheightChanged: {
+                            height = oheight
+                        }
+
+                        Loader {//for different file types
+                            id: fileitemloader
+                            property int fileindex: index
+                            property int rowindex: indexrow
+                            property color fontcolor: textcolor
+                            property real widthcontent: textcolumn.width - Theme.paddingSmall
+                            property real cheight: 0
+
+                            onCheightChanged:{
+                                height = cheight
+                                filesrepeater.oheight += cheight
+//                                cheight = 0
+                            }
+                            sourceComponent:
+                                switch(messagesmodel.getFileType(indexrow,index))
+                                {
+                                case MattermostQt.FileImage:
+                                case MattermostQt.FileAnimatedImage:
+                                    fileimage
+                                    break;
+                                case MattermostQt.FileDocument:
+                                    filedocument
+                                    break;
+                                }
+                        }// Loader for files
+                    }//Repeater of attached files
+
+                    //величина подобрана хер знает как,
+                    // надо разбираться как задать высату нормально
+                    height:{
+                        ((countfiles>0)?username_row.height * countfiles:username_row.height) +
+                        textlabel.height +
+                        Theme.paddingSmall +
+                        filesrepeater.height +
+                        Theme.paddingLarge * countfiles
+                    }
                 }//Column
             }// Row
         }// Component messagelabel
@@ -193,7 +310,8 @@ Page {
                 width: contentwidth
                 text: messagetext
                 wrapMode: Text.Wrap
-                elide: Text.ElideRight
+                elide: Text.ElideMiddle
+                horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.secondaryColor
                 font.italic: true
@@ -229,6 +347,12 @@ Page {
                     property string imagepath   : userimagepath
                     property string username    : user
                     property string createat    : messagecreateat
+
+                    property real  outtotalheight
+
+                    onOuttotalheightChanged:
+                        height = outtotalheight
+
                     sourceComponent:
                         type == MattermostQt.MessageSystem ?
                            messagesystem:messagelabel
