@@ -106,23 +106,13 @@ Page {
 //            }
 //        }
 //        header: footeritem
+
         Component {
-            id: fileimage
-            Image {
-                id: image
-                fillMode: Image.PreserveAspectFit
-                source: messagesmodel.getThumbPath(rowindex,fileindex)
-                sourceSize: messagesmodel.getImageSize(rowindex,fileindex)
-                height: ( (sourceSize.width > sourceSize.height) ?
-                            (widthcontent)/sourceSize.width * sourceSize.height :
-                            widthcontent
-                         ) + Theme.paddingSmall
-                width: ( sourceSize.width > sourceSize.height ) ?
-                           widthcontent :
-                           (widthcontent)/sourceSize.height * sourceSize.width
-                onHeightChanged:
-                    cheight = height
-            }//image
+            id: emptycomponent
+            BackgroundItem {
+                visible: false
+                height: 0
+            }
         }
 
         Component {
@@ -133,17 +123,12 @@ Page {
                 spacing: Theme.paddingSmall
 
                 onHeightChanged: {
-                    cheight = height
+                    if(height > 0)
+                        componentHeight = height
                 }
 
                 Image {
                     id: image
-//                    anchors {
-//                        topMargin: paddingHalfSmall;
-//                        bottomMargin: paddingHalfSmall;
-//                        leftMargin: paddingHalfSmall;
-//                        rightMargin: paddingHalfSmall;
-//                    }//anchors
                     fillMode: Image.PreserveAspectFit
                     source: "image://theme/icon-m-file-document"
                     sourceSize.width: Theme.iconSizeMedium
@@ -157,7 +142,7 @@ Page {
                     text: messagesmodel.getFileName(rowindex,fileindex)
                     anchors.verticalCenter: image.verticalCenter
                     font.family: Theme.fontFamily
-                    font.pixelSize: textMessageFontSize
+                    font.pixelSize: Theme.fontSizeSmall
                     font.italic:  true
                     color: fontcolor
                     truncationMode: TruncationMode.Fade
@@ -219,8 +204,8 @@ Page {
                         spacing: Theme.paddingSmall
                         Label {
                             id: usernamelabel
-                            text: username + " " + countfiles + " " + filesrepeater.height
-                            width: Math.min(textcolumn.width - timestamp.width - Theme.paddingSmall, contentwidth)
+                            text: username
+                            width: Math.min(textcolumn.width - timestamp.width - Theme.paddingSmall, contentWidth)
                             font.pixelSize: Theme.fontSizeTiny
                             font.family: Theme.fontFamilyHeading
                             font.bold: true
@@ -236,46 +221,78 @@ Page {
                             horizontalAlignment: Text.AlignLeft
                         }// Label timestamp
                     }//Row username and timestamp
-                    Label {
-                        id: textlabel
-                        text: messagetext
-
-//                        onTextChanged: {
-//                            if( messagetext.length === 0 )
-//                                height = 0;
-//                        }
-
-                        anchors {
-                            left:parent.left
-                            right: parent.right
+                    Loader {
+                        id: textlabelloader
+                        property string textmesage: messagetext
+                        property real componentheight
+                        onComponentheightChanged:
+                            height = componentheight
+                        Component {
+                            id: messagecomponent
+                            Label {
+                                id: textlabel
+                                text: textmesage
+                                onContentHeightChanged:
+                                {
+                                   componentheight = contentHeight
+                                }
+                                width: textcolumn.width
+                                wrapMode: Text.Wrap
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: textcolor
+                            }//Label message
                         }
-                        wrapMode: Text.Wrap
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: textcolor
-                    }//Label message
+                        sourceComponent:
+                            if( textmesage.length === 0 )
+                                emptycomponent
+                            else
+                                messagecomponent
+                    }// Loader textlabelloader
+
                     Repeater {
                         id: filesrepeater
-                        property real oheight: 0
-//                        height: oheight
+                        property real summaryHeight: 0
                         model: countfiles
 
-                        onOheightChanged: {
-                            height = oheight
+                        onSummaryHeightChanged:
+                            height = summaryHeight
+
+                        onImplicitHeightChanged:
+                            console.log("fielsrepeater.implicitHeight " + implicitHeight)
+
+                        Component {
+                            id: fileimage
+                            Image {
+                                id: image
+                                fillMode: Image.PreserveAspectFit
+                                source: messagesmodel.getThumbPath(rowindex,fileindex)
+                                sourceSize: messagesmodel.getImageSize(rowindex,fileindex)
+                                height: ( (sourceSize.width > sourceSize.height) ?
+                                            (widthcontent)/sourceSize.width * sourceSize.height :
+                                            widthcontent
+                                         ) + Theme.paddingSmall
+                                width: ( sourceSize.width > sourceSize.height ) ?
+                                           widthcontent :
+                                           (widthcontent)/sourceSize.height * sourceSize.width
+                                onHeightChanged: {
+                                    if(height > 0)
+                                        componentHeight = height
+                                }
+                            }//image
                         }
 
                         Loader {//for different file types
                             id: fileitemloader
-                            property int fileindex: index
-                            property int rowindex: indexrow
+                            property int   fileindex: index
+                            property int   rowindex: indexrow
                             property color fontcolor: textcolor
-                            property real widthcontent: textcolumn.width - Theme.paddingSmall
-                            property real cheight: 0
+                            property real  widthcontent: textcolumn.width - Theme.paddingSmall
+                            property real  componentHeight: 0
 
-                            onCheightChanged:{
-                                height = cheight
-                                filesrepeater.oheight += cheight
-//                                cheight = 0
+                            onComponentHeightChanged:{
+                                filesrepeater.summaryHeight += componentHeight + textcolumn.spacing
                             }
+
                             sourceComponent:
                                 switch(messagesmodel.getFileType(indexrow,index))
                                 {
@@ -284,20 +301,18 @@ Page {
                                     fileimage
                                     break;
                                 case MattermostQt.FileDocument:
+                                default:
                                     filedocument
                                     break;
                                 }
                         }// Loader for files
                     }//Repeater of attached files
 
-                    //величина подобрана хер знает как,
-                    // надо разбираться как задать высату нормально
                     height:{
-                        ((countfiles>0)?username_row.height * countfiles:username_row.height) +
-                        textlabel.height +
+                        username_row.height +
+                        textlabelloader.height +
                         Theme.paddingSmall +
-                        filesrepeater.height +
-                        Theme.paddingLarge * countfiles
+                        filesrepeater.height
                     }
                 }//Column
             }// Row
@@ -325,11 +340,11 @@ Page {
         delegate: ListItem {
             anchors { left:parent.left; right:parent.right; }
 //            width: messages.width
-            height: item.height
-            contentHeight: item.height
+            height: itemlistcolumn.height
+            contentHeight: itemlistcolumn.height
 
             Column {
-                id: item
+                id: itemlistcolumn
                 height: itemloader.height
                 anchors {
                     left:parent.left
