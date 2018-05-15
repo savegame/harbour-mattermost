@@ -44,8 +44,3 @@ Files:
 
 # For more information about yaml and what's supported in Sailfish OS
 # build system, please see https://wiki.merproject.org/wiki/Spectacle
-
-# >> macros
-# list here all the libraries your RPM installs
-# %define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*$
-# << macros

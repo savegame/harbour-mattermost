@@ -43,7 +43,7 @@ DISTFILES += qml/harbour-mattermost.qml \
     qml/pages/TeamsPage.qml \
     qml/components/TeamLabel.qml \
     translations/harbour-mattermost-ru.ts \
-    rpm/harbour-mattermost.yaml.backup
+    rpm/harbour-mattermost.yaml
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 
