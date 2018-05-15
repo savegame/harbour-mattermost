@@ -93,6 +93,7 @@ public:
 		// if it image
 		QSize   m_image_size;
 		QString m_thumb_path;
+		// if it document
 
 		int m_server_index;
 		int m_team_index;
@@ -357,6 +358,7 @@ protected:
 	 * @param channel
 	 */
 	void prepare_direct_channel(int server_index, int team_index, int channel_index);
+
 	/**
 	 * @brief prepare_user_index
 	 * @param server_index

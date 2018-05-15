@@ -44,6 +44,7 @@ public:
 	MattermostQt *getMattermost() const;
 
 	Q_INVOKABLE int getFileType(int row, int i) const;
+	Q_INVOKABLE QString getFileMimeType(int row, int i) const;
 	Q_INVOKABLE QString getThumbPath(int row, int i) const;
 	Q_INVOKABLE QSize   getImageSize(int row, int i) const;
 	Q_INVOKABLE QString getFileName(int row, int i) const;

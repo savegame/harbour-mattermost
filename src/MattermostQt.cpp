@@ -1336,10 +1336,25 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 					break;
 				// direct channel
 				case MattermostQt::ChannelDirect:
-					ct->m_team_index = -1;
-					ct->m_self_index = m_server[ct->m_server_index]->m_direct_channels.size();
-					m_server[ct->m_server_index]->m_direct_channels.append(ct);
-					prepare_direct_channel(ct->m_server_index, ct->m_team_index, ct->m_self_index);
+					{
+						bool channel_exists = false;
+						ct->m_team_index = -1;
+						// search if channels already added
+						// TODO need refactoring ( because direct channels must be added once
+						for(int c = 0; c < m_server[ct->m_server_index]->m_direct_channels.size(); c++)
+						{
+							if(m_server[ct->m_server_index]->m_direct_channels[c]->m_id.compare(ct->m_id) == 0 )
+							{
+								channel_exists = true;
+								break;
+							}
+						}
+						if(channel_exists)
+							break;
+						ct->m_self_index = m_server[ct->m_server_index]->m_direct_channels.size();
+						m_server[ct->m_server_index]->m_direct_channels.append(ct);
+						prepare_direct_channel(ct->m_server_index, ct->m_team_index, ct->m_self_index);
+					}
 					break;
 				default:
 					break;
@@ -1527,14 +1542,17 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file->m_message_index = message_index;
 
 	// TODO Here need save file info to json in file's directory
-	QString file_thumb_path = sc->m_config_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
-	if( !QFile::exists(file_thumb_path) )
-		get_file_thumbnail(server_index,file->m_self_sc_index);
-	else {
-		file->m_thumb_path = file_thumb_path;
-		QList<MessagePtr> messages;
-		messages << mc;
-		emit messageUpdated(messages);
+	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
+	{
+		QString file_thumb_path = sc->m_config_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
+		if( !QFile::exists(file_thumb_path) )
+			get_file_thumbnail(server_index,file->m_self_sc_index);
+		else {
+			file->m_thumb_path = file_thumb_path;
+			QList<MessagePtr> messages;
+			messages << mc;
+			emit messageUpdated(messages);
+		}
 	}
 	return;
 }

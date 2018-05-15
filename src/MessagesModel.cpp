@@ -143,6 +143,13 @@ int MessagesModel::getFileType(int row,int i) const
 	return (int)m_messages[row]->m_file[i]->m_file_type;
 }
 
+QString MessagesModel::getFileMimeType(int row, int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return "";
+	return m_messages[row]->m_file[i]->m_mime_type;
+}
+
 QString MessagesModel::getThumbPath(int row,int i) const
 {
 	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )

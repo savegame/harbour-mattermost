@@ -115,44 +115,7 @@ Page {
             }
         }
 
-        Component {
-            id: filedocument
-            Row {
-                height: Math.max(image.height, imagelabel.height)
-                width: widthcontent
-                spacing: Theme.paddingSmall
-
-                onHeightChanged: {
-                    if(height > 0)
-                        componentHeight = height
-                }
-
-                Image {
-                    id: image
-                    fillMode: Image.PreserveAspectFit
-                    source: "image://theme/icon-m-file-document"
-                    sourceSize.width: Theme.iconSizeMedium
-                    sourceSize.height: Theme.iconSizeMedium
-                    height: Theme.iconSizeMedium
-                    width: Theme.iconSizeMedium
-                }//image
-
-                Label {
-                    id: imagelabel
-                    text: messagesmodel.getFileName(rowindex,fileindex)
-                    anchors.verticalCenter: image.verticalCenter
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.italic:  true
-                    color: fontcolor
-                    truncationMode: TruncationMode.Fade
-                    width: widthcontent - Theme.paddingSmall - image.width
-                    height: contentHeight
-                } // label with filename
-            }
-        }
-
-        Component {
+       Component {
             /* message from users */
             id: messagelabel
             Row {
@@ -279,6 +242,48 @@ Page {
                                         componentHeight = height
                                 }
                             }//image
+                        }// file image component
+
+                        Component {
+                            id: filedocument
+                            Row {
+                                height: Math.max(image.height, imagelabel.height)
+                                width: widthcontent
+                                spacing: Theme.paddingSmall
+
+                                onHeightChanged: {
+                                    if(height > 0)
+                                        componentHeight = height
+                                }
+
+                                Image {
+                                    id: image
+                                    fillMode: Image.PreserveAspectFit
+                                    source: Theme.iconForMimeType(messagesmodel.getFileMimeType(rowindex,fileindex))
+                                    sourceSize.width: Theme.iconSizeMedium
+                                    sourceSize.height: Theme.iconSizeMedium
+                                    height: Theme.iconSizeMedium
+                                    width: Theme.iconSizeMedium
+                                }//image
+
+                                Label {
+                                    id: imagelabel
+                                    text: messagesmodel.getFileName(rowindex,fileindex)
+                                    anchors.verticalCenter: image.verticalCenter
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    font.italic:  true
+                                    color: fontcolor
+                                    truncationMode: TruncationMode.Fade
+                                    width: widthcontent - Theme.paddingSmall - image.width
+                                    height: contentHeight
+                                } // label with filename
+
+                //                IconButton {
+                //                    id: downloadfilebutton
+                //                    icon.source: "image://icon-m-device-download"
+                //                }// download button
+                            }
                         }
 
                         Loader {//for different file types
