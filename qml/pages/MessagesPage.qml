@@ -225,12 +225,11 @@ Page {
 
                         Component {
                             id: fileimage
-                            Image {
-                                id: image
-                                fillMode: Image.PreserveAspectFit
-                                source: messagesmodel.getValidPath(rowindex,fileindex)
-                                sourceSize: messagesmodel.getImageSize(rowindex,fileindex)
+                            BackgroundItem {
+                                id: imagebackground
                                 property size itemSize: messagesmodel.getItemSize(rowindex,fileindex,widthcontent)
+                                property size imageSourceSize: messagesmodel.getImageSize(rowindex,fileindex)
+                                property string imagePath: messagesmodel.getValidPath(rowindex,fileindex)
 
                                 height: itemSize.height
                                 width: itemSize.width
@@ -240,30 +239,70 @@ Page {
                                         componentHeight = height
                                 }
 
+                                Component {
+                                    id: staticimage
 
-                                Rectangle {
+                                    Image {
+                                        id: image
+                                        fillMode: Image.PreserveAspectFit
+                                        source: imagebackground.imagePath
+                                        sourceSize: imagebackground.imageSourceSize
+
+                                        height: imagebackground.itemSize.height
+                                        width: imagebackground.itemSize.width
+                                    }//image
+                                }
+
+                                Component {
+                                    id: animatedimage
+
+                                    AnimatedImage {
+                                        id: image
+                                        fillMode: Image.PreserveAspectFit
+                                        source: imagebackground.imagePath
+                                        onStatusChanged: playing = (status == AnimatedImage.Ready)
+//                                        sourceSize: imagebackground.imageSourceSize
+                                        height: imagebackground.itemSize.height
+                                        width: imagebackground.itemSize.width
+                                    }
+                                }
+
+                                Loader {
+                                    id: imageloader
+                                    width: imagebackground.itemSize.width
+                                    height: imagebackground.itemSize.height
+                                    sourceComponent:
+                                        switch(filetype)
+                                        {
+                                        case MattermostQt.FileImage:
+                                            staticimage
+                                            break;
+                                        case MattermostQt.FileAnimatedImage:
+                                            animatedimage
+                                            break;
+                                        default:
+                                            staticimage
+                                            break;
+                                        }
+                                }
+
+                                Rectangle {//ac background for play gif button
                                     id: bgrect
                                     opacity: 0.6
-                                    visible: downloadbutton.visible
+                                    visible: false
                                     color: Theme.secondaryHighlightColor
                                     width: Theme.iconSizeMedium
                                     height: Theme.iconSizeMedium
                                     radius:Theme.paddingSmall
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                }
+                                }//Rectangle
 
                                 IconButton {
                                     id: downloadbutton
-//                                    visible: filetype == MattermostQt.FileAnimatedImage ||
-//                                             filestatus == MattermostQt.FileRemote
                                     visible: false
-//                                    enabled: filetype == MattermostQt.FileAnimatedImage ||
-//                                             filestatus == MattermostQt.FileRemote
                                     anchors.fill: parent
-//                                    icon.source: (filestatus == MattermostQt.FileRemote) ?
-//                                                     "image://theme/icon-m-cloud-download" :
-//                                                     "image://theme/icon-m-play"
+
                                     icon.width: Theme.iconSizeMedium
                                     icon.height: Theme.iconSizeMedium
 
@@ -274,12 +313,9 @@ Page {
                                                     return
                                                 switch(fstatus){
                                                 case MattermostQt.FileDownloading:
-//                                                    enabled = false
-//                                                    visible = false
                                                     progressCircle.visible = true;
                                                     break;
                                                 case MattermostQt.FileDownloaded:
-//                                                    visible = false
                                                     progressCircle.visible = false
                                                     progressCircle.enabled = false
                                                     image.source = messagesmodel.getValidPath(rowindex,fileindex)
@@ -310,8 +346,8 @@ Page {
                                         }
                                         running: visible
                                     }
-                                }
-                            }//image
+                                }//ProgressCircle
+                            }
                         }// file image component
 
                         Component {
