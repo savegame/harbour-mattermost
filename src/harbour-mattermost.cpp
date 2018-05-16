@@ -29,6 +29,7 @@
 */
 
 #include <QtQuick>
+#include <QCoreApplication>
 #include <sailfishapp.h>
 #include "TeamsModel.h"
 #include "MattermostQt.h"
@@ -40,6 +41,10 @@ int main(int argc, char *argv[])
 	// Set up QML engine.
 	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
 	QScopedPointer<QQuickView> v(SailfishApp::createView());
+
+	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
+	QCoreApplication::setOrganizationDomain("harbour");
+	QCoreApplication::setOrganizationName("sashikknox");
 
 	// If you wish to publish your app on the Jolla harbour, it is recommended
 	// that you prefix your internal namespaces with "harbour.".

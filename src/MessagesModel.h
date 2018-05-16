@@ -44,9 +44,15 @@ public:
 	MattermostQt *getMattermost() const;
 
 	Q_INVOKABLE int getFileType(int row, int i) const;
+	Q_INVOKABLE int getFileStatus(int row, int i) const;
 	Q_INVOKABLE QString getFileMimeType(int row, int i) const;
 	Q_INVOKABLE QString getThumbPath(int row, int i) const;
+	Q_INVOKABLE QString getValidPath(int row, int i) const;
+	Q_INVOKABLE QString getFilePath(int row, int i) const;
+	Q_INVOKABLE QString getFileId(int row, int i) const;
 	Q_INVOKABLE QSize   getImageSize(int row, int i) const;
+	/** compute right item size for QML list view */
+	Q_INVOKABLE QSizeF  getItemSize(int row, int i, qreal contentWidth) const;
 	Q_INVOKABLE QString getFileName(int row, int i) const;
 	Q_INVOKABLE QString getSenderName(int row) const;
 	bool    atEnd() const;
@@ -61,6 +67,7 @@ protected slots:
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageUpdated(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
+//	void slot_fileStatusChanged(MattermostQt::FilePtr file);
 private:
 	MattermostQt::ChannelPtr           m_channel;
 	QVector<MattermostQt::MessagePtr>  m_messages;

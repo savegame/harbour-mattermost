@@ -23,6 +23,8 @@
 #define P_FILE_SC_INDEX      "file_sc_index"
 #define P_TEAM_INDEX         "team_index"
 #define P_MESSAGE_INDEX      "message_index"
+#define P_FILE_INDEX         "file_index"
+#define P_FILE_PTR           "file_ptr"
 #define P_TEAM_ID            "team_id"
 #define P_CHANNEL_INDEX      "channel_id"
 #define P_CHANNEL_TYPE       "channel_type"
@@ -44,6 +46,8 @@
 	request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
 	request.setRawHeader("Authorization", QString("Bearer %0").arg(server->m_token).toUtf8())
 
+Q_DECLARE_METATYPE(MattermostQt::FilePtr)
+
 MattermostQt::MattermostQt()
 {
 	m_networkManager.reset(new QNetworkAccessManager());
@@ -58,13 +62,23 @@ MattermostQt::MattermostQt()
 	connect(m_networkManager.data(),SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
 	        this, SLOT(replySSLErrors(QNetworkReply*,QList<QSslError>)));
 
-	m_settings_path = QDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
+	m_config_path = QDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
 	        .filePath(QCoreApplication::applicationName());
 
-	QString data_dir = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-	QString cache_dir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+	m_data_path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+	m_cache_path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 
-	//m_settings_path = "/home/nemo/.config/mattermostqt/";
+	m_documents_path = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+	        .filePath(QCoreApplication::applicationName());
+	m_pictures_path = QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation))
+	        .filePath(QCoreApplication::applicationName());
+	m_download_path = QDir(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation))
+	        .filePath(QCoreApplication::applicationName());
+
+	m_settings.reset(new SettingsContainer());
+	m_settings->m_auto_download_image_size = 500 * 1024; // 500 Kb
+
+	//m_data_path = "/home/nemo/.config/mattermostqt/";
 	load_settings();
 }
 
@@ -358,6 +372,33 @@ void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 	reply->setProperty(P_FILE_SC_INDEX, QVariant(file_sc_index) );
 }
 
+void MattermostQt::get_file_preview(int server_index, int file_sc_index)
+{
+	// we think all indexes is right
+	ServerPtr sc = m_server[server_index];
+	FilePtr file = sc->m_file[file_sc_index];
+	QString file_id = file->m_id;
+	//files/{file_id}/preview
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/files/")
+	        + file_id
+	        + QLatin1String("/preview");
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_file_preview) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_FILE_SC_INDEX, QVariant(file_sc_index) );
+}
+
 void MattermostQt::get_file_info(int server_index, int team_index, int channel_type,
                                  int channel_index, int message_index, QString file_id)
 {// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
@@ -385,6 +426,50 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
 	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
 	reply->setProperty(P_MESSAGE_INDEX, QVariant(message_index) );
+}
+
+void MattermostQt::get_file(int server_index, int team_index,
+                            int channel_type, int channel_index,
+                            int message_index, int file_index)
+{
+	ServerPtr sc = m_server[server_index];
+	ChannelPtr channel;
+	if( channel_type == ChannelDirect )
+		channel = sc->m_direct_channels[channel_index];
+	else {
+		TeamPtr tc = sc->m_teams[team_index];
+		if( channel_type == ChannelPrivate )
+			channel = tc->m_private_channels[channel_index];
+		else
+			channel = tc->m_public_channels[channel_index];
+	}
+	MessagePtr message = channel->m_message[message_index];
+	FilePtr file = message->m_file[file_index];
+
+	//files/{file_id}/thumbnail
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/files/")
+	        + file->m_id;
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+	file->m_file_status = FileStatus::FileDownloading;
+	emit fileStatusChanged(file->m_id, file->m_file_status);
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_file) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
+	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
+	reply->setProperty(P_MESSAGE_INDEX, QVariant(message_index) );
+	reply->setProperty(P_FILE_INDEX, QVariant(file_index) );
+	reply->setProperty(P_FILE_PTR, QVariant::fromValue<FilePtr>(file) );
 }
 
 void MattermostQt::post_send_message(QString message, int server_index, int team_index, int channel_type,
@@ -445,7 +530,7 @@ void MattermostQt::get_user_image(int server_index, int user_index)
 		return;
 	UserPtr user = sc->m_user[user_index];
 
-	QString path = sc->m_config_path +
+	QString path = sc->m_cache_path +
 	        QString("/users/") +
 	        user->m_id +
 	        QString("/image.png");
@@ -708,14 +793,18 @@ bool MattermostQt::save_settings()
 		if(sc->m_trust_cert)
 		{
 			server_dir_path = QString("%0_%1").arg(i).arg(sc->m_user_id);
-			sc->m_config_path = m_settings_path + QDir::separator() + server_dir_path;
-			QDir server_dir(sc->m_config_path);
+			sc->m_data_path = m_data_path + QDir::separator() + server_dir_path;
+			sc->m_cache_path = m_cache_path + QDir::separator() + server_dir_path;
+			QDir server_dir(sc->m_data_path);
 			if(! server_dir.exists() )
-				server_dir.mkpath(sc->m_config_path);
-			QString new_ca_path = sc->m_config_path + QString("/ca.crt");
+				server_dir.mkpath(sc->m_data_path);
+			QDir server_cache(sc->m_cache_path);
+			if(! server_cache.exists() )
+				server_cache.mkpath(sc->m_cache_path);
+			QString new_ca_path = sc->m_data_path + QString("/ca.crt");
 			if( QFile::copy(sc->m_ca_cert_path , new_ca_path) )
 				sc->m_ca_cert_path = new_ca_path;
-			QString new_cert_path = sc->m_config_path + QString("/server.crt");
+			QString new_cert_path = sc->m_data_path + QString("/server.crt");
 			if( QFile::copy(sc->m_ca_cert_path , new_cert_path) )
 				sc->m_cert_path = new_cert_path;
 		}
@@ -727,7 +816,7 @@ bool MattermostQt::save_settings()
 	object["servers"] = servers;
 	json.setObject(object);
 
-	QFile jsonFile( m_settings_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
+	QFile jsonFile( m_data_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
 	if( !jsonFile.open(QFile::WriteOnly) )
 		return false;
 	jsonFile.write(json.toJson());
@@ -739,7 +828,7 @@ bool MattermostQt::save_settings()
 bool MattermostQt::load_settings()
 {
 	QJsonDocument json;
-	QFile jsonFile( m_settings_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
+	QFile jsonFile( m_data_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
 	if( !jsonFile.open(QFile::ReadOnly | QFile::Text) )
 		return false;
 
@@ -780,14 +869,18 @@ bool MattermostQt::load_settings()
 
 		// create server container
 		ServerPtr server( new ServerContainer(url,token,api) );
-		server->m_config_path = m_settings_path + QDir::separator() +  object["server_dir"].toString("");
-		if(server->m_config_path.isEmpty())
-			server->m_config_path = m_settings_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
+		server->m_data_path = m_data_path + QDir::separator() +  object["server_dir"].toString("");
+		server->m_cache_path = m_cache_path + QDir::separator() +  object["server_dir"].toString("");
+		if(server->m_data_path.isEmpty())
+		{
+			server->m_data_path = m_data_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
+			server->m_cache_path = m_cache_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
+		}
 		server->m_trust_cert = trust_certificate;
 		server->m_display_name = display_name;
 		server->m_self_index = m_server.size();
-		server->m_ca_cert_path = server->m_config_path + QDir::separator() +  ca_cert_path;
-		server->m_cert_path = server->m_config_path + QDir::separator() + cert_path;
+		server->m_ca_cert_path = server->m_data_path + QDir::separator() +  ca_cert_path;
+		server->m_cert_path = server->m_data_path + QDir::separator() + cert_path;
 		server->m_user_id = user_id;
 		m_server.append(server);
 		get_login(server);
@@ -986,7 +1079,7 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 				tc->m_self_index = m_server[server_index]->m_teams.size();
 				m_server[server_index]->m_teams.append(tc);
 				// TODO move to Thread all filesystem operations
-				tc->save_json( m_server[server_index]->m_config_path );
+				tc->save_json( m_server[server_index]->m_data_path );
 				// ---------------------------------------------
 				emit teamAdded(tc);
 			}
@@ -1473,7 +1566,7 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 
 	QByteArray replyData = reply->readAll();
 	{
-		QString file_path = sc->m_config_path
+		QString file_path = sc->m_cache_path
 		        + QLatin1String("/files/")
 		        + file->m_id;
 		QDir dir;
@@ -1495,6 +1588,64 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 			file->m_thumb_path = file_path + QLatin1String("/thumb.jpeg");
 	}
 	if(!file->m_thumb_path.isEmpty())
+	{
+		QList<MessagePtr> messages;
+		messages << mc;
+		emit messageUpdated(messages);
+	}
+	return;
+}
+
+void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
+{
+	// we think all indexes right
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int file_sc_index = reply->property(P_FILE_SC_INDEX).toInt();
+	FilePtr file = m_server[server_index]->m_file[file_sc_index];
+	int team_index = file->m_team_index;
+	int channel_type = file->m_channel_type;
+	int channel_index = file->m_channel_index;
+	int message_index = file->m_message_index;
+
+	ServerPtr sc = m_server[server_index];
+	ChannelPtr channel;
+	if(team_index >= 0)
+	{
+		TeamPtr tc = sc->m_teams[team_index];
+		if( channel_type == ChannelType::ChannelPublic )
+			channel = tc->m_public_channels[channel_index];
+		else// if( channel_type == ChannelType::ChannelPublic )
+			channel = tc->m_private_channels[channel_index];
+	}
+	else
+		channel = sc->m_direct_channels[channel_index];
+
+	MessagePtr mc = channel->m_message[message_index];
+
+	QByteArray replyData = reply->readAll();
+	{
+		QString file_path = sc->m_cache_path
+		        + QLatin1String("/files/")
+		        + file->m_id;
+		QDir dir;
+		if( !QFile::exists(file_path + QLatin1String("/preview.jpeg")) )
+		{
+			dir.mkpath(file_path);
+			file_path += QLatin1String("/preview.jpeg");
+			QFile save(file_path);
+			if(save.open(QIODevice::WriteOnly | QIODevice::Truncate))
+			{
+				save.write( replyData );
+				save.close();
+				file->m_preview_path = file_path;
+			}
+			else
+				qDebug() << file_path;
+		}
+		else
+			file->m_preview_path = file_path + QLatin1String("/preview.jpeg");
+	}
+	if(!file->m_preview_path.isEmpty())
 	{
 		QList<MessagePtr> messages;
 		messages << mc;
@@ -1540,11 +1691,39 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file->m_channel_index = channel_index;
 	file->m_channel_type = channel_type;
 	file->m_message_index = message_index;
-
-	// TODO Here need save file info to json in file's directory
-	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
+	if( file->load_json(sc->m_data_path) )
 	{
-		QString file_thumb_path = sc->m_config_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
+		if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
+		{
+			if( !QFile::exists(file->m_thumb_path) )
+				get_file_thumbnail(server_index,file->m_self_sc_index);
+			if( file->m_has_preview_image && file->m_file_size > m_settings->m_auto_download_image_size
+			        && !QFile::exists(file->m_preview_path) )
+			{
+				file->m_preview_path.clear();
+				get_file_preview(server_index,file->m_self_sc_index);
+				file->m_file_status = FileRemote;
+			}
+			if( !QFile::exists(file->m_file_path) )
+			{
+				file->m_file_path.clear();
+				if( file->m_file_size <= m_settings->m_auto_download_image_size )
+				{
+					file->m_file_status = FileDownloading;
+					get_file(file->m_server_index, file->m_team_index,
+					         file->m_channel_type, file->m_channel_index,
+					         file->m_message_index, file->m_self_index);
+				}
+				else
+					file->m_file_status = FileRemote;
+			}
+			else
+				file->m_file_status = FileDownloaded;
+		}
+	}
+	else if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
+	{
+		QString file_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
 		if( !QFile::exists(file_thumb_path) )
 			get_file_thumbnail(server_index,file->m_self_sc_index);
 		else {
@@ -1553,7 +1732,71 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			messages << mc;
 			emit messageUpdated(messages);
 		}
+		if(file->m_has_preview_image && file->m_file_size > m_settings->m_auto_download_image_size) {
+			QString preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
+			if( !QFile::exists(preview_path) )
+				get_file_preview(server_index,file->m_self_sc_index);
+			else {
+				file->m_preview_path = preview_path;
+				QList<MessagePtr> messages;
+				messages << mc;
+				emit messageUpdated(messages);
+			}
+		}
+		else
+		{
+			QString path = m_pictures_path + QDir::separator() + file->m_name;
+			if( !QFile::exists(path) )
+				get_file(file->m_server_index, file->m_team_index,
+				         file->m_channel_type, file->m_channel_index,
+				         file->m_message_index, file->m_self_index);
+			else {
+				file->m_file_path = path;
+				QList<MessagePtr> messages;
+				messages << mc;
+				emit messageUpdated(messages);
+			}
+		}
 	}
+	return;
+}
+
+void MattermostQt::reply_get_file(QNetworkReply *reply)
+{
+	// we think all indexes right
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int team_index = reply->property(P_TEAM_INDEX).toInt();
+	int channel_type = reply->property(P_CHANNEL_TYPE).toInt();
+	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
+	int message_index = reply->property(P_MESSAGE_INDEX).toInt();
+	int file_index =  reply->property(P_FILE_INDEX).toInt();
+	FilePtr file =  reply->property(P_FILE_PTR).value<FilePtr>();
+	if(file)
+		qDebug() << file->m_name;
+
+	QString dowload_dir;
+	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage)
+		dowload_dir = m_pictures_path;
+	else
+		dowload_dir = m_download_path;
+
+	QDir dir(dowload_dir);
+	if( !dir.exists() )
+		dir.mkpath(dowload_dir);
+	dowload_dir += QDir::separator() + file->m_name;
+	QFile download(dowload_dir);
+	if( download.open(QFile::Append) )
+	{
+		download.write(reply->readAll());
+		download.flush();
+		download.close();
+		file->m_file_path = dowload_dir;
+		file->m_file_status = FileStatus::FileDownloaded;
+		file->save_json( m_server[file->m_self_index]->m_data_path );
+	}
+	else
+		file->m_file_status = FileStatus::FileRemote;
+	emit fileStatusChanged(file->m_id, file->m_file_status);
 	return;
 }
 
@@ -1574,7 +1817,7 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 	QByteArray replyData = reply->readAll();
 	qDebug() << replyData;
 	{
-		QString file_path = sc->m_config_path
+		QString file_path = sc->m_cache_path
 		        + QLatin1String("/users/")
 		        + user->m_id;
 		QDir dir;
@@ -1888,8 +2131,14 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			case ReplyType::rt_get_file_thumbnail:
 				reply_get_file_thumbnail(reply);
 				break;
+			case ReplyType::rt_get_file_preview:
+				reply_get_file_preview(reply);
+				break;
 			case ReplyType::rt_get_file_info:
 				reply_get_file_info(reply);
+				break;
+			case ReplyType::rt_get_file:
+				reply_get_file(reply);
 				break;
 			case ReplyType::rt_post_send_message:
 				reply_post_send_message(reply);
@@ -2403,6 +2652,8 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 MattermostQt::FileContainer::FileContainer(QJsonObject object)
 {
 	qDebug() << object;
+	m_file_status = FileStatus::FileRemote;
+
 	m_id = object["id"].toString("");
 	m_post_id = object["post_id"].toString("");
 	m_user_id = object["user_id"].toString("");
@@ -2424,4 +2675,62 @@ MattermostQt::FileContainer::FileContainer(QJsonObject object)
 	}
 	else
 		m_file_type = FileUnknown;
+}
+
+bool MattermostQt::FileContainer::save_json(QString server_data_path) const
+{
+	QString fpath = server_data_path + QDir::separator()
+	        + QLatin1String("files") + QDir::separator()
+	        + m_id;
+	QDir dir(fpath);
+	if( !dir.exists() )
+		dir.mkpath(fpath);
+	fpath += QDir::separator() + QLatin1String("info.json");
+	QFile conf(fpath);
+	conf.setPermissions(QFile::WriteOwner | QFile::ReadOwner);
+	if( !conf.open(QFile::WriteOnly) )
+		return false;
+	QJsonDocument json;
+	QJsonObject obj;
+	obj["thumb_path"] = m_thumb_path;
+	obj["file_type"] = (int)m_file_type;
+	obj["file_path"] = m_file_path;
+	obj["preview_path"] = m_preview_path;
+	QJsonObject item_size;
+	item_size["width"] = m_item_size.width();
+	item_size["height"] = m_item_size.height();
+	obj["item_size"] = item_size;
+	obj["content_width"] = m_contentwidth;
+	json.setObject(obj);
+	conf.write( json.toJson() );
+	conf.flush();
+	conf.close();
+	return true;
+}
+
+bool MattermostQt::FileContainer::load_json(QString server_data_path)
+{
+	QString fpath = server_data_path + QDir::separator()
+	        + QLatin1String("files") + QDir::separator()
+	        + m_id;
+	fpath += QDir::separator() + QLatin1String("info.json");
+	QFile conf(fpath);
+	conf.setPermissions(QFile::WriteOwner | QFile::ReadOwner);
+	if( !conf.open(QFile::ReadOnly) )
+		return false;
+	QJsonDocument json = QJsonDocument::fromJson(conf.readAll());
+	conf.close();
+	if( json.isEmpty() )
+		return false;
+
+	QJsonObject obj = json.object();
+	m_thumb_path = obj["thumb_path"].toString();
+	m_file_type = (MattermostQt::FileType)obj["file_type"].toInt();
+	m_file_path = obj["file_path"].toString();
+	m_preview_path = obj["preview_path"].toString();
+	QJsonObject item_size = obj["item_size"].toObject();
+	m_item_size.setWidth(item_size["width"].toDouble());
+	m_item_size.setHeight(item_size["height"].toDouble());
+	m_contentwidth = obj["content_width"].toInt();
+	return true;
 }

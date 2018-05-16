@@ -30,6 +30,7 @@ public:
 		rt_get_posts_before,
 		rt_get_posts_after,
 		rt_get_file_thumbnail,
+		rt_get_file_preview,
 		rt_get_file,
 		rt_get_file_info,
 		rt_post_send_message
@@ -47,6 +48,13 @@ public:
 		FileAnimatedImage,
 	};
 	Q_ENUMS(FileType)
+
+	enum FileStatus {
+		FileDownloaded,
+		FileDownloading,
+		FileRemote //that mean not downloaded
+	};
+	Q_ENUMS(FileStatus)
 
 	enum ChannelType : int {
 		ChannelPublic,   // "O"
@@ -71,6 +79,12 @@ public:
 	};
 	Q_ENUMS(ServerState)
 
+	struct SettingsContainer {
+		int m_preload_image_size; // if size less than that, then download automaticly
+		int m_auto_download_image_size; // if file image have less size,  then not need preview
+	};
+	typedef QSharedPointer<SettingsContainer> SettingsPtr;
+
 	/**
 	 * @brief The FileContainer struct
 	 * all files list stored in serverptr
@@ -79,6 +93,9 @@ public:
 		FileContainer() {}
 
 		FileContainer(QJsonObject object);
+
+		bool save_json(QString server_data_path) const;
+		bool load_json(QString server_data_path);
 
 		// file info
 		QString m_id;
@@ -90,9 +107,15 @@ public:
 		QString m_mime_type;
 		qlonglong m_file_size;
 		FileType m_file_type;
+		FileStatus m_file_status;
+
+		QString m_file_path;
 		// if it image
 		QSize   m_image_size;
 		QString m_thumb_path;
+		QString m_preview_path;
+		QSizeF  m_item_size; //computed item size for list view
+		int     m_contentwidth;
 		// if it document
 
 		int m_server_index;
@@ -105,6 +128,7 @@ public:
 //		MessagePtr m_message;// test
 	};
 	typedef QSharedPointer<FileContainer> FilePtr;
+
 
 	struct MessageContainer {
 		MessageContainer()
@@ -290,7 +314,8 @@ public:
 		int                         m_self_index; /**< server index in QVector */
 		QVector<TeamPtr>            m_teams; /**< allowed teams */
 		int                         m_state; /**< server state (from WebSocket) */
-		QString                     m_config_path; /**< local config path */
+		QString                     m_data_path; /**< local config path */
+		QString                     m_cache_path;
 		QVector<UserPtr>            m_user;/**< list of users by theirs id's */
 		QVector<ChannelPtr>         m_direct_channels; /**< direct channels */
 		QString                     m_display_name; /**< custom server name */
@@ -319,10 +344,13 @@ public:
 //	void get_team(int server_index, QString team_id);
 	void get_team(int server_index, int team_index);
 	void get_file_thumbnail(int server_index, int file_sc_index);
+	void get_file_preview(int server_index, int file_sc_index);
 //	void get_file_thumbnail(int server_index, int team_index, int channel_type,
 //	                        int channel_index, int message_index, QString file_id);
 	Q_INVOKABLE void get_file_info(int server_index, int team_index, int channel_type,
 	                   int channel_index, int message_index, QString file_id);
+	Q_INVOKABLE void get_file(int server_index, int team_index, int channel_type,
+	                          int channel_index, int message_index, int file_index);
 	Q_INVOKABLE void post_send_message(QString message, int server_index, int team_index, int channel_type,
 	                                   int channel_index);
 	Q_INVOKABLE void get_user_image(int server_index, int user_index);
@@ -350,6 +378,7 @@ Q_SIGNALS:
 	void messageAdded(QList<MessagePtr> messages);
 	void messageUpdated(QList<MessagePtr> messages);
 	void userUpdated(UserPtr user);
+	void fileStatusChanged(QString file_id, int status);
 protected:
 	/**
 	 * @brief prepare_direct_channel
@@ -380,7 +409,9 @@ protected:
 	void reply_get_user_info(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
 	void reply_get_file_thumbnail(QNetworkReply *reply);
+	void reply_get_file_preview(QNetworkReply *reply);
 	void reply_get_file_info(QNetworkReply *reply);
+	void reply_get_file(QNetworkReply *reply);
 	void reply_get_user_image(QNetworkReply *reply);
 	void reply_post_send_message(QNetworkReply *reply);
 
@@ -404,15 +435,21 @@ protected Q_SLOTS:
 protected:
 	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
+	SettingsPtr m_settings;
 
-	QString m_settings_path;
+	QString m_config_path;
+	QString m_data_path;
+	QString m_cache_path;
+	QString m_pictures_path;
+	QString m_documents_path;
+	QString m_download_path;
 //	QTimer  m_settings_timer;
 
 	int    m_update_server_timeout;
 	QTimer m_reconnect_server;
 
 	/** channels, need update before put to model */
-//	QList<ChannelContainer>   m_stackedChannels;
+	//	QList<ChannelContainer>   m_stackedChannels;
 };
 
 #endif // MATTERMOSTQT_H

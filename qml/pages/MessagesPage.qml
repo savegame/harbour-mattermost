@@ -228,18 +228,88 @@ Page {
                             Image {
                                 id: image
                                 fillMode: Image.PreserveAspectFit
-                                source: messagesmodel.getThumbPath(rowindex,fileindex)
+                                source: messagesmodel.getValidPath(rowindex,fileindex)
                                 sourceSize: messagesmodel.getImageSize(rowindex,fileindex)
-                                height: ( (sourceSize.width > sourceSize.height) ?
-                                            (widthcontent)/sourceSize.width * sourceSize.height :
-                                            widthcontent
-                                         ) + Theme.paddingSmall
-                                width: ( sourceSize.width > sourceSize.height ) ?
-                                           widthcontent :
-                                           (widthcontent)/sourceSize.height * sourceSize.width
+                                property size itemSize: messagesmodel.getItemSize(rowindex,fileindex,widthcontent)
+
+                                height: itemSize.height
+                                width: itemSize.width
+
                                 onHeightChanged: {
                                     if(height > 0)
                                         componentHeight = height
+                                }
+
+
+                                Rectangle {
+                                    id: bgrect
+                                    opacity: 0.6
+                                    visible: downloadbutton.visible
+                                    color: Theme.secondaryHighlightColor
+                                    width: Theme.iconSizeMedium
+                                    height: Theme.iconSizeMedium
+                                    radius:Theme.paddingSmall
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                }
+
+                                IconButton {
+                                    id: downloadbutton
+//                                    visible: filetype == MattermostQt.FileAnimatedImage ||
+//                                             filestatus == MattermostQt.FileRemote
+                                    visible: false
+//                                    enabled: filetype == MattermostQt.FileAnimatedImage ||
+//                                             filestatus == MattermostQt.FileRemote
+                                    anchors.fill: parent
+//                                    icon.source: (filestatus == MattermostQt.FileRemote) ?
+//                                                     "image://theme/icon-m-cloud-download" :
+//                                                     "image://theme/icon-m-play"
+                                    icon.width: Theme.iconSizeMedium
+                                    icon.height: Theme.iconSizeMedium
+
+                                    onClicked: {
+                                        context.mattermost.fileStatusChanged.connect(
+                                            function onStatusChanged(fid,fstatus) {
+                                                if(fid !==  file_id )
+                                                    return
+                                                switch(fstatus){
+                                                case MattermostQt.FileDownloading:
+//                                                    enabled = false
+//                                                    visible = false
+                                                    progressCircle.visible = true;
+                                                    break;
+                                                case MattermostQt.FileDownloaded:
+//                                                    visible = false
+                                                    progressCircle.visible = false
+                                                    progressCircle.enabled = false
+                                                    image.source = messagesmodel.getValidPath(rowindex,fileindex)
+                                                }
+                                            }
+                                        )
+                                        if( filestatus == MattermostQt.FileRemote )
+                                            context.mattermost.get_file(
+                                                        server_index,
+                                                        team_index,
+                                                        channel_type,
+                                                        channel_index,
+                                                        rowindex,
+                                                        fileindex)
+                                    }
+                                } // IconButton downloadbutton
+                                ProgressCircle {
+                                    id: progressCircle
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    visible: false
+                                    Timer {
+                                        interval: 32
+                                        repeat: true
+                                        onTriggered: {
+                                            progressCircle.rotation += 10
+                                            progressCircle.value = (progressCircle.value + 0.05) % 1.0
+                                        }
+                                        running: visible
+                                    }
                                 }
                             }//image
                         }// file image component
@@ -291,10 +361,13 @@ Page {
 
                         Loader {//for different file types
                             id: fileitemloader
-                            property int   fileindex: index
                             property int   rowindex: indexrow
                             property color fontcolor: textcolor
                             property real  widthcontent: textcolumn.width - Theme.paddingSmall
+                            property int   filetype    : messagesmodel.getFileType(indexrow,index)
+                            property int   filestatus  : messagesmodel.getFileStatus(indexrow,index)
+                            property string file_id    : messagesmodel.getFileId(indexrow,index)
+                            property int   fileindex   : index
                             property real  componentHeight: 0
 
                             onComponentHeightChanged:{
@@ -302,7 +375,7 @@ Page {
                             }
 
                             sourceComponent:
-                                switch(messagesmodel.getFileType(indexrow,index))
+                                switch(filetype)
                                 {
                                 case MattermostQt.FileImage:
                                 case MattermostQt.FileAnimatedImage:

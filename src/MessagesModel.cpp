@@ -143,6 +143,13 @@ int MessagesModel::getFileType(int row,int i) const
 	return (int)m_messages[row]->m_file[i]->m_file_type;
 }
 
+int MessagesModel::getFileStatus(int row, int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return (int)MattermostQt::FileStatus::FileRemote;
+	return (int)m_messages[row]->m_file[i]->m_file_status;
+}
+
 QString MessagesModel::getFileMimeType(int row, int i) const
 {
 	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
@@ -157,11 +164,86 @@ QString MessagesModel::getThumbPath(int row,int i) const
 	return m_messages[row]->m_file[i]->m_thumb_path;
 }
 
+QString MessagesModel::getValidPath(int row, int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return "";//TODO add path for bad thumb (default error image)
+	MattermostQt::ServerPtr sc = m_mattermost->m_server[m_messages[row]->m_server_index];
+	MattermostQt::FilePtr file = m_messages[row]->m_file[i];
+
+	if( file->m_file_type == MattermostQt::FileAnimatedImage )
+	{
+//		if(file->m_file_path.isEmpty())
+//			return file->m_thumb_path;
+		return file->m_file_path;
+	}
+	else if( file->m_file_size > m_mattermost->m_settings->m_auto_download_image_size) {
+		if(!file->m_preview_path.isEmpty() )
+			return file->m_preview_path;
+		else
+			return file->m_thumb_path;
+	}
+	return file->m_file_path;
+}
+
+QString MessagesModel::getFilePath(int row, int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return "";//TODO add path for bad thumb (default error image)
+	return m_messages[row]->m_file[i]->m_file_path;
+}
+
+QString MessagesModel::getFileId(int row, int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return "";//TODO add path for bad thumb (default error image)
+	return m_messages[row]->m_file[i]->m_id;
+}
+
 QSize MessagesModel::getImageSize(int row, int i) const
 {
 	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
 		return QSize();
 	return m_messages[row]->m_file[i]->m_image_size;
+}
+
+QSizeF MessagesModel::getItemSize(int row, int i, qreal contentWidth) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return QSizeF();
+	MattermostQt::FilePtr file = m_messages[row]->m_file[i];
+	QSize sourceSize = file->m_image_size;
+	if( !file->m_item_size.isEmpty() && file->m_contentwidth == (int)contentWidth )
+		return file->m_item_size;
+
+	file->m_contentwidth = (int)contentWidth;
+	if( sourceSize.width() > sourceSize.height() )
+	{
+		if( contentWidth > sourceSize.width() )
+		{
+			file->m_item_size.setWidth( sourceSize.width() );
+			file->m_item_size.setHeight( sourceSize.height() );
+		}
+		else
+		{
+			file->m_item_size.setWidth( contentWidth );
+			file->m_item_size.setHeight( contentWidth/sourceSize.width() * sourceSize.height()  );
+		}
+	}
+	else
+	{
+		if( contentWidth > sourceSize.height() )
+		{
+			file->m_item_size.setWidth( sourceSize.width() );
+			file->m_item_size.setHeight( sourceSize.height() );
+		}
+		else
+		{
+			file->m_item_size.setWidth( contentWidth/sourceSize.height() * sourceSize.width() );
+			file->m_item_size.setHeight( contentWidth );
+		}
+	}
+	return file->m_item_size;
 }
 
 QString MessagesModel::getFileName(int row, int i) const
@@ -242,3 +324,5 @@ void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, in
 	if(atEnd())
 		emit atEndChanged();
 }
+
+
