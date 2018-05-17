@@ -314,8 +314,22 @@ void MessagesModel::slot_messageAdded(QList<MattermostQt::MessagePtr> messages)
 
 void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages)
 {
-	beginResetModel();
-	endResetModel();
+//	beginResetModel();
+//	endResetModel();
+
+	QVector<int> roles;
+	roles << CreateAt << Text;
+	int br = 0,lt = m_messages.size() - 1;
+	foreach(MattermostQt::MessagePtr m, messages)
+	{
+		lt = (m->m_self_index < lt)?m->m_self_index:lt;
+		br = (m->m_self_index > br)?m->m_self_index:br;
+	}
+	lt = m_messages.size() - 1 - lt;
+	br = m_messages.size() - 1 - br;
+	QModelIndex topLeft = index(lt);
+	QModelIndex bottomRight = index(br);
+	dataChanged(topLeft, bottomRight, roles);
 }
 
 void MessagesModel::slot_messageDeleted(MattermostQt::MessagePtr message)
