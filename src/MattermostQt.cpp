@@ -2000,10 +2000,8 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject obj
 {
 	QJsonObject data = object["data"].toObject();
 	QJsonObject broadcast = object["broadcast"].toObject();
-
-
-	ChannelType type = ChannelType::ChannelTypeCount;
-	QString ch_type = data["channel_type"].toString();
+//	int team_index = -1;
+	ChannelPtr channel;
 
 	QJsonObject post = data["post"].toObject();
 	if( post.isEmpty() )
@@ -2022,71 +2020,35 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject obj
 	}
 	MessagePtr message( new MessageContainer(post) );
 
+	// search for channel
+	// TODO make na optimized search! maybe use QMap?
+	for(int ti = 0; ti < sc->m_teams.size(); ti++ )
+	{
+		TeamPtr tc = sc->m_teams[ti];
+		for(int ci = 0; ci < tc->m_private_channels.size(); ci++ )
+		{
+			ChannelPtr c = tc->m_private_channels[ci];
+			if( c->m_id == message->m_channel_id )
+			{
+				channel = c;
+				break;
+			}
+		}
+		for(int ci = 0; ci < tc->m_public_channels.size(); ci++ )
+		{
+			ChannelPtr c = tc->m_public_channels[ci];
+			if( c->m_id == message->m_channel_id )
+			{
+				channel = c;
+				break;
+			}
+		}
+	}
+
 	qDebug() << post; //search channel
-
 	qDebug() << broadcast;
-	//maybe use QMap
-	// get broadcast jsonobjecct
 
-	if( cmp(ch_type,O) )
-		type = ChannelType::ChannelPublic;
-	else if( cmp(ch_type,P) )
-		type = ChannelType::ChannelPrivate;
-	else if( cmp(ch_type,D) )
-		type = ChannelType::ChannelDirect;
-
-	ChannelPtr channel;
-	int channel_index = -1;
-
-	if( type == ChannelType::ChannelDirect )
-	{
-		QString channel_name = data["channel_name"].toString();
-		for(int i = 0; i < sc->m_direct_channels.size(); i++ )
-		{
-			if( scmp(sc->m_direct_channels[i]->m_name,channel_name) )
-			{
-				channel = sc->m_direct_channels[i];
-				channel_index = i;
-				break;
-			}
-		}
-	}
-	else
-	{
-		QString team_id = data["team_id"].toString();
-		QString channel_id = message->m_channel_id;
-		int team_index = -1;
-
-		for(int i = 0; i < sc->m_teams.size(); i++ )
-		{
-			if( scmp(sc->m_teams[i]->m_id,team_id) )
-			{
-				TeamPtr tc = sc->m_teams[i];
-				QVector<ChannelPtr> *channels;
-				if( type == ChannelType::ChannelPublic )
-					channels = &tc->m_public_channels;
-				else if( type == ChannelType::ChannelPrivate )
-					channels = &tc->m_private_channels;
-				if(!channels)
-				{
-					qWarning() << "Wrong channel type" << type;
-					return;
-				}
-				for(int j = 0; j < channels->size(); j++ )
-				{
-					if( channels->at(j)->m_id.compare(channel_id) == 0 )
-					{
-						channel = channels->at(j);
-						channel_index = j;
-						team_index = i;
-						break;
-					}
-				}
-				break;
-			}
-		}
-	}
-	if( channel && channel_index >= 0)
+	if( channel )
 	{
 		// search for message
 		for(int i = 0; i < channel->m_message.size(); i++ )
@@ -2097,7 +2059,7 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject obj
 				mc->m_create_at = message->m_create_at;
 				mc->m_update_at = message->m_update_at;
 				mc->m_message = message->m_message;
-				// TODO - check all files
+				// TODO - check all files (looks like it no need, can change only )
 //				mc->
 				QList<MessagePtr> messages;
 				messages << mc;
