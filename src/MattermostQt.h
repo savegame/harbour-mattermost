@@ -416,7 +416,7 @@ protected:
 	void reply_post_send_message(QNetworkReply *reply);
 
 	void event_posted(ServerPtr sc, QJsonObject data);
-	void event_post_edited(ServerPtr sc, QJsonObject data);
+	void event_post_edited(ServerPtr sc, QJsonObject object);
 	void event_post_deleted(ServerPtr sc, QJsonObject data);
 
 protected Q_SLOTS:

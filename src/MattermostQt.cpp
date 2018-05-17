@@ -1758,6 +1758,11 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			}
 		}
 	}
+	else {
+		QList<MessagePtr> messages;
+		messages << mc;
+		emit messageUpdated(messages);
+	}
 	return;
 }
 
@@ -1991,8 +1996,12 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 	}
 }
 
-void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject data)
+void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject object)
 {
+	QJsonObject data = object["data"].toObject();
+	QJsonObject broadcast = object["broadcast"].toObject();
+
+
 	ChannelType type = ChannelType::ChannelTypeCount;
 	QString ch_type = data["channel_type"].toString();
 
@@ -2012,6 +2021,12 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject dat
 			return;
 	}
 	MessagePtr message( new MessageContainer(post) );
+
+	qDebug() << post; //search channel
+
+	qDebug() << broadcast;
+	//maybe use QMap
+	// get broadcast jsonobjecct
 
 	if( cmp(ch_type,O) )
 		type = ChannelType::ChannelPublic;
@@ -2073,6 +2088,23 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject dat
 	}
 	if( channel && channel_index >= 0)
 	{
+		// search for message
+		for(int i = 0; i < channel->m_message.size(); i++ )
+		{
+			MessagePtr mc = channel->m_message[i];
+			if( mc->m_id.compare(message->m_id) == 0)
+			{
+				mc->m_create_at = message->m_create_at;
+				mc->m_update_at = message->m_update_at;
+				mc->m_message = message->m_message;
+				// TODO - check all files
+//				mc->
+				QList<MessagePtr> messages;
+				messages << mc;
+				emit messageUpdated(messages);
+				break;
+			}
+		}
 		return;
 	}
 }
@@ -2330,6 +2362,7 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	QJsonObject object = json.object();
 	QString event = object["event"].toString();
 	QJsonObject data = object["data"].toObject();
+	QJsonObject broadcast = object["broadcast"].toObject();
 
 	_compare(hello) // that mean we are logged in
 	{
@@ -2340,7 +2373,7 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	else _compare(posted)
 	    event_posted(sc,data);
 	else _compare(post_edited)
-	    event_post_edited(sc,data);
+	    event_post_edited(sc,object);
 	else
 	    qWarning() << event;
 //typing
