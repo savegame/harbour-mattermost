@@ -28,11 +28,11 @@
     </message>
     <message>
         <source>Offline</source>
-        <translation type="unfinished"></translation>
+        <translation>Не в сети</translation>
     </message>
     <message>
         <source>Online</source>
-        <translation type="unfinished"></translation>
+        <translation>В сети</translation>
     </message>
 </context>
 <context>
@@ -47,53 +47,53 @@
     </message>
     <message>
         <source>Login</source>
-        <translation type="unfinished"></translation>
+        <translation>Авторизация</translation>
     </message>
     <message>
         <source>server custom name</source>
-        <translation type="unfinished"></translation>
+        <translation>Название сервера</translation>
     </message>
     <message>
         <source>server address</source>
-        <translation type="unfinished"></translation>
+        <translation>Адрес сервера</translation>
     </message>
     <message>
         <source>Password</source>
-        <translation type="unfinished"></translation>
+        <translation>Пароль</translation>
     </message>
     <message>
         <source>Certificate options</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройка доверенного сертификата</translation>
     </message>
     <message>
         <source>CA certificate path</source>
-        <translation type="unfinished"></translation>
+        <translation>Путь к сертификату ЦС</translation>
     </message>
     <message>
         <source>Server certificate path</source>
-        <translation type="unfinished"></translation>
+        <translation>Путь к сертификату сервера</translation>
     </message>
     <message>
         <source>Choose CA certificate</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите сертификат центра сертификации</translation>
     </message>
     <message>
         <source>Choose server certificate</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите сертификат сервера</translation>
     </message>
 </context>
 <context>
     <name>MessageEditorBar</name>
     <message>
         <source>Message...</source>
-        <translation type="unfinished"></translation>
+        <translation>Сообщение...</translation>
     </message>
 </context>
 <context>
     <name>MessagesPage</name>
     <message>
         <source>get older</source>
-        <translation type="unfinished"></translation>
+        <translation>предыдущие сообщения</translation>
     </message>
 </context>
 <context>
@@ -101,6 +101,10 @@
     <message>
         <source>Login failed because of invalid password</source>
         <translation>Не удалось подключиться к серверу, неверный пароль</translation>
+    </message>
+    <message>
+        <source>(edited)</source>
+        <translation>(отредактировано)</translation>
     </message>
 </context>
 <context>

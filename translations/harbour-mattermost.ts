@@ -102,6 +102,10 @@
         <source>Login failed because of invalid password</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>(edited)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SecondPage</name>

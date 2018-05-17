@@ -78,11 +78,18 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	case MessagesModel::CreateAt:
 	    {
 		    QDateTime time;
+			QString result;
 			if( m_messages[row]->m_update_at  == m_messages[row]->m_create_at )
+			{
 				time = QDateTime::fromMSecsSinceEpoch(m_messages[row]->m_create_at);
+				result = time.toString("hh:mm:ss");
+			}
 			else
+			{
 				time = QDateTime::fromMSecsSinceEpoch(m_messages[row]->m_update_at);
-			return time.toString("hh:mm:ss");
+				result = time.toString("hh:mm:ss ") + QObject::trUtf8("(edited)");
+			}
+			return result;
 	    }
 		    break;
 	case MessagesModel::IsEdited:
