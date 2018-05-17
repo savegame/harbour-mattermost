@@ -377,6 +377,7 @@ Q_SIGNALS:
 	void messagesAddedBefore(ChannelPtr channel, int count);
 	void messageAdded(QList<MessagePtr> messages);
 	void messageUpdated(QList<MessagePtr> messages);
+	void messageDeleted(MessagePtr message);
 	void userUpdated(UserPtr user);
 	void fileStatusChanged(QString file_id, int status);
 protected:

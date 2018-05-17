@@ -129,6 +129,8 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 	        this, &MessagesModel::slot_messageAddedBefore );
 	connect(m_mattermost.data(), &MattermostQt::messageUpdated,
 	        this, &MessagesModel::slot_messageUpdated );
+	connect(m_mattermost.data(), &MattermostQt::messageDeleted,
+	        this, &MessagesModel::slot_messageDeleted );
 }
 
 MattermostQt *MessagesModel::getMattermost() const
@@ -307,6 +309,17 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 {
 	beginResetModel();
 	endResetModel();
+}
+
+void MessagesModel::slot_messageDeleted(MattermostQt::MessagePtr message)
+{
+	if(message->m_channel_id.compare(m_channel->m_id) != 0)
+		return;
+
+	int row = m_messages.size() - 1 - message->m_self_index;
+	beginRemoveRows(QModelIndex(), row, row);
+	m_messages.remove(message->m_self_index);
+	endRemoveRows();
 }
 
 void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count)

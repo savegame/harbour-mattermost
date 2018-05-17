@@ -66,6 +66,7 @@ protected slots:
 	void slot_messagesAdded(MattermostQt::ChannelPtr channel);
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageUpdated(QList<MattermostQt::MessagePtr> messages);
+	void slot_messageDeleted(MattermostQt::MessagePtr message);
 	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
 //	void slot_fileStatusChanged(MattermostQt::FilePtr file);
 private:

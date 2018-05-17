@@ -2022,6 +2022,16 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject obj
 
 	// search for channel
 	// TODO make na optimized search! maybe use QMap?
+	for(int ci = 0; ci < sc->m_direct_channels.size(); ci++ )
+	{
+		ChannelPtr c = sc->m_direct_channels[ci];
+		if( c->m_id == message->m_channel_id )
+		{
+			channel = c;
+			break;
+		}
+	}
+	if(channel.isNull())
 	for(int ti = 0; ti < sc->m_teams.size(); ti++ )
 	{
 		TeamPtr tc = sc->m_teams[ti];
@@ -2045,8 +2055,8 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject obj
 		}
 	}
 
-	qDebug() << post; //search channel
-	qDebug() << broadcast;
+//	qDebug() << post;
+//	qDebug() << broadcast;
 
 	if( channel )
 	{
@@ -2073,7 +2083,77 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject obj
 
 void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject data)
 {
+	ChannelPtr channel;
 
+	QJsonObject post = data["post"].toObject();
+	if( post.isEmpty() )
+	{
+		QJsonValue value = data.value("post");
+		if( value.type() == QJsonValue::String )
+		{
+			QString s = value.toString();
+			QJsonDocument j = QJsonDocument::fromJson( s.toUtf8() );
+			post = j.object();
+			if(post.isEmpty())
+				return;
+		}
+		else
+			return;
+	}
+	MessagePtr message( new MessageContainer(post) );
+
+	// search for channel
+	// TODO make na optimized search! maybe use QMap?
+	for(int ci = 0; ci < sc->m_direct_channels.size(); ci++ )
+	{
+		ChannelPtr c = sc->m_direct_channels[ci];
+		if( c->m_id == message->m_channel_id )
+		{
+			channel = c;
+			break;
+		}
+	}
+	if(channel.isNull())
+	for(int ti = 0; ti < sc->m_teams.size(); ti++ )
+	{
+		TeamPtr tc = sc->m_teams[ti];
+		for(int ci = 0; ci < tc->m_private_channels.size(); ci++ )
+		{
+			ChannelPtr c = tc->m_private_channels[ci];
+			if( c->m_id == message->m_channel_id )
+			{
+				channel = c;
+				break;
+			}
+		}
+		for(int ci = 0; ci < tc->m_public_channels.size(); ci++ )
+		{
+			ChannelPtr c = tc->m_public_channels[ci];
+			if( c->m_id == message->m_channel_id )
+			{
+				channel = c;
+				break;
+			}
+		}
+	}
+//	qDebug() << post; //search channel
+	if( channel )
+	{
+		// search for message
+		for(int i = 0; i < channel->m_message.size(); i++ )
+		{
+			MessagePtr mc = channel->m_message[i];
+			if( mc->m_id.compare(message->m_id) == 0)
+			{
+				mc->m_delete_at = message->m_delete_at;
+				//mc->m_message = message->m_message;
+				channel->m_message.remove(i);
+				emit messageDeleted(mc);
+				break;
+			}
+		}
+		return;
+	}
 }
 
 void MattermostQt::replyFinished(QNetworkReply *reply)
@@ -2336,11 +2416,12 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	    event_posted(sc,data);
 	else _compare(post_edited)
 	    event_post_edited(sc,object);
+	else _compare(post_deleted)
+	    event_post_deleted(sc,data);
 	else
 	    qWarning() << event;
+/** that need release first */
 //typing
-//post_edited
-//post_deleted
 //response
 //channel_created
 //channel_deleted
