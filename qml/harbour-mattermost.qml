@@ -31,15 +31,35 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import harbour.sashikknox 1.0
+import Nemo.Notifications 1.0
 import "pages"
 import "model"
 import "cover"
 
 ApplicationWindow
 {
-    property Context context: Context { }
-
     id: mainwindow
+    property Context context: Context {}
+    property string previewString: ""
+
+    Notification{
+        id:notification
+        appName: "Mattermost"
+        previewBody: previewString
+    }
+
+    onStateChanged: {
+        context.mattermost.newMessage.connect(
+            function onNewMessage(channel_name, user_name){
+                mainwindow.previewString =
+                        qsTr("New post on ") +
+                        channel_name +
+                        qsTr(" by user ") +
+                        user_name
+                notification.publish()
+            }
+        )
+    }
 
     initialPage: Component {
         LoginPage {

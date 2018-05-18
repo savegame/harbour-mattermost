@@ -1929,6 +1929,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			QList<MessagePtr> new_messages;
 			new_messages << message;
 			emit messageAdded(new_messages);
+			emit newMessage(channel->m_display_name, sc->m_user[message->m_user_index]->m_username);
 		}
 	}
 	else
@@ -1992,6 +1993,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			QList<MessagePtr> new_messages;
 			new_messages << message;
 			emit messageAdded(new_messages);
+			emit newMessage(channel->m_display_name, sc->m_user[message->m_user_index]->m_username);
 		}
 	}
 }

@@ -152,7 +152,7 @@ public:
 		// inside types
 		QVector<FilePtr>     m_file;
 		ChannelType      m_channel_type;
-		int              m_user_index;
+		int              m_user_index;  // index in server users
 		int              m_server_index;
 		int              m_team_index;
 		int              m_channel_index;
@@ -376,6 +376,7 @@ Q_SIGNALS:
 	void messagesAdded(ChannelPtr channel);
 	void messagesAddedBefore(ChannelPtr channel, int count);
 	void messageAdded(QList<MessagePtr> messages);
+	void newMessage(QString chanel_name, QString user_name);
 	void messageUpdated(QList<MessagePtr> messages);
 	void messageDeleted(MessagePtr message);
 	void userUpdated(UserPtr user);
