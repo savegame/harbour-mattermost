@@ -15,6 +15,10 @@ Page {
     property int channel_type
     property string display_name
     property string current_user_id
+
+    property alias editmode: messageeditor.editmode
+    property alias edittext: messageeditor.edittext
+    property alias editmessageindex: messageeditor.message_index
 //    property bool noMoreMessages: true
 
     property MessagesModel messagesmodel: MessagesModel {
@@ -537,6 +541,11 @@ Page {
                 MenuItem {
                     text: qsTr("Edit")
                     visible: current_user_id === messageuserid
+                    onClicked: {
+                        edittext = message
+                        editmode = true
+                        editmessageindex = messageindex
+                    }
                 }
                 MenuItem {
                     text: qsTr("Delete")
@@ -558,6 +567,7 @@ Page {
 
                 MenuItem {
                     text: qsTr("Copy")
+                    onClicked: Clipboard.text = message
                 }
             }
 

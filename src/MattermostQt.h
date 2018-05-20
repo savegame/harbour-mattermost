@@ -358,7 +358,7 @@ public:
 	                                   int channel_index);
 	Q_INVOKABLE void delete_message(int server_index, int team_index, int channel_type,
 	                                     int channel_index, int message_index);
-	Q_INVOKABLE void post_message_edit(QString text, int server_index, int team_index, int channel_type,
+	Q_INVOKABLE void put_message_edit(QString text, int server_index, int team_index, int channel_type,
 	                                     int channel_index, int message_index);
 
 	Q_INVOKABLE void post_channel_view(int server_index, int team_index,
@@ -421,7 +421,7 @@ protected:
 	void get_teams_unread(ServerPtr server);
 
 	void websocket_connect(ServerPtr server);
-
+	// repliest
 	bool reply_login(QNetworkReply *reply);
 	void reply_get_teams(QNetworkReply *reply);
 	void reply_get_team(QNetworkReply *reply);
@@ -439,7 +439,8 @@ protected:
 	void reply_get_user_image(QNetworkReply *reply);
 	void reply_post_send_message(QNetworkReply *reply);
 	void reply_delete_message(QNetworkReply *reply);
-
+	void reply_post_message_edit(QNetworkReply *reply);
+	// events
 	void event_posted(ServerPtr sc, QJsonObject data);
 	void event_post_edited(ServerPtr sc, QJsonObject object);
 	void event_post_deleted(ServerPtr sc, QJsonObject data);

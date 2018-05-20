@@ -12,12 +12,21 @@ BackgroundItem {
     property int channel_index
     property int channel_type
 
+    property bool   editmode: false
+    property string edittext
+    property int    message_index
+
     property alias text: textedit.text
 
     height: textedit.height
 
     TouchBlocker {
         anchors.fill: parent
+    }
+
+    onEditmodeChanged: {
+        if(editmode)
+            textedit.text = edittext
     }
 
     TextArea  {
@@ -50,12 +59,27 @@ BackgroundItem {
             if( textedit.text.length === 0 )
                 textedit.focus = true;
             else {
-                messageeditor.context.mattermost.post_send_message
-                        (textedit.text,
-                         server_index,
-                         team_index,
-                         channel_type,
-                         channel_index)
+                if(editmode)
+                {
+                    context.mattermost.put_message_edit
+                            (textedit.text,
+                             server_index,
+                             team_index,
+                             channel_type,
+                             channel_index,
+                             message_index)
+                    editmode = false;
+                }
+                else
+                {
+                    messageeditor.context.mattermost.post_send_message
+                            (textedit.text,
+                             server_index,
+                             team_index,
+                             channel_type,
+                             channel_index)
+                    editmode = false;
+                }
                 text = ""
             }
         }

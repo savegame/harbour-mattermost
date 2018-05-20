@@ -547,7 +547,7 @@ void MattermostQt::delete_message(int server_index, int team_index, int channel_
 	reply->setProperty(P_MESSAGE_PTR, QVariant::fromValue<MessagePtr>(message) );
 }
 
-void MattermostQt::post_message_edit(QString text, int server_index, int team_index, int channel_type, int channel_index, int message_index)
+void MattermostQt::put_message_edit(QString text, int server_index, int team_index, int channel_type, int channel_index, int message_index)
 {
 	ChannelPtr channel = channelAt(server_index, team_index,channel_type,channel_index);
 	if(!channel)
@@ -558,7 +558,29 @@ void MattermostQt::post_message_edit(QString text, int server_index, int team_in
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
 	        + QLatin1String("/posts/")
-	        + message->m_id;
+	        + message->m_id
+	        + QLatin1String("/patch");
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+//	"is_pinned": true,
+//	"message": "string",
+//	"file_ids": [ ],
+//	"has_reactions": true,
+//	"props": "string"
+	QJsonDocument json;
+	QJsonObject root;
+	root["message"] = text;
+	json.setObject(root);
+
+	QNetworkReply *reply = m_networkManager->put(request, json.toJson());
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_message_edit) );
+	reply->setProperty(P_MESSAGE_PTR, QVariant::fromValue<MessagePtr>(message) );
 }
 
 void MattermostQt::post_channel_view(int server_index, int team_index, int channel_type, int channel_index)
@@ -1992,6 +2014,11 @@ void MattermostQt::reply_delete_message(QNetworkReply *reply)
 	qDebug() << reply->readAll();
 }
 
+void MattermostQt::reply_post_message_edit(QNetworkReply *reply)
+{
+	qDebug() << reply->readAll();
+}
+
 void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 {
 	ChannelType type = ChannelType::ChannelTypeCount;
@@ -2365,6 +2392,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 				break;
 			case ReplyType::rt_delete_message:
 				reply_delete_message(reply);
+				break;
+			case ReplyType::rt_post_message_edit:
+				reply_post_message_edit(reply);
 				break;
 			default:
 				qWarning() << "That can't be!";
