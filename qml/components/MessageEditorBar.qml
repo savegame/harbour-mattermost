@@ -57,13 +57,13 @@ BackgroundItem {
 //        EnterKey.enabled: text.trim().length > 0
 //        EnterKey.iconSource: context.sendwithreturn ? "image://theme/icon-m-enter-accept" : "image://theme/icon-m-enter"
     }
+
     IconButton {
         id: button
         anchors {
             right: menu.left
             verticalCenter: textedit.verticalCenter
         }
-
         icon.source: "image://theme/icon-m-mail"
         onClicked: {
             if( textedit.text.length === 0 )
@@ -91,8 +91,9 @@ BackgroundItem {
                 }
                 text = ""
             }
-        }
+        }// onClicked
     }
+
     IconButton {
         id: menu
         visible: true

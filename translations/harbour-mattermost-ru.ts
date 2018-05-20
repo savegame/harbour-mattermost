@@ -97,19 +97,19 @@
     </message>
     <message>
         <source>Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>Редактировать</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>Копировать</translation>
     </message>
     <message>
         <source>Reply</source>
-        <translation type="unfinished"></translation>
+        <translation>Ответить</translation>
     </message>
 </context>
 <context>
@@ -164,11 +164,11 @@
     <name>harbour-mattermost</name>
     <message>
         <source>New post on </source>
-        <translation type="unfinished"></translation>
+        <translation>Новое сообщение в </translation>
     </message>
     <message>
         <source> by user </source>
-        <translation type="unfinished"></translation>
+        <translation> от пользователя </translation>
     </message>
 </context>
 </TS>
