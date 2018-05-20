@@ -25,8 +25,18 @@ BackgroundItem {
     }
 
     onEditmodeChanged: {
-        if(editmode)
+        if(editmode) {
             textedit.text = edittext
+            menu.icon.source = "image://theme/icon-m-clear"
+            button.icon.source = "image://theme/icon-m-enter-accept"
+            menu.enabled = true
+        }
+        else
+        {
+            menu.icon.source = "image://theme/icon-m-menu"
+            button.icon.source = "image://theme/icon-m-mail"
+            menu.enabled = false
+        }
     }
 
     TextArea  {
@@ -72,13 +82,12 @@ BackgroundItem {
                 }
                 else
                 {
-                    messageeditor.context.mattermost.post_send_message
+                    context.mattermost.post_send_message
                             (textedit.text,
                              server_index,
                              team_index,
                              channel_type,
                              channel_index)
-                    editmode = false;
                 }
                 text = ""
             }
@@ -92,8 +101,13 @@ BackgroundItem {
             right: parent.right
             verticalCenter: textedit.verticalCenter
         }
-
         icon.source: "image://theme/icon-m-menu"
-    }
-
+        onClicked: {
+            if(editmode)
+            {
+                textedit.text = ""
+                editmode = false
+            }
+        }
+    }// IconButton
 }
