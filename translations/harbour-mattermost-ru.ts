@@ -95,6 +95,22 @@
         <source>get older</source>
         <translation>предыдущие сообщения</translation>
     </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reply</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -105,6 +121,18 @@
     <message>
         <source>(edited)</source>
         <translation>(отредактировано)</translation>
+    </message>
+    <message>
+        <source>%0 bytes</source>
+        <translation>%0 байт</translation>
+    </message>
+    <message>
+        <source>%0 Kb</source>
+        <translation>%0 Кб</translation>
+    </message>
+    <message>
+        <source>%0 Mb</source>
+        <translation>%0 Мб</translation>
     </message>
 </context>
 <context>

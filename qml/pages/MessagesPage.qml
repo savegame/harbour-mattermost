@@ -14,22 +14,36 @@ Page {
     property int channel_index
     property int channel_type
     property string display_name
-    property bool noMoreMessages: true
+    property string current_user_id
+//    property bool noMoreMessages: true
 
     property MessagesModel messagesmodel: MessagesModel {
         mattermost: context.mattermost
         onMessagesInitialized: {
             // nothing
 //            listview.scrollToBottom()
-
+//            messages.noMoreMessages = atEnd
+            if(atEnd === true)
+                pullMenu.visible = false
+            context.mattermost.post_channel_view(
+                        server_index,
+                        team_index,
+                        channel_type,
+                        channel_index
+                        )
         }
-        onAtEndChanged:
-            messages.noMoreMessages = atEnd
+        onAtEndChanged: {
+//            messages.noMoreMessages = atEnd
+//            pullMenu.visible = !atEnd
+            if(atEnd === true)
+                pullMenu.visible = false
+        }
     }
 
     onStatusChanged: {
         if(status === PageStatus.Active) {
-            context.mattermost.get_posts(server_index,team_index,channel_index,channel_type);
+            context.mattermost.get_posts(server_index,team_index,channel_index,channel_type)
+            current_user_id = context.mattermost.user_id(server_index)
         }
     }
 
@@ -79,7 +93,7 @@ Page {
         PullDownMenu {
             id:pullMenu
             quickSelect: true
-            visible: !messages.noMoreMessages
+//            visible: true
 
             MenuItem{
                 text:qsTr("get older")
@@ -231,7 +245,7 @@ Page {
                                 property size imageSourceSize: messagesmodel.getImageSize(rowindex,fileindex)
                                 property string imagePath: messagesmodel.getValidPath(rowindex,fileindex)
 
-                                height: itemSize.height
+                                height: file_and_label.height
                                 width: itemSize.width
 
                                 onHeightChanged: {
@@ -250,6 +264,7 @@ Page {
 
                                         height: imagebackground.itemSize.height
                                         width: imagebackground.itemSize.width
+
                                     }//image
                                 }
 
@@ -266,24 +281,56 @@ Page {
                                         width: imagebackground.itemSize.width
                                     }
                                 }
-
-                                Loader {
-                                    id: imageloader
+                                Column {
+                                    id: file_and_label
                                     width: imagebackground.itemSize.width
-                                    height: imagebackground.itemSize.height
-                                    sourceComponent:
-                                        switch(filetype)
-                                        {
-                                        case MattermostQt.FileImage:
-                                            staticimage
-                                            break;
-                                        case MattermostQt.FileAnimatedImage:
-                                            animatedimage
-                                            break;
-                                        default:
-                                            staticimage
-                                            break;
-                                        }
+                                    height: imageloader.height + imagename.height +Theme.paddingSmall
+                                    spacing: Theme.paddingSmall
+                                    Row {
+                                        id: filename_row
+                                        width: textcolumn.width
+                                        spacing: Theme.paddingMedium
+                                        Label {
+                                            id: imagename
+                                            //width: textcolumn.width - filesize.width
+                                            text: messagesmodel.getFileName(rowindex,fileindex)
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Theme.fontSizeTiny
+                                            font.italic:  true
+                                            color: fontcolor
+                                            truncationMode: TruncationMode.Fade
+                                            height: contentHeight
+                                        }// filename label
+                                        Label {
+                                            id: filesize
+                                            width: contentWidth
+                                            text: messagesmodel.getFileSize(rowindex,fileindex)
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Theme.fontSizeTiny
+                                            font.italic:  true
+                                            color: fontcolor
+//                                            truncationMode: TruncationMode.Fade
+                                            height: contentHeight
+                                        }// filename label
+                                    }
+                                    Loader {
+                                        id: imageloader
+                                        width: imagebackground.itemSize.width
+                                        height: imagebackground.itemSize.height
+                                        sourceComponent:
+                                            switch(filetype)
+                                            {
+                                            case MattermostQt.FileImage:
+                                                staticimage
+                                                break;
+                                            case MattermostQt.FileAnimatedImage:
+                                                animatedimage
+                                                break;
+                                            default:
+                                                staticimage
+                                                break;
+                                            }
+                                    }//imageloader
                                 }
 
                                 Rectangle {//ac background for play gif button
@@ -298,13 +345,13 @@ Page {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }//Rectangle
 
-                                IconButton {
+                                BackgroundItem {
                                     id: downloadbutton
-                                    visible: false
+                                    visible: true
                                     anchors.fill: parent
 
-                                    icon.width: Theme.iconSizeMedium
-                                    icon.height: Theme.iconSizeMedium
+//                                    icon.width: Theme.iconSizeMedium
+//                                    icon.height: Theme.iconSizeMedium
 
                                     onClicked: {
                                         context.mattermost.fileStatusChanged.connect(
@@ -312,17 +359,22 @@ Page {
                                                 if(fid !==  file_id )
                                                     return
                                                 switch(fstatus){
-                                                case MattermostQt.FileDownloading:
-                                                    progressCircle.visible = true;
-                                                    break;
+//                                                case MattermostQt.FileDownloading:
+//                                                    progressCircle.visible = true;
+//                                                    break;
                                                 case MattermostQt.FileDownloaded:
                                                     progressCircle.visible = false
                                                     progressCircle.enabled = false
-                                                    image.source = messagesmodel.getValidPath(rowindex,fileindex)
+                                                    // here need open prepeared ImageViewPage
+                                                    pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
+                                                        {
+                                                            imagePath: messagesmodel.getFilePath(rowindex,fileindex)
+                                                        })
                                                 }
+                                                filestatus = fstatus;
                                             }
                                         )
-                                        if( filestatus == MattermostQt.FileRemote )
+                                        if( filestatus === MattermostQt.FileRemote ) {
                                             context.mattermost.get_file(
                                                         server_index,
                                                         team_index,
@@ -330,6 +382,16 @@ Page {
                                                         channel_index,
                                                         rowindex,
                                                         fileindex)
+                                            progressCircle.visible = true;
+                                        }
+                                        else if( filestatus === MattermostQt.FileDownloaded ) {
+                                            pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
+                                                {
+                                                    imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+                                                    sourceSize: imagebackground.imageSourceSize,
+                                                    width: Screen.width
+                                                })
+                                        }
                                     }
                                 } // IconButton downloadbutton
                                 ProgressCircle {
@@ -337,14 +399,14 @@ Page {
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     visible: false
-                                    Timer {
-                                        interval: 32
-                                        repeat: true
-                                        onTriggered: {
-                                            progressCircle.rotation += 10
-                                            progressCircle.value = (progressCircle.value + 0.05) % 1.0
-                                        }
-                                        running: visible
+                                    value: 0
+                                    onVisibleChanged: {
+                                        context.mattermost.fileDownloadingProgress.connect(
+                                            function onDownloading(id_of_file,progress) {
+                                                if(id_of_file === file_id)
+                                                    value = progress
+                                            }
+                                        )
                                     }
                                 }//ProgressCircle
                             }
@@ -382,16 +444,21 @@ Page {
                                     font.italic:  true
                                     color: fontcolor
                                     truncationMode: TruncationMode.Fade
-                                    width: widthcontent - fdrow.spacing*2 - image.width /*- downloadfilebutton.width*/
+                                    width: widthcontent - fdrow.spacing*3 - image.width - filesize.width
                                     height: contentHeight
                                 } // label with filename
 
-//                                IconButton {
-//                                    id: downloadfilebutton
-//                                    icon.source: "image://theme/icon-m-device-download"
-//                                    width: Theme.iconSizeMedium
-//                                    height: Theme.iconSizeMedium
-//                                }// download button
+                                Label {
+                                    id: filesize
+                                    width: contentWidth
+                                    text: messagesmodel.getFileSize(rowindex,fileindex)
+                                    anchors.verticalCenter: image.verticalCenter
+                                    font.family: Theme.fontFamily
+                                    font.pixelSize: Theme.fontSizeTiny
+                                    font.italic:  true
+                                    color: fontcolor
+                                    height: contentHeight
+                                }// filename label
                             }
                         }
 
@@ -454,11 +521,45 @@ Page {
             }
         }// Component messagesystem
 
+//        m
+
         delegate: ListItem {
             anchors { left:parent.left; right:parent.right; }
 //            width: messages.width
-            height: itemlistcolumn.height
+            height: itemlistcolumn.height + contextmenu.height
             contentHeight: itemlistcolumn.height
+            property string messageuserid: userid
+
+            showMenuOnPressAndHold: true
+
+            menu: ContextMenu {
+                id: contextmenu
+                MenuItem {
+                    text: qsTr("Edit")
+                    visible: current_user_id === messageuserid
+                }
+                MenuItem {
+                    text: qsTr("Delete")
+                    visible: current_user_id === messageuserid
+                    onClicked: {
+                        context.mattermost.delete_message(
+                                    server_index,
+                                    team_index,
+                                    channel_type,
+                                    channel_index,
+                                    messageindex
+                                    )
+                    }
+                }
+                MenuItem {
+                    text: qsTr("Reply")
+                    visible: false
+                }
+
+                MenuItem {
+                    text: qsTr("Copy")
+                }
+            }
 
             Column {
                 id: itemlistcolumn
@@ -478,6 +579,7 @@ Page {
                     property real   contentwidth: parent.width
                     property string imagepath   : userimagepath
                     property string username    : user
+                    property string iduser      : userid
                     property string createat    : messagecreateat
 
                     property real  outtotalheight
@@ -488,25 +590,8 @@ Page {
                     sourceComponent:
                         type == MattermostQt.MessageSystem ?
                            messagesystem:messagelabel
-                }
-            }
-
-//            MessageLabel {
-//                id: item
-//                width: messages.width
-//                anchors.verticalCenter: parent.verticalCenter
-//                anchors {
-//                    left:parent.left
-//                    right:parent.right
-//                    leftMargin: Theme.paddingSmall
-//                    rightMargin: Theme.paddingSmall
-//                }
-//                text: message
-//                message_type: type
-//                files_count: filescount
-//                messagesmodel: messages.messagesmodel
-//                row_index: rowindex
-//            }
+                }// item loader
+            } // itemslist column
         }
         layer.enabled: true
         // uncomment this too, for gradient hide

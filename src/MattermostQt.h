@@ -20,7 +20,8 @@ public:
 	enum ReplyType : int {
 		Login,
 		Teams,
-		Channels,
+		rt_get_public_channels,
+		rt_post_channel_view,
 		rt_get_user_info,
 		rt_get_user_image,
 		rt_get_team,
@@ -33,7 +34,9 @@ public:
 		rt_get_file_preview,
 		rt_get_file,
 		rt_get_file_info,
-		rt_post_send_message
+		rt_post_send_message,
+		rt_delete_message,
+		rt_post_message_edit
 	};
 
 	enum ConnectionError {
@@ -353,12 +356,21 @@ public:
 	                          int channel_index, int message_index, int file_index);
 	Q_INVOKABLE void post_send_message(QString message, int server_index, int team_index, int channel_type,
 	                                   int channel_index);
+	Q_INVOKABLE void delete_message(int server_index, int team_index, int channel_type,
+	                                     int channel_index, int message_index);
+	Q_INVOKABLE void post_message_edit(QString text, int server_index, int team_index, int channel_type,
+	                                     int channel_index, int message_index);
+
+	Q_INVOKABLE void post_channel_view(int server_index, int team_index,
+	                                     int channel_type, int channel_index);
 	Q_INVOKABLE void get_user_image(int server_index, int user_index);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
 //	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
 	Q_INVOKABLE void get_posts(int server_index, int team_index, int channel_index, int channel_type);
 	Q_INVOKABLE void get_posts_before(int server_index, int team_index, int channel_index, int channel_type);
+	/** get current user id */
+	Q_INVOKABLE QString user_id(int server_index) const;
 
 	bool save_settings();
 	bool load_settings();
@@ -381,6 +393,12 @@ Q_SIGNALS:
 	void messageDeleted(MessagePtr message);
 	void userUpdated(UserPtr user);
 	void fileStatusChanged(QString file_id, int status);
+	/**
+	 * @brief fileDownloadingProgress
+	 * @param file_id    id of file
+	 * @param progress   from 0.0 to 1.0
+	 */
+	void fileDownloadingProgress(QString file_id, qreal progress);
 protected:
 	/**
 	 * @brief prepare_direct_channel
@@ -397,6 +415,9 @@ protected:
 	 */
 	void prepare_user_index(int server_index, MessagePtr message);
 
+	ChannelPtr channelAt(int server_index, int team_index,
+	                     int channel_type, int channel_index);
+
 	void get_teams_unread(ServerPtr server);
 
 	void websocket_connect(ServerPtr server);
@@ -408,6 +429,7 @@ protected:
 	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_posts_before(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
+	void reply_post_channel_view(QNetworkReply *reply);
 	void reply_get_user_info(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
 	void reply_get_file_thumbnail(QNetworkReply *reply);
@@ -416,6 +438,7 @@ protected:
 	void reply_get_file(QNetworkReply *reply);
 	void reply_get_user_image(QNetworkReply *reply);
 	void reply_post_send_message(QNetworkReply *reply);
+	void reply_delete_message(QNetworkReply *reply);
 
 	void event_posted(ServerPtr sc, QJsonObject data);
 	void event_post_edited(ServerPtr sc, QJsonObject object);
@@ -424,6 +447,7 @@ protected:
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
 	void replySSLErrors(QNetworkReply *reply, QList<QSslError> errors);
+	void replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
 	void onWebSocketConnected();
 	void onWebSocketSslError(QList<QSslError> errors);

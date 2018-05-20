@@ -30,6 +30,9 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	case MessagesModel::Text:
 		return QVariant(m_messages[row]->m_message);
 		break;
+	case MessagesModel::MessageIndex:
+		return QVariant(m_messages[row]->m_self_index);
+		break;
 	case MessagesModel::Type:
 		{
 			return QVariant( (int)m_messages[row]->m_type );
@@ -38,6 +41,11 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	case MessagesModel::FilesCount:
 		{
 			return QVariant( (int)m_messages[row]->m_file.size() );
+		}
+		break;
+	case MessagesModel::UserId:
+		{
+			return QVariant( m_messages[row]->m_user_id );
 		}
 		break;
 	case MessagesModel::RowIndex:
@@ -114,6 +122,8 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	names[MessagesModel::SenderUserName] = QLatin1String("user").data();
 	names[MessagesModel::CreateAt] = QLatin1String("messagecreateat").data();
 	names[MessagesModel::IsEdited] = QLatin1String("messageisedited").data();
+	names[MessagesModel::UserId] = QLatin1String("userid").data();
+	names[MessagesModel::MessageIndex] = QLatin1String("messageindex").data();
 	return names;
 }
 
@@ -269,6 +279,20 @@ QString MessagesModel::getSenderName(int row) const
 	return m_messages[row]->m_user_id;
 }
 
+QString MessagesModel::getFileSize(int row, int i) const
+{
+	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
+		return "";
+	MattermostQt::FilePtr file = m_messages[row]->m_file[i];
+	if( file->m_file_size < 1000 )
+		return QObject::trUtf8("%0 bytes").arg(file->m_file_size);
+	qreal size = (qreal)file->m_file_size/1024;
+	if( size < 1000 )
+		return QObject::trUtf8("%0 Kb").arg(size,0,'f',1);
+	size = size/1024;
+	return QObject::trUtf8("%0 Mb").arg(size,0,'f',1);
+}
+
 bool MessagesModel::atEnd() const
 {
 	if(!m_channel)
@@ -278,18 +302,20 @@ bool MessagesModel::atEnd() const
 
 void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 {
-	if(channel->m_message.size() > 0)
+	if(channel->m_message.size() != m_messages.size() )
 	{
 //		m_messages.reserve(channel->m_message.size());
-		beginInsertRows(QModelIndex(),0,channel->m_message.size()-1);
+//		beginInsertRows(QModelIndex(),0,channel->m_message.size()-1);
 //		m_messages.append(channel->m_message);
+		beginResetModel();
 		m_messages = channel->m_message;
-		endInsertRows();
+//		endInsertRows();
+		endResetModel();
 	}
 	m_channel = channel;
-	if(atEnd())
-		emit atEndChanged();
+//	if(atEnd())
 	emit messagesInitialized();
+	emit atEndChanged();
 }
 
 void MessagesModel::slot_messageAdded(QList<MattermostQt::MessagePtr> messages)
@@ -341,6 +367,13 @@ void MessagesModel::slot_messageDeleted(MattermostQt::MessagePtr message)
 	beginRemoveRows(QModelIndex(), row, row);
 	m_messages.remove(message->m_self_index);
 	endRemoveRows();
+
+//	QVector<int> roles;
+//	roles << MessageIndex;
+//	int br = m_messages.size() - 1;
+//	QModelIndex topLeft = index(0);
+//	QModelIndex bottomRight = index(m_messages.size() - 1);
+//	dataChanged(topLeft, bottomRight, roles);
 }
 
 void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count)
@@ -355,8 +388,8 @@ void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, in
 		m_messages = channel->m_message;
 		endInsertRows();
 	}
-	if(atEnd())
-		emit atEndChanged();
+//	if(atEnd())
+	emit atEndChanged();
 }
 
 

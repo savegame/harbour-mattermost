@@ -25,8 +25,10 @@ class MessagesModel : public QAbstractListModel
 		RowIndex,
 		SenderImagePath, // user avatar
 		SenderUserName,
+		UserId,
 		CreateAt,
-		IsEdited
+		IsEdited,
+		MessageIndex
 	};
 
 public:
@@ -55,6 +57,7 @@ public:
 	Q_INVOKABLE QSizeF  getItemSize(int row, int i, qreal contentWidth) const;
 	Q_INVOKABLE QString getFileName(int row, int i) const;
 	Q_INVOKABLE QString getSenderName(int row) const;
+	Q_INVOKABLE QString getFileSize(int row,int i) const;
 	bool    atEnd() const;
 //	Q_INVOKABLE int   getImageSize(int row, int i) const;
 

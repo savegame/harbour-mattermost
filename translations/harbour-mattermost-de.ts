@@ -95,6 +95,22 @@
         <source>get older</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reply</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -104,6 +120,18 @@
     </message>
     <message>
         <source>(edited)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%0 bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%0 Kb</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%0 Mb</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

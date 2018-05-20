@@ -25,6 +25,8 @@
 #define P_MESSAGE_INDEX      "message_index"
 #define P_FILE_INDEX         "file_index"
 #define P_FILE_PTR           "file_ptr"
+#define P_MESSAGE_PTR        "message_ptr"
+#define P_CHANNEL_PTR        "channel_ptr"
 #define P_TEAM_ID            "team_id"
 #define P_CHANNEL_INDEX      "channel_id"
 #define P_CHANNEL_TYPE       "channel_type"
@@ -47,6 +49,8 @@
 	request.setRawHeader("Authorization", QString("Bearer %0").arg(server->m_token).toUtf8())
 
 Q_DECLARE_METATYPE(MattermostQt::FilePtr)
+Q_DECLARE_METATYPE(MattermostQt::ChannelPtr)
+Q_DECLARE_METATYPE(MattermostQt::MessagePtr)
 
 MattermostQt::MattermostQt()
 {
@@ -308,7 +312,7 @@ void MattermostQt::get_public_channels(int server_index, QString team_id)
 //		request.setSslConfiguration(sc->m_cert);
 
 	QNetworkReply *reply = m_networkManager->get(request);
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Channels) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_public_channels) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 	reply->setProperty(P_TEAM_ID, QVariant(team_id) );
@@ -463,13 +467,8 @@ void MattermostQt::get_file(int server_index, int team_index,
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_file) );
-	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
-	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
-	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
-	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
-	reply->setProperty(P_MESSAGE_INDEX, QVariant(message_index) );
-	reply->setProperty(P_FILE_INDEX, QVariant(file_index) );
 	reply->setProperty(P_FILE_PTR, QVariant::fromValue<FilePtr>(file) );
+	connect(reply, SIGNAL(downloadProgress(qint64,qint64)), SLOT(replyDownloadProgress(qint64,qint64)));
 }
 
 void MattermostQt::post_send_message(QString message, int server_index, int team_index, int channel_type,
@@ -519,6 +518,96 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
 	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
+}
+
+void MattermostQt::delete_message(int server_index, int team_index, int channel_type, int channel_index, int message_index)
+{
+	ChannelPtr channel = channelAt(server_index, team_index,channel_type,channel_index);
+	if(!channel)
+		return;
+	ServerPtr sc = m_server[server_index];
+	MessagePtr message = channel->m_message[message_index];
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/posts/")
+	        + message->m_id;
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+
+//	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	QNetworkReply *reply = m_networkManager->deleteResource(request);
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_delete_message) );
+	reply->setProperty(P_MESSAGE_PTR, QVariant::fromValue<MessagePtr>(message) );
+}
+
+void MattermostQt::post_message_edit(QString text, int server_index, int team_index, int channel_type, int channel_index, int message_index)
+{
+	ChannelPtr channel = channelAt(server_index, team_index,channel_type,channel_index);
+	if(!channel)
+		return;
+	ServerPtr sc = m_server[server_index];
+	MessagePtr message = channel->m_message[message_index];
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/posts/")
+	        + message->m_id;
+}
+
+void MattermostQt::post_channel_view(int server_index, int team_index, int channel_type, int channel_index)
+{
+	///channels/members/{user_id}/view
+	ServerPtr sc = m_server[server_index];
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/channels/members/")
+	        + sc->m_user_id
+	        + QLatin1String("/view");
+	ChannelPtr channel;
+
+	if(channel_type == ChannelType::ChannelDirect)
+	{
+		channel = sc->m_direct_channels[channel_index];
+	}
+	else {
+		TeamPtr tc = sc->m_teams[team_index];
+		QVector<ChannelPtr> *channels = nullptr;
+		if(channel_type == ChannelType::ChannelPublic)
+			channels = &tc->m_public_channels;
+		else if(channel_type == ChannelType::ChannelPrivate)
+			channels = &tc->m_private_channels;
+		if(!channels)
+			return;
+		channel = channels->at(channel_index);
+	}
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+
+//{
+//	"channel_id": "string", //Required
+//	"prev_channel_id": "string"
+//}
+	QJsonDocument json;
+	QJsonObject root;
+	root["channel_id"] = channel->m_id;
+	json.setObject(root);
+
+	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_channel_view) );
+	reply->setProperty(P_CHANNEL_PTR, QVariant::fromValue<ChannelPtr>(channel) );
 }
 
 void MattermostQt::get_user_image(int server_index, int user_index)
@@ -750,6 +839,11 @@ void MattermostQt::get_posts_before(int server_index, int team_index,
 	reply->setProperty(P_MESSAGE_INDEX, QVariant(before->m_self_index) );
 }
 
+QString MattermostQt::user_id(int server_index) const
+{
+	return m_server[server_index]->m_user_id;
+}
+
 void MattermostQt::get_teams_unread(MattermostQt::ServerPtr server)
 {
 	// request url users/{user_id}/teams/unread
@@ -941,6 +1035,31 @@ void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr
 	{
 		get_user_info(server_index, message->m_user_id);
 	}
+}
+
+MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_index, int channel_type, int channel_index)
+{
+	ChannelPtr channel;
+	if( server_index < 0 || server_index >= m_server.size() )
+		return channel;
+
+	ServerPtr sc = m_server[server_index];
+	if(channel_type == ChannelType::ChannelDirect)
+	{
+		channel = sc->m_direct_channels[channel_index];
+	}
+	else if( team_index >= 0 && team_index < sc->m_teams.size() ) {
+		TeamPtr tc = sc->m_teams[team_index];
+		QVector<ChannelPtr> *channels = nullptr;
+		if(channel_type == ChannelType::ChannelPublic)
+			channels = &tc->m_public_channels;
+		else if(channel_type == ChannelType::ChannelPrivate)
+			channels = &tc->m_private_channels;
+		if(!channels)
+			return ChannelPtr();
+		channel = channels->at(channel_index);
+	}
+	return channel;
 }
 
 void MattermostQt::websocket_connect(ServerPtr server)
@@ -1457,6 +1576,20 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 	}
 }
 
+void MattermostQt::reply_post_channel_view(QNetworkReply *reply)
+{
+	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+	if(!channel)
+		return;
+	ServerPtr pc = m_server[channel->m_server_index];
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	QJsonObject object = json.object();
+	if( object["status"].toString() != QString("success") )
+	{
+		qWarning() << json;
+	}
+}
+
 void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 {
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
@@ -1768,13 +1901,6 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 
 void MattermostQt::reply_get_file(QNetworkReply *reply)
 {
-	// we think all indexes right
-	int server_index = reply->property(P_SERVER_INDEX).toInt();
-	int team_index = reply->property(P_TEAM_INDEX).toInt();
-	int channel_type = reply->property(P_CHANNEL_TYPE).toInt();
-	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
-	int message_index = reply->property(P_MESSAGE_INDEX).toInt();
-	int file_index =  reply->property(P_FILE_INDEX).toInt();
 	FilePtr file =  reply->property(P_FILE_PTR).value<FilePtr>();
 	if(file)
 		qDebug() << file->m_name;
@@ -1797,7 +1923,7 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 		download.close();
 		file->m_file_path = dowload_dir;
 		file->m_file_status = FileStatus::FileDownloaded;
-		file->save_json( m_server[file->m_self_index]->m_data_path );
+		file->save_json( m_server[file->m_server_index]->m_data_path );
 	}
 	else
 		file->m_file_status = FileStatus::FileRemote;
@@ -1861,6 +1987,11 @@ void MattermostQt::reply_post_send_message(QNetworkReply *reply)
 	qDebug() << reply->readAll();
 }
 
+void MattermostQt::reply_delete_message(QNetworkReply *reply)
+{
+	qDebug() << reply->readAll();
+}
+
 void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 {
 	ChannelType type = ChannelType::ChannelTypeCount;
@@ -1913,6 +2044,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			message->m_channel_index = channel_index;
 			message->m_self_index    = channel->m_message.size();
 			channel->m_message.append(message);
+			channel->m_total_msg_count++;
 			if(message->m_type == MessageType::MessageTypeCount)
 			{
 				if(message->m_user_id.compare(sc->m_user_id) == 0 )
@@ -2141,18 +2273,27 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject da
 //	qDebug() << post; //search channel
 	if( channel )
 	{
+		MessagePtr deleted;
+		int index = -1;
 		// search for message
 		for(int i = 0; i < channel->m_message.size(); i++ )
 		{
 			MessagePtr mc = channel->m_message[i];
 			if( mc->m_id.compare(message->m_id) == 0)
 			{
+				deleted = mc;
+				index = i;
 				mc->m_delete_at = message->m_delete_at;
 				//mc->m_message = message->m_message;
 				channel->m_message.remove(i);
-				emit messageDeleted(mc);
 				break;
 			}
+		}
+		if(deleted && index >= 0)
+		{
+			for(int i = index; i < channel->m_message.size(); i++ )
+				channel->m_message[i]->m_self_index = i;
+			emit messageDeleted(deleted);
 		}
 		return;
 	}
@@ -2183,8 +2324,11 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			case ReplyType::Teams:
 				reply_get_teams(reply);
 				break;
-			case ReplyType::Channels:
+			case ReplyType::rt_get_public_channels:
 				reply_get_public_channels(reply);
+				break;
+			case ReplyType::rt_post_channel_view:
+				reply_post_channel_view(reply);
 				break;
 			case ReplyType::rt_get_user_info:
 				reply_get_user_info(reply);
@@ -2218,6 +2362,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 				break;
 			case ReplyType::rt_post_send_message:
 				reply_post_send_message(reply);
+				break;
+			case ReplyType::rt_delete_message:
+				reply_delete_message(reply);
 				break;
 			default:
 				qWarning() << "That can't be!";
@@ -2280,6 +2427,17 @@ void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 //		reply->ignoreSslErrors(errors);
 	}
 
+}
+
+void MattermostQt::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
+{
+	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+	if(!reply)
+		return;
+	FilePtr file = reply->property(P_FILE_PTR).value<FilePtr>();
+	if(!file)
+		return;
+	emit fileDownloadingProgress(file->m_id, (qreal)bytesReceived/bytesTotal);
 }
 
 void MattermostQt::onWebSocketConnected()
