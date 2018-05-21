@@ -506,8 +506,8 @@ Page {
 
                                 ProgressCircle {
                                     id: progressCircle
-                                    anchors.verticalCenter: image.verticalCenter
-                                    anchors.horizontalCenter: image.horizontalCenter
+                                    anchors.verticalCenter: fdrow.verticalCenter
+                                    anchors.left: fdrow.left
                                     visible: false
                                     value: 0
                                     width: image.width
