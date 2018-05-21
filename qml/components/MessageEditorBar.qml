@@ -30,6 +30,7 @@ BackgroundItem {
             menu.icon.source = "image://theme/icon-m-clear"
             button.icon.source = "image://theme/icon-m-enter-accept"
             menu.enabled = true
+            textedit.focus = true
         }
         else
         {
