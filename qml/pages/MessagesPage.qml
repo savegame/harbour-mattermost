@@ -349,7 +349,7 @@ Page {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }//Rectangle
 
-                                BackgroundItem {
+                                MouseArea {
                                     id: downloadbutton
                                     visible: true
                                     anchors.fill: parent

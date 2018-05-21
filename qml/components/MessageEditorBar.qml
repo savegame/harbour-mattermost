@@ -17,8 +17,11 @@ BackgroundItem {
     property int    message_index
 
     property alias text: textedit.text
-
     height: textedit.height
+
+    // animations
+    property real opacity_one: 0.0
+    property real opacity_two: 1.0
 
     TouchBlocker {
         anchors.fill: parent
@@ -27,15 +30,17 @@ BackgroundItem {
     onEditmodeChanged: {
         if(editmode) {
             textedit.text = edittext
-            menu.icon.source = "image://theme/icon-m-clear"
-            button.icon.source = "image://theme/icon-m-enter-accept"
+            opacity_one = 1.0
+            opacity_two = 0.0
+            animation.restart()
             menu.enabled = true
             textedit.focus = true
         }
         else
         {
-            menu.icon.source = "image://theme/icon-m-menu"
-            button.icon.source = "image://theme/icon-m-mail"
+            opacity_one = 0.0
+            opacity_two = 1.0
+            animation.restart()
             menu.enabled = false
         }
     }
@@ -95,15 +100,17 @@ BackgroundItem {
         }// onClicked
     }
 
-    IconButton {
+    MouseArea {
         id: menu
         visible: true
         enabled: false
+        width: Theme.iconSizeMedium
+        height: Theme.iconSizeMedium
         anchors {
             right: parent.right
             verticalCenter: textedit.verticalCenter
         }
-        icon.source: "image://theme/icon-m-menu"
+//        icon.source: "image://theme/icon-m-menu"
         onClicked: {
             if(editmode)
             {
@@ -112,4 +119,55 @@ BackgroundItem {
             }
         }
     }// IconButton
+
+    Image {
+        id: image_menu
+        source: "image://theme/icon-m-menu"
+        width: Theme.iconSizeMedium
+        height: Theme.iconSizeMedium
+        anchors {
+            right: parent.right
+            verticalCenter: textedit.verticalCenter
+        }
+        visible: (opacity > 0)
+    }
+
+    Image {
+        id: image_cancel
+        source: "image://theme/icon-m-clear"
+        width: Theme.iconSizeMedium
+        height: Theme.iconSizeMedium
+        anchors {
+            right: parent.right
+            verticalCenter: textedit.verticalCenter
+        }
+        opacity: 0
+        visible: (opacity > 0)
+    }
+
+
+    ParallelAnimation {
+        id: animation
+        NumberAnimation {
+            id: animation_menu
+            running: false
+            target: image_menu
+            property: "opacity"
+            easing.type: Easing.InExpo
+            from: opacity_one
+            to: opacity_two
+            duration: 200
+        }
+
+        NumberAnimation {
+            id: animation_cancel
+            running: false
+            target: image_cancel
+            property: "opacity"
+            easing.type: Easing.InExpo
+            from: opacity_two
+            to: opacity_one
+            duration: 200
+        }
+    }
 }
