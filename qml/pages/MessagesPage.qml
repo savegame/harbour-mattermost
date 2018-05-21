@@ -397,7 +397,7 @@ Page {
                                                 })
                                         }
                                     }
-                                } // IconButton downloadbutton
+                                } // MouseArea downloadbutton
                                 ProgressCircle {
                                     id: progressCircle
                                     anchors.verticalCenter: parent.verticalCenter
@@ -418,51 +418,109 @@ Page {
 
                         Component {
                             id: filedocument
-                            Row {
-                                id: fdrow
+                            MouseArea {
                                 height: Math.max(image.height, imagelabel.height)
                                 width: widthcontent
-                                spacing: Theme.paddingSmall
 
-                                onHeightChanged: {
-                                    if(height > 0)
-                                        componentHeight = height
+                                onClicked: {
+                                    context.mattermost.fileStatusChanged.connect(
+                                        function onStatusChanged(fid,fstatus) {
+                                            if(fid !==  file_id )
+                                                return
+                                            switch(fstatus){
+//                                                case MattermostQt.FileDownloading:
+//                                                    progressCircle.visible = true;
+//                                                    break;
+                                            case MattermostQt.FileDownloaded:
+                                                progressCircle.visible = false
+                                                progressCircle.enabled = false
+                                            }
+                                            filestatus = fstatus;
+                                        }
+                                    )
+                                    if( filestatus === MattermostQt.FileRemote ) {
+                                        context.mattermost.get_file(
+                                                    server_index,
+                                                    team_index,
+                                                    channel_type,
+                                                    channel_index,
+                                                    rowindex,
+                                                    fileindex)
+                                        progressCircle.visible = true;
+                                    }
+                                    else if( filestatus === MattermostQt.FileDownloaded ) {
+//                                        pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
+//                                            {
+//                                                imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+//                                                sourceSize: imagebackground.imageSourceSize,
+//                                                width: Screen.width
+//                                            })
+                                    }
                                 }
 
-                                Image {
-                                    id: image
-                                    fillMode: Image.PreserveAspectFit
-                                    source: Theme.iconForMimeType(messagesmodel.getFileMimeType(rowindex,fileindex))
-                                    sourceSize.width: Theme.iconSizeMedium
-                                    sourceSize.height: Theme.iconSizeMedium
-                                    height: Theme.iconSizeMedium
-                                    width: Theme.iconSizeMedium
-                                }//image
+                                Row {
+                                    id: fdrow
+                                    anchors.fill: parent
+                                    spacing: Theme.paddingSmall
 
-                                Label {
-                                    id: imagelabel
-                                    text: messagesmodel.getFileName(rowindex,fileindex)
-                                    anchors.verticalCenter: image.verticalCenter
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSizeSmall
-                                    font.italic:  true
-                                    color: fontcolor
-                                    truncationMode: TruncationMode.Fade
-                                    width: widthcontent - fdrow.spacing*3 - image.width - filesize.width
-                                    height: contentHeight
-                                } // label with filename
+                                    onHeightChanged: {
+                                        if(height > 0)
+                                            componentHeight = height
+                                    }
 
-                                Label {
-                                    id: filesize
-                                    width: contentWidth
-                                    text: messagesmodel.getFileSize(rowindex,fileindex)
+                                    Image {
+                                        id: image
+                                        fillMode: Image.PreserveAspectFit
+                                        source: Theme.iconForMimeType(messagesmodel.getFileMimeType(rowindex,fileindex))
+                                        sourceSize.width: Theme.iconSizeMedium
+                                        sourceSize.height: Theme.iconSizeMedium
+                                        height: Theme.iconSizeMedium
+                                        width: Theme.iconSizeMedium
+                                    }//image
+
+                                    Label {
+                                        id: imagelabel
+                                        text: messagesmodel.getFileName(rowindex,fileindex)
+                                        anchors.verticalCenter: image.verticalCenter
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        font.italic:  true
+                                        color: fontcolor
+                                        truncationMode: TruncationMode.Fade
+                                        width: widthcontent - fdrow.spacing*3 - image.width - filesize.width
+                                        height: contentHeight
+                                    } // label with filename
+
+                                    Label {
+                                        id: filesize
+                                        width: contentWidth
+                                        text: messagesmodel.getFileSize(rowindex,fileindex)
+                                        anchors.verticalCenter: image.verticalCenter
+                                        font.family: Theme.fontFamily
+                                        font.pixelSize: Theme.fontSizeTiny
+                                        font.italic:  true
+                                        color: fontcolor
+                                        height: contentHeight
+                                    }// filename label
+                                }
+
+                                ProgressCircle {
+                                    id: progressCircle
                                     anchors.verticalCenter: image.verticalCenter
-                                    font.family: Theme.fontFamily
-                                    font.pixelSize: Theme.fontSizeTiny
-                                    font.italic:  true
-                                    color: fontcolor
-                                    height: contentHeight
-                                }// filename label
+                                    anchors.horizontalCenter: image.horizontalCenter
+                                    visible: false
+                                    value: 0
+                                    width: image.width
+                                    height: image.height
+                                    onVisibleChanged: {
+                                        context.mattermost.fileDownloadingProgress.connect(
+                                            function onDownloading(id_of_file,progress) {
+                                                if(id_of_file === file_id)
+                                                    value = progress
+                                            }
+                                        )
+                                    }
+                                }//ProgressCircle
                             }
                         }
 
