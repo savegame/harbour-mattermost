@@ -17,6 +17,7 @@ BackgroundItem {
     property string edittext
     property int    message_index
 
+    property bool showToolBar: false
     property alias text: textedit.text
     height: textedit.height
 
@@ -73,6 +74,12 @@ BackgroundItem {
             placeholderText: label
             textMargin: Theme.paddingSmall
             height: Math.min(Theme.itemSizeHuge,implicitHeight)
+
+            onFocusChanged: {
+                if(focus)
+                    showToolBar = false
+            }
+
             // onTextChanged when .trim().length > 2 send user is typing
     //        EnterKey.enabled: text.trim().length > 0
     //        EnterKey.iconSource: context.sendwithreturn ? "image://theme/icon-m-enter-accept" : "image://theme/icon-m-enter"
@@ -214,31 +221,31 @@ BackgroundItem {
             }
             else
             {
-                if( buttons_row.width === 0.0 )
-                {
-                    buttons_row_w1 = 0
-                    buttons_row_w2 = (Theme.iconSizeMedium + btnrow.spacing)*3 + Theme.paddingLarge//messageeditor.width - menu.width
-                    opacity_one = 1.0
-                    opacity_two = 0.0
-//                    button_size_one = Theme.iconSizeMedium
-//                    button_size_two = Theme.iconSizeLarge
-                }
-                else
-                {
-                    buttons_row_w1 = buttons_row.width
-                    buttons_row_w2 = 0
-                    opacity_one = 0.0
-                    opacity_two = 1.0
-//                    button_size_one = Theme.iconSizeLarge
-//                    button_size_two = Theme.iconSizeMedium
-                }
-                animation.restart()
-                buttonrow_animation.restart()
+               showToolBar = !showToolBar
             }
         }
 
 
     }// IconButton
+
+    onShowToolBarChanged: {
+        if( showToolBar )
+        {
+            buttons_row_w1 = 0
+            buttons_row_w2 = (Theme.iconSizeMedium + btnrow.spacing)*3 + Theme.paddingLarge
+            opacity_one = 1.0
+            opacity_two = 0.0
+        }
+        else
+        {
+            buttons_row_w1 = buttons_row.width
+            buttons_row_w2 = 0
+            opacity_one = 0.0
+            opacity_two = 1.0
+        }
+        animation.restart()
+        buttonrow_animation.restart()
+    }
 
     Image {
         id: image_menu
