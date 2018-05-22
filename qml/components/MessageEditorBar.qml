@@ -123,6 +123,8 @@ BackgroundItem {
 
     property real buttons_row_w1: 0
     property real buttons_row_w2: messageeditor.width - menu.width
+//    property real button_size_one: Theme.iconSizeMedium
+//    property real button_size_two: Theme.iconSizeMedium
 
     ParallelAnimation {
         id: buttonrow_animation
@@ -131,14 +133,15 @@ BackgroundItem {
             property: "width"
             from: buttons_row_w1
             to: buttons_row_w2
-            duration: 300
+            duration: 200
         }
 
 //        NumberAnimation {
-//            target: textarea
-//            property: "name"
+//            targets: [button_photo, button_image, button_document]
+//            properties: "width,height"
 //            duration: 200
-//            easing.type: Easing.InOutQuad
+//            from: button_size_one
+//            to: button_size_two
 //        }
     }
 
@@ -164,21 +167,25 @@ BackgroundItem {
         Row{
             id: btnrow
             anchors.fill: parent
-            spacing: Theme.paddingSmall
+            spacing: Theme.paddingMedium
             anchors.leftMargin: Theme.paddingMedium
+            anchors.verticalCenter: parent.verticalCenter
 //            anchors.horizontalCenter: parent.horizontalCenter
             IconButton {
+                id: button_photo
                 icon.source: "image://theme/icon-m-imaging"
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
                 enabled: false
             }
             IconButton {
+                id: button_image
                 icon.source: "image://theme/icon-m-file-image"
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
             }
             IconButton {
+                id: button_document
                 icon.source: "image://theme/icon-m-file-document"
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
@@ -210,9 +217,11 @@ BackgroundItem {
                 if( buttons_row.width === 0.0 )
                 {
                     buttons_row_w1 = 0
-                    buttons_row_w2 = (Theme.iconSizeMedium + Theme.paddingSmall)*3 + Theme.paddingLarge//messageeditor.width - menu.width
+                    buttons_row_w2 = (Theme.iconSizeMedium + btnrow.spacing)*3 + Theme.paddingLarge//messageeditor.width - menu.width
                     opacity_one = 1.0
                     opacity_two = 0.0
+//                    button_size_one = Theme.iconSizeMedium
+//                    button_size_two = Theme.iconSizeLarge
                 }
                 else
                 {
@@ -220,6 +229,8 @@ BackgroundItem {
                     buttons_row_w2 = 0
                     opacity_one = 0.0
                     opacity_two = 1.0
+//                    button_size_one = Theme.iconSizeLarge
+//                    button_size_two = Theme.iconSizeMedium
                 }
                 animation.restart()
                 buttonrow_animation.restart()
