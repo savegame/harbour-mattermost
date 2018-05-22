@@ -35,12 +35,14 @@
 #include "MattermostQt.h"
 #include "ChannelsModel.h"
 #include "MessagesModel.h"
+#include "SailNotify.h"
 
 int main(int argc, char *argv[])
 {
 	// Set up QML engine.
 	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
 	QScopedPointer<QQuickView> v(SailfishApp::createView());
+	QScopedPointer<SailNotify> notify(new SailNotify());
 
 	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
 	QCoreApplication::setOrganizationDomain("harbour");
@@ -59,5 +61,24 @@ int main(int argc, char *argv[])
 	// Start the application.
 	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));
 	v->show();
+
+////	QObject *item = dynamic_cast<QObject *>(v->engine()->rootContext()->baseUrl()rootObjects().at(0));
+//	foreach(QObject *object , v->engine()->children() )
+//	{
+//		qDebug() << QQmlProperty::read(object, "context").toString();
+//		foreach(QObject *object2 , object->children() )
+//			qDebug() << "  " << QQmlProperty::read(object2, "name").toString();
+//	}
+
+//	v->engine()
+//	QVariant value;
+//	QMetaObject::invokeMethod(v->engine()->findChild<QObject*>("harbour-mattermost"), "getMattermost", Qt::DirectConnection,
+//	                          Q_RETURN_ARG(QVariant, value) );
+//	qWarning() << value;
+
+	MattermostQt *m = v->rootObject()->findChild<MattermostQt*>();
+	if(m)
+		QObject::connect(m, SIGNAL(newMessage(QString,QString)), notify.data(), SLOT(slotNewMessage(QString,QString)) );
+
 	return app->exec();
 }
