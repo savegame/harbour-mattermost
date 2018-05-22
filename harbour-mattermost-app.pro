@@ -18,7 +18,9 @@ DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
 CONFIG += sailfishapp
 CONFIG += qt
-QT += gui qml quick network
+QT += gui qml quick network dbus
+PKGCONFIG += \
+    nemonotifications-qt5
 
 LIBS += -Llibs -lqt5websockets
 INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
