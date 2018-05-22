@@ -210,9 +210,9 @@ Page {
                             height = componentheight
                         Component {
                             id: messagecomponent
-                            Label {
+                            LinkedLabel {
                                 id: textlabel
-                                text: textmesage
+                                plainText: messagetext
                                 onContentHeightChanged:
                                 {
                                    componentheight = contentHeight
@@ -605,19 +605,13 @@ Page {
                         editmessageindex = messageindex
                     }
                 }
+
                 MenuItem {
                     text: qsTr("Delete")
                     visible: current_user_id === messageuserid
-                    onClicked: {
-                        context.mattermost.delete_message(
-                                    server_index,
-                                    team_index,
-                                    channel_type,
-                                    channel_index,
-                                    messageindex
-                                    )
-                    }
+                    onClicked: remove()
                 }
+
                 MenuItem {
                     text: qsTr("Reply")
                     visible: false
@@ -627,6 +621,18 @@ Page {
                     text: qsTr("Copy")
                     onClicked: Clipboard.text = message
                 }
+            }
+
+            function remove() {
+//                remorseAction( qsTr("Deleting"), function() {
+                    context.mattermost.delete_message(
+                        server_index,
+                        team_index,
+                        channel_type,
+                        channel_index,
+                        messageindex
+                    )
+//                })
             }
 
             Column {
@@ -719,5 +725,6 @@ Page {
                     right: messages.right
                     bottom: messages.bottom
                 } //an
+
     } // MessageEditorBar
 }
