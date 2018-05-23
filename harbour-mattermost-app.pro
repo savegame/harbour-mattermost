@@ -25,6 +25,8 @@ PKGCONFIG += \
 LIBS += -Llibs -lqt5websockets
 INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
 
+INCLUDEPATH += $$PWD/../../mersdk/targets/SailfishOS-2.1.4.13-i486/usr/include/nemonotifications-qt5
+
 debug: DEFINES += _DEBUG
 
 SOURCES += src/harbour-mattermost.cpp \

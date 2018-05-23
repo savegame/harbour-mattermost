@@ -3,6 +3,7 @@
 
 #include <notification.h>
 #include <QObject>
+#include <QList>
 
 /**
  * @brief The SailNotify class
@@ -16,6 +17,9 @@ public:
 
 public Q_SLOTS:
 	void slotNewMessage(QString channelname, QString user);
+
+protected:
+	QList<Notification*> m_notification;
 };
 
 #endif // SAILNOTIFY_H

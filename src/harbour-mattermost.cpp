@@ -62,20 +62,6 @@ int main(int argc, char *argv[])
 	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));
 	v->show();
 
-////	QObject *item = dynamic_cast<QObject *>(v->engine()->rootContext()->baseUrl()rootObjects().at(0));
-//	foreach(QObject *object , v->engine()->children() )
-//	{
-//		qDebug() << QQmlProperty::read(object, "context").toString();
-//		foreach(QObject *object2 , object->children() )
-//			qDebug() << "  " << QQmlProperty::read(object2, "name").toString();
-//	}
-
-//	v->engine()
-//	QVariant value;
-//	QMetaObject::invokeMethod(v->engine()->findChild<QObject*>("harbour-mattermost"), "getMattermost", Qt::DirectConnection,
-//	                          Q_RETURN_ARG(QVariant, value) );
-//	qWarning() << value;
-
 	MattermostQt *m = v->rootObject()->findChild<MattermostQt*>();
 	if(m)
 		QObject::connect(m, SIGNAL(newMessage(QString,QString)), notify.data(), SLOT(slotNewMessage(QString,QString)) );
