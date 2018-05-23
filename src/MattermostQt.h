@@ -388,7 +388,7 @@ Q_SIGNALS:
 	void messagesAdded(ChannelPtr channel);
 	void messagesAddedBefore(ChannelPtr channel, int count);
 	void messageAdded(QList<MessagePtr> messages);
-	void newMessage(QString chanel_name, QString user_name);
+	void newMessage(MessagePtr message);
 	void messageUpdated(QList<MessagePtr> messages);
 	void messageDeleted(MessagePtr message);
 	void userUpdated(UserPtr user);

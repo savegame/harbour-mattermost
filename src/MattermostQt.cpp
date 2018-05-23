@@ -2087,8 +2087,10 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			}
 			QList<MessagePtr> new_messages;
 			new_messages << message;
-			emit messageAdded(new_messages);
-			emit newMessage(channel->m_display_name, sc->m_user[message->m_user_index]->m_username);
+			emit messageAdded(new_messages); // add messages to model
+			// chek if messed sended from another user, then
+			if( message->m_user_id != m_server[message->m_server_index]->m_user_id )
+				emit newMessage(message);
 		}
 	}
 	else
@@ -2151,8 +2153,10 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			}
 			QList<MessagePtr> new_messages;
 			new_messages << message;
-			emit messageAdded(new_messages);
-			emit newMessage(channel->m_display_name, sc->m_user[message->m_user_index]->m_username);
+			emit messageAdded(new_messages);// add messages to model
+			// chek if messed sended from another user, then
+			if( message->m_user_id != m_server[message->m_server_index]->m_user_id )
+				emit newMessage(message);
 		}
 	}
 }

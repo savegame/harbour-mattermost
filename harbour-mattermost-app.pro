@@ -48,9 +48,14 @@ DISTFILES += qml/harbour-mattermost.qml \
     qml/pages/TeamsPage.qml \
     qml/components/TeamLabel.qml \
     translations/harbour-mattermost-ru.ts \
-    rpm/harbour-mattermost.yaml
+    rpm/harbour-mattermost.yaml \
+    dbus/sashikknox.mattermost.service
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
+
+dbus.files = dbus/sashikknox.mattermost.service
+dbus.path = /usr/share/dbus-1/services/
+INSTALLS += dbus
 
 # to disable building translations every time, comment out the
 # following CONFIG line

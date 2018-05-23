@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
 	MattermostQt *m = v->rootObject()->findChild<MattermostQt*>();
 	if(m)
-		QObject::connect(m, SIGNAL(newMessage(QString,QString)), notify.data(), SLOT(slotNewMessage(QString,QString)) );
+		QObject::connect(m, &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );
 
 	return app->exec();
 }

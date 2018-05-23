@@ -4,6 +4,7 @@
 #include <notification.h>
 #include <QObject>
 #include <QList>
+#include "MattermostQt.h"
 
 /**
  * @brief The SailNotify class
@@ -16,7 +17,7 @@ public:
 	SailNotify();
 
 public Q_SLOTS:
-	void slotNewMessage(QString channelname, QString user);
+	void slotNewMessage(MattermostQt::MessagePtr message);
 
 protected:
 	QList<Notification*> m_notification;

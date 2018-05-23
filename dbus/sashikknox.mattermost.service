@@ -1,0 +1,4 @@
+[D-BUS Service]
+Interface=/sashikknox/mattermost/service
+Name=sashikknox.mattermost.service
+Exec=/usr/bin/invoker --type=silica-qt5 --desktop-file=harbour-mattermost.desktop -s /usr/bin/harbour-mattermost
