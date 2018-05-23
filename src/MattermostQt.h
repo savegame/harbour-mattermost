@@ -93,9 +93,9 @@ public:
 	 * all files list stored in serverptr
 	 */
 	struct FileContainer {
-		FileContainer() {}
+		FileContainer() noexcept {}
 
-		FileContainer(QJsonObject object);
+		FileContainer(QJsonObject object) noexcept;
 
 		bool save_json(QString server_data_path) const;
 		bool load_json(QString server_data_path);
@@ -134,7 +134,7 @@ public:
 
 
 	struct MessageContainer {
-		MessageContainer()
+		MessageContainer() noexcept
 		{}
 
 		MessageContainer(QJsonObject object);
@@ -167,7 +167,7 @@ public:
 
 	struct UserContainer
 	{
-		UserContainer() {
+		UserContainer() noexcept {
 			m_update_at = 0;
 		}
 
@@ -212,7 +212,7 @@ public:
 
 	struct ChannelContainer
 	{
-		ChannelContainer()
+		ChannelContainer() noexcept
 		{
 			m_team_index = -1;
 			m_server_index = -1;
@@ -221,7 +221,7 @@ public:
 			m_dc_user_index = -1;
 		}
 
-		ChannelContainer(QJsonObject &object);
+		ChannelContainer(QJsonObject &object) noexcept ;
 
 		bool save_json(QString server_dir_path) const;
 		bool load_json(QString server_dir_path);
@@ -253,14 +253,14 @@ public:
 
 	struct TeamContainer
 	{
-		TeamContainer()
+		TeamContainer() noexcept
 		{
 			m_create_at = 0;
 			m_update_at = 0;
 			m_delete_at = 0;
 		}
 
-		TeamContainer(QJsonObject &object);
+		TeamContainer(QJsonObject &object) noexcept ;
 		/**
 		 * @brief save_json
 		 * @param server_dir_path   directory where all teams data stored
@@ -289,6 +289,13 @@ public:
 		QVector<ChannelPtr> m_private_channels;
 	};
 	typedef QSharedPointer<TeamContainer> TeamPtr;
+
+	struct UnattachedMessageContainer {
+		UnattachedMessageContainer() noexcept {}
+		QString     m_team_id;
+		MessagePtr  m_message;
+	};
+	typedef QSharedPointer<UnattachedMessageContainer> UMessagePtr;
 
 	struct ServerContainer
 	{
@@ -326,6 +333,8 @@ public:
 		QString                     m_ca_cert_path;
 		QString                     m_cert_path;
 		QVector<FilePtr>            m_file;
+
+		QList<UMessagePtr>           m_untacched_messages;/**< untached messages (!) */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -371,7 +380,9 @@ public:
 	Q_INVOKABLE void get_posts_before(int server_index, int team_index, int channel_index, int channel_type);
 	/** get current user id */
 	Q_INVOKABLE QString user_id(int server_index) const;
-
+	/** get channel name */
+	Q_INVOKABLE QString getChannelName(int server_index, int team_index, int channel_type, int channel_index);
+	Q_INVOKABLE QString getUserName(int server_index, int user_index);
 	bool save_settings();
 	bool load_settings();
 

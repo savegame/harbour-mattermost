@@ -866,6 +866,22 @@ QString MattermostQt::user_id(int server_index) const
 	return m_server[server_index]->m_user_id;
 }
 
+QString MattermostQt::getChannelName(int server_index, int team_index, int channel_type, int channel_index)
+{
+	ChannelPtr channel = channelAt(server_index, team_index, channel_type, channel_index);
+	if(channel)
+		return channel->m_display_name;
+	return QString();
+}
+
+QString MattermostQt::getUserName(int server_index, int user_index)
+{
+	if(server_index < 0 || server_index >= m_server.size()
+	        || user_index < 0 || user_index >= m_server[server_index]->m_url.size() )
+		return QString();
+	return m_server[server_index]->m_user[user_index]->m_username;
+}
+
 void MattermostQt::get_teams_unread(MattermostQt::ServerPtr server)
 {
 	// request url users/{user_id}/teams/unread
@@ -2040,6 +2056,17 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			return;
 	}
 	MessagePtr message( new MessageContainer(post) );
+	message->m_server_index = sc->m_self_index;
+	if(message->m_type == MessageType::MessageTypeCount)
+	{
+		if(message->m_user_id.compare(sc->m_user_id) == 0 )
+			message->m_type = MessageMine;
+		else
+			message->m_type = MessageOther;
+	}
+	prepare_user_index(sc->m_self_index,message);
+
+	int team_index = -1;
 
 	if( cmp(ch_type,O) )
 		type = ChannelType::ChannelPublic;
@@ -2066,20 +2093,12 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 		{
 			message->m_channel_type  = channel->m_type;
 			message->m_channel_id = channel->m_id;
-			message->m_server_index  = sc->m_self_index;
-			message->m_team_index    = -1;
+			message->m_team_index    = team_index;
 			message->m_channel_index = channel_index;
 			message->m_self_index    = channel->m_message.size();
 			channel->m_message.append(message);
 			channel->m_total_msg_count++;
-			if(message->m_type == MessageType::MessageTypeCount)
-			{
-				if(message->m_user_id.compare(sc->m_user_id) == 0 )
-					message->m_type = MessageMine;
-				else
-					message->m_type = MessageOther;
-			}
-			prepare_user_index(sc->m_self_index, message);
+
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
 				get_file_info(sc->m_self_index,-1,(int)ChannelType::ChannelDirect,channel_index,
@@ -2089,7 +2108,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			new_messages << message;
 			emit messageAdded(new_messages); // add messages to model
 			// chek if messed sended from another user, then
-			if( message->m_user_id != m_server[message->m_server_index]->m_user_id )
+			if( message->m_type != MessageMine )
 				emit newMessage(message);
 		}
 	}
@@ -2097,7 +2116,6 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 	{
 		QString team_id = data["team_id"].toString();
 		QString channel_id = message->m_channel_id;
-		int team_index = -1;
 		ChannelPtr channel;
 		int channel_index = -1;
 
@@ -2133,19 +2151,11 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 		{
 			// TODO refactoring, move all creation parameters to constructor
 			message->m_channel_type  = channel->m_type;
-			message->m_server_index  = sc->m_self_index;
-			message->m_team_index    = -1;
+			message->m_team_index    = team_index;
 			message->m_channel_index = channel_index;
 			message->m_self_index    = channel->m_message.size();
 			channel->m_message.append(message);
-			if(message->m_type == MessageType::MessageTypeCount)
-			{
-				if(message->m_user_id.compare(sc->m_user_id) == 0 )
-					message->m_type = MessageMine;
-				else
-					message->m_type = MessageOther;
-			}
-			prepare_user_index(sc->m_self_index, message);
+
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
 				get_file_info(sc->m_self_index,team_index,type,channel_index,
@@ -2155,9 +2165,20 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			new_messages << message;
 			emit messageAdded(new_messages);// add messages to model
 			// chek if messed sended from another user, then
-			if( message->m_user_id != m_server[message->m_server_index]->m_user_id )
+			if( message->m_type != MessageMine )
 				emit newMessage(message);
 		}
+	}
+	if(message->m_channel_index == -1 && message->m_team_index == -1)
+	{// Need some structure for unnatached messages (when it need)
+	//maybe need use only channels list in ServerPtr,
+	//and download TeamPtr and teamslist after it needed by user
+//		UMessagePtr umessage(new UnattachedMessageContainer);
+//		umessage->m_team_id = data["team_id"].toString();
+//		umessage->m_message = message;
+//		sc->m_untacched_messages.append(umessage);
+		if( message->m_type != MessageMine )
+			emit newMessage(message);
 	}
 }
 
@@ -2684,7 +2705,7 @@ void MattermostQt::slot_recconect_servers()
 	}
 }
 
-MattermostQt::TeamContainer::TeamContainer(QJsonObject &object)
+MattermostQt::TeamContainer::TeamContainer(QJsonObject &object) noexcept
 {
 	m_id = object["id"].toString();
 	m_create_at = (qlonglong)object["create_at"].toDouble();
@@ -2794,7 +2815,7 @@ bool MattermostQt::TeamContainer::load_json(QString server_dir_path)
 	return true;
 }
 
-MattermostQt::ChannelContainer::ChannelContainer(QJsonObject &object)
+MattermostQt::ChannelContainer::ChannelContainer(QJsonObject &object) noexcept
 {
 	m_id = object["id"].toString();
 //"create_at": 0,
@@ -2919,7 +2940,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 		m_file_ids.append( file_ids.at(i).toString() );
 }
 
-MattermostQt::FileContainer::FileContainer(QJsonObject object)
+MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept
 {
 	qDebug() << object;
 	m_file_status = FileStatus::FileRemote;
