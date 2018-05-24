@@ -77,6 +77,7 @@ Page {
             anchors.fill: parent
 //            anchors.top: parent.top
             width: parent.width
+            spacing: Theme.paddingSmall
 
             VerticalScrollDecorator {}
 
@@ -89,35 +90,61 @@ Page {
 
             delegate: ListItem {
                 id: bgitem
-                anchors { left:parent.left; right:parent.right; }
+                anchors {
+                    left:parent.left;
+                    right:parent.right;
+                    leftMargin: Theme.paddingMedium
+                    rightMargin: Theme.paddingMedium
+                }
                 contentHeight: Theme.itemSizeMedium
 
-                TouchBlocker {
-                    anchors.fill: parent
+                Label {
+                    id: teamname
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.paddingMedium
+                    font.pixelSize: Theme.fontSizeLarge
+                    text: display_name
                 }
 
-                TeamLabel {
-                    id: teamlabel
-                    name: display_name
-                    teamid: teamid
-                    messages: msg_count
-                    mentions: mention_count
-                    anchors.leftMargin: Theme.horizontalPageMargin
-                    anchors.rightMargin: Theme.horizontalPageMargin
-                    anchors { left:parent.left; right:parent.right; }
-
-                    onClicked: {
-                        pageStack.pushAttached( Qt.resolvedUrl("ChannelsPage.qml"),
-                                       {
-                                           context: teamsPage.context,
-                                           teamid: teamsmodel.getTeamId(index),
-                                           server_index: teamsPage.server_index,
-                                           team_index: teamsmodel.getTeamIndex(index),
-                                           team_label: teamlabel.name
-                                       } )
-                        pageStack.navigateForward(PageStackAction.Animated);
-                    }
+                onClicked: {
+                    pageStack.pushAttached( Qt.resolvedUrl("ChannelsPage.qml"),
+                                   {
+                                       context: teamsPage.context,
+                                       teamid: teamsmodel.getTeamId(index),
+                                       server_index: teamsPage.server_index,
+                                       team_index: teamsmodel.getTeamIndex(index),
+                                       team_label: teamname.text
+                                   } )
+                    pageStack.navigateForward(PageStackAction.Animated);
                 }
+
+//                TouchBlocker {
+//                    anchors.fill: parent
+//                }
+
+//                TeamLabel {
+//                    id: teamlabel
+//                    name: display_name
+//                    teamid: teamid
+//                    messages: msg_count
+//                    mentions: mention_count
+//                    anchors.leftMargin: Theme.horizontalPageMargin
+//                    anchors.rightMargin: Theme.horizontalPageMargin
+//                    anchors { left:parent.left; right:parent.right; }
+
+//                    onClicked: {
+//                        pageStack.pushAttached( Qt.resolvedUrl("ChannelsPage.qml"),
+//                                       {
+//                                           context: teamsPage.context,
+//                                           teamid: teamsmodel.getTeamId(index),
+//                                           server_index: teamsPage.server_index,
+//                                           team_index: teamsmodel.getTeamIndex(index),
+//                                           team_label: teamlabel.name
+//                                       } )
+//                        pageStack.navigateForward(PageStackAction.Animated);
+//                    }
+//                }
             }
         }
     }

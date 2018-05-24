@@ -73,7 +73,7 @@ Page {
                     }
                 }
                 width: parent.width
-                height: channellabel.height
+                height: Math.max(Theme.itemSizeMedium,channellabel.height)
                 ChannelLabel {
                     id: channellabel
                     _display_name: m_display_name
