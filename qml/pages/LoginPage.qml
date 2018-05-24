@@ -23,7 +23,7 @@ Dialog {
     canAccept : server_name.isComplete &
                 server.isComplete &
                 login_id.isComplete &
-                password.isComplete &
+                ((use_token_switcher.checked)?true:password.isComplete) &
                 ( !trust_certificate_switcher.checked
                  ? true
                  : ca_cert_text_field.isComplete & cert_text_field.isComplete )
@@ -42,7 +42,14 @@ Dialog {
     }
 
     onAccepted: {
-        context.mattermost.post_login( server.text, login_id.text, password.text,
+        if(use_token_switcher.checked)
+            context.mattermost.post_login_by_token(
+                server.text, login_id.text,
+                api, server_name.text, trust_certificate_switcher.checked,
+                ca_cert_text_field.text, cert_text_field.text
+            );
+        else
+            context.mattermost.post_login( server.text, login_id.text, password.text,
                                       api, server_name.text, trust_certificate_switcher.checked,
                                       ca_cert_text_field.text, cert_text_field.text )
     }
@@ -118,12 +125,29 @@ Dialog {
                 onTextChanged: isComplete = true;
             }
 
+            TextSwitch {
+                id: use_token_switcher
+                text: qsTr("use authentication token")
+                onCheckedChanged: {
+                    if(checked)
+                    {
+                        login_id.label = qsTr("Authentication token")
+                        password.visible = false
+                    }
+                    else
+                    {
+                        login_id.label = qsTr("Username or Email address")
+                        password.visible = true
+                    }
+                }
+            }
 
             TextField {
                 id: login_id
                 property bool isComplete: false
                 anchors { left: parent.left; right: parent.right }
-                label: qsTr("Username or Email address"); placeholderText: label
+                label: qsTr("Username or Email address")
+                placeholderText: label
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
                 EnterKey.onClicked: {

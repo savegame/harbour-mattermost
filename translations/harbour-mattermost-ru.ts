@@ -81,6 +81,14 @@
         <source>Choose server certificate</source>
         <translation>Выберите сертификат сервера</translation>
     </message>
+    <message>
+        <source>use authentication token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Authentication token</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MessageEditorBar</name>

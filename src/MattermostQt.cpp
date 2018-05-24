@@ -10,6 +10,10 @@
 #include <QFile>
 #include <QDir>
 #include <QUrlQuery>
+#include <QHttpMultiPart>
+#include <QHttpPart>
+#include <QMimeDatabase>
+#include <QMimeType>
 #include <QCoreApplication>
 #include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
 //#include <QtWebSockets>
@@ -170,6 +174,27 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 		ca_cert_file.close();
 		cert_file.close();
 	}
+}
+
+void MattermostQt::post_login_by_token(QString url, QString token, int api, QString display_name, bool trustCertificate, QString ca_cert_path, QString cert_path)
+{
+//	QString url = QString("%0")
+	ServerPtr server( new ServerContainer(url,token,api) );
+//	server->m_data_path = m_data_path + QDir::separator() +  object["server_dir"].toString("");
+//	server->m_cache_path = m_cache_path + QDir::separator() +  object["server_dir"].toString("");
+//	if(server->m_data_path.isEmpty())
+//	{
+//		server->m_data_path = m_data_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
+//		server->m_cache_path = m_cache_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
+//	}
+	server->m_trust_cert = trustCertificate;
+	server->m_display_name = display_name;
+	server->m_self_index = m_server.size();
+	server->m_ca_cert_path = ca_cert_path;
+	server->m_cert_path = cert_path;
+//	server->m_user_id = user_id;
+	m_server.append(server);
+	get_login(server);
 }
 
 void MattermostQt::get_login(MattermostQt::ServerPtr sc)
@@ -469,6 +494,58 @@ void MattermostQt::get_file(int server_index, int team_index,
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_file) );
 	reply->setProperty(P_FILE_PTR, QVariant::fromValue<FilePtr>(file) );
 	connect(reply, SIGNAL(downloadProgress(qint64,qint64)), SLOT(replyDownloadProgress(qint64,qint64)));
+}
+
+void MattermostQt::post_file_upload(int server_index, int team_index, int channel_type,
+                                    int channel_index, QString file_path)
+{
+	ChannelPtr channel = channelAt(server_index, team_index, channel_type, channel_index);
+	if(!channel)
+		return;
+	ServerPtr sc = m_server[server_index];
+
+	QFile *file = new QFile(file_path);
+	if(!file->open(QIODevice::ReadOnly))
+	{
+		qWarning() << "Can not open File " << file_path;
+		delete file;
+		return;
+	}
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/files");
+
+	QUrlQuery query;
+	query.addQueryItem("channel_id", channel->m_id);
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	url.setQuery(query);
+
+	QNetworkRequest request;
+	request.setUrl(url);
+	requset_set_headers(request,sc);
+
+	QHttpMultiPart *multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+	QMimeDatabase db;
+	QFileInfo fileinfo(*file);
+	QMimeType type = db.mimeTypeForFile(fileinfo);
+
+	QHttpPart filePart;
+	filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant(type.name()));
+	filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"%0\"").arg(file->fileName()) );
+	filePart.setBodyDevice(file);
+	file->setParent(multipart); // we cannot delete the file now, so delete it with the multiPart
+	multipart->append(filePart);
+
+	QNetworkReply *reply = m_networkManager->post(request,multipart);
+	multipart->setParent(reply);// delete multipart with reply
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_file_upload) );
+//	reply->setProperty(P_FILE_PTR, QVariant::fromValue<FilePtr>(file) );
+	connect(reply, SIGNAL( uploadProgress(qint64,qint64) ), SLOT(replyUploadProgress(qint64,qint64)));
 }
 
 void MattermostQt::post_send_message(QString message, int server_index, int team_index, int channel_type,
@@ -1588,19 +1665,25 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 				case MattermostQt::ChannelDirect:
 					{
 						bool channel_exists = false;
-						ct->m_team_index = -1;
 						// search if channels already added
 						// TODO need refactoring ( because direct channels must be added once
 						for(int c = 0; c < m_server[ct->m_server_index]->m_direct_channels.size(); c++)
 						{
 							if(m_server[ct->m_server_index]->m_direct_channels[c]->m_id.compare(ct->m_id) == 0 )
 							{
+								int si = ct->m_server_index;
+								ct.reset();
+								ct = m_server[si]->m_direct_channels[c];
 								channel_exists = true;
 								break;
 							}
 						}
 						if(channel_exists)
+						{
+							emit channelAdded(ct);
 							break;
+						}
+						ct->m_team_index = -1;
 						ct->m_self_index = m_server[ct->m_server_index]->m_direct_channels.size();
 						m_server[ct->m_server_index]->m_direct_channels.append(ct);
 						prepare_direct_channel(ct->m_server_index, ct->m_team_index, ct->m_self_index);
@@ -2493,6 +2576,11 @@ void MattermostQt::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal
 	if(!file)
 		return;
 	emit fileDownloadingProgress(file->m_id, (qreal)bytesReceived/bytesTotal);
+}
+
+void MattermostQt::replyUploadProgress(qint64 bytesReceived, qint64 bytesTotal)
+{
+
 }
 
 void MattermostQt::onWebSocketConnected()

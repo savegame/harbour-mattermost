@@ -33,6 +33,7 @@ public:
 		rt_get_file_thumbnail,
 		rt_get_file_preview,
 		rt_get_file,
+		rt_post_file_upload,
 		rt_get_file_info,
 		rt_post_send_message,
 		rt_delete_message,
@@ -350,6 +351,9 @@ public:
 	Q_INVOKABLE void post_login(QString server, QString login, QString password,
 	                            int api = 4,QString display_name = QString("Mattermost Server"),
 	                            bool trustCertificate = false, QString ca_cert_path = QString(), QString cert_path = QString());
+	Q_INVOKABLE void post_login_by_token(QString url, QString token,
+	                                     int api = 4,QString display_name = QString("Mattermost Server"),
+	                                     bool trustCertificate = false, QString ca_cert_path = QString(), QString cert_path = QString());
 	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
@@ -363,6 +367,8 @@ public:
 	                   int channel_index, int message_index, QString file_id);
 	Q_INVOKABLE void get_file(int server_index, int team_index, int channel_type,
 	                          int channel_index, int message_index, int file_index);
+	Q_INVOKABLE void post_file_upload(int server_index, int team_index, int channel_type,
+	                                  int channel_index, QString file_path);
 	Q_INVOKABLE void post_send_message(QString message, int server_index, int team_index, int channel_type,
 	                                   int channel_index);
 	Q_INVOKABLE void delete_message(int server_index, int team_index, int channel_type,
@@ -460,6 +466,7 @@ protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
 	void replySSLErrors(QNetworkReply *reply, QList<QSslError> errors);
 	void replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+	void replyUploadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
 	void onWebSocketConnected();
 	void onWebSocketSslError(QList<QSslError> errors);
