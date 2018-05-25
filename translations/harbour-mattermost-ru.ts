@@ -119,6 +119,14 @@
         <source>Reply</source>
         <translation>Ответить</translation>
     </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose document</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

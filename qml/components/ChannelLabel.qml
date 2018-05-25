@@ -12,14 +12,15 @@ Item {
     property int _type
     property int channelType
 
-    height: loader.height
+    height: loader.itemHeight
 
     Component {
         id: channel
         Label {
             id: labelname
-//            font.pixelSize: Theme.fontSizeMedium
             text: _display_name
+            height: contentHeight
+            onHeightChanged: itemHeight = height
         }
     }
 
@@ -27,8 +28,9 @@ Item {
         id: direct_channel
         Label {
             id: labelname
-//            font.pixelSize: Theme.fontSizeLarge
             text: _display_name
+            height: contentHeight
+            onHeightChanged: itemHeight = height
         }
     }
 
@@ -39,6 +41,8 @@ Item {
                      anchors.fill: parent
             }
             text: qsTr("Public channes")
+            height: contentHeight
+            onHeightChanged: itemHeight = height
         }
     }
 
@@ -49,6 +53,8 @@ Item {
                      anchors.fill: parent
             }
             text: qsTr("Private channes")
+            height: contentHeight
+            onHeightChanged: itemHeight = height
         }
     }
 
@@ -59,15 +65,14 @@ Item {
                      anchors.fill: parent
             }
             text: qsTr("Direct channes")
+            onHeightChanged: itemHeight = height
         }
     }
 
     Loader {
         id: loader
-        //            width: parent.width
-
+        property real itemHeight
         anchors {left: parent.left; right: parent.right; }
-        //            anchors.fill: parent
         anchors {
             topMargin: _type == ChannelsModel.Channel ? Theme.horizontalPageMargin : Theme.paddingSmall
             bottomMargin: loader.topMargin

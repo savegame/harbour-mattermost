@@ -25,13 +25,17 @@ BackgroundItem {
     property real opacity_one: 0.0
     property real opacity_two: 1.0
 
+    signal attachImage
+    signal atatchDocument
+    signal attachFile
+    signal takePhoto
+
     onEditmodeChanged: {
         if(editmode) {
             textedit.text = edittext
             opacity_one = 1.0
             opacity_two = 0.0
             animation.restart()
-//            menu.enabled = true
             textedit.focus = true
         }
         else
@@ -39,7 +43,6 @@ BackgroundItem {
             opacity_one = 0.0
             opacity_two = 1.0
             animation.restart()
-//            menu.enabled = false
         }
     }
 
@@ -53,7 +56,6 @@ BackgroundItem {
         anchors {
             left: parent.left
             bottom: parent.bottom
-//            right: menu.left
         }
         height: textedit.height
         width: messageeditor.width - menu.width
@@ -61,7 +63,6 @@ BackgroundItem {
 
         TextArea  {
             id: textedit
-            //implicitHeight: Theme.itemSizeSmall
             anchors {
                 left: parent.left
                 bottom: parent.bottom
@@ -69,7 +70,7 @@ BackgroundItem {
                 leftMargin: Theme.paddingSmall
             }
             label: qsTr("Message...") // need timestamp here, its better
-    //      focusOutBehavior: FocusBehavior.KeepFocus
+
             font.pixelSize: Theme.fontSizeSmall
             placeholderText: label
             textMargin: Theme.paddingSmall
@@ -79,16 +80,7 @@ BackgroundItem {
                 if(focus)
                     showToolBar = false
             }
-
-            // onTextChanged when .trim().length > 2 send user is typing
-    //        EnterKey.enabled: text.trim().length > 0
-    //        EnterKey.iconSource: context.sendwithreturn ? "image://theme/icon-m-enter-accept" : "image://theme/icon-m-enter"
         }
-
-//        layer.effect: OpacityMask {
-//            source: textedit
-//            maskSource: maskrect
-//        }
 
         IconButton {
             id: button
@@ -130,34 +122,16 @@ BackgroundItem {
 
     property real buttons_row_w1: 0
     property real buttons_row_w2: messageeditor.width - menu.width
-//    property real button_size_one: Theme.iconSizeMedium
-//    property real button_size_two: Theme.iconSizeMedium
 
-    ParallelAnimation {
+    NumberAnimation {
         id: buttonrow_animation
-        NumberAnimation {
-            target: buttons_row
-            property: "width"
-            from: buttons_row_w1
-            to: buttons_row_w2
-            duration: 200
-        }
-
-//        NumberAnimation {
-//            targets: [button_photo, button_image, button_document]
-//            properties: "width,height"
-//            duration: 200
-//            from: button_size_one
-//            to: button_size_two
-//        }
+        target: buttons_row
+        property: "width"
+        from: buttons_row_w1
+        to: buttons_row_w2
+        duration: 200
     }
 
-//    Rectangle {
-//        id: maskrect
-//        anchors.fill: buttons_row
-//        color: Theme.rgba(0.0,0.0,0.0,0.3)
-//        visible: true
-//    }
 
     TouchBlocker {
         id: buttons_row
@@ -184,18 +158,30 @@ BackgroundItem {
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
                 enabled: false
+                onClicked: {
+                    showToolBar = false
+                    takePhoto()
+                }
             }
             IconButton {
                 id: button_image
                 icon.source: "image://theme/icon-m-file-image"
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
+                onClicked: {
+                    showToolBar = false
+                    attachImage()
+                }
             }
             IconButton {
                 id: button_document
                 icon.source: "image://theme/icon-m-file-document"
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
+                onClicked: {
+                    showToolBar = false
+                    atatchDocument()
+                }
             }
         }
     }

@@ -453,6 +453,7 @@ protected:
 	void reply_get_file_preview(QNetworkReply *reply);
 	void reply_get_file_info(QNetworkReply *reply);
 	void reply_get_file(QNetworkReply *reply);
+	void reply_post_file_upload(QNetworkReply *reply);
 	void reply_get_user_image(QNetworkReply *reply);
 	void reply_post_send_message(QNetworkReply *reply);
 	void reply_delete_message(QNetworkReply *reply);

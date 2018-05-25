@@ -1,5 +1,6 @@
 import QtQuick 2.5
 import Sailfish.Silica 1.0
+import Sailfish.Pickers 1.0
 import "../model"
 import "../components"
 import harbour.sashikknox 1.0
@@ -166,6 +167,21 @@ Page {
                     id: avataritem
                     height: Theme.iconSizeMedium
                     width: Theme.iconSizeMedium
+
+                    Rectangle {
+                        id: roundmask
+                        anchors.centerIn: parent
+                        width: Theme.iconSizeMedium
+                        height: Theme.iconSizeMedium
+                        radius: Theme.iconSizeMedium
+                        visible: false
+                    }
+                    // TODO generate avatars in CPP code!!!!
+                    layer.enabled:true
+                    layer.effect: OpacityMask {
+                        maskSource: roundmask
+                    }
+
                     Image{
                         source: imagepath
                         anchors.fill: parent
@@ -713,6 +729,26 @@ Page {
         }
     }
 
+    Component {
+        id: imagepicker
+        ImagePickerPage {
+            title: qsTr("Choose image")
+            onSelectedContentPropertiesChanged: {
+                console.log(selectedContentProperties.filePath)
+            }
+        }
+    }
+
+    Component {
+        id: documentpicker
+        DocumentPickerPage {
+            title: qsTr("Choose document")
+            onSelectedContentPropertiesChanged: {
+                console.log(selectedContentProperties.filePath)
+            }
+        }
+    }
+
     MessageEditorBar {
         id: messageeditor
         context: messages.context
@@ -725,6 +761,12 @@ Page {
                     right: messages.right
                     bottom: messages.bottom
                 } //an
+        onAttachImage: {
+            pageStack.push(imagepicker)
+        }
 
+        onAtatchDocument: {
+            pageStack.push(documentpicker)
+        }
     } // MessageEditorBar
 }

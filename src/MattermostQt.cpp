@@ -2050,6 +2050,23 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 	return;
 }
 
+void MattermostQt::reply_post_file_upload(QNetworkReply *reply)
+{
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	QJsonObject object = json.object();
+	QJsonArray file_infos = object["file_infos"].toArray();
+	// we attach just one file at once
+	for( int i = 0; i < file_infos.size(); i ++ )
+	{
+		QJsonObject jfile = file_infos.at(i).toObject();
+		FilePtr file( new FileContainer(jfile) );
+
+	}
+}
+
 void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 {
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
@@ -2492,6 +2509,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 				break;
 			case ReplyType::rt_get_file:
 				reply_get_file(reply);
+				break;
+			case ReplyType::rt_post_file_upload:
+				reply_post_file_upload(reply);
 				break;
 			case ReplyType::rt_post_send_message:
 				reply_post_send_message(reply);

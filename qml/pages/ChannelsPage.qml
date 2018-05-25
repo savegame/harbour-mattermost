@@ -35,12 +35,17 @@ Page {
     SilicaFlickable {
         id: flickable
         anchors.fill: parent
+        anchors {
+            topMargin: Theme.paddingMedium
+            bottomMargin: Theme.paddingMedium
+        }
 
         SilicaListView {
             id: channelslist
             width: parent.width
             anchors.fill: parent
             model: channelsmodel
+            spacing: Theme.paddingSmall
 
             VerticalScrollDecorator {}
 
@@ -49,7 +54,7 @@ Page {
                 title: team_label
             }
 
-            delegate: BackgroundItem {
+            delegate: ListItem {
                 id: bgitem
                 ParallelAnimation {
                     id: panim
@@ -73,7 +78,17 @@ Page {
                     }
                 }
                 width: parent.width
-                height: Math.max(Theme.itemSizeMedium,channellabel.height)
+//                height:switch(m_type)
+//                       {
+//                       case ChannelsModel.HeaderPublic:
+//                       case ChannelsModel.HeaderPrivate:
+//                       case ChannelsModel.HeaderDirect:
+//                           channellabel.height;
+//                           break;
+//                       default:
+//                           Math.max(Theme.itemSizeSmall,channellabel.height)
+//                       }
+
                 ChannelLabel {
                     id: channellabel
                     _display_name: m_display_name
@@ -83,10 +98,16 @@ Page {
                     _type: m_type
                     channelType: channel_type
                     x: Theme.horizontalPageMargin
-                    anchors {left: parent.left; right: parent.right}
-                    anchors.topMargin: Theme.paddingSmall
-                    anchors.leftMargin: Theme.paddingLarge
-                    anchors.rightMargin: Theme.paddingSmall
+                    anchors {
+                        fill: parent
+                        verticalCenter: parent.verticalCenter
+//                        left: parent.left
+//                        right: parent.right
+//                        top: parent.top
+                    }
+//                    anchors.topMargin: Theme.paddingSmall
+                    anchors.leftMargin: Theme.paddingMedium
+                    anchors.rightMargin: Theme.paddingMedium
                 }
                 onClicked: {
                     var messages = pageStack.pushAttached(
