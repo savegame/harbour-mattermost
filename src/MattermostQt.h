@@ -382,7 +382,7 @@ public:
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
 //	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
-	Q_INVOKABLE void get_posts(int server_index, int team_index, int channel_index, int channel_type);
+	Q_INVOKABLE void get_posts(int server_index, int team_index, int channel_type, int channel_index);
 	Q_INVOKABLE void get_posts_before(int server_index, int team_index, int channel_index, int channel_type);
 	/** get current user id */
 	Q_INVOKABLE QString user_id(int server_index) const;
@@ -423,7 +423,7 @@ protected:
 	 * image before we send to ChannelsModel
 	 * @param channel
 	 */
-	void prepare_direct_channel(int server_index, int team_index, int channel_index);
+	void prepare_direct_channel(int server_index, int channel_index);
 
 	/**
 	 * @brief prepare_user_index

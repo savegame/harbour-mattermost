@@ -142,6 +142,10 @@
         <source>%0 Mb</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>(you)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SecondPage</name>

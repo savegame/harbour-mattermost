@@ -788,38 +788,12 @@ void MattermostQt::get_teams_unread(int server_index)
 	get_teams_unread(m_server[server_index]);
 }
 
-void MattermostQt::get_posts(int server_index, int team_index, int channel_index, int channel_type )
+void MattermostQt::get_posts(int server_index, int team_index, int channel_type, int channel_index )
 {
-	if( server_index < 0 || server_index >= m_server.size() )
+	ChannelPtr channel = channelAt(server_index, team_index, channel_type, channel_index);
+	if( !channel )
 		return;
 	ServerPtr sc = m_server[server_index];
-	ChannelPtr channel;
-	if( channel_type == ChannelType::ChannelPublic )
-	{
-		if( team_index < 0 || team_index >= sc->m_teams.size() )
-			return;
-		TeamPtr tc =  sc->m_teams[team_index];
-		if( channel_index < 0 || channel_index > tc->m_public_channels.size() )
-			return;
-		channel = tc->m_public_channels[channel_index];
-	}
-	else if( channel_type == ChannelType::ChannelPrivate )
-	{
-		if( team_index < 0 || team_index >= sc->m_teams.size() )
-			return;
-		TeamPtr tc =  sc->m_teams[team_index];
-		if( channel_index < 0 || channel_index > tc->m_private_channels.size() )
-			return;
-		channel = tc->m_private_channels[channel_index];
-	}
-	else if( channel_type == ChannelType::ChannelDirect)
-	{
-		if( channel_index < 0 || channel_index > sc->m_direct_channels.size() )
-			return;
-		channel = sc->m_direct_channels[channel_index];
-	}
-	else
-		return;
 
 	//before send a requset, we chek if channel already have posts
 	if(!channel->m_message.isEmpty())
@@ -1097,27 +1071,37 @@ bool MattermostQt::load_settings()
 	return true;
 }
 
-void MattermostQt::prepare_direct_channel(int server_index, int team_index, int channel_index)
+void MattermostQt::prepare_direct_channel(int server_index, int channel_index)
 {
 	ChannelPtr ct = m_server[server_index]->m_direct_channels[channel_index];
-	ServerPtr sc = m_server[ct->m_server_index];
+	ServerPtr sc = m_server[server_index];
 	/** in name we have two ids, separated with '__' */
-	int index = ct->m_name.indexOf("__");
-	QString user_id = ct->m_name.left( index );
-	if( user_id == sc->m_user_id )
-		user_id = ct->m_name.right( ct->m_name.length() - index - 2  );
+	QString ch_name = ct->m_name;
+	QString user_id = m_server[server_index]->m_user_id;
+	bool self_chat = false;
+	ch_name = ch_name.replace(QRegExp(QString("(%0|__)").arg(user_id)),"");
+	if(ch_name.isEmpty())
+		self_chat = true;
+	else // not self chat
+		user_id = ch_name;
+
 	// first search in cached users
 	for(int i = 0; i < sc->m_user.size(); i++ )
 	{
 		if( sc->m_user[i]->m_id.compare(user_id) == 0 )
 		{
-			sc->m_direct_channels[channel_index]->m_display_name = sc->m_user[i]->m_username;
+			if(self_chat)
+				sc->m_direct_channels[channel_index]->m_display_name = sc->m_user[i]->m_username
+				        + QLatin1String(" ") // for right translation, if someone forgot about space before '(you)'
+				        + QObject::trUtf8("(you)");
+			else
+				sc->m_direct_channels[channel_index]->m_display_name = sc->m_user[i]->m_username;
 			sc->m_direct_channels[channel_index]->m_dc_user_index = sc->m_user[i]->m_self_index;
 			return;
 		}
 	}
 	// send request for user credentials first
-	get_user_info(sc->m_self_index, user_id, team_index);
+	get_user_info(sc->m_self_index, user_id);
 }
 
 void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr message)
@@ -1686,7 +1670,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 						ct->m_team_index = -1;
 						ct->m_self_index = m_server[ct->m_server_index]->m_direct_channels.size();
 						m_server[ct->m_server_index]->m_direct_channels.append(ct);
-						prepare_direct_channel(ct->m_server_index, ct->m_team_index, ct->m_self_index);
+						prepare_direct_channel(ct->m_server_index, ct->m_self_index);
 					}
 					break;
 				default:
@@ -1756,12 +1740,26 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 		get_user_image(server_index,user->m_self_index);
 	}
 
+	bool self_chat = sc->m_user_id == user->m_id;
+
 	if(direct_channel && team_index == -1)
 	{
 		for(int i = 0; i < sc->m_direct_channels.size(); i++)
 		{
 			ChannelPtr channel = sc->m_direct_channels[i];
-			if( channel->m_name.indexOf(user->m_id) >= 0  )
+
+			QString ch_name = channel->m_name;
+			ch_name = ch_name.replace(QRegExp(QString("(%0|__)").arg(sc->m_user_id)),"");
+			if(self_chat && ch_name.isEmpty())
+			{
+				channel->m_display_name = user->m_username
+				        + QLatin1String(" ") // for right translation, if someone forgot about space before '(you)'
+				        + QObject::trUtf8("(you)");
+				channel->m_dc_user_index = user->m_self_index;
+				emit channelAdded(channel);
+				break;
+			}
+			else if( ch_name == user->m_id  )
 			{
 				channel->m_display_name = user->m_username;
 				channel->m_dc_user_index = user->m_self_index;
