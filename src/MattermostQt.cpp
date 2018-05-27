@@ -18,6 +18,7 @@
 #include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
 //#include <QtWebSockets>
 
+// all properties names
 #define P_REPLY_TYPE         "reply_type"
 #define P_API                "api"
 #define P_SERVER_URL         "server_url"
@@ -29,6 +30,7 @@
 #define P_MESSAGE_INDEX      "message_index"
 #define P_FILE_INDEX         "file_index"
 #define P_FILE_PTR           "file_ptr"
+#define P_FILE_PATH          "file_path"
 #define P_MESSAGE_PTR        "message_ptr"
 #define P_CHANNEL_PTR        "channel_ptr"
 #define P_TEAM_ID            "team_id"
@@ -39,9 +41,9 @@
 #define P_CA_CERT_PATH       "ca_cert_path"
 #define P_CERT_PATH          "cert_path"
 #define P_NEED_SAVE_SETTINGS "save_settings"
-
+// config file name
 #define F_CONFIG_FILE       "config.json"
-
+// some
 #define cmp(s,t) s.compare(#t) == 0
 #define scmp(s1,s2) s1.compare(s2) == 0
 #define _compare(string) if( cmp(event,string) )
@@ -51,6 +53,7 @@
 	request.setHeader(QNetworkRequest::UserAgentHeader, QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION) ); \
 	request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
 	request.setRawHeader("Authorization", QString("Bearer %0").arg(server->m_token).toUtf8())
+//	request.setHeader(QNetworkRequest::ContentType, "application/x-www-form-urlencoded") \
 
 Q_DECLARE_METATYPE(MattermostQt::FilePtr)
 Q_DECLARE_METATYPE(MattermostQt::ChannelPtr)
@@ -521,7 +524,7 @@ void MattermostQt::post_file_upload(int server_index, int team_index, int channe
 
 	QUrl url(sc->m_url);
 	url.setPath(urlString);
-	url.setQuery(query);
+//	url.setQuery(query);
 
 	QNetworkRequest request;
 	request.setUrl(url);
@@ -533,18 +536,26 @@ void MattermostQt::post_file_upload(int server_index, int team_index, int channe
 	QFileInfo fileinfo(*file);
 	QMimeType type = db.mimeTypeForFile(fileinfo);
 
+	QHttpPart textPart;
+	textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"channel_id\""));
+//	textPart.setRawHeader("channel_id",channel->m_id.toUtf8());
+	textPart.setBody(channel->m_id.toUtf8());
+	multipart->append(textPart);
+
 	QHttpPart filePart;
+	QString mtype = type.name();
 	filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant(type.name()));
-	filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"%0\"").arg(file->fileName()) );
+	filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; files=\"%0\"").arg(fileinfo.fileName()) );
 	filePart.setBodyDevice(file);
-	file->setParent(multipart); // we cannot delete the file now, so delete it with the multiPart
 	multipart->append(filePart);
+
+	file->setParent(multipart); // we cannot delete the file now, so delete it with the multiPart
 
 	QNetworkReply *reply = m_networkManager->post(request,multipart);
 	multipart->setParent(reply);// delete multipart with reply
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_file_upload) );
-//	reply->setProperty(P_FILE_PTR, QVariant::fromValue<FilePtr>(file) );
+	reply->setProperty(P_FILE_PATH, file_path );
 	connect(reply, SIGNAL( uploadProgress(qint64,qint64) ), SLOT(replyUploadProgress(qint64,qint64)));
 }
 
@@ -2055,6 +2066,9 @@ void MattermostQt::reply_post_file_upload(QNetworkReply *reply)
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
+	ServerPtr sc = m_server[server_index];
+	QString file_path = reply->property(P_FILE_PATH).toString();
+
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
 	QJsonObject object = json.object();
 	QJsonArray file_infos = object["file_infos"].toArray();
@@ -2063,7 +2077,17 @@ void MattermostQt::reply_post_file_upload(QNetworkReply *reply)
 	{
 		QJsonObject jfile = file_infos.at(i).toObject();
 		FilePtr file( new FileContainer(jfile) );
+		file->m_server_index = server_index;
+		file->m_self_sc_index = sc->m_file.size();
+		file->m_file_path = file_path;
+		file->m_file_status = FileDownloaded;
 
+		sc->m_file.append(file);
+		// TODO make thumb on device ( or not? )
+		if( file->m_file_type != FileDocument && file->m_file_type != FileUnknown )
+			get_file_thumbnail(file->m_server_index, file->m_self_sc_index);
+		else
+			emit fileUploaded(file->m_server_index, file->m_self_sc_index);
 	}
 }
 
@@ -2598,7 +2622,9 @@ void MattermostQt::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal
 
 void MattermostQt::replyUploadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-
+	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+	if(!reply)
+		return;
 }
 
 void MattermostQt::onWebSocketConnected()

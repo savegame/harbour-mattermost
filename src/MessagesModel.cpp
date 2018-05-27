@@ -199,8 +199,10 @@ QString MessagesModel::getValidPath(int row, int i) const
 	else if( file->m_file_size > m_mattermost->m_settings->m_auto_download_image_size) {
 		if(!file->m_preview_path.isEmpty() )
 			return file->m_preview_path;
-		else
+		else {
+			m_mattermost->get_file_preview(file->m_server_index, file->m_self_sc_index);
 			return file->m_thumb_path;
+		}
 	}
 	return file->m_file_path;
 }

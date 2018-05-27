@@ -20,6 +20,7 @@ BackgroundItem {
     property bool showToolBar: false
     property alias text: textedit.text
     height: textedit.height
+    property int    attachCount: 0
 
     // animations
     property real opacity_one: 0.0
@@ -29,6 +30,17 @@ BackgroundItem {
     signal atatchDocument
     signal attachFile
     signal takePhoto
+
+//    function fileUploaded(s_index,f_index) {
+
+//    }
+
+    onContextChanged: {
+        context.mattermost.fileUploaded.connect( function fileUp(sindex,findex){
+            console.log(sindex + " " + findex)
+            attachCount++
+        })
+    }
 
     onEditmodeChanged: {
         if(editmode) {
@@ -117,6 +129,22 @@ BackgroundItem {
                     text = ""
                 }
             }// onClicked
+
+            Rectangle {
+                id: filescountrect
+                visible: attachCount > 0
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                width: Theme.iconSizeSmall
+                height: Theme.iconSizeSmall
+                radius: Theme.iconSizeSmall
+                color: Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity)
+                Label {
+                    text: attachCount
+                    font.pixelSize: Theme.fontSizeTiny
+                    color: Theme.highlightColor
+                }
+            }
         }// send message button
     }// textarea
 

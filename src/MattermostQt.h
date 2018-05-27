@@ -410,6 +410,8 @@ Q_SIGNALS:
 	void messageDeleted(MessagePtr message);
 	void userUpdated(UserPtr user);
 	void fileStatusChanged(QString file_id, int status);
+	void fileUploaded(int server_index, int file_sc_index);
+//	void fileUploaded(FilePtr file);
 	/**
 	 * @brief fileDownloadingProgress
 	 * @param file_id    id of file

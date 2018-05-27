@@ -745,6 +745,13 @@ Page {
             title: qsTr("Choose document")
             onSelectedContentPropertiesChanged: {
                 console.log(selectedContentProperties.filePath)
+                context.mattermost.post_file_upload(
+                            server_index,
+                            team_index,
+                            channel_type,
+                            channel_index,
+                            selectedContentProperties.filePath
+                )
             }
         }
     }
