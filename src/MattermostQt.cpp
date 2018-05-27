@@ -48,12 +48,12 @@
 #define scmp(s1,s2) s1.compare(s2) == 0
 #define _compare(string) if( cmp(event,string) )
 
-#define requset_set_headers(requset, server) \
+#define request_set_headers(requset, server) \
 	request.setHeader(QNetworkRequest::ServerHeader, "application/json"); \
-	request.setHeader(QNetworkRequest::UserAgentHeader, QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION) ); \
+	request.setHeader(QNetworkRequest::UserAgentHeader, QString("Matterfish v%0").arg(MATTERMOSTQT_VERSION) ); \
 	request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
+	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded"); \
 	request.setRawHeader("Authorization", QString("Bearer %0").arg(server->m_token).toUtf8())
-//	request.setHeader(QNetworkRequest::ContentType, "application/x-www-form-urlencoded") \
 
 Q_DECLARE_METATYPE(MattermostQt::FilePtr)
 Q_DECLARE_METATYPE(MattermostQt::ChannelPtr)
@@ -217,7 +217,7 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Login) );
@@ -273,7 +273,7 @@ void MattermostQt::get_teams(int server_index)
 	//json.setObject(data)
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	if(sc->m_trust_cert)
 		request.setSslConfiguration(sc->m_cert);
@@ -335,7 +335,7 @@ void MattermostQt::get_public_channels(int server_index, QString team_id)
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 //	if(sc->m_trustCertificate && !sc->m_cert.isNull())
 //		request.setSslConfiguration(sc->m_cert);
 
@@ -367,7 +367,7 @@ void MattermostQt::get_team(int server_index, int team_index)
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 //	if(sc->m_trustCertificate && !sc->m_cert.isNull())
 //		request.setSslConfiguration(sc->m_cert);
 
@@ -395,7 +395,7 @@ void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
@@ -422,7 +422,7 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
@@ -448,7 +448,7 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
@@ -489,7 +489,7 @@ void MattermostQt::get_file(int server_index, int team_index,
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 	file->m_file_status = FileStatus::FileDownloading;
 	emit fileStatusChanged(file->m_id, file->m_file_status);
 	QNetworkReply *reply = m_networkManager->get(request);
@@ -518,22 +518,23 @@ void MattermostQt::post_file_upload(int server_index, int team_index, int channe
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
 	        + QLatin1String("/files");
+	QFileInfo fileinfo(*file);
 
 	QUrlQuery query;
 	query.addQueryItem("channel_id", channel->m_id);
+	query.addQueryItem("filename", fileinfo.fileName());
 
 	QUrl url(sc->m_url);
 	url.setPath(urlString);
-//	url.setQuery(query);
+	url.setQuery(query);
 
 	QNetworkRequest request;
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	QHttpMultiPart *multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
 	QMimeDatabase db;
-	QFileInfo fileinfo(*file);
 	QMimeType type = db.mimeTypeForFile(fileinfo);
 
 	QHttpPart textPart;
@@ -545,7 +546,7 @@ void MattermostQt::post_file_upload(int server_index, int team_index, int channe
 	QHttpPart filePart;
 	QString mtype = type.name();
 	filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant(type.name()));
-	filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; files=\"%0\"").arg(fileinfo.fileName()) );
+	filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"files\"; files=\"%0\"").arg(fileinfo.fileName()) );
 	filePart.setBodyDevice(file);
 	multipart->append(filePart);
 
@@ -589,7 +590,7 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	QJsonDocument json;
 	QJsonObject root;
@@ -626,7 +627,7 @@ void MattermostQt::delete_message(int server_index, int team_index, int channel_
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 //	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
 	QNetworkReply *reply = m_networkManager->deleteResource(request);
@@ -654,7 +655,7 @@ void MattermostQt::put_message_edit(QString text, int server_index, int team_ind
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 //	"is_pinned": true,
 //	"message": "string",
 //	"file_ids": [ ],
@@ -703,7 +704,7 @@ void MattermostQt::post_channel_view(int server_index, int team_index, int chann
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 //{
 //	"channel_id": "string", //Required
@@ -752,7 +753,7 @@ void MattermostQt::get_user_image(int server_index, int user_index)
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	if(sc->m_trust_cert)
 		request.setSslConfiguration(sc->m_cert);
@@ -780,7 +781,7 @@ void MattermostQt::get_user_info(int server_index, QString userId, int team_inde
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	if(sc->m_trust_cert)
 		request.setSslConfiguration(sc->m_cert);
@@ -834,7 +835,7 @@ void MattermostQt::get_posts(int server_index, int team_index, int channel_type,
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	if(sc->m_trust_cert) {
 		request.setSslConfiguration(sc->m_cert);
@@ -908,7 +909,7 @@ void MattermostQt::get_posts_before(int server_index, int team_index,
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,sc);
+	request_set_headers(request,sc);
 
 	if(sc->m_trust_cert) {
 		request.setSslConfiguration(sc->m_cert);
@@ -957,7 +958,7 @@ void MattermostQt::get_teams_unread(MattermostQt::ServerPtr server)
 	QNetworkRequest request;
 
 	request.setUrl(url);
-	requset_set_headers(request,server);
+	request_set_headers(request,server);
 
 	if(server->m_trust_cert)
 		request.setSslConfiguration(server->m_cert);
@@ -1225,7 +1226,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	url.setPath(urlString);
 
 	QNetworkRequest request;
-	requset_set_headers(request,server);
+	request_set_headers(request,server);
 	request.setUrl(url);
 
 	socket->open(request);
@@ -2829,7 +2830,7 @@ void MattermostQt::slot_recconect_servers()
 			url.setPath(urlString);
 
 			QNetworkRequest request;
-			requset_set_headers(request,m_server[i]);
+			request_set_headers(request,m_server[i]);
 			request.setUrl(url);
 
 			m_server[i]->m_socket->open(request);
