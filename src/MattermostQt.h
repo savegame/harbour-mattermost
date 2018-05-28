@@ -24,6 +24,7 @@ public:
 		rt_post_channel_view,
 		rt_get_user_info,
 		rt_get_user_image,
+		rt_post_users_status,
 		rt_get_team,
 		rt_get_teams_unread,
 		rt_get_posts,
@@ -82,6 +83,14 @@ public:
 		ServerUnconnected = QAbstractSocket::UnconnectedState
 	};
 	Q_ENUMS(ServerState)
+
+	enum UserStatus : int {
+		UserOnline,
+		UserAway,
+		UserOffline,
+		UserDnd
+	};
+	Q_ENUMS(UserStatus)
 
 	struct SettingsContainer {
 		int m_preload_image_size; // if size less than that, then download automaticly
@@ -334,8 +343,9 @@ public:
 		QString                     m_ca_cert_path;
 		QString                     m_cert_path;
 		QVector<FilePtr>            m_file;
-
-		QList<UMessagePtr>           m_untacched_messages;/**< untached messages (!) */
+		QList<FilePtr>              m_unattached_file; /**< uploaded, but not sended files */
+		QList<FilePtr>              m_sended_files; /**<  */
+		QList<UMessagePtr>          m_untacched_messages;/**< untached messages (!) */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -384,6 +394,7 @@ public:
 //	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
 	Q_INVOKABLE void get_posts(int server_index, int team_index, int channel_type, int channel_index);
 	Q_INVOKABLE void get_posts_before(int server_index, int team_index, int channel_index, int channel_type);
+	Q_INVOKABLE void post_users_status(int server_index);
 	/** get current user id */
 	Q_INVOKABLE QString user_id(int server_index) const;
 	/** get channel name */
@@ -450,6 +461,7 @@ protected:
 	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_post_channel_view(QNetworkReply *reply);
 	void reply_get_user_info(QNetworkReply *reply);
+	void reply_post_users_status(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
 	void reply_get_file_thumbnail(QNetworkReply *reply);
 	void reply_get_file_preview(QNetworkReply *reply);

@@ -40,6 +40,8 @@ BackgroundItem {
             console.log(sindex + " " + findex)
             attachCount++
         })
+
+//        context.mattermost.fil
     }
 
     onEditmodeChanged: {
@@ -125,6 +127,7 @@ BackgroundItem {
                                  team_index,
                                  channel_type,
                                  channel_index)
+                        attachCount = 0
                     }
                     text = ""
                 }
@@ -135,6 +138,8 @@ BackgroundItem {
                 visible: attachCount > 0
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
+                anchors.leftMargin: Theme.paddingSmall
+                anchors.bottomMargin: Theme.paddingSmall
                 width: Theme.iconSizeSmall
                 height: Theme.iconSizeSmall
                 radius: Theme.iconSizeSmall
@@ -142,7 +147,12 @@ BackgroundItem {
                 Label {
                     text: attachCount
                     font.pixelSize: Theme.fontSizeTiny
+                    font.bold: true
                     color: Theme.highlightColor
+                    anchors {
+                        verticalCenter: parent.verticalCenter
+                        horizontalCenter: parent.horizontalCenter
+                    }
                 }
             }
         }// send message button

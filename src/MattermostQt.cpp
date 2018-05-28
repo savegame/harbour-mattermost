@@ -52,7 +52,7 @@
 	request.setHeader(QNetworkRequest::ServerHeader, "application/json"); \
 	request.setHeader(QNetworkRequest::UserAgentHeader, QString("Matterfish v%0").arg(MATTERMOSTQT_VERSION) ); \
 	request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
-	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded"); \
+	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www--urlencoded"); \
 	request.setRawHeader("Authorization", QString("Bearer %0").arg(server->m_token).toUtf8())
 
 Q_DECLARE_METATYPE(MattermostQt::FilePtr)
@@ -534,56 +534,48 @@ void MattermostQt::post_file_upload(int server_index, int team_index, int channe
 
 	QHttpMultiPart *multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
 
-	QMimeDatabase db;
-	QMimeType type = db.mimeTypeForFile(fileinfo);
+//	QMimeDatabase db;
+//	QMimeType type = db.mimeTypeForFile(fileinfo);
 
-	QHttpPart textPart;
-	textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"channel_id\""));
-//	textPart.setRawHeader("channel_id",channel->m_id.toUtf8());
-	textPart.setBody(channel->m_id.toUtf8());
-	multipart->append(textPart);
+//	QHttpPart textPart;
+//	textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"channel_id\""));
+//	textPart.setBody(channel->m_id.toUtf8());
+//	multipart->append(textPart);
 
-	QHttpPart filePart;
-	QString mtype = type.name();
-	filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant(type.name()));
-	filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QString("form-data; name=\"files\"; files=\"%0\"").arg(fileinfo.fileName()) );
-	filePart.setBodyDevice(file);
-	multipart->append(filePart);
+//	QHttpPart filePart;
+//	QString mtype = type.name();
+////	filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant(type.name()));
+//	filePart.setHeader(QNetworkRequest::ContentTypeHeader, QString("application/octet-stream") );
+//	filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
+//	                   QString("form-data; name=\"files\"; filename=\"%0\"").arg(fileinfo.fileName()) );
+//	filePart.setBodyDevice(file);
+//	multipart->append(filePart);
 
-	file->setParent(multipart); // we cannot delete the file now, so delete it with the multiPart
 
-	QNetworkReply *reply = m_networkManager->post(request,multipart);
+	QNetworkReply *reply = m_networkManager->post(request,file);
+	file->setParent(reply); // we cannot delete the file now, so delete it with the multiPart
 	multipart->setParent(reply);// delete multipart with reply
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_file_upload) );
 	reply->setProperty(P_FILE_PATH, file_path );
+	reply->setProperty(P_CHANNEL_PTR, QVariant::fromValue<ChannelPtr>(channel) );
 	connect(reply, SIGNAL( uploadProgress(qint64,qint64) ), SLOT(replyUploadProgress(qint64,qint64)));
 }
 
 void MattermostQt::post_send_message(QString message, int server_index, int team_index, int channel_type,
                                      int channel_index)
 {
+	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
+	if(!channel)
+	{
+		qWarning() << "Cannot find channel!!!";
+		return;
+	}
 	ServerPtr sc = m_server[server_index];
 	//files/{file_id}/thumbnail
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
 	        + QLatin1String("/posts");
-	ChannelPtr channel;
-	if(channel_type == ChannelType::ChannelDirect)
-	{
-		channel = sc->m_direct_channels[channel_index];
-	}
-	else {
-		TeamPtr tc = sc->m_teams[team_index];
-		QVector<ChannelPtr> *channels = nullptr;
-		if(channel_type == ChannelType::ChannelPublic)
-			channels = &tc->m_public_channels;
-		else if(channel_type == ChannelType::ChannelPrivate)
-			channels = &tc->m_private_channels;
-		if(!channels)
-			return;
-		channel = channels->at(channel_index);
-	}
 
 	QUrl url(sc->m_url);
 	url.setPath(urlString);
@@ -594,9 +586,30 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 
 	QJsonDocument json;
 	QJsonObject root;
+	QJsonArray files;
+
+	QList<FilePtr>::iterator
+	        it = sc->m_unattached_file.begin(),
+	        end = sc->m_unattached_file.end();
+	while(it != end)
+	{
+		FilePtr f = *it;
+		ChannelPtr c = channelAt(f->m_server_index,f->m_team_index,f->m_channel_type,f->m_channel_index);
+		if(!c) {
+			it++;
+			continue;
+		}
+		if(c->m_id == channel->m_id)
+		{
+			files.append(f->m_id);
+			it = sc->m_unattached_file.erase(it);
+			sc->m_sended_files.append(f);
+		}
+	}
+
 	root["channel_id"] = channel->m_id;
 	root["message"] = message;
-	root["files_ids"] = QJsonArray();
+	root["file_ids"] = files;
 	root["props"] = "";
 	json.setObject(root);
 
@@ -922,6 +935,40 @@ void MattermostQt::get_posts_before(int server_index, int team_index,
 	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel->m_type) );
 	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
 	reply->setProperty(P_MESSAGE_INDEX, QVariant(before->m_self_index) );
+}
+
+void MattermostQt::post_users_status(int server_index)
+{
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
+	ServerPtr sc = m_server[server_index];
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/users/status/ids");
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	QJsonDocument json;
+	QJsonArray ids;
+
+	for(int i = 0; i < sc->m_user.size(); i++)
+	{
+		ids.append(sc->m_user[i]->m_id);
+	}
+	json.setArray(ids);
+
+	request.setUrl(url);
+	request_set_headers(request,sc);
+
+	if(sc->m_trust_cert)
+		request.setSslConfiguration(sc->m_cert);
+
+	QNetworkReply *reply = m_networkManager->post(request,json.toJson());
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_users_status) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 }
 
 QString MattermostQt::user_id(int server_index) const
@@ -1637,6 +1684,8 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 				sc.reset();
 				sc = m_server[ct->m_server_index];
 
+				qDebug() << QString("channel \"%0\" : %1").arg(ct->m_display_name).arg(ct->m_id);
+
 				switch( ct->m_type )
 				{
 				// open channels
@@ -1769,6 +1818,7 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 				        + QObject::trUtf8("(you)");
 				channel->m_dc_user_index = user->m_self_index;
 				emit channelAdded(channel);
+				qDebug() << QString("direct_channel \"%0\" id: '%1'").arg(channel->m_display_name).arg(channel->m_id) ;
 				break;
 			}
 			else if( ch_name == user->m_id  )
@@ -1776,10 +1826,31 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 				channel->m_display_name = user->m_username;
 				channel->m_dc_user_index = user->m_self_index;
 				emit channelAdded(channel);
+				qDebug() << QString("direct_channel \"%0\" id: '%1'").arg(channel->m_display_name).arg(channel->m_id) ;
 				break;
 			}
 		}
 	}
+}
+
+void MattermostQt::reply_post_users_status(QNetworkReply *reply)
+{
+	QByteArray replyData = reply->readAll();
+	QJsonDocument json = QJsonDocument::fromJson(replyData);
+	if( !json.isEmpty())
+	{
+		if(json.isArray() )
+		{
+			QJsonArray array = json.array();
+			for( int i = 0; i < array.size(); i++ )
+			{
+			}
+		}
+		else
+			qWarning() << json;
+	}
+	else if ( replyData.size() > 0 )
+		qWarning() << replyData.data();
 }
 
 void MattermostQt::reply_error(QNetworkReply *reply)
@@ -1799,7 +1870,7 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 		}
 	}
 	else if ( replyData.size() > 0 )
-		qDebug() << replyData.data();
+		qWarning() << replyData.data();
 }
 
 void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
@@ -2045,7 +2116,7 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 	QDir dir(dowload_dir);
 	if( !dir.exists() )
 		dir.mkpath(dowload_dir);
-	dowload_dir += QDir::separator() + file->m_name;
+	dowload_dir += QDir::separator() + file->m_id + QLatin1String("_") + file->m_name;
 	QFile download(dowload_dir);
 	if( download.open(QFile::Append) )
 	{
@@ -2058,6 +2129,21 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 	}
 	else
 		file->m_file_status = FileStatus::FileRemote;
+	{
+		ChannelPtr channel = channelAt(
+		            file->m_server_index,
+		            file->m_team_index,
+		            file->m_channel_type,
+		            file->m_channel_index
+		            );
+		if(channel && file->m_message_index >=0 && file->m_message_index < channel->m_message.size())
+		{
+			MessagePtr message = channel->m_message[file->m_message_index];
+			QList<MessagePtr> msgs;
+			msgs << message;
+			emit messageUpdated( msgs );
+		}
+	}
 	emit fileStatusChanged(file->m_id, file->m_file_status);
 	return;
 }
@@ -2068,6 +2154,9 @@ void MattermostQt::reply_post_file_upload(QNetworkReply *reply)
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	ServerPtr sc = m_server[server_index];
+	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+	if(!channel)
+		return;
 	QString file_path = reply->property(P_FILE_PATH).toString();
 
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
@@ -2082,13 +2171,17 @@ void MattermostQt::reply_post_file_upload(QNetworkReply *reply)
 		file->m_self_sc_index = sc->m_file.size();
 		file->m_file_path = file_path;
 		file->m_file_status = FileDownloaded;
+		file->m_channel_type = channel->m_type;
+		file->m_team_index = channel->m_team_index;
+		file->m_channel_index = channel->m_self_index;
 
 		sc->m_file.append(file);
 		// TODO make thumb on device ( or not? )
-		if( file->m_file_type != FileDocument && file->m_file_type != FileUnknown )
-			get_file_thumbnail(file->m_server_index, file->m_self_sc_index);
-		else
-			emit fileUploaded(file->m_server_index, file->m_self_sc_index);
+//		if( file->m_file_type != FileDocument && file->m_file_type != FileUnknown )
+//			get_file_thumbnail(file->m_server_index, file->m_self_sc_index);
+//		else
+		sc->m_unattached_file.append(file);
+		emit fileUploaded(file->m_server_index, file->m_self_sc_index);
 	}
 }
 
@@ -2281,6 +2374,27 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
+				if(message->m_type == MessageMine)
+				{// search if we already has files
+					bool fileDownloaded = false;
+					QList<FilePtr>::iterator
+					        it = sc->m_sended_files.begin(),
+					        end = sc->m_sended_files.end();
+					while(it != end)
+					{
+						FilePtr f = *it;
+						if(f->m_id == message->m_file_ids[k] )
+						{
+							it = sc->m_sended_files.erase(it);
+							fileDownloaded = true;
+							f->m_self_index = message->m_file.size();
+							message->m_file.append(f);
+							break;
+						}
+					}
+					if(fileDownloaded)
+						continue;
+				}
 				get_file_info(sc->m_self_index,team_index,type,channel_index,
 				                   message->m_self_index, message->m_file_ids[k]);
 			}
@@ -2507,6 +2621,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 				break;
 			case ReplyType::rt_get_user_info:
 				reply_get_user_info(reply);
+				break;
+			case ReplyType::rt_post_users_status:
+				reply_post_users_status(reply);
 				break;
 			case ReplyType::rt_get_user_image:
 				reply_get_user_image(reply);

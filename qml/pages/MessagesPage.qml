@@ -263,7 +263,8 @@ Page {
                                 id: imagebackground
                                 property size itemSize: messagesmodel.getItemSize(rowindex,fileindex,widthcontent)
                                 property size imageSourceSize: messagesmodel.getImageSize(rowindex,fileindex)
-                                property string imagePath: messagesmodel.getValidPath(rowindex,fileindex)
+                                //property string imagePath: messagesmodel.getValidPath(rowindex,fileindex)
+                                property string imagePath: pathsvalid[fileindex]
 
                                 height: file_and_label.height
                                 width: itemSize.width
@@ -284,7 +285,9 @@ Page {
 
                                         height: imagebackground.itemSize.height
                                         width: imagebackground.itemSize.width
-
+                                        onSourceChanged: {
+                                            console.log( source )
+                                        }
                                     }//image
                                 }
 
@@ -665,6 +668,7 @@ Page {
                     property string messagetext : message
                     property int    messagetype : type
                     property int    countfiles  : filescount
+                    property var    pathsvalid  : validpaths
                     property int    indexrow    : rowindex
                     property real   contentwidth: parent.width
                     property string imagepath   : userimagepath
@@ -735,6 +739,13 @@ Page {
             title: qsTr("Choose image")
             onSelectedContentPropertiesChanged: {
                 console.log(selectedContentProperties.filePath)
+                context.mattermost.post_file_upload(
+                            server_index,
+                            team_index,
+                            channel_type,
+                            channel_index,
+                            selectedContentProperties.filePath
+                )
             }
         }
     }

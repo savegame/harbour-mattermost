@@ -83,9 +83,24 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				return QVariant("");
 		}
 		break;
+	case MessagesModel::ValidPaths:
+		{
+			if( m_messages[row]->m_file.size() > 0 )
+			{
+				QVariantList files;
+				for(int i = 0; i < m_messages[row]->m_file.size(); i++ )
+				{
+					files.append( getValidPath(row,i) );
+				}
+				return files;
+			}
+			else
+				return QVariantList();
+		}
+		break;
 	case MessagesModel::CreateAt:
-	    {
-		    QDateTime time;
+		{
+			QDateTime time;
 			QString result;
 			if( m_messages[row]->m_update_at  == m_messages[row]->m_create_at )
 			{
@@ -98,8 +113,8 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				result = time.toString("hh:mm:ss ") + QObject::trUtf8("(edited)");
 			}
 			return result;
-	    }
-		    break;
+		}
+		break;
 	case MessagesModel::IsEdited:
 	    {
 		    return QVariant(m_messages[row]->m_update_at  > 0);
@@ -124,6 +139,8 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	names[MessagesModel::IsEdited] = QLatin1String("messageisedited").data();
 	names[MessagesModel::UserId] = QLatin1String("userid").data();
 	names[MessagesModel::MessageIndex] = QLatin1String("messageindex").data();
+//	names[MessagesModel::FilePaths] = QLatin1String("filepaths").data();
+	names[MessagesModel::ValidPaths] = QLatin1String("validpaths").data();
 	return names;
 }
 
@@ -346,7 +363,7 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 //	endResetModel();
 
 	QVector<int> roles;
-	roles << CreateAt << Text;
+	roles << CreateAt << Text << ValidPaths;
 	int br = 0,lt = m_messages.size() - 1;
 	foreach(MattermostQt::MessagePtr m, messages)
 	{
