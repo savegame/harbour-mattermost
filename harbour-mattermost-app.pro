@@ -74,3 +74,6 @@ HEADERS += \
     src/ChannelsModel.h \
     src/MessagesModel.h \
     src/SailNotify.h
+
+RESOURCES += \
+    resources.qrc

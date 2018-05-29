@@ -77,9 +77,24 @@ CoverBackground {
         }
     }
 
+    Image {
+        source: "qrc:///resources/logo_rect_white.png"
+        opacity: Theme.highlightBackgroundOpacity * 0.8
+        anchors {
+            bottom: parent.bottom
+            left: parent.left
+            bottomMargin: - width * 0.2
+            leftMargin: - width * 0.2
+        }
+        width: parent.width * 1.2
+        height: width
+    }
+
     Label {
         id: label
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: Theme.paddingMedium
         text: status_text
         font.pixelSize: Theme.fontSizeLarge
     }
