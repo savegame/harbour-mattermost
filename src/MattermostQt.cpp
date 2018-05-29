@@ -436,7 +436,7 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 {// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
 	// we think all indexes is right
 	ServerPtr sc = m_server[server_index];
-	//files/{file_id}/thumbnail
+	//files/{file_id}/info
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
 	        + QLatin1String("/files/")
@@ -1111,8 +1111,11 @@ bool MattermostQt::load_settings()
 
 		// create server container
 		ServerPtr server( new ServerContainer(url,token,api) );
-		server->m_data_path = m_data_path + QDir::separator() +  object["server_dir"].toString("");
-		server->m_cache_path = m_cache_path + QDir::separator() +  object["server_dir"].toString("");
+		QString server_dir = object["server_dir"].toString("");
+		if(server_dir.isEmpty())
+			server_dir = QString("%0_%1").arg(m_server.size()).arg(user_id);
+		server->m_data_path = m_data_path + QDir::separator() +  server_dir;
+		server->m_cache_path = m_cache_path + QDir::separator() +  server_dir;
 		if(server->m_data_path.isEmpty())
 		{
 			server->m_data_path = m_data_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
@@ -1942,19 +1945,13 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 	int channel_index = file->m_channel_index;
 	int message_index = file->m_message_index;
 
-	ServerPtr sc = m_server[server_index];
-	ChannelPtr channel;
-	if(team_index >= 0)
+	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
+	if(!channel)
 	{
-		TeamPtr tc = sc->m_teams[team_index];
-		if( channel_type == ChannelType::ChannelPublic )
-			channel = tc->m_public_channels[channel_index];
-		else// if( channel_type == ChannelType::ChannelPublic )
-			channel = tc->m_private_channels[channel_index];
+		qWarning() << "Cant found chanel";
+		return;
 	}
-	else
-		channel = sc->m_direct_channels[channel_index];
-
+	ServerPtr sc = m_server[server_index];
 	MessagePtr mc = channel->m_message[message_index];
 
 	QByteArray replyData = reply->readAll();
@@ -1998,18 +1995,13 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
 	int message_index = reply->property(P_MESSAGE_INDEX).toInt();
 
-	ServerPtr sc = m_server[server_index];
-	ChannelPtr channel;
-	if(team_index >= 0)
+	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
+	if(!channel)
 	{
-		TeamPtr tc = sc->m_teams[team_index];
-		if( channel_type == ChannelType::ChannelPublic )
-			channel = tc->m_public_channels[channel_index];
-		else// if( channel_type == ChannelType::ChannelPublic )
-			channel = tc->m_private_channels[channel_index];
+		qWarning() << "Cant found channel ";
+		return;
 	}
-	else
-		channel = sc->m_direct_channels[channel_index];
+	ServerPtr sc = m_server[server_index];
 
 	MessagePtr mc = channel->m_message[message_index];
 
@@ -2019,6 +2011,10 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	FilePtr file(new FileContainer(json.object()));
 	file->m_self_index = mc->m_file.size();
 	mc->m_file.append(file);
+
+	QList<MessagePtr> messages;
+	messages << mc;
+
 	file->m_self_sc_index = m_server[server_index]->m_file.size();
 	m_server[server_index]->m_file.append(file);
 	file->m_server_index = server_index;
@@ -2032,6 +2028,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 		{
 			if( !QFile::exists(file->m_thumb_path) )
 				get_file_thumbnail(server_index,file->m_self_sc_index);
+
 			if( file->m_has_preview_image && file->m_file_size > m_settings->m_auto_download_image_size
 			        && !QFile::exists(file->m_preview_path) )
 			{
@@ -2055,6 +2052,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			else
 				file->m_file_status = FileDownloaded;
 		}
+		emit messageUpdated(messages);
 	}
 	else if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
 	{
@@ -2063,8 +2061,6 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			get_file_thumbnail(server_index,file->m_self_sc_index);
 		else {
 			file->m_thumb_path = file_thumb_path;
-			QList<MessagePtr> messages;
-			messages << mc;
 			emit messageUpdated(messages);
 		}
 		if(file->m_has_preview_image && file->m_file_size > m_settings->m_auto_download_image_size) {
@@ -2073,29 +2069,23 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 				get_file_preview(server_index,file->m_self_sc_index);
 			else {
 				file->m_preview_path = preview_path;
-				QList<MessagePtr> messages;
-				messages << mc;
 				emit messageUpdated(messages);
 			}
 		}
 		else
 		{
-			QString path = m_pictures_path + QDir::separator() + file->m_name;
+			QString path = m_pictures_path + QDir::separator() + file->filename();
 			if( !QFile::exists(path) )
 				get_file(file->m_server_index, file->m_team_index,
 				         file->m_channel_type, file->m_channel_index,
 				         file->m_message_index, file->m_self_index);
 			else {
 				file->m_file_path = path;
-				QList<MessagePtr> messages;
-				messages << mc;
 				emit messageUpdated(messages);
 			}
 		}
 	}
 	else {
-		QList<MessagePtr> messages;
-		messages << mc;
 		emit messageUpdated(messages);
 	}
 	return;
@@ -2116,7 +2106,7 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 	QDir dir(dowload_dir);
 	if( !dir.exists() )
 		dir.mkpath(dowload_dir);
-	dowload_dir += QDir::separator() + file->m_id + QLatin1String("_") + file->m_name;
+	dowload_dir += QDir::separator() + file->filename();
 	QFile download(dowload_dir);
 	if( download.open(QFile::Append) )
 	{
@@ -2181,6 +2171,7 @@ void MattermostQt::reply_post_file_upload(QNetworkReply *reply)
 //			get_file_thumbnail(file->m_server_index, file->m_self_sc_index);
 //		else
 		sc->m_unattached_file.append(file);
+		file->save_json( m_server[file->m_server_index]->m_data_path );
 		emit fileUploaded(file->m_server_index, file->m_self_sc_index);
 	}
 }
@@ -2325,6 +2316,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			emit messageAdded(new_messages); // add messages to model
 			// chek if messed sended from another user, then
 			if( message->m_type != MessageMine )
+			// that for notifications
 				emit newMessage(message);
 		}
 	}

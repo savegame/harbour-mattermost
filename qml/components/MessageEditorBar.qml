@@ -105,7 +105,7 @@ BackgroundItem {
             x: messageeditor.width - menu.width - Theme.paddingSmall - width
             icon.source: "image://theme/icon-m-mail"
             onClicked: {
-                if( textedit.text.length === 0 )
+                if( textedit.text.length === 0 && attachCount === 0 )
                     textedit.focus = true;
                 else {
                     if(editmode)

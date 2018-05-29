@@ -110,6 +110,8 @@ public:
 		bool save_json(QString server_data_path) const;
 		bool load_json(QString server_data_path);
 
+		QString filename() const { return m_id + QLatin1String("_") + m_name; }
+
 		// file info
 		QString m_id;
 		QString m_post_id; // message id
