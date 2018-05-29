@@ -84,6 +84,15 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 			return QVariant(-1);
 		return QVariant((int)m_channel[index.row()]->m_type);
 		break;
+	case AvatarPath:
+		if( m_channel[index.row()].isNull() )
+			return QVariant("");
+		if ( m_channel[index.row()]->m_type != MattermostQt::ChannelDirect )
+			return QVariant("");
+		MattermostQt::UserPtr user = m_mattermost->m_server[m_channel[index.row()]->m_server_index]->m_user[m_channel[index.row()]->m_dc_user_index];
+		QString path = user->m_image_path;
+		return path;
+		break;
 	}
 	return QVariant();
 }
@@ -135,6 +144,7 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	roleNames[DataRoles::ServerIndex]  = QLatin1String("server_index").data();
 	roleNames[DataRoles::TeamIndex]  = QLatin1String("team_index").data();
 	roleNames[DataRoles::ChannelType]  = QLatin1String("channel_type").data();
+	roleNames[DataRoles::AvatarPath]  = QLatin1String("avatar_path").data();
 	return roleNames;
 }
 

@@ -38,7 +38,6 @@ SOURCES += src/harbour-mattermost.cpp \
 
 DISTFILES += qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
-    qml/pages/SecondPage.qml \
     rpm/harbour-mattermost.changes.in \
     rpm/harbour-mattermost.changes.run.in \
     rpm/harbour-mattermost.spec \
@@ -49,7 +48,8 @@ DISTFILES += qml/harbour-mattermost.qml \
     qml/components/TeamLabel.qml \
     translations/harbour-mattermost-ru.ts \
     rpm/harbour-mattermost.yaml \
-    dbus/sashikknox.mattermost.service
+    dbus/sashikknox.mattermost.service \
+    qml/pages/OptionsPage.qml
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 

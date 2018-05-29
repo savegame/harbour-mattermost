@@ -129,6 +129,13 @@
     </message>
 </context>
 <context>
+    <name>OptionsPage</name>
+    <message>
+        <source>Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <source>Login failed because of invalid password</source>
@@ -156,17 +163,6 @@
     </message>
 </context>
 <context>
-    <name>SecondPage</name>
-    <message>
-        <source>Nested Page</source>
-        <translation>Unterseite</translation>
-    </message>
-    <message>
-        <source>Item</source>
-        <translation>Element</translation>
-    </message>
-</context>
-<context>
     <name>TeamOptions</name>
     <message>
         <source>Team Options</source>
@@ -176,7 +172,7 @@
 <context>
     <name>TeamsPage</name>
     <message>
-        <source>Show Page 2</source>
+        <source>Options</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

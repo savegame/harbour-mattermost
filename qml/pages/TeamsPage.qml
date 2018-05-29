@@ -63,8 +63,8 @@ Page {
 //        // PullDownMenu and PushUpMenu must be declared in SilicaFlickable, SilicaListView or SilicaGridView
         PullDownMenu {
             MenuItem {
-                text: qsTr("Show Page 2")
-                onClicked: pageStack.push(Qt.resolvedUrl("SecondPage.qml"))
+                text: qsTr("Options")
+                onClicked: pageStack.push(Qt.resolvedUrl("OptionsPage.qml"))
             }
         }
 
@@ -118,33 +118,6 @@ Page {
                                    } )
                     pageStack.navigateForward(PageStackAction.Animated);
                 }
-
-//                TouchBlocker {
-//                    anchors.fill: parent
-//                }
-
-//                TeamLabel {
-//                    id: teamlabel
-//                    name: display_name
-//                    teamid: teamid
-//                    messages: msg_count
-//                    mentions: mention_count
-//                    anchors.leftMargin: Theme.horizontalPageMargin
-//                    anchors.rightMargin: Theme.horizontalPageMargin
-//                    anchors { left:parent.left; right:parent.right; }
-
-//                    onClicked: {
-//                        pageStack.pushAttached( Qt.resolvedUrl("ChannelsPage.qml"),
-//                                       {
-//                                           context: teamsPage.context,
-//                                           teamid: teamsmodel.getTeamId(index),
-//                                           server_index: teamsPage.server_index,
-//                                           team_index: teamsmodel.getTeamIndex(index),
-//                                           team_label: teamlabel.name
-//                                       } )
-//                        pageStack.navigateForward(PageStackAction.Animated);
-//                    }
-//                }
             }
         }
     }

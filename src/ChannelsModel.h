@@ -22,6 +22,7 @@ public:
 		ServerIndex,
 		TeamIndex,
 		ChannelType,
+		AvatarPath,
 	};
 
 	enum ItemType {

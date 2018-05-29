@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import QtGraphicalEffects 1.0
 import harbour.sashikknox 1.0
 
 Item {
@@ -11,26 +12,79 @@ Item {
     property int  _index
     property int _type
     property int channelType
+    property string directChannelImage
 
     height: loader.itemHeight
 
     Component {
-        id: channel
-        Label {
-            id: labelname
-            text: _display_name
-            height: contentHeight
-            onHeightChanged: itemHeight = height
+        id: public_channel
+        Row {
+            spacing: Theme.paddingMedium
+            Image {
+                id: userimage
+                source: "image://theme/icon-m-chat"
+                width: Theme.iconSizeMedium
+                height: Theme.iconSizeMedium
+            }
+            Label {
+                id: labelname
+                text: _display_name
+                height: contentHeight
+                onHeightChanged: itemHeight = height
+            }
+        }
+    }
+
+    Component {
+        id: private_channel
+        Row {
+            spacing: Theme.paddingMedium
+            Image {
+                id: userimage
+                source: "image://theme/icon-m-device-lock"
+                width: Theme.iconSizeMedium
+                height: Theme.iconSizeMedium
+            }
+            Label {
+                id: labelname
+                text: _display_name
+                height: contentHeight
+                onHeightChanged: itemHeight = height
+            }
         }
     }
 
     Component {
         id: direct_channel
-        Label {
-            id: labelname
-            text: _display_name
-            height: contentHeight
-            onHeightChanged: itemHeight = height
+        Row {
+            spacing: Theme.paddingMedium
+            Image {
+                id: userimage
+                source: directChannelImage
+                width: Theme.iconSizeMedium
+                height: Theme.iconSizeMedium
+
+                Rectangle {
+                    id: roundmask
+                    anchors.fill: parent
+                    width: Theme.iconSizeMedium
+                    height: Theme.iconSizeMedium
+                    radius: Theme.iconSizeMedium
+                    visible: false
+                }
+                // TODO generate avatars in CPP code!!!!
+                layer.enabled:true
+                layer.effect: OpacityMask {
+                    maskSource: roundmask
+                }
+            }
+
+            Label {
+                id: labelname
+                text: _display_name
+                height: contentHeight
+                onHeightChanged: itemHeight = height
+            }
         }
     }
 
@@ -91,7 +145,16 @@ Item {
                 header_direct;
                 break;
             default:
-                channel;
+                switch(channelType) {
+                case MattermostQt.ChannelDirect:
+                    direct_channel
+                    break
+                case MattermostQt.ChannelPrivate:
+                    private_channel
+                    break
+                default:
+                    public_channel
+                }
             }
     }
 }

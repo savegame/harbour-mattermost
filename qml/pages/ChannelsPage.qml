@@ -56,6 +56,12 @@ Page {
 
             delegate: ListItem {
                 id: bgitem
+
+                TouchBlocker {
+                    anchors.fill: parent
+                    enabled: m_type != ChannelsModel.Channel
+                }
+
                 ParallelAnimation {
                     id: panim
                     running: true
@@ -97,6 +103,8 @@ Page {
                     _index: m_index
                     _type: m_type
                     channelType: channel_type
+                    directChannelImage: avatar_path
+
                     x: Theme.horizontalPageMargin
                     anchors {
                         fill: parent
@@ -106,7 +114,7 @@ Page {
 //                        top: parent.top
                     }
 //                    anchors.topMargin: Theme.paddingSmall
-                    anchors.leftMargin: Theme.paddingMedium
+                    anchors.leftMargin: Theme.paddingLarge
                     anchors.rightMargin: Theme.paddingMedium
                 }
                 onClicked: {

@@ -16,6 +16,7 @@ class MattermostQt : public QObject
 	Q_OBJECT
 
 	friend class MessagesModel;
+	friend class ChannelsModel;
 public:
 	enum ReplyType : int {
 		Login,

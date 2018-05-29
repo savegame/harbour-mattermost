@@ -38,23 +38,23 @@ Page {
     // The effective value will be restricted by ApplicationWindow.allowedOrientations
     allowedOrientations: Orientation.All
 
-    SilicaListView {
-        id: listView
-        model: 20
-        anchors.fill: parent
-        header: PageHeader {
-            title: qsTr("Nested Page")
+    PageHeader {
+        id: header
+        title: qsTr("Options")
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
         }
-        delegate: BackgroundItem {
-            id: delegate
+    }
 
-            Label {
-                x: Theme.horizontalPageMargin
-                text: qsTr("Item") + " " + index
-                anchors.verticalCenter: parent.verticalCenter
-                color: delegate.highlighted ? Theme.highlightColor : Theme.primaryColor
-            }
-            onClicked: console.log("Clicked " + index)
+    SilicaFlickable {
+        id: listView
+        anchors {
+            top: header.bottom
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
         }
         VerticalScrollDecorator {}
     }
