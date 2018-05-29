@@ -246,6 +246,13 @@ Page {
                                 messagecomponent
                     }// Loader textlabelloader
 
+//                    height:{
+//                        username_row.height +
+//                        textlabelloader.height +
+//                        Theme.paddingSmall +
+//                        filesrepeater.height
+//                    }
+
                     Repeater {
                         id: filesrepeater
                         property real summaryHeight: 0
@@ -356,17 +363,17 @@ Page {
                                     }//imageloader
                                 }
 
-                                Rectangle {//ac background for play gif button
-                                    id: bgrect
-                                    opacity: 0.6
-                                    visible: false
-                                    color: Theme.secondaryHighlightColor
-                                    width: Theme.iconSizeMedium
-                                    height: Theme.iconSizeMedium
-                                    radius:Theme.paddingSmall
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                }//Rectangle
+//                                Rectangle {//ac background for play gif button
+//                                    id: bgrect
+//                                    opacity: 0.6
+//                                    visible: false
+//                                    color: Theme.secondaryHighlightColor
+//                                    width: Theme.iconSizeMedium
+//                                    height: Theme.iconSizeMedium
+//                                    radius:Theme.paddingSmall
+//                                    anchors.verticalCenter: parent.verticalCenter
+//                                    anchors.horizontalCenter: parent.horizontalCenter
+//                                }//Rectangle
 
                                 MouseArea {
                                     id: downloadbutton
@@ -572,13 +579,6 @@ Page {
                                 }
                         }// Loader for files
                     }//Repeater of attached files
-
-                    height:{
-                        username_row.height +
-                        textlabelloader.height +
-                        Theme.paddingSmall +
-                        filesrepeater.height
-                    }
                 }//Column
             }// Row
         }// Component messagelabel
@@ -677,6 +677,14 @@ Page {
                     property string createat    : messagecreateat
 
                     property real  outtotalheight
+                    property var   heightmap
+//                    onCountfilesChanged: {
+//                        outtotalheight = 0
+//                    }
+
+                    onHeightmapChanged: {
+                        console.log(heightmap)
+                    }
 
                     onOuttotalheightChanged:
                         height = outtotalheight
