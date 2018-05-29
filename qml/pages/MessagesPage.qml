@@ -114,18 +114,6 @@ Page {
             }// MenuItem
         }// PullDownMenu
 
-//        Component {
-//            id: footeritem
-//            BackgroundItem {
-//                height: Theme.paddingMedium
-//                visible: false;
-//                TouchBlocker {
-//                    anchors.fill: parent
-//                }
-//            }
-//        }
-//        header: footeritem
-
         Component {
             id: emptycomponent
             BackgroundItem {
@@ -246,20 +234,27 @@ Page {
                                 messagecomponent
                     }// Loader textlabelloader
 
-//                    height:{
-//                        username_row.height +
-//                        textlabelloader.height +
-//                        Theme.paddingSmall +
-//                        filesrepeater.height
-//                    }
+                    height:{
+                        username_row.height +
+                        textlabelloader.height +
+                        Theme.paddingSmall +
+                        filesrepeater.height
+                    }
 
                     Repeater {
                         id: filesrepeater
-                        property real summaryHeight: 0
+                        property variant summaryHeight: []
+                        property bool trigger: true
                         model: countfiles
 
-                        onSummaryHeightChanged:
-                            height = summaryHeight
+//                        onSummaryHeightChanged:{
+                        onTriggerChanged: {
+                            height = 0;
+                            for(var i = 0; i < countfiles; i++)
+                            {
+                                height += summaryHeight[i]
+                            }
+                        }
 
                         onImplicitHeightChanged:
                             console.log("fielsrepeater.implicitHeight " + implicitHeight)
@@ -270,7 +265,6 @@ Page {
                                 id: imagebackground
                                 property size itemSize: messagesmodel.getItemSize(rowindex,fileindex,widthcontent)
                                 property size imageSourceSize: messagesmodel.getImageSize(rowindex,fileindex)
-                                //property string imagePath: messagesmodel.getValidPath(rowindex,fileindex)
                                 property string imagePath: pathsvalid[fileindex]
 
                                 height: file_and_label.height
@@ -311,6 +305,7 @@ Page {
                                         width: imagebackground.itemSize.width
                                     }
                                 }
+
                                 Column {
                                     id: file_and_label
                                     width: imagebackground.itemSize.width
@@ -322,7 +317,7 @@ Page {
                                         spacing: Theme.paddingMedium
                                         Label {
                                             id: imagename
-                                            //width: textcolumn.width - filesize.width
+                                            width: Math.min(contentWidth,textcolumn.width - filename_row.spacing - filesize.width)
                                             text: messagesmodel.getFileName(rowindex,fileindex)
                                             font.family: Theme.fontFamily
                                             font.pixelSize: Theme.fontSizeTiny
@@ -363,26 +358,10 @@ Page {
                                     }//imageloader
                                 }
 
-//                                Rectangle {//ac background for play gif button
-//                                    id: bgrect
-//                                    opacity: 0.6
-//                                    visible: false
-//                                    color: Theme.secondaryHighlightColor
-//                                    width: Theme.iconSizeMedium
-//                                    height: Theme.iconSizeMedium
-//                                    radius:Theme.paddingSmall
-//                                    anchors.verticalCenter: parent.verticalCenter
-//                                    anchors.horizontalCenter: parent.horizontalCenter
-//                                }//Rectangle
-
                                 MouseArea {
                                     id: downloadbutton
                                     visible: true
                                     anchors.fill: parent
-
-//                                    icon.width: Theme.iconSizeMedium
-//                                    icon.height: Theme.iconSizeMedium
-
                                     onClicked: {
                                         context.mattermost.fileStatusChanged.connect(
                                             function onStatusChanged(fid,fstatus) {
@@ -454,9 +433,9 @@ Page {
                                             if(fid !==  file_id )
                                                 return
                                             switch(fstatus){
-//                                                case MattermostQt.FileDownloading:
-//                                                    progressCircle.visible = true;
-//                                                    break;
+                                            case MattermostQt.FileDownloading:
+                                                progressCircle.visible = true;
+                                                break;
                                             case MattermostQt.FileDownloaded:
                                                 progressCircle.visible = false
                                                 progressCircle.enabled = false
@@ -562,7 +541,8 @@ Page {
                             property real  componentHeight: 0
 
                             onComponentHeightChanged:{
-                                filesrepeater.summaryHeight += componentHeight + textcolumn.spacing
+                                filesrepeater.summaryHeight[index] = componentHeight + textcolumn.spacing
+                                filesrepeater.trigger = !filesrepeater.trigger;
                             }
 
                             sourceComponent:
@@ -677,21 +657,21 @@ Page {
                     property string createat    : messagecreateat
 
                     property real  outtotalheight
-                    property var   heightmap
+//                    property var   heightmap
 //                    onCountfilesChanged: {
 //                        outtotalheight = 0
 //                    }
 
-                    onHeightmapChanged: {
-                        console.log(heightmap)
-                    }
+//                    onHeightmapChanged: {
+//                        console.log(heightmap)
+//                    }
 
                     onOuttotalheightChanged:
                         height = outtotalheight
 
                     sourceComponent:
                         type == MattermostQt.MessageSystem ?
-                           messagesystem:messagelabel
+                           messagesystem : messagelabel
                 }// item loader
             } // itemslist column
         }
