@@ -18,7 +18,7 @@ DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
 CONFIG += sailfishapp
 CONFIG += qt
-QT += gui qml quick network dbus
+QT += gui qml quick network dbus svg
 PKGCONFIG += \
     nemonotifications-qt5
 

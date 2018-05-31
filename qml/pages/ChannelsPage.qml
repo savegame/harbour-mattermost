@@ -35,9 +35,16 @@ Page {
     SilicaFlickable {
         id: flickable
         anchors.fill: parent
-        anchors {
-            topMargin: Theme.paddingMedium
-            bottomMargin: Theme.paddingMedium
+
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("About")
+                onClicked: pageStack.push(Qt.resolvedUrl("AboutPage.qml"),{context: channelspage.context})
+            }
+            MenuItem {
+                text: qsTr("Options")
+                onClicked: pageStack.push(Qt.resolvedUrl("OptionsPage.qml"))
+            }
         }
 
         SilicaListView {
@@ -46,6 +53,7 @@ Page {
             anchors.fill: parent
             model: channelsmodel
             spacing: Theme.paddingSmall
+
 
             VerticalScrollDecorator {}
 

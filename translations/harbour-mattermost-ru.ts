@@ -2,6 +2,29 @@
 <!DOCTYPE TS>
 <TS version="2.1">
 <context>
+    <name>AboutPage</name>
+    <message>
+        <source></source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>If you want to donate, you can do that by: &lt;br&gt; &lt;a href=&quot;http://yasobe.ru/na/sashikknox&quot;&gt;Yandex Money&lt;/a&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is unofficial client for &lt;a href=&quot;https://www.mattermost.org/licensing/&quot;&gt;Mattermost&lt;/a&gt; server. </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thanks to &lt;a href=&quot;https://t.me/sailfishos/&quot;&gt;Russian SailfishOS Community&lt;/a&gt; in Telegram for help.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version: </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ChannelLabel</name>
     <message>
         <source>Public channes</source>
@@ -14,6 +37,17 @@
     <message>
         <source>Direct channes</source>
         <translation>Личные сообщения</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelsPage</name>
+    <message>
+        <source>Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -38,48 +72,16 @@
 <context>
     <name>LoginPage</name>
     <message>
-        <source>Username or Email address</source>
-        <translation>Логин или электронная почта</translation>
-    </message>
-    <message>
-        <source>trust certificate</source>
-        <translation>доверенный сервер</translation>
-    </message>
-    <message>
         <source>Login</source>
-        <translation>Авторизация</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>server custom name</source>
-        <translation>Название сервера</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>server address</source>
-        <translation>Адрес сервера</translation>
-    </message>
-    <message>
-        <source>Password</source>
-        <translation>Пароль</translation>
-    </message>
-    <message>
-        <source>Certificate options</source>
-        <translation>Настройка доверенного сертификата</translation>
-    </message>
-    <message>
-        <source>CA certificate path</source>
-        <translation>Путь к сертификату ЦС</translation>
-    </message>
-    <message>
-        <source>Server certificate path</source>
-        <translation>Путь к сертификату сервера</translation>
-    </message>
-    <message>
-        <source>Choose CA certificate</source>
-        <translation>Выберите сертификат центра сертификации</translation>
-    </message>
-    <message>
-        <source>Choose server certificate</source>
-        <translation>Выберите сертификат сервера</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>use authentication token</source>
@@ -89,12 +91,48 @@
         <source>Authentication token</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Username or Email address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Certificate options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>trust certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose CA certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CA certificate path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose server certificate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Server certificate path</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MessageEditorBar</name>
     <message>
         <source>Message...</source>
-        <translation>Сообщение...</translation>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Uploading </source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -125,6 +163,10 @@
     </message>
     <message>
         <source>Choose document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose file</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -173,6 +215,10 @@
     <name>TeamsPage</name>
     <message>
         <source>Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

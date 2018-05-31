@@ -4,7 +4,8 @@ import Sailfish.Pickers 1.0
 import harbour.sashikknox 1.0
 import "../model"
 
-Dialog {
+//Dialog {
+Page {
     id: loginpage
     property Context context
 
@@ -20,7 +21,7 @@ Dialog {
     property int status_server_unconnected: MattermostQt.ServerUnconnected
 
 
-    canAccept : server_name.isComplete &
+    property bool canAccept : server_name.isComplete &
                 server.isComplete &
                 login_id.isComplete &
                 ((use_token_switcher.checked)?true:password.isComplete) &
@@ -41,6 +42,8 @@ Dialog {
         cert_text_field.text = certPath;
     }
 
+    signal accepted()
+
     onAccepted: {
         if(use_token_switcher.checked)
             context.mattermost.post_login_by_token(
@@ -54,25 +57,22 @@ Dialog {
                                       ca_cert_text_field.text, cert_text_field.text )
     }
 
-    onStatusChanged: {
-        if( status == PageStatus.Active )
-        {
-            context.mattermost.serverStateChanged.connect( function onServerConnected(server_index,state){
-                if(state === status_server_connected) {
-                    var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
-                                                      {
-                                                          context: loginpage.context,
-                                                          server_index: server_index,
-                                                          servername: context.mattermost.get_server_name(server_index)
-                                                      })
-                }
-            })
+    onContextChanged:{
+        context.mattermost.serverStateChanged.connect( function onServerConnected(server_index,state){
+            if(state === status_server_connected) {
+                var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
+                                                  {
+                                                      context: loginpage.context,
+                                                      server_index: server_index,
+                                                      servername: context.mattermost.get_server_name(server_index)
+                                                  })
+            }
+        })
 
-            context.mattermost.connectionError.connect( function onConnectionError(id,message){
-                specialmessage.text = message;
-                specialmessage.visible = true;
-            })
-        }
+        context.mattermost.connectionError.connect( function onConnectionError(id,message){
+            specialmessage.text = message;
+            specialmessage.visible = true;
+        })
     }
 
     SilicaFlickable {
@@ -82,13 +82,14 @@ Dialog {
 
         VerticalScrollDecorator {}
 
+
         Column {
             id: column
             spacing: Theme.paddingSmall
             anchors {left: parent.left; right: parent.right; }
             width: parent.width
 
-            DialogHeader {
+            PageHeader {
                 id: header
                 title: qsTr("Login")
             }
@@ -270,6 +271,15 @@ Dialog {
                 wrapMode: Text.Wrap
 //                horizontalAlignment: parent.horizontalCenter
             }
-        }
-    }
+
+            Button {
+                enabled: canAccept
+                text: qsTr("Login")
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: {
+                    accepted();
+                }
+            }
+        }//Column
+    }//SilicaFlickable
 }

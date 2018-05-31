@@ -18,6 +18,9 @@
 #include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
 //#include <QtWebSockets>
 
+#include "MessagesModel.h"
+#include "ChannelsModel.h"
+
 // all properties names
 #define P_REPLY_TYPE         "reply_type"
 #define P_API                "api"
@@ -96,6 +99,11 @@ MattermostQt::MattermostQt()
 MattermostQt::~MattermostQt()
 {
 	m_server.clear();
+}
+
+QString MattermostQt::getVersion() const
+{
+	return MATTERMOSTQT_VERSION;
 }
 
 int MattermostQt::get_server_state(int server_index)
@@ -984,6 +992,14 @@ QString MattermostQt::getChannelName(int server_index, int team_index, int chann
 	return QString();
 }
 
+QString MattermostQt::getChannelId(int server_index, int team_index, int channel_type, int channel_index)
+{
+	ChannelPtr channel = channelAt(server_index, team_index, channel_type, channel_index);
+	if(channel)
+		return channel->m_id;
+	return QString();
+}
+
 QString MattermostQt::getUserName(int server_index, int user_index)
 {
 	if(server_index < 0 || server_index >= m_server.size()
@@ -1032,11 +1048,13 @@ bool MattermostQt::save_settings()
 		server["token"] = sc->m_token;
 		server["name"] = sc->m_display_name;
 		server["trust_certificate"] = sc->m_trust_cert;
+
+		sc->m_data_path = m_data_path + QDir::separator() + server_dir_path;
+		sc->m_cache_path = m_cache_path + QDir::separator() + server_dir_path;
+
 		if(sc->m_trust_cert)
 		{
 			server_dir_path = QString("%0_%1").arg(i).arg(sc->m_user_id);
-			sc->m_data_path = m_data_path + QDir::separator() + server_dir_path;
-			sc->m_cache_path = m_cache_path + QDir::separator() + server_dir_path;
 			QDir server_dir(sc->m_data_path);
 			if(! server_dir.exists() )
 				server_dir.mkpath(sc->m_data_path);
@@ -1058,6 +1076,9 @@ bool MattermostQt::save_settings()
 	object["servers"] = servers;
 	json.setObject(object);
 
+	QDir dir(m_data_path);
+	if(!dir.exists())
+		dir.mkpath(m_data_path);
 	QFile jsonFile( m_data_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
 	if( !jsonFile.open(QFile::WriteOnly) )
 		return false;
@@ -1172,10 +1193,9 @@ void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	sc = m_server[server_index];
-
+	message->m_user_index = -1;
 	if( message->m_user_id.isEmpty() )
 	{// system message
-		message->m_user_index = -1;
 		return;
 	}
 //	else if( message->m_user_id.compare(sc->m_user_id) == 0 )
@@ -1184,16 +1204,17 @@ void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr
 //		return;
 //	}
 	else // other users messages
-	for(int k = 0; k < sc->m_user.size(); k++)
-	{
-		if( message->m_user_id.compare(sc->m_user[k]->m_id) == 0)
+		for(int k = 0; k < sc->m_user.size(); k++)
 		{
-			message->m_user_index = k;
-			break;
+			if( message->m_user_id.compare(sc->m_user[k]->m_id) == 0)
+			{
+				message->m_user_index = k;
+				break;
+			}
 		}
-	}
 	if( message->m_user_index == -1 )
 	{
+		sc->m_nouser_messages.append(message);
 		get_user_info(server_index, message->m_user_id);
 	}
 }
@@ -1285,7 +1306,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 bool MattermostQt::reply_login(QNetworkReply *reply)
 {
 	if( reply->property(P_SERVER_INDEX).isValid() )
-	{
+	{//login by token
 		ServerPtr server;
 
 		int server_id = reply->property(P_SERVER_INDEX).toInt();
@@ -1301,6 +1322,11 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			qDebug() << object;
 			server->m_user_id = object["id"].toString();
 		}
+		QString server_dir = QString("%0_%1").arg(server->m_self_index).arg(server->m_user_id);
+		if( server->m_data_path.isEmpty() )
+			server->m_data_path = m_data_path + QDir::separator() +  server_dir;
+		if( server->m_cache_path.isEmpty() )
+			server->m_cache_path = m_cache_path + QDir::separator() +  server_dir;
 		websocket_connect(server);
 //		emit serverConnected(server->m_self_index);
 		return true;
@@ -1431,49 +1457,23 @@ void MattermostQt::reply_get_teams_unread(QNetworkReply *reply)
 void MattermostQt::reply_get_posts(QNetworkReply *reply)
 {
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
-	int team_index = -1; // reply->property(P_TEAM_INDEX).toInt();
+	int team_index = reply->property(P_TEAM_INDEX).toInt();
 	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
 	int channel_type =reply-> property(P_CHANNEL_TYPE).toInt();
 
-	if( server_index < 0 || server_index >= m_server.size() )
+	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
+	if(!channel)
+	{
+		qWarning() << "Chanel not found!";
 		return;
+	}
+//	if(channel->m_type == ChannelDirect)
+//		team_index = -1;
+
 	ServerPtr sc = m_server[server_index];
-	ChannelPtr channel;
-
-	if( channel_type == ChannelPublic )
-	{
-		team_index = reply->property(P_TEAM_INDEX).toInt();
-		if( team_index < 0 || team_index >= sc->m_teams.size() )
-			return;
-		TeamPtr tc =  sc->m_teams[team_index];
-		if( channel_index < 0 || channel_index > tc->m_public_channels.size() )
-			return;
-		channel = tc->m_public_channels[channel_index];
-	}
-	else if( channel_type == ChannelPrivate)
-	{
-		team_index = reply->property(P_TEAM_INDEX).toInt();
-		if( team_index < 0 || team_index >= sc->m_teams.size() )
-			return;
-		TeamPtr tc =  sc->m_teams[team_index];
-		if( channel_index < 0 || channel_index > tc->m_private_channels.size() )
-			return;
-		channel = tc->m_private_channels[channel_index];
-	}
-	else if( channel_type == ChannelDirect )
-	{
-		if( channel_index < 0 || channel_index > sc->m_direct_channels.size() )
-			return;
-		channel = sc->m_direct_channels[channel_index];
-	}
-
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
-
-//	qDebug() << json;
-
 	QJsonArray order = json.object()["order"].toArray();
 	channel->m_message.reserve(order.size());
-//	qDebug() << order;
 	QJsonObject posts = json.object()["posts"].toObject();
 	QJsonObject::iterator it = posts.begin(),
 	        end = posts.end();
@@ -1541,42 +1541,18 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 {
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
-	int team_index = -1; // reply->property(P_TEAM_INDEX).toInt();
+	int team_index = reply->property(P_TEAM_INDEX).toInt();
 	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
 	int channel_type = reply-> property(P_CHANNEL_TYPE).toInt();
 //	int before_message_index = reply-> property(P_MESSAGE_INDEX).toInt();
 
-	if( server_index < 0 || server_index >= m_server.size() )
+	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
+	if(!channel)
+	{
+		qWarning() << "Chanel not found!";
 		return;
+	}
 	ServerPtr sc = m_server[server_index];
-	ChannelPtr channel;
-
-	if( channel_type == ChannelPublic )
-	{
-		team_index = reply->property(P_TEAM_INDEX).toInt();
-		if( team_index < 0 || team_index >= sc->m_teams.size() )
-			return;
-		TeamPtr tc =  sc->m_teams[team_index];
-		if( channel_index < 0 || channel_index > tc->m_public_channels.size() )
-			return;
-		channel = tc->m_public_channels[channel_index];
-	}
-	else if( channel_type == ChannelPrivate)
-	{
-		team_index = reply->property(P_TEAM_INDEX).toInt();
-		if( team_index < 0 || team_index >= sc->m_teams.size() )
-			return;
-		TeamPtr tc =  sc->m_teams[team_index];
-		if( channel_index < 0 || channel_index > tc->m_private_channels.size() )
-			return;
-		channel = tc->m_private_channels[channel_index];
-	}
-	else if( channel_type == ChannelDirect )
-	{
-		if( channel_index < 0 || channel_index > sc->m_direct_channels.size() )
-			return;
-		channel = sc->m_direct_channels[channel_index];
-	}
 
 	QVector<MessagePtr> messages;
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
@@ -1801,6 +1777,28 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 	{
 		user->m_self_index = sc->m_user.size();
 		sc->m_user.append(user);
+		QList<MessagePtr>::iterator it = sc->m_nouser_messages.begin();
+		while( it != sc->m_nouser_messages.end() )
+		{
+			MessagePtr m = *it;
+			if(m->m_user_id == user->m_id)
+			{
+				m->m_user_index = user->m_self_index;
+				emit updateMessage(m,MessagesModel::SenderUserName);
+				QString path = sc->m_cache_path +
+				        QString("/users/") +
+				        user->m_id +
+				        QString("/image.png");
+				// check if user has image
+				QFile user_image(path);
+				if( user_image.exists() ) {
+					emit updateMessage(m,MessagesModel::SenderImagePath);
+					it = sc->m_nouser_messages.erase(it);
+					continue;
+				}
+			}
+			it++;
+		}
 		get_user_image(server_index,user->m_self_index);
 	}
 
@@ -1833,6 +1831,8 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 				break;
 			}
 		}
+		if(user->m_image_path.isEmpty() && user_exists)
+			get_user_image(server_index,user->m_self_index);
 	}
 }
 
@@ -1889,7 +1889,7 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 
 	ServerPtr sc = m_server[server_index];
 	ChannelPtr channel;
-	if(team_index >= 0)
+	if(channel_type != ChannelDirect)
 	{
 		TeamPtr tc = sc->m_teams[team_index];
 		if( channel_type == ChannelType::ChannelPublic )
@@ -2191,7 +2191,7 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 //	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
 
 	QByteArray replyData = reply->readAll();
-	qDebug() << replyData;
+	//qDebug() << replyData;
 	{
 		QString file_path = sc->m_cache_path
 		        + QLatin1String("/users/")
@@ -2209,22 +2209,44 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 				user->m_image_path = file_path;
 			}
 			else
-				qDebug() << file_path;
+				qWarning() << "Cant save file " << file_path;
 		}
 		else
 			user->m_image_path = file_path + QLatin1String("/image.png");
 	}
 	if(!user->m_image_path.isEmpty())
 	{
-
-//		QList<MessagePtr> messages;
-//		messages << mc;
-//		emit messageUpdated(messages);
+		QList<MessagePtr>::iterator it = sc->m_nouser_messages.begin();
+		while( it != sc->m_nouser_messages.end() )
+		{
+			MessagePtr m = *it;
+			if(m->m_user_id == user->m_id)
+			{
+				m->m_user_index = user->m_self_index;
+				emit updateMessage(m,MessagesModel::SenderImagePath);
+				it = sc->m_nouser_messages.erase(it);
+				continue;
+			}
+			it++;
+		}
+		for(int i = 0; i < sc->m_direct_channels.size(); i++ )
+		{
+			ChannelPtr c = sc->m_direct_channels[i];
+			if( c->m_dc_user_index == user->m_self_index )
+			{
+				QVector<int> roles;
+				roles << ChannelsModel::AvatarPath;
+				emit updateChannel(c, roles);
+				break;
+			}
+		}
 		emit userUpdated(user);
 	}
+	else
+		qWarning() << "User image not found!";
 //	qDebug() << reply->readAll();
 
-	qDebug() << "get user image";
+	//qDebug() << "get user image";
 }
 
 void MattermostQt::reply_post_send_message(QNetworkReply *reply)
@@ -2735,6 +2757,12 @@ void MattermostQt::replyUploadProgress(qint64 bytesReceived, qint64 bytesTotal)
 	QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
 	if(!reply)
 		return;
+	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+	QString data;
+	if(channel)
+		data = channel->m_id;
+	int progress = int((qreal)bytesReceived/(qreal)bytesTotal*100.0);
+	emit fileUploadProgress(data,progress);
 }
 
 void MattermostQt::onWebSocketConnected()

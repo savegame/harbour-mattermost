@@ -165,6 +165,9 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 	        this, &MessagesModel::slot_messageUpdated );
 	connect(m_mattermost.data(), &MattermostQt::messageDeleted,
 	        this, &MessagesModel::slot_messageDeleted );
+	connect(m_mattermost.data(), &MattermostQt::updateMessage,
+	        this, &MessagesModel::slot_updateMessage );
+
 }
 
 MattermostQt *MessagesModel::getMattermost() const
@@ -254,10 +257,11 @@ QSizeF MessagesModel::getItemSize(int row, int i, qreal contentWidth) const
 	if( !file->m_item_size.isEmpty() && file->m_contentwidth == (int)contentWidth )
 		return file->m_item_size;
 
+	/** if file is GIF , we scae it to contentWidth */
 	file->m_contentwidth = (int)contentWidth;
 	if( sourceSize.width() > sourceSize.height() )
 	{
-		if( contentWidth > sourceSize.width() )
+		if( contentWidth > sourceSize.width() && file->m_file_type != MattermostQt::FileAnimatedImage )
 		{
 			file->m_item_size.setWidth( sourceSize.width() );
 			file->m_item_size.setHeight( sourceSize.height() );
@@ -270,7 +274,7 @@ QSizeF MessagesModel::getItemSize(int row, int i, qreal contentWidth) const
 	}
 	else
 	{
-		if( contentWidth > sourceSize.height() )
+		if( contentWidth > sourceSize.height() && file->m_file_type != MattermostQt::FileAnimatedImage )
 		{
 			file->m_item_size.setWidth( sourceSize.width() );
 			file->m_item_size.setHeight( sourceSize.height() );
@@ -392,7 +396,19 @@ void MessagesModel::slot_messageDeleted(MattermostQt::MessagePtr message)
 //	int br = m_messages.size() - 1;
 //	QModelIndex topLeft = index(0);
 //	QModelIndex bottomRight = index(m_messages.size() - 1);
-//	dataChanged(topLeft, bottomRight, roles);
+	//	dataChanged(topLeft, bottomRight, roles);
+}
+
+void MessagesModel::slot_updateMessage(MattermostQt::MessagePtr message, int role)
+{
+	if(message->m_channel_id.compare(m_channel->m_id) != 0)
+		return;
+	int row = m_messages.size() - 1 - message->m_self_index;
+
+	QVector<int> roles;
+	roles << role;
+	QModelIndex i = index(row);
+	dataChanged(i,i,roles);
 }
 
 void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count)

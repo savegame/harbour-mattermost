@@ -159,6 +159,7 @@ void ChannelsModel::setMattermost(MattermostQt *mattermost)
 
 	connect( m_mattermost.data(), &MattermostQt::channelAdded, this, &ChannelsModel::slot_channelAdded );
 	connect( m_mattermost.data(), &MattermostQt::channelsList, this, &ChannelsModel::slot_channelsList );
+	connect( m_mattermost.data(), &MattermostQt::updateChannel, this, &ChannelsModel::slot_updateChannel );
 }
 
 void ChannelsModel::clear()
@@ -237,6 +238,42 @@ void ChannelsModel::slot_channelsList(QList<MattermostQt::ChannelPtr> list)
 	// need optimize here, more effective code
 		slot_channelAdded(channel);
 	}
+}
+
+void ChannelsModel::slot_updateChannel(MattermostQt::ChannelPtr channel, QVector<int> roles)
+{
+	int headerIndex, endIndex;
+
+	switch( channel->m_type )
+	{
+	case MattermostQt::ChannelPublic:
+		headerIndex = m_header_index[ItemType::HeaderPublic] + 1;
+		endIndex == m_header_index[ItemType::HeaderPrivate];
+		break;
+	case MattermostQt::ChannelPrivate:
+		headerIndex = m_header_index[ItemType::HeaderPrivate] + 1;
+		endIndex == m_header_index[ItemType::HeaderDirect];
+		break;
+	case MattermostQt::ChannelDirect:
+		headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
+		endIndex = m_header.size();
+		break;
+//	case MattermostQt::ChannelTypeCount:
+	default:
+		headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
+		endIndex = m_header.size();
+		break;
+	}
+	for(int i = headerIndex; i < endIndex; i++)
+	{
+		if(m_channel[i] == channel)
+		{
+			headerIndex = i;
+			break;
+		}
+	}
+	QModelIndex ci = index(headerIndex);
+	dataChanged(ci,ci,roles);
 }
 
 //void ChannelsModel::setMattermost(MattermostQt *mattermost)

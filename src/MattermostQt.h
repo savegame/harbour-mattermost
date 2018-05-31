@@ -303,12 +303,12 @@ public:
 	};
 	typedef QSharedPointer<TeamContainer> TeamPtr;
 
-	struct UnattachedMessageContainer {
-		UnattachedMessageContainer() noexcept {}
-		QString     m_team_id;
-		MessagePtr  m_message;
-	};
-	typedef QSharedPointer<UnattachedMessageContainer> UMessagePtr;
+//	struct UnattachedMessageContainer {
+//		UnattachedMessageContainer() noexcept {}
+//		QString     m_team_id;
+//		MessagePtr  m_message;
+//	};
+//	typedef QSharedPointer<UnattachedMessageContainer> UMessagePtr;
 
 	struct ServerContainer
 	{
@@ -348,7 +348,7 @@ public:
 		QVector<FilePtr>            m_file;
 		QList<FilePtr>              m_unattached_file; /**< uploaded, but not sended files */
 		QList<FilePtr>              m_sended_files; /**<  */
-		QList<UMessagePtr>          m_untacched_messages;/**< untached messages (!) */
+		QList<MessagePtr>           m_nouser_messages;/**< messages without user */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -357,6 +357,7 @@ public:
 
 	~MattermostQt();
 
+	Q_INVOKABLE QString getVersion() const;
 	Q_INVOKABLE int get_server_state(int server_index);
 	Q_INVOKABLE int get_server_count() const;
 	Q_INVOKABLE QString get_server_name(int server_index) const;
@@ -400,9 +401,10 @@ public:
 	Q_INVOKABLE void post_users_status(int server_index);
 	/** get current user id */
 	Q_INVOKABLE QString user_id(int server_index) const;
+	Q_INVOKABLE QString getUserName(int server_index, int user_index);
 	/** get channel name */
 	Q_INVOKABLE QString getChannelName(int server_index, int team_index, int channel_type, int channel_index);
-	Q_INVOKABLE QString getUserName(int server_index, int user_index);
+	Q_INVOKABLE QString getChannelId(int server_index, int team_index, int channel_type, int channel_index);
 	bool save_settings();
 	bool load_settings();
 
@@ -414,6 +416,7 @@ Q_SIGNALS:
 	void teamsExists(const QVector<MattermostQt::TeamPtr> &teams);
 	void channelsList(QList<ChannelPtr> list);
 	void channelAdded(ChannelPtr channel);
+	void updateChannel(ChannelPtr channel, QVector<int> roles);
 //	void updateChannel()
 	void teamUnread(QString team_id, int msg, int mention);
 	void messagesAdded(ChannelPtr channel);
@@ -421,6 +424,7 @@ Q_SIGNALS:
 	void messageAdded(QList<MessagePtr> messages);
 	void newMessage(MessagePtr message);
 	void messageUpdated(QList<MessagePtr> messages);
+	void updateMessage(MessagePtr m,int role);
 	void messageDeleted(MessagePtr message);
 	void userUpdated(UserPtr user);
 	void fileStatusChanged(QString file_id, int status);
@@ -432,6 +436,12 @@ Q_SIGNALS:
 	 * @param progress   from 0.0 to 1.0
 	 */
 	void fileDownloadingProgress(QString file_id, qreal progress);
+	/**
+	 * @brief fileUploadProgress
+	 * @param data      some string
+	 * @param progress  from 0.0 to 1.0
+	 */
+	void fileUploadProgress(QString data, int progress);
 protected:
 	/**
 	 * @brief prepare_direct_channel

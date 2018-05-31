@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>resources/logo_rect_white.png</file>
+        <file>resources/logoHorizontal_WS.png</file>
+        <file>resources/mattermost_icon.svg</file>
     </qresource>
 </RCC>

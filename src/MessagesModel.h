@@ -15,7 +15,7 @@ class MessagesModel : public QAbstractListModel
 
 	Q_PROPERTY(MattermostQt *mattermost READ getMattermost WRITE setMattermost)
 	Q_PROPERTY(bool atEnd READ atEnd NOTIFY atEndChanged)
-
+public:
 	enum DataRoles : int {
 		Text = Qt::UserRole,
 		Type,
@@ -74,6 +74,7 @@ protected slots:
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageUpdated(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageDeleted(MattermostQt::MessagePtr message);
+	void slot_updateMessage(MattermostQt::MessagePtr message, int role);
 	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
 //	void slot_fileStatusChanged(MattermostQt::FilePtr file);
 private:

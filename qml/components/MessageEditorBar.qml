@@ -39,8 +39,16 @@ BackgroundItem {
         context.mattermost.fileUploaded.connect( function fileUp(sindex,findex){
             console.log(sindex + " " + findex)
             attachCount++
+            uploadprogress.uploaded = true
         })
 
+        context.mattermost.fileUploadProgress.connect(
+            function upProgress(channel_id,progress)
+            {
+                uploadprogress.uploaded = false
+                uploadprogress.progress = progress
+            }
+        )
 //        context.mattermost.fil
     }
 
@@ -83,10 +91,10 @@ BackgroundItem {
                 right: button.left
                 leftMargin: Theme.paddingSmall
             }
-            label: qsTr("Message...") // need timestamp here, its better
+            //label: qsTr("Message...") // need timestamp here, its better
 
             font.pixelSize: Theme.fontSizeSmall
-            placeholderText: label
+            placeholderText: qsTr("Message...")
             textMargin: Theme.paddingSmall
             height: Math.min(Theme.itemSizeHuge,implicitHeight)
 
@@ -143,12 +151,12 @@ BackgroundItem {
                 width: Theme.iconSizeSmall
                 height: Theme.iconSizeSmall
                 radius: Theme.iconSizeSmall
-                color: Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity)
+                color: Theme.rgba(Theme.primaryColor,0.8)
                 Label {
                     text: attachCount
                     font.pixelSize: Theme.fontSizeTiny
                     font.bold: true
-                    color: Theme.highlightColor
+                    color: "black"
                     anchors {
                         verticalCenter: parent.verticalCenter
                         horizontalCenter: parent.horizontalCenter
@@ -157,6 +165,51 @@ BackgroundItem {
             }
         }// send message button
     }// textarea
+
+    Row {
+        spacing: Theme.paddingMedium
+        anchors {
+            leftMargin: Theme.paddingMedium
+            bottomMargin: Theme.paddingMedium
+            left: parent.left
+            bottom: parent.bottom
+            //right: button.left
+        }
+
+        Label {
+            id: timestamp
+            color: textedit.color
+            font.pixelSize:  Theme.fontSizeTiny
+            font.bold: true
+
+            function updateTimestamp() {
+                var date = new Date();
+                text = Format.formatDate(date, Formatter.TimeValue);
+                updater.interval = (60 - date.getSeconds() + 1) * 1000;
+            }
+
+            Timer {
+                id: updater
+                repeat: true
+                triggeredOnStart: true
+                running: Qt.application.active && timestamp.visible
+                onTriggered: timestamp.updateTimestamp()
+            }
+        }
+
+        Label {
+            id: uploadprogress
+            property bool uploaded : true
+            property int progress: 0
+
+            color: textedit.color
+            font.pixelSize:  Theme.fontSizeTiny
+            font.bold: true
+            visible: !uploaded
+            text: qsTr("Uploading ") + progress + "%"
+        }
+    }
+
 
     property real buttons_row_w1: 0
     property real buttons_row_w2: messageeditor.width - menu.width
@@ -221,6 +274,16 @@ BackgroundItem {
                     atatchDocument()
                 }
             }
+            IconButton {
+                id: button_file
+                icon.source: "image://theme/icon-m-file-folder"
+                width: Theme.iconSizeMedium
+                height: Theme.iconSizeMedium
+                onClicked: {
+                    showToolBar = false
+                    attachFile()
+                }
+            }
         }
     }
 
@@ -256,7 +319,7 @@ BackgroundItem {
         if( showToolBar )
         {
             buttons_row_w1 = 0
-            buttons_row_w2 = (Theme.iconSizeMedium + btnrow.spacing)*3 + Theme.paddingLarge
+            buttons_row_w2 = (Theme.iconSizeMedium + btnrow.spacing)*4 + Theme.paddingLarge
             opacity_one = 1.0
             opacity_two = 0.0
         }

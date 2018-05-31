@@ -8,6 +8,7 @@ import QtGraphicalEffects 1.0
 
 Page {
     id: messages
+    allowedOrientations: Orientation.All
 
     property Context context
     property int server_index
@@ -755,6 +756,23 @@ Page {
         }
     }
 
+    Component {
+        id: filepicker
+        FilePickerPage {
+            title: qsTr("Choose file")
+            onSelectedContentPropertiesChanged: {
+                console.log(selectedContentProperties.filePath)
+                context.mattermost.post_file_upload(
+                            server_index,
+                            team_index,
+                            channel_type,
+                            channel_index,
+                            selectedContentProperties.filePath
+                )
+            }
+        }
+    }
+
     MessageEditorBar {
         id: messageeditor
         context: messages.context
@@ -773,6 +791,10 @@ Page {
 
         onAtatchDocument: {
             pageStack.push(documentpicker)
+        }
+
+        onAttachFile: {
+            pageStack.push(filepicker)
         }
     } // MessageEditorBar
 }
