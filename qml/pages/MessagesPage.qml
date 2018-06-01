@@ -378,7 +378,10 @@ Page {
                                                     // here need open prepeared ImageViewPage
                                                     pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
                                                         {
-                                                            imagePath: messagesmodel.getFilePath(rowindex,fileindex)
+                                                            imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+                                                            sourceSize: imagebackground.imageSourceSize,
+                                                            animatedImage: filetype === MattermostQt.FileAnimatedImage,
+                                                            width: Screen.width
                                                         })
                                                 }
                                                 filestatus = fstatus;
@@ -398,6 +401,7 @@ Page {
                                             pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
                                                 {
                                                     imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+                                                    animatedImage: filetype === MattermostQt.FileAnimatedImage,
                                                     sourceSize: imagebackground.imageSourceSize,
                                                     width: Screen.width
                                                 })

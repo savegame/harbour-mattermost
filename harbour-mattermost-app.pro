@@ -12,7 +12,7 @@
 # The name of your application
 TARGET = harbour-mattermost
 
-VERSION = 0.1.0
+VERSION = 0.1.1
 
 DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
@@ -23,7 +23,8 @@ PKGCONFIG += \
     nemonotifications-qt5
 
 LIBS += -Llibs -lqt5websockets
-INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
+#INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
+INCLUDEPATH += libs/qtwebsockets-5.6.2/include/QtWebSockets
 
 INCLUDEPATH += $$PWD/../../mersdk/targets/SailfishOS-2.1.4.13-i486/usr/include/nemonotifications-qt5
 
@@ -49,7 +50,8 @@ DISTFILES += qml/harbour-mattermost.qml \
     translations/harbour-mattermost-ru.ts \
     rpm/harbour-mattermost.yaml \
     dbus/sashikknox.mattermost.service \
-    qml/pages/OptionsPage.qml
+    qml/pages/OptionsPage.qml \
+    CHANGELOG
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 

@@ -6,7 +6,8 @@
 Name:       harbour-mattermost
 
 # >> macros
-%define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*$
+%define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*|libQt5WebSockets.so.5(Qt_5)$
+#%define __requires_exclude ^|libQt5WebSockets.so.*$
 # << macros
 
 %{!?qtc_qmake:%define qtc_qmake %qmake}
@@ -14,11 +15,10 @@ Name:       harbour-mattermost
 %{!?qtc_make:%define qtc_make make}
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    Mattermost Sailfish client
-Version:    0.1.0
+Version:    0.1.1
 Release:    1
 Group:      Qt/Qt
 License:    LICENSE
-URL:        http://example.org/
 Source0:    %{name}-%{version}.tar.bz2
 Source100:  harbour-mattermost.yaml
 Requires:   sailfishsilica-qt5 >= 0.10.9
@@ -26,12 +26,11 @@ BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Quick)
-BuildRequires:  pkgconfig(Qt5WebSockets)
 BuildRequires:  pkgconfig(nemonotifications-qt5)
 BuildRequires:  desktop-file-utils
 
 %description
-Short description of my Sailfish OS Application
+Mattermost native client for SailfishOS
 
 
 %prep

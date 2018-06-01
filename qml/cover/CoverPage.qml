@@ -46,21 +46,18 @@ CoverBackground {
 
     property int server_state: MattermostQt.ServerUnconnected
 
-    onStatusChanged: {
-        if( status == PageStatus.Active )
-        {
-            // for now, we have just 1 server, and his index is 0
-            server_state = context.mattermost.get_server_state(0);
+    onContextChanged: {
+        // for now, we have just 1 server, and his index is 0
+        server_state = context.mattermost.get_server_state(0);
 
-            context.mattermost.serverStateChanged.connect( function onServerStateChanged(server_index, state) {
-                server_state = state;
-            })
+        context.mattermost.serverStateChanged.connect( function onServerStateChanged(server_index, state) {
+            server_state = state;
+        })
 
-            context.mattermost.connectionError.connect( function onConnectionError(id,message){
-                status_text = qsTr("Error")
-                error = message
-            })
-        }
+        context.mattermost.connectionError.connect( function onConnectionError(id,message){
+            status_text = qsTr("Error")
+            error = message
+        })
     }
 
     onServer_stateChanged: {

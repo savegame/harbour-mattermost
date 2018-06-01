@@ -15,8 +15,8 @@
 #include <QMimeDatabase>
 #include <QMimeType>
 #include <QCoreApplication>
-#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
-//#include <QtWebSockets>
+//#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
+#include <QtWebSockets>
 
 #include "MessagesModel.h"
 #include "ChannelsModel.h"
@@ -1296,11 +1296,11 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	QUrl url(serUrl);
 	url.setPath(urlString);
 
-	QNetworkRequest request;
-	request_set_headers(request,server);
-	request.setUrl(url);
+//	QNetworkRequest request;
+//	request_set_headers(request,server);
+//	request.setUrl(url);
 
-	socket->open(request);
+	socket->open(url);
 }
 
 bool MattermostQt::reply_login(QNetworkReply *reply)
@@ -2966,11 +2966,11 @@ void MattermostQt::slot_recconect_servers()
 			QUrl url(serUrl);
 			url.setPath(urlString);
 
-			QNetworkRequest request;
-			request_set_headers(request,m_server[i]);
-			request.setUrl(url);
+//			QNetworkRequest request;
+//			request_set_headers(request,m_server[i]);
+//			request.setUrl(url);
 
-			m_server[i]->m_socket->open(request);
+			m_server[i]->m_socket->open(url);
 		}
 	}
 }

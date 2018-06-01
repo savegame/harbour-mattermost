@@ -9,19 +9,19 @@
     </message>
     <message>
         <source>If you want to donate, you can do that by: &lt;br&gt; &lt;a href=&quot;http://yasobe.ru/na/sashikknox&quot;&gt;Yandex Money&lt;/a&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>Если вы хотите сделать пожертвование, вы можете сделать это используя ссылку ниже: &lt;br&gt; &lt;a href=&quot;http://yasobe.ru/na/sashikknox&quot;&gt;Яндекс Деньги&lt;/a&gt;</translation>
     </message>
     <message>
         <source>This is unofficial client for &lt;a href=&quot;https://www.mattermost.org/licensing/&quot;&gt;Mattermost&lt;/a&gt; server. </source>
-        <translation type="unfinished"></translation>
+        <translation>Это неофициальный клиент для &lt;a href=&quot;https://www.mattermost.org/licensing/&quot;&gt;Mattermost&lt;/a&gt; сервера. </translation>
     </message>
     <message>
         <source>Thanks to &lt;a href=&quot;https://t.me/sailfishos/&quot;&gt;Russian SailfishOS Community&lt;/a&gt; in Telegram for help.</source>
-        <translation type="unfinished"></translation>
+        <translation>Спасибо &lt;a href=&quot;https://t.me/sailfishos/&quot;&gt;русскоязычному сообществу SailfishOS&lt;/a&gt; в Телеграме за их помощь.</translation>
     </message>
     <message>
         <source>Version: </source>
-        <translation type="unfinished"></translation>
+        <translation>Версия: </translation>
     </message>
 </context>
 <context>
@@ -43,11 +43,11 @@
     <name>ChannelsPage</name>
     <message>
         <source>Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished"></translation>
+        <translation>О программе</translation>
     </message>
 </context>
 <context>
@@ -73,66 +73,66 @@
     <name>LoginPage</name>
     <message>
         <source>Login</source>
-        <translation type="unfinished"></translation>
+        <translation>Авторизация</translation>
     </message>
     <message>
         <source>server custom name</source>
-        <translation type="unfinished"></translation>
+        <translation>Произвольное имя сервера</translation>
     </message>
     <message>
         <source>server address</source>
-        <translation type="unfinished"></translation>
+        <translation>Адрес сервера</translation>
     </message>
     <message>
         <source>use authentication token</source>
-        <translation type="unfinished"></translation>
+        <translation>Исользовать токен авторизации</translation>
     </message>
     <message>
         <source>Authentication token</source>
-        <translation type="unfinished"></translation>
+        <translation>Токен авторизации</translation>
     </message>
     <message>
         <source>Username or Email address</source>
-        <translation type="unfinished"></translation>
+        <translation>Эл. почта или имя пользователя</translation>
     </message>
     <message>
         <source>Password</source>
-        <translation type="unfinished"></translation>
+        <translation>Пароль</translation>
     </message>
     <message>
         <source>Certificate options</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки сертификата</translation>
     </message>
     <message>
         <source>trust certificate</source>
-        <translation type="unfinished"></translation>
+        <translation>Доверенный сертификат</translation>
     </message>
     <message>
         <source>Choose CA certificate</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите сертификат ЦС</translation>
     </message>
     <message>
         <source>CA certificate path</source>
-        <translation type="unfinished"></translation>
+        <translation>Сертификат ЦС</translation>
     </message>
     <message>
         <source>Choose server certificate</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите сертификат сервера</translation>
     </message>
     <message>
         <source>Server certificate path</source>
-        <translation type="unfinished"></translation>
+        <translation>Сертификат сервера</translation>
     </message>
 </context>
 <context>
     <name>MessageEditorBar</name>
     <message>
         <source>Message...</source>
-        <translation type="unfinished"></translation>
+        <translation>Сообщение ...</translation>
     </message>
     <message>
         <source>Uploading </source>
-        <translation type="unfinished"></translation>
+        <translation>Загрузка </translation>
     </message>
 </context>
 <context>
@@ -159,22 +159,22 @@
     </message>
     <message>
         <source>Choose image</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите изображение</translation>
     </message>
     <message>
         <source>Choose document</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите документ</translation>
     </message>
     <message>
         <source>Choose file</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите файл</translation>
     </message>
 </context>
 <context>
     <name>OptionsPage</name>
     <message>
         <source>Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки</translation>
     </message>
 </context>
 <context>
@@ -201,7 +201,7 @@
     </message>
     <message>
         <source>(you)</source>
-        <translation type="unfinished"></translation>
+        <translation>(вы)</translation>
     </message>
 </context>
 <context>
@@ -215,11 +215,11 @@
     <name>TeamsPage</name>
     <message>
         <source>Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки</translation>
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished"></translation>
+        <translation>О программе</translation>
     </message>
 </context>
 <context>

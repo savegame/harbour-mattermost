@@ -8,8 +8,9 @@
 #include <QMap>
 #include <QTimer>
 #include <QNetworkAccessManager>
-#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
+#include "libs/qtwebsockets-5.6.2/include/QtWebSockets/qwebsocket.h"
 //#include <QtWebSockets/QWebSocket>
+//#include <QtWebSockets>
 
 class MattermostQt : public QObject
 {
