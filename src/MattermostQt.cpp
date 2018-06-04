@@ -156,7 +156,7 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 	request.setRawHeader("X-Custom-User-Agent", QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION).toUtf8());
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson() );
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Login) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_login) );
 	reply->setProperty(P_API, QVariant(api) );
 	reply->setProperty(P_SERVER_URL, server );
 	reply->setProperty(P_SERVER_NAME, display_name );
@@ -228,7 +228,7 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 	request_set_headers(request,sc);
 
 	QNetworkReply *reply = m_networkManager->get(request);
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Login) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_login) );
 	reply->setProperty(P_SERVER_INDEX, sc->m_self_index);
 	reply->setProperty(P_TRUST_CERTIFICATE, sc->m_trust_cert);
 
@@ -287,7 +287,7 @@ void MattermostQt::get_teams(int server_index)
 		request.setSslConfiguration(sc->m_cert);
 
 	QNetworkReply *reply = m_networkManager->get(request);
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::Teams) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_teams) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 }
 
@@ -1000,6 +1000,11 @@ QString MattermostQt::getChannelId(int server_index, int team_index, int channel
 	return QString();
 }
 
+void MattermostQt::notificationActivated(int server_index, int team_index, int channel_type, int channel_index)
+{
+	//
+}
+
 QString MattermostQt::getUserName(int server_index, int user_index)
 {
 	if(server_index < 0 || server_index >= m_server.size()
@@ -1049,12 +1054,13 @@ bool MattermostQt::save_settings()
 		server["name"] = sc->m_display_name;
 		server["trust_certificate"] = sc->m_trust_cert;
 
+		server_dir_path = QString("%0_%1").arg(i).arg(sc->m_user_id);
+
 		sc->m_data_path = m_data_path + QDir::separator() + server_dir_path;
 		sc->m_cache_path = m_cache_path + QDir::separator() + server_dir_path;
 
 		if(sc->m_trust_cert)
 		{
-			server_dir_path = QString("%0_%1").arg(i).arg(sc->m_user_id);
 			QDir server_dir(sc->m_data_path);
 			if(! server_dir.exists() )
 				server_dir.mkpath(sc->m_data_path);
@@ -2076,14 +2082,14 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 		else
 		{
 			QString path = m_pictures_path + QDir::separator() + file->filename();
-			if( !QFile::exists(path) )
+//			if( !QFile::exists(path) )
 				get_file(file->m_server_index, file->m_team_index,
 				         file->m_channel_type, file->m_channel_index,
 				         file->m_message_index, file->m_self_index);
-			else {
-				file->m_file_path = path;
-				updateMessage = true;
-			}
+//			else {
+//				file->m_file_path = path;
+//				updateMessage = true;
+//			}
 		}
 	}
 	if(updateMessage)
@@ -2094,9 +2100,8 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 void MattermostQt::reply_get_file(QNetworkReply *reply)
 {
 	FilePtr file =  reply->property(P_FILE_PTR).value<FilePtr>();
-	if(file)
-		qDebug() << file->m_name;
-
+//	if(file)
+//		qDebug() << file->m_name;
 	QString dowload_dir;
 	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage)
 		dowload_dir = m_pictures_path;
@@ -2106,7 +2111,17 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 	QDir dir(dowload_dir);
 	if( !dir.exists() )
 		dir.mkpath(dowload_dir);
-	dowload_dir += QDir::separator() + file->filename();
+	QString filename = file->m_name;
+	int it = 0;
+	while(QFile::exists(dowload_dir + QDir::separator() + filename))
+	{
+		if(it++ > 100)
+		{
+			filename = file->filename();
+		}
+		filename = file->m_name + QString("_%0").arg(it);
+	}
+	dowload_dir +=  QDir::separator() + filename;
 	QFile download(dowload_dir);
 	if( download.open(QFile::Append) )
 	{
@@ -2615,7 +2630,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 		if(replyType.isValid())
 		{
 			switch (replyType.toInt()) {
-			case ReplyType::Login:
+			case ReplyType::rt_login:
 				if( reply_login(reply) )
 				{//connect timers
 //					connect( &m_update_server, SIGNAL(timeout()), SLOT(slot_get_teams_unread()) );
@@ -2624,7 +2639,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 //					slot_get_teams_unread();
 				}
 				break;
-			case ReplyType::Teams:
+			case ReplyType::rt_get_teams:
 				reply_get_teams(reply);
 				break;
 			case ReplyType::rt_get_public_channels:

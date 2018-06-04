@@ -72,3 +72,7 @@ desktop-file-install --delete-original       \
 # >> files
 #%{_datadir}/dbus-1/services
 # << files
+
+%changelog
+* Fri Jan 1 2018 sashikknox <sashikknox@gmail.com> - 0.1.1-1
+- remove depricated ImageViewr for support vie images in SailfishOS 2.2.0.29

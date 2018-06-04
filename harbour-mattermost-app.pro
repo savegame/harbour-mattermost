@@ -23,8 +23,10 @@ PKGCONFIG += \
     nemonotifications-qt5
 
 LIBS += -Llibs -lqt5websockets
-#INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
-INCLUDEPATH += libs/qtwebsockets-5.6.2/include/QtWebSockets
+INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
+INCLUDEPATH += libs/qtwebsockets/include
+#INCLUDEPATH += libs/qtwebsockets-5.6.2/include/QtWebSockets
+#INCLUDEPATH += libs/qtwebsockets-5.6.2/include
 
 INCLUDEPATH += $$PWD/../../mersdk/targets/SailfishOS-2.1.4.13-i486/usr/include/nemonotifications-qt5
 

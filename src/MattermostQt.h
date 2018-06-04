@@ -8,7 +8,7 @@
 #include <QMap>
 #include <QTimer>
 #include <QNetworkAccessManager>
-#include "libs/qtwebsockets-5.6.2/include/QtWebSockets/qwebsocket.h"
+#include "QtWebSockets/qwebsocket.h"
 //#include <QtWebSockets/QWebSocket>
 //#include <QtWebSockets>
 
@@ -20,8 +20,8 @@ class MattermostQt : public QObject
 	friend class ChannelsModel;
 public:
 	enum ReplyType : int {
-		Login,
-		Teams,
+		rt_login,
+		rt_get_teams,
 		rt_get_public_channels,
 		rt_post_channel_view,
 		rt_get_user_info,
@@ -406,8 +406,16 @@ public:
 	/** get channel name */
 	Q_INVOKABLE QString getChannelName(int server_index, int team_index, int channel_type, int channel_index);
 	Q_INVOKABLE QString getChannelId(int server_index, int team_index, int channel_type, int channel_index);
+
+	/** functions, called from DBusAdaptor */
+	Q_INVOKABLE void notificationActivated(int server_index, int team_index, int channel_type, int channel_index);
+	/** settings  fucntions */
 	bool save_settings();
 	bool load_settings();
+
+	/** */
+	ChannelPtr channelAt(int server_index, int team_index,
+	                     int channel_type, int channel_index);
 
 Q_SIGNALS:
 	void serverConnected(int server_index);
@@ -458,9 +466,6 @@ protected:
 	 * @param message
 	 */
 	void prepare_user_index(int server_index, MessagePtr message);
-
-	ChannelPtr channelAt(int server_index, int team_index,
-	                     int channel_type, int channel_index);
 
 	void get_teams_unread(ServerPtr server);
 
