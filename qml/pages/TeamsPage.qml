@@ -114,11 +114,11 @@ Page {
                 onClicked: {
                     pageStack.pushAttached( Qt.resolvedUrl("ChannelsPage.qml"),
                                    {
-                                       context: teamsPage.context,
                                        teamid: teamsmodel.getTeamId(index),
                                        server_index: teamsPage.server_index,
                                        team_index: teamsmodel.getTeamIndex(index),
-                                       team_label: teamname.text
+                                       team_label: teamname.text,
+                                       context: teamsPage.context
                                    } )
                     pageStack.navigateForward(PageStackAction.Animated);
                 }

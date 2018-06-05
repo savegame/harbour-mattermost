@@ -47,11 +47,12 @@ Page {
         }
     }
 
-    onContextChanged: {
-//        if(status === PageStatus.Active) {
-        context.mattermost.get_posts(server_index,team_index,channel_type,channel_index)
-        current_user_id = context.mattermost.user_id(server_index)
-//        }
+//    onContextChanged: {
+    onStatusChanged: {
+        if(status === PageStatus.Active) {
+            context.mattermost.get_posts(server_index,team_index,channel_type,channel_index)
+            current_user_id = context.mattermost.user_id(server_index)
+        }
     }
 
     // not looks good, but nice effec,

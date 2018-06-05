@@ -129,12 +129,12 @@ Page {
                     var messages = pageStack.pushAttached(
                                 Qt.resolvedUrl("MessagesPage.qml"),
                                 {
-                                    context: channelspage.context,
                                     team_index: channelspage.team_index,
                                     server_index: channelspage.server_index,
                                     channel_index: channellabel._index,
                                     channel_type: channellabel.channelType,
-                                    display_name: channellabel._display_name
+                                    display_name: channellabel._display_name,
+                                    context: channelspage.context
                                 } );
                     pageStack.navigateForward(PageStackAction.Animated);
                 }

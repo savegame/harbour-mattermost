@@ -62,9 +62,9 @@ Page {
             if(state === status_server_connected) {
                 var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
                                                   {
-                                                      context: loginpage.context,
                                                       server_index: server_index,
-                                                      servername: context.mattermost.get_server_name(server_index)
+                                                      servername: context.mattermost.get_server_name(server_index),
+                                                      context: loginpage.context
                                                   })
             }
         })

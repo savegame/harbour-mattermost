@@ -866,7 +866,7 @@ void MattermostQt::get_teams_unread(int server_index)
 void MattermostQt::get_posts(int server_index, int team_index, int channel_type, int channel_index )
 {
 	ChannelPtr channel = channelAt(server_index, team_index, channel_type, channel_index);
-	if( !channel )
+	if( channel.isNull() )
 		return;
 	ServerPtr sc = m_server[server_index];
 
