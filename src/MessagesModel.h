@@ -14,6 +14,7 @@ class MessagesModel : public QAbstractListModel
 	Q_OBJECT
 
 	Q_PROPERTY(MattermostQt *mattermost READ getMattermost WRITE setMattermost)
+	Q_PROPERTY(QString channelId READ getChannelId WRITE setChannelId)
 	Q_PROPERTY(bool atEnd READ atEnd NOTIFY atEndChanged)
 public:
 	enum DataRoles : int {
@@ -49,6 +50,9 @@ public:
 	void setMattermost(MattermostQt *mattermost);
 	MattermostQt *getMattermost() const;
 
+	void setChannelId(QString id);
+	QString getChannelId() const;
+
 	Q_INVOKABLE int getFileType(int row, int i) const;
 	Q_INVOKABLE int getFileStatus(int row, int i) const;
 	Q_INVOKABLE QString getFileMimeType(int row, int i) const;
@@ -78,6 +82,7 @@ protected slots:
 	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
 //	void slot_fileStatusChanged(MattermostQt::FilePtr file);
 private:
+	QString                            m_channel_id;
 	MattermostQt::ChannelPtr           m_channel;
 	QVector<MattermostQt::MessagePtr>  m_messages;
 	QVector<MattermostQt::UserPtr>     m_users;

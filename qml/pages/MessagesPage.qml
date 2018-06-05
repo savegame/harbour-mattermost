@@ -15,7 +15,7 @@ Page {
     property int team_index
     property int channel_index
     property int channel_type
-//    property string channel_id
+    property string channel_id
     property string display_name
     property string current_user_id
 
@@ -26,18 +26,20 @@ Page {
 
     property MessagesModel messagesmodel: MessagesModel {
         mattermost: context.mattermost
+//        channelId: channel_id
         onMessagesInitialized: {
             // nothing
 //            listview.scrollToBottom()
 //            messages.noMoreMessages = atEnd
             if(atEnd === true)
                 pullMenu.visible = false
-            context.mattermost.post_channel_view(
+            if(channel_index >= 0)
+                context.mattermost.post_channel_view(
                         server_index,
                         team_index,
                         channel_type,
                         channel_index
-                        )
+                    )
         }
         onAtEndChanged: {
 //            messages.noMoreMessages = atEnd
@@ -47,11 +49,29 @@ Page {
         }
     }
 
-//    onContextChanged: {
+    onContextChanged:
+        current_user_id = context.mattermost.user_id(server_index)
+
+    onChannel_idChanged:
+        messagesmodel.channelId = channel_id
+
     onStatusChanged: {
         if(status === PageStatus.Active) {
-            context.mattermost.get_posts(server_index,team_index,channel_type,channel_index)
-            current_user_id = context.mattermost.user_id(server_index)
+            if(channel_index >= 0)
+            {
+                context.mattermost.get_posts(server_index,team_index,channel_type,channel_index)
+            }
+            else
+            {
+                context.mattermost.get_channel(server_index,channel_id)
+                context.mattermost.updateChannelInfo.connect(
+                            function onUpdateChannelInfo(ch_id,tm_index,ch_index) {
+                                if(messages.channel_id === ch_id) {
+                                    messages.team_index = tm_index
+                                    messages.channel_index = ch_index
+                                }
+                            })
+            }
         }
     }
 

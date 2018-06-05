@@ -1805,17 +1805,11 @@ void MattermostQt::reply_get_channel(QNetworkReply *reply)
 	// if we here, it seems we dont have that channel in any list
 	if( channel->m_type == ChannelDirect )
 	{
-//		for(int i = 0; i < sc->m_direct_channels.size(); i++)
-//		{
-//			if( sc->m_direct_channels[i]->m_id == channel->m_id )
-//			{
-//				channel = sc->m_direct_channels[i];
-//				break;
-//			}
-//		}
 		channel->m_self_index = sc->m_direct_channels.size();
 		channel->m_team_index = -1;
 		sc->m_direct_channels.append(channel);
+		emit channelAdded(channel);
+		get_posts(server_index,-1,channel->m_type, channel->m_self_index);
 		prepare_direct_channel(server_index,channel->m_self_index);
 	}
 	else
@@ -1838,13 +1832,19 @@ void MattermostQt::reply_get_channel(QNetworkReply *reply)
 		}
 		if(channel->m_type == ChannelPublic)
 		{
-
+			channel->m_self_index = team->m_public_channels.size();
+			team->m_public_channels.append(channel);
 		}
 		else
 		{
-
+			channel->m_self_index = team->m_public_channels.size();
+			team->m_public_channels.append(channel);
 		}
+		channel->m_team_index = team->m_self_index;
+		channelAdded(channel);
+		get_posts(server_index,channel->m_team_index,channel->m_type, channel->m_self_index);
 	}
+	emit updateChannelInfo(channel->m_id, channel->m_team_index, channel->m_self_index);
 }
 
 void MattermostQt::reply_post_channel_view(QNetworkReply *reply)
@@ -2442,6 +2442,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 		type = ChannelType::ChannelPrivate;
 	else if( cmp(ch_type,D) )
 		type = ChannelType::ChannelDirect;
+	message->m_channel_type = type;
 
 	if( type == ChannelType::ChannelDirect )
 	{

@@ -26,21 +26,22 @@ Item {
              '    <property name="channel_id" type="s" access="read" />\n' +
              '  </interface>\n'
 
-        function newMessage(server,team,type,channel) {
+        function newMessage(server,team,type,channel,channel_id) {
 //            console.log("Server: " + server + " Team " + team + " " + type + " " + channel )
             mattermost.notificationActivated( server, team, type, channel )
             __silica_applicationwindow_instance.activate();
 
-//            var messages = pageStack.push(
-//                        Qt.resolvedUrl("../pages/MessagesPage.qml"),
-//                        {
-//                            context: context_item,
-//                            server_index: server,
-//                            team_index: team,
-//                            channel_type: type,
-//                            channel_index: channel,
-//                            display_name: mattermost.getChannelName(server,team,type,channel)
-//                        } );
+            var messages = pageStack.push(
+                        Qt.resolvedUrl("../pages/MessagesPage.qml"),
+                        {
+                            server_index: server,
+                            team_index: team,
+                            channel_type: type,
+                            channel_index: channel,
+                            channel_id: channel_id,
+                            display_name: mattermost.getChannelName(server,team,type,channel),
+                            context: context_item
+                        } );
            // pageStack.navigateForward(PageStackAction.Animated);
         }
     }

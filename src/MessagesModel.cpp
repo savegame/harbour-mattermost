@@ -167,12 +167,21 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 	        this, &MessagesModel::slot_messageDeleted );
 	connect(m_mattermost.data(), &MattermostQt::updateMessage,
 	        this, &MessagesModel::slot_updateMessage );
-
 }
 
 MattermostQt *MessagesModel::getMattermost() const
 {
 	return m_mattermost;
+}
+
+void MessagesModel::setChannelId(QString id)
+{
+	m_channel_id = id;
+}
+
+QString MessagesModel::getChannelId() const
+{
+	return m_channel_id;
 }
 
 int MessagesModel::getFileType(int row,int i) const
@@ -426,5 +435,6 @@ void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, in
 //	if(atEnd())
 	emit atEndChanged();
 }
+
 
 

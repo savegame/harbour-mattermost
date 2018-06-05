@@ -428,6 +428,7 @@ Q_SIGNALS:
 	void channelsList(QList<ChannelPtr> list);
 	void channelAdded(ChannelPtr channel);
 	void updateChannel(ChannelPtr channel, QVector<int> roles);
+	void updateChannelInfo(QString channel_id, int team_index, int self_index );
 //	void updateChannel()
 	void teamUnread(QString team_id, int msg, int mention);
 	void messagesAdded(ChannelPtr channel);
