@@ -139,35 +139,35 @@
     <name>MessagesPage</name>
     <message>
         <source>get older</source>
-        <translation>предыдущие сообщения</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>Редактировать</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>Удалить</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>Копировать</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reply</source>
-        <translation>Ответить</translation>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose image</source>
-        <translation>Выберите изображение</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose document</source>
-        <translation>Выберите документ</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose file</source>
-        <translation>Выберите файл</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -202,6 +202,10 @@
     <message>
         <source>(you)</source>
         <translation>(вы)</translation>
+    </message>
+    <message>
+        <source>somebody</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -23,6 +23,7 @@ public:
 		rt_login,
 		rt_get_teams,
 		rt_get_public_channels,
+		rt_get_channel,
 		rt_post_channel_view,
 		rt_get_user_info,
 		rt_get_user_image,
@@ -372,6 +373,7 @@ public:
 	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
+	Q_INVOKABLE void get_channel(int server_index, QString channel_id);
 //	void get_team(int server_index, QString team_id);
 	void get_team(int server_index, int team_index);
 	void get_file_thumbnail(int server_index, int file_sc_index);
@@ -467,6 +469,17 @@ protected:
 	 */
 	void prepare_user_index(int server_index, MessagePtr message);
 
+	/**
+	 * @brief find_team_by_id
+	 * get team ptr by id string
+	 * @param sc       server ptr
+	 * @param team_id  team id
+	 * @return  empty or valid team ptr
+	 */
+	TeamPtr find_team_by_id(ServerPtr sc, QString team_id) const;
+
+	inline ServerPtr get_server(int server_index) const;
+
 	void get_teams_unread(ServerPtr server);
 
 	void websocket_connect(ServerPtr server);
@@ -478,6 +491,7 @@ protected:
 	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_posts_before(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
+	void reply_get_channel(QNetworkReply *reply);
 	void reply_post_channel_view(QNetworkReply *reply);
 	void reply_get_user_info(QNetworkReply *reply);
 	void reply_post_users_status(QNetworkReply *reply);

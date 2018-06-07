@@ -72,7 +72,7 @@ protected Q_SLOTS:
 	void slot_channelsList(QList<MattermostQt::ChannelPtr> list);
 	void slot_updateChannel(MattermostQt::ChannelPtr channel, QVector<int> roles);
 private:
-	QVector<QString> m_display_name;
+//	QVector<QString> m_display_name;
 	QVector<QString> m_header;
 	QVector<QString> m_puprose;
 	QVector<MattermostQt::ChannelPtr> m_channel;

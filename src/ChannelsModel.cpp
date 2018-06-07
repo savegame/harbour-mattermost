@@ -5,7 +5,7 @@ ChannelsModel::ChannelsModel(QObject *parent)
 {
 	beginInsertRows(QModelIndex(), 0, 2);
 	m_header.resize(3);
-	m_display_name.resize(3);
+//	m_display_name.resize(3);
 	m_puprose.resize(3);
 	m_channel.resize(3);
 	m_type.resize(3);
@@ -49,9 +49,14 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 	if (!index.isValid())
 		return QVariant();
 
+	MattermostQt::ChannelPtr channel = m_channel[index.row()];
+
 	switch(role) {
 	case DisplayName:
-		return QVariant(m_display_name[index.row()]);
+		if(channel.isNull() || channel->m_display_name.isEmpty())
+			return QObject::trUtf8("somebody");
+		else
+			return QVariant(channel->m_display_name);
 		break;
 	case Purpose:
 		return m_puprose[index.row()];
@@ -66,30 +71,34 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 		return m_type[index.row()];
 		break;
 	case Index:
-		if( m_channel[index.row()].isNull() )
+		if( channel.isNull() )
 			return QVariant(-1);
-		return QVariant(m_channel[index.row()]->m_self_index);
+		return QVariant(channel->m_self_index);
 		break;
 	case ServerIndex:
-		if( m_channel[index.row()].isNull() )
+		if( channel.isNull() )
 			return QVariant(-1);
-		return QVariant(m_channel[index.row()]->m_server_index);
+		return QVariant(channel->m_server_index);
 	case TeamIndex:
-		if( m_channel[index.row()].isNull() )
+		if( channel.isNull() )
 			return QVariant(-1);
-		return QVariant(m_channel[index.row()]->m_team_index);
+		return QVariant(channel->m_team_index);
 		break;
 	case ChannelType:
-		if( m_channel[index.row()].isNull() )
+		if( channel.isNull() )
 			return QVariant(-1);
-		return QVariant((int)m_channel[index.row()]->m_type);
+		return QVariant((int)channel->m_type);
 		break;
 	case AvatarPath:
-		if( m_channel[index.row()].isNull() )
+		// show mattermost icon if no Avatar loaded
+		if(channel.isNull())
 			return QVariant("");
-		if ( m_channel[index.row()]->m_type != MattermostQt::ChannelDirect )
+		if( channel->m_dc_user_index < 0 )
 			return QVariant("");
-		MattermostQt::UserPtr user = m_mattermost->m_server[m_channel[index.row()]->m_server_index]->m_user[m_channel[index.row()]->m_dc_user_index];
+		if ( channel->m_type != MattermostQt::ChannelDirect )
+			return QVariant("");
+		MattermostQt::ServerPtr server = m_mattermost->m_server[channel->m_server_index];
+		MattermostQt::UserPtr user = server->m_user[channel->m_dc_user_index];
 		QString path = user->m_image_path;
 		return path;
 		break;
@@ -168,7 +177,7 @@ void ChannelsModel::clear()
 		return;
 	beginResetModel();
 	m_header.clear();
-	m_display_name.clear();
+//	m_display_name.clear();
 	m_puprose.clear();
 	m_type.clear();
 //	m_index.resize(3);
@@ -176,7 +185,7 @@ void ChannelsModel::clear()
 
 	beginInsertRows(QModelIndex(), 0, 2);
 	m_header.resize(3);
-	m_display_name.resize(3);
+//	m_display_name.resize(3);
 	m_puprose.resize(3);
 	m_channel.resize(3);
 	m_type.resize(3);
@@ -214,7 +223,7 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 	if(insertIndex == m_header.size())
 	{
 		m_header.append(channel->m_header);
-		m_display_name.append(channel->m_display_name);
+//		m_display_name.append(channel->m_display_name);
 		m_puprose.append(channel->m_purpose);
 		m_type.append(ItemType::Channel);
 		m_channel.append( channel);
@@ -222,7 +231,7 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 	else
 	{
 		m_header.insert(insertIndex,channel->m_header);
-		m_display_name.insert(insertIndex,channel->m_display_name);
+//		m_display_name.insert(insertIndex,channel->m_display_name);
 		m_puprose.insert(insertIndex,channel->m_purpose);
 		m_type.insert(insertIndex,ItemType::Channel);
 		m_channel.insert(insertIndex, channel);

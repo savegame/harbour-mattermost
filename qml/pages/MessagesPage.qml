@@ -15,6 +15,7 @@ Page {
     property int team_index
     property int channel_index
     property int channel_type
+//    property string channel_id
     property string display_name
     property string current_user_id
 
@@ -46,11 +47,11 @@ Page {
         }
     }
 
-    onStatusChanged: {
-        if(status === PageStatus.Active) {
-            context.mattermost.get_posts(server_index,team_index,channel_type,channel_index)
-            current_user_id = context.mattermost.user_id(server_index)
-        }
+    onContextChanged: {
+//        if(status === PageStatus.Active) {
+        context.mattermost.get_posts(server_index,team_index,channel_type,channel_index)
+        current_user_id = context.mattermost.user_id(server_index)
+//        }
     }
 
     // not looks good, but nice effec,

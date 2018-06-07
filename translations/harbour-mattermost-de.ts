@@ -150,11 +150,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy</source>
+        <source>Reply</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reply</source>
+        <source>Copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -201,6 +201,10 @@
     </message>
     <message>
         <source>(you)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>somebody</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
