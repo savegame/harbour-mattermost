@@ -11,6 +11,8 @@ QT = core-private network
 #OTHER_FILES += doc/snippets/*.cpp
 #OTHER_FILES += doc/qtwebsockets.qdocconf
 
+INCLUDEPATH += ../../include/QtWebSockets/
+INCLUDEPATH += ../../include/
 
 PUBLIC_HEADERS += \
     $$PWD/qwebsockets_global.h \
