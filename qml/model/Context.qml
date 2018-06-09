@@ -30,19 +30,38 @@ Item {
 //            console.log("Server: " + server + " Team " + team + " " + type + " " + channel )
             mattermost.notificationActivated( server, team, type, channel )
             __silica_applicationwindow_instance.activate();
-
-            var messages = pageStack.push(
-                        Qt.resolvedUrl("../pages/MessagesPage.qml"),
-                        {
-                            server_index: server,
-                            team_index: team,
-                            channel_type: type,
-                            channel_index: channel,
-                            channel_id: channel_id,
-                            display_name: mattermost.getChannelName(server,team,type,channel),
-                            context: context_item
-                        } );
-           // pageStack.navigateForward(PageStackAction.Animated);
+            if( pageStack !== null && pageStack.currentPage !== null ) {
+                var name = pageStack.currentPage.objectName
+                var messages = null
+                if( name === "MessagesPage" ) {
+                    messages = pageStack.replace(
+                                Qt.resolvedUrl("../pages/MessagesPage.qml"),
+                                {
+                                    server_index: server,
+                                    team_index: team,
+                                    channel_type: type,
+                                    channel_index: channel,
+                                    channel_id: channel_id,
+                                    display_name: mattermost.getChannelName(server,team,type,channel),
+                                    context: context_item
+                                } );
+                }
+                else
+                {
+                    messages = pageStack.pushAttached(
+                                Qt.resolvedUrl("../pages/MessagesPage.qml"),
+                                {
+                                    server_index: server,
+                                    team_index: team,
+                                    channel_type: type,
+                                    channel_index: channel,
+                                    channel_id: channel_id,
+                                    display_name: mattermost.getChannelName(server,team,type,channel),
+                                    context: context_item
+                                } );
+                    pageStack.navigateForward(PageStackAction.Animated)
+                }
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import QtGraphicalEffects 1.0
 
 Page {
     id: messages
+    objectName: "MessagesPage"
     allowedOrientations: Orientation.All
 
     property Context context
