@@ -21,21 +21,27 @@ class SettingsContainer : public QObject
 	Q_OBJECT
 
 	Q_PROPERTY(bool showBlobs READ showBlobs WRITE setShowBlobs NOTIFY showBlobsChanged)
+	Q_PROPERTY(qreal blobsOpacity READ blobsOpacity WRITE setBlobsOpacity NOTIFY blobsOpacityChanged)
 public:
 	SettingsContainer() : QObject()
 	{// Default settings
 		m_auto_download_image_size = 500 * 1024; // 500 Kb
-		m_show_blobs = false;
+		m_show_blobs = true;
+		m_blobs_opacity = 1.0;
 	}
 
 	bool showBlobs() const { return m_show_blobs; }
 	void setShowBlobs(bool show = true) { m_show_blobs = show; emit showBlobsChanged(); }
 
+	bool blobsOpacity() const { return m_blobs_opacity; }
+	void setBlobsOpacity(qreal opacity) { m_blobs_opacity = opacity; emit blobsOpacityChanged(); }
 Q_SIGNALS:
 	void showBlobsChanged();
+	void blobsOpacityChanged();
 public:
 	int   m_auto_download_image_size; // if size less than that, then download automaticly
 	bool  m_show_blobs; // show blobs behind messages
+	qreal m_blobs_opacity; // blobs opacity
 };
 typedef QSharedPointer<SettingsContainer> SettingsPtr;
 

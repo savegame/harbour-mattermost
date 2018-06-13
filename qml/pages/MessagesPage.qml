@@ -20,6 +20,7 @@ Page {
     property string display_name
     property string current_user_id
     property bool showBlobs
+    property real blobsOpacity
 
     property alias editmode: messageeditor.editmode
     property alias edittext: messageeditor.edittext
@@ -54,6 +55,7 @@ Page {
     onContextChanged: {
         current_user_id = context.mattermost.user_id(server_index)
         showBlobs = context.mattermost.settings.showBlobs
+        blobsOpacity = context.mattermost.settings.blobsOpacity
     }
     onChannel_idChanged:
         messagesmodel.channelId = channel_id
@@ -156,9 +158,9 @@ Page {
                        break
                     }
                 property color blobcolor: (showBlobs === false) ? Theme.rgba(0,0,0,0) :
-                    ((messagetyp === MattermostQt.MessageMine) ?
-                        Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * 0.6 ) :
-                        Theme.rgba(Theme.highlightColor,Theme.highlightBackgroundOpacity * 0.6 )
+                    ((messagetype === MattermostQt.MessageMine) ?
+                        Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * blobsOpacity) :
+                        Theme.rgba(Theme.highlightColor,Theme.highlightBackgroundOpacity * blobsOpacity)
                     )
                 property color sectextcolor :
                     switch(messagetype) {
