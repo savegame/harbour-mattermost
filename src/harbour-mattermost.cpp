@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 	QCoreApplication::setOrganizationDomain("harbour");
 	QCoreApplication::setOrganizationName("sashikknox");
 
+	qDebug() << "App version: " << MATTERMOSTQT_VERSION;
 	// If you wish to publish your app on the Jolla harbour, it is recommended
 	// that you prefix your internal namespaces with "harbour.".
 	//

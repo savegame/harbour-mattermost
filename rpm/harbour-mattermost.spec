@@ -15,7 +15,7 @@ Name:       harbour-mattermost
 %{!?qtc_make:%define qtc_make make}
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    Mattermost Sailfish client
-Version:    0.1.1
+Version:    0.1.2
 Release:    1
 Group:      Qt/Qt
 License:    LICENSE
@@ -27,6 +27,7 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  pkgconfig(nemonotifications-qt5)
+BuildRequires:  pkgconfig(libgcrypt)
 BuildRequires:  desktop-file-utils
 
 %description
@@ -72,7 +73,3 @@ desktop-file-install --delete-original       \
 # >> files
 #%{_datadir}/dbus-1/services
 # << files
-
-%changelog
-* Fri Jan 1 2018 sashikknox <sashikknox@gmail.com> - 0.1.1-1
-- remove depricated ImageViewr for support vie images in SailfishOS 2.2.0.29

@@ -1,2 +1,4 @@
-* Fri Jan 1 2018 sashikknox <sashikknox@gmail.com> - 0.1.1-1
+* Thu Jun 14  2018 sashikknox <sashikknox@gmail.com> - 0.1.2-1
+- open messages dialog when notification activated
+* Fri Jun 1   2018 sashikknox <sashikknox@gmail.com> - 0.1.1-1
 - remove depricated ImageViewr for support vie images in SailfishOS 2.2.0.29

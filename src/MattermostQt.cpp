@@ -3355,7 +3355,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 
 MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept
 {
-	qDebug() << object;
+	//qDebug() << object;
 	m_file_status = FileStatus::FileRemote;
 
 	m_id = object["id"].toString("");

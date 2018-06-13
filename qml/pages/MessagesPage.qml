@@ -76,26 +76,6 @@ Page {
         }
     }
 
-    // not looks good, but nice effec,
-    // more good make a shadow gradient
-    Rectangle {
-        id: mask
-        visible: false
-        anchors{
-            left: parent.left;
-            right: parent.right;
-            top: headitem.bottom
-            bottom: parent.bottom
-            topMargin: -Theme.paddingSmall
-        }
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.rgba(0.0,0.0,0.0, 0.3) }
-            GradientStop { position: 0.02; color: Theme.rgba(1.0,1.0,1.0, 1.0) }
-            GradientStop { position: 0.975; color: Theme.rgba(1.0,1.0,1.0, 1.0) }
-            GradientStop { position: 1.0; color: Theme.rgba(0.0,0.0,0.0, 0.3) }
-        }
-    }
-
     Label {
         id: debuglabel
 
@@ -112,6 +92,14 @@ Page {
             bottom: messageeditor.top
         }
         spacing: Theme.paddingSmall
+        clip: true
+        //layer.enabled: true
+
+        property int upIndex
+
+        onUpIndexChanged:  { // here we can understand what item on top and bottom
+            console.log("current_index " + upIndex);
+        }
 
         VerticalScrollDecorator {}
 
@@ -324,6 +312,8 @@ Page {
                                         fillMode: Image.PreserveAspectFit
                                         source: imagebackground.imagePath
                                         onStatusChanged: playing = (status == AnimatedImage.Ready)
+                                        asynchronous: true
+                                        cache: false
 //                                        sourceSize: imagebackground.imageSourceSize
                                         height: imagebackground.itemSize.height
                                         width: imagebackground.itemSize.width
@@ -436,7 +426,7 @@ Page {
                                     anchors.verticalCenter: parent.verticalCenter
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     visible: false
-                                    value: 0
+                                    value: filestatus === MattermostQt.FileDownloading
                                     onVisibleChanged: {
                                         context.mattermost.fileDownloadingProgress.connect(
                                             function onDownloading(id_of_file,progress) {
@@ -610,14 +600,17 @@ Page {
             }
         }// Component messagesystem
 
-//        m
-
         delegate: ListItem {
             anchors { left:parent.left; right:parent.right; }
 //            width: messages.width
             height: itemlistcolumn.height + contextmenu.height
             contentHeight: itemlistcolumn.height
             property string messageuserid: userid
+            property int superIndex: index
+
+            onSuperIndexChanged: {
+                listview.upIndex = index
+            }
 
             showMenuOnPressAndHold: true
 
@@ -703,7 +696,6 @@ Page {
                 }// item loader
             } // itemslist column
         }
-        layer.enabled: true
         // uncomment this too, for gradient hide
 //        layer.effect: OpacityMask {
 //            source: listview

@@ -12,7 +12,7 @@
 # The name of your application
 TARGET = harbour-mattermost
 
-VERSION = 0.1.1
+VERSION = 0.1.2
 
 DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
@@ -20,7 +20,7 @@ CONFIG += sailfishapp
 CONFIG += qt
 QT += gui qml quick network dbus svg
 PKGCONFIG += \
-    nemonotifications-qt5
+    nemonotifications-qt5 libgcrypt
 
 LIBS += -Llibs -lqt5websockets
 INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
@@ -37,7 +37,8 @@ SOURCES += src/harbour-mattermost.cpp \
     src/MattermostQt.cpp \
     src/ChannelsModel.cpp \
     src/MessagesModel.cpp \
-    src/SailNotify.cpp
+    src/SailNotify.cpp \
+    src/AccountsModel.cpp
 
 DISTFILES += qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
@@ -53,6 +54,7 @@ DISTFILES += qml/harbour-mattermost.qml \
     rpm/harbour-mattermost.yaml \
     dbus/sashikknox.mattermost.service \
     qml/pages/OptionsPage.qml \
+    CHANGELOG \
     CHANGELOG
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
@@ -77,7 +79,8 @@ HEADERS += \
     src/MattermostQt.h \
     src/ChannelsModel.h \
     src/MessagesModel.h \
-    src/SailNotify.h
+    src/SailNotify.h \
+    src/AccountsModel.h
 
 RESOURCES += \
     resources.qrc
