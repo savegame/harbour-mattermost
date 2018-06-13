@@ -12,12 +12,41 @@
 //#include <QtWebSockets/QWebSocket>
 //#include <QtWebSockets>
 
+/**
+ * @brief The SettingsContainer class
+ * application settings
+ */
+class SettingsContainer : public QObject
+{
+	Q_OBJECT
+
+	Q_PROPERTY(bool showBlobs READ showBlobs WRITE setShowBlobs NOTIFY showBlobsChanged)
+public:
+	SettingsContainer() : QObject()
+	{// Default settings
+		m_auto_download_image_size = 500 * 1024; // 500 Kb
+		m_show_blobs = false;
+	}
+
+	bool showBlobs() const { return m_show_blobs; }
+	void setShowBlobs(bool show = true) { m_show_blobs = show; emit showBlobsChanged(); }
+
+Q_SIGNALS:
+	void showBlobsChanged();
+public:
+	int   m_auto_download_image_size; // if size less than that, then download automaticly
+	bool  m_show_blobs; // show blobs behind messages
+};
+typedef QSharedPointer<SettingsContainer> SettingsPtr;
+
 class MattermostQt : public QObject
 {
 	Q_OBJECT
 
 	friend class MessagesModel;
 	friend class ChannelsModel;
+
+	Q_PROPERTY(SettingsContainer *settings READ settings NOTIFY settingsChanged)
 public:
 	enum ReplyType : int {
 		rt_login,
@@ -94,12 +123,6 @@ public:
 		UserDnd
 	};
 	Q_ENUMS(UserStatus)
-
-	struct SettingsContainer {
-		int m_preload_image_size; // if size less than that, then download automaticly
-		int m_auto_download_image_size; // if file image have less size,  then not need preview
-	};
-	typedef QSharedPointer<SettingsContainer> SettingsPtr;
 
 	/**
 	 * @brief The FileContainer struct
@@ -411,6 +434,10 @@ public:
 
 	/** functions, called from DBusAdaptor */
 	Q_INVOKABLE void notificationActivated(int server_index, int team_index, int channel_type, int channel_index);
+
+	/** return pointer to settings */
+	SettingsContainer* settings() { return m_settings.data(); }
+
 	/** settings  fucntions */
 	bool save_settings();
 	bool load_settings();
@@ -442,18 +469,26 @@ Q_SIGNALS:
 	void fileStatusChanged(QString file_id, int status);
 	void fileUploaded(int server_index, int file_sc_index);
 //	void fileUploaded(FilePtr file);
+
 	/**
 	 * @brief fileDownloadingProgress
 	 * @param file_id    id of file
 	 * @param progress   from 0.0 to 1.0
 	 */
 	void fileDownloadingProgress(QString file_id, qreal progress);
+
 	/**
 	 * @brief fileUploadProgress
 	 * @param data      some string
 	 * @param progress  from 0.0 to 1.0
 	 */
 	void fileUploadProgress(QString data, int progress);
+
+	/**
+	 * @brief settingsChanged
+	 * when settings are changed
+	 */
+	void settingsChanged();
 protected:
 	/**
 	 * @brief prepare_direct_channel

@@ -96,9 +96,7 @@ MattermostQt::MattermostQt()
 	        .filePath(QCoreApplication::applicationName());
 
 	m_settings.reset(new SettingsContainer());
-	m_settings->m_auto_download_image_size = 500 * 1024; // 500 Kb
 
-	//m_data_path = "/home/nemo/.config/mattermostqt/";
 	load_settings();
 }
 

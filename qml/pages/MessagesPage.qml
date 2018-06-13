@@ -19,6 +19,7 @@ Page {
     property string channel_id
     property string display_name
     property string current_user_id
+    property bool showBlobs
 
     property alias editmode: messageeditor.editmode
     property alias edittext: messageeditor.edittext
@@ -50,9 +51,10 @@ Page {
         }
     }
 
-    onContextChanged:
+    onContextChanged: {
         current_user_id = context.mattermost.user_id(server_index)
-
+        showBlobs = context.mattermost.settings.showBlobs
+    }
     onChannel_idChanged:
         messagesmodel.channelId = channel_id
 
@@ -153,6 +155,11 @@ Page {
                        Theme.primaryColor
                        break
                     }
+                property color blobcolor: (showBlobs === false) ? Theme.rgba(0,0,0,0) :
+                    ((messagetyp === MattermostQt.MessageMine) ?
+                        Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * 0.6 ) :
+                        Theme.rgba(Theme.highlightColor,Theme.highlightBackgroundOpacity * 0.6 )
+                    )
                 property color sectextcolor :
                     switch(messagetype) {
                     case MattermostQt.MessageMine:
@@ -190,212 +197,287 @@ Page {
                         width: Theme.iconSizeMedium
                     }
                 }//BackgroundItem avataritem
-                Column {
-                    id: textcolumn
-                    width: contentwidth - Theme.paddingSmall - avataritem.width
-                    spacing: Theme.paddingSmall
-                    Row {
-                        id: username_row
-                        height: usernamelabel.height
-                        width: textcolumn.width
+                Rectangle {
+                    id: textlabelrect
+
+                    color: blobcolor
+                    radius: Theme.paddingMedium
+                    width: textcolumn.width
+                    height: textcolumn.height
+
+                    Column {
+                        id: textcolumn
+                        width: contentwidth - Theme.paddingSmall - avataritem.width
                         spacing: Theme.paddingSmall
-                        Label {
-                            id: usernamelabel
-                            text: username
-                            width: Math.min(textcolumn.width - timestamp.width - Theme.paddingSmall, contentWidth)
-                            font.pixelSize: Theme.fontSizeTiny
-                            font.family: Theme.fontFamilyHeading
-                            font.bold: true
-                            color: textcolor
+                        height:{
+                            username_row.height +
+                            textlabelloader.height +
+                            Theme.paddingSmall +
+                            filesrepeater.height
                         }
-                        Label {
-                            id: timestamp
-                            text: createat
-                            font.pixelSize: Theme.fontSizeTiny
-                            font.family: Theme.fontFamilyHeading
-                            color: sectextcolor
-                            elide: Text.ElideRight
-                            horizontalAlignment: Text.AlignLeft
-                        }// Label timestamp
-                    }//Row username and timestamp
-                    Loader {
-                        id: textlabelloader
-                        property string textmesage: messagetext
-                        property real componentheight
-                        onComponentheightChanged:
-                            height = componentheight
-                        Component {
-                            id: messagecomponent
-                            LinkedLabel {
-                                id: textlabel
-                                plainText: messagetext
-                                onContentHeightChanged:
-                                {
-                                   componentheight = contentHeight
-                                }
-                                width: textcolumn.width
-                                wrapMode: Text.Wrap
-                                font.pixelSize: Theme.fontSizeSmall
+
+                        anchors {
+                            top : parent.top
+                            left: parent.left
+                        }
+
+                        Row {
+                            id: username_row
+                            height: usernamelabel.height
+                            width: textcolumn.width
+                            spacing: Theme.paddingSmall
+                            Label {
+                                id: usernamelabel
+                                text: username
+                                width: Math.min(textcolumn.width - timestamp.width - Theme.paddingSmall, contentWidth)
+                                font.pixelSize: Theme.fontSizeTiny
+                                font.family: Theme.fontFamilyHeading
+                                font.bold: true
                                 color: textcolor
-                            }//Label message
-                        }
-                        sourceComponent:
-                            if( textmesage.length === 0 )
-                                emptycomponent
-                            else
-                                messagecomponent
-                    }// Loader textlabelloader
-
-                    height:{
-                        username_row.height +
-                        textlabelloader.height +
-                        Theme.paddingSmall +
-                        filesrepeater.height
-                    }
-
-                    Repeater {
-                        id: filesrepeater
-                        property variant summaryHeight: []
-                        property bool trigger: true
-                        model: countfiles
-
-//                        onSummaryHeightChanged:{
-                        onTriggerChanged: {
-                            height = 0;
-                            for(var i = 0; i < countfiles; i++)
-                            {
-                                height += summaryHeight[i]
                             }
-                        }
+                            Label {
+                                id: timestamp
+                                text: createat
+                                font.pixelSize: Theme.fontSizeTiny
+                                font.family: Theme.fontFamilyHeading
+                                color: sectextcolor
+                                elide: Text.ElideRight
+                                horizontalAlignment: Text.AlignLeft
+                            }// Label timestamp
+                        }//Row username and timestamp
 
-                        onImplicitHeightChanged:
-                            console.log("fielsrepeater.implicitHeight " + implicitHeight)
-
-                        Component {
-                            id: fileimage
-                            BackgroundItem {
-                                id: imagebackground
-                                property size itemSize: messagesmodel.getItemSize(rowindex,fileindex,widthcontent)
-                                property size imageSourceSize: messagesmodel.getImageSize(rowindex,fileindex)
-                                property string imagePath: pathsvalid[fileindex]
-
-                                height: file_and_label.height
-                                width: itemSize.width
-
-                                onHeightChanged: {
-                                    if(height > 0)
-                                        componentHeight = height
-                                }
-
-                                Component {
-                                    id: staticimage
-
-                                    Image {
-                                        id: image
-                                        fillMode: Image.PreserveAspectFit
-                                        source: imagebackground.imagePath
-                                        sourceSize: imagebackground.imageSourceSize
-
-                                        height: imagebackground.itemSize.height
-                                        width: imagebackground.itemSize.width
-                                        onSourceChanged: {
-                                            console.log( source )
-                                        }
-                                    }//image
-                                }
-
-                                Component {
-                                    id: animatedimage
-
-                                    AnimatedImage {
-                                        id: image
-                                        fillMode: Image.PreserveAspectFit
-                                        source: imagebackground.imagePath
-                                        onStatusChanged: playing = (status == AnimatedImage.Ready)
-                                        asynchronous: true
-                                        cache: false
-//                                        sourceSize: imagebackground.imageSourceSize
-                                        height: imagebackground.itemSize.height
-                                        width: imagebackground.itemSize.width
+                        Loader {
+                            id: textlabelloader
+                            property string textmesage: messagetext
+                            property real componentheight
+                            onComponentheightChanged:
+                                height = componentheight
+                            Component {
+                                id: messagecomponent
+                                LinkedLabel {
+                                    id: textlabel
+                                    plainText: messagetext
+                                    onContentHeightChanged:
+                                    {
+                                       componentheight = contentHeight
                                     }
-                                }
+                                    width: textcolumn.width
+                                    wrapMode: Text.Wrap
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: textcolor
+                                }//Label message
+                            }
+                            sourceComponent:
+                                if( textmesage.length === 0 )
+                                    emptycomponent
+                                else
+                                    messagecomponent
+                        }// Loader textlabelloader
 
-                                Column {
-                                    id: file_and_label
-                                    width: imagebackground.itemSize.width
-                                    height: imageloader.height + imagename.height +Theme.paddingSmall
-                                    spacing: Theme.paddingSmall
-                                    Row {
-                                        id: filename_row
-                                        width: textcolumn.width
-                                        spacing: Theme.paddingMedium
-                                        Label {
-                                            id: imagename
-                                            width: Math.min(contentWidth,textcolumn.width - filename_row.spacing - filesize.width)
-                                            text: messagesmodel.getFileName(rowindex,fileindex)
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: Theme.fontSizeTiny
-                                            font.italic:  true
-                                            color: fontcolor
-                                            truncationMode: TruncationMode.Fade
-                                            height: contentHeight
-                                        }// filename label
-                                        Label {
-                                            id: filesize
-                                            width: contentWidth
-                                            text: messagesmodel.getFileSize(rowindex,fileindex)
-                                            font.family: Theme.fontFamily
-                                            font.pixelSize: Theme.fontSizeTiny
-                                            font.italic:  true
-                                            color: fontcolor
-//                                            truncationMode: TruncationMode.Fade
-                                            height: contentHeight
-                                        }// filename label
+                        Repeater {
+                            id: filesrepeater
+                            property variant summaryHeight: []
+                            property bool trigger: true
+                            model: countfiles
+
+    //                        onSummaryHeightChanged:{
+                            onTriggerChanged: {
+                                height = 0;
+                                for(var i = 0; i < countfiles; i++)
+                                {
+                                    height += summaryHeight[i]
+                                }
+                            }
+
+                            onImplicitHeightChanged:
+                                console.log("fielsrepeater.implicitHeight " + implicitHeight)
+
+                            Component {
+                                id: fileimage
+                                BackgroundItem {
+                                    id: imagebackground
+                                    property size itemSize: messagesmodel.getItemSize(rowindex,fileindex,widthcontent)
+                                    property size imageSourceSize: messagesmodel.getImageSize(rowindex,fileindex)
+                                    property string imagePath: pathsvalid[fileindex]
+
+                                    height: file_and_label.height
+                                    width: itemSize.width
+
+                                    onHeightChanged: {
+                                        if(height > 0)
+                                            componentHeight = height
                                     }
-                                    Loader {
-                                        id: imageloader
-                                        width: imagebackground.itemSize.width
-                                        height: imagebackground.itemSize.height
-                                        sourceComponent:
-                                            switch(filetype)
-                                            {
-                                            case MattermostQt.FileImage:
-                                                staticimage
-                                                break;
-                                            case MattermostQt.FileAnimatedImage:
-                                                animatedimage
-                                                break;
-                                            default:
-                                                staticimage
-                                                break;
+
+                                    Component {
+                                        id: staticimage
+
+                                        Image {
+                                            id: image
+                                            fillMode: Image.PreserveAspectFit
+                                            source: imagebackground.imagePath
+                                            sourceSize: imagebackground.imageSourceSize
+
+                                            height: imagebackground.itemSize.height
+                                            width: imagebackground.itemSize.width
+                                            onSourceChanged: {
+                                                console.log( source )
                                             }
-                                    }//imageloader
-                                }
+                                        }//image
+                                    }
 
+                                    Component {
+                                        id: animatedimage
+
+                                        AnimatedImage {
+                                            id: image
+                                            fillMode: Image.PreserveAspectFit
+                                            source: imagebackground.imagePath
+                                            onStatusChanged: playing = (status == AnimatedImage.Ready)
+                                            asynchronous: true
+                                            cache: false
+    //                                        sourceSize: imagebackground.imageSourceSize
+                                            height: imagebackground.itemSize.height
+                                            width: imagebackground.itemSize.width
+                                        }
+                                    }
+
+                                    Column {
+                                        id: file_and_label
+                                        width: imagebackground.itemSize.width
+                                        height: imageloader.height + imagename.height +Theme.paddingSmall
+                                        spacing: Theme.paddingSmall
+                                        Row {
+                                            id: filename_row
+                                            width: textcolumn.width - Theme.paddingMedium
+                                            spacing: Theme.paddingMedium
+                                            Label {
+                                                id: imagename
+                                                width: Math.min(contentWidth,textcolumn.width - filename_row.spacing - filesize.width)
+                                                text: messagesmodel.getFileName(rowindex,fileindex)
+                                                font.family: Theme.fontFamily
+                                                font.pixelSize: Theme.fontSizeTiny
+                                                font.italic:  true
+                                                color: fontcolor
+                                                truncationMode: TruncationMode.Fade
+                                                height: contentHeight
+                                            }// filename label
+                                            Label {
+                                                id: filesize
+                                                width: contentWidth
+                                                text: messagesmodel.getFileSize(rowindex,fileindex)
+                                                font.family: Theme.fontFamily
+                                                font.pixelSize: Theme.fontSizeTiny
+                                                font.italic:  true
+                                                color: fontcolor
+    //                                            truncationMode: TruncationMode.Fade
+                                                height: contentHeight
+                                            }// filename label
+                                        }
+                                        Loader {
+                                            id: imageloader
+                                            width: imagebackground.itemSize.width
+                                            height: imagebackground.itemSize.height
+                                            sourceComponent:
+                                                switch(filetype)
+                                                {
+                                                case MattermostQt.FileImage:
+                                                    staticimage
+                                                    break;
+                                                case MattermostQt.FileAnimatedImage:
+                                                    animatedimage
+                                                    break;
+                                                default:
+                                                    staticimage
+                                                    break;
+                                                }
+                                        }//imageloader
+                                    }
+
+                                    MouseArea {
+                                        id: downloadbutton
+                                        visible: true
+                                        anchors.fill: parent
+                                        onClicked: {
+                                            context.mattermost.fileStatusChanged.connect(
+                                                function onStatusChanged(fid,fstatus) {
+                                                    if(fid !==  file_id )
+                                                        return
+                                                    switch(fstatus){
+    //                                                case MattermostQt.FileDownloading:
+    //                                                    progressCircle.visible = true;
+    //                                                    break;
+                                                    case MattermostQt.FileDownloaded:
+                                                        progressCircle.visible = false
+                                                        progressCircle.enabled = false
+                                                        // here need open prepeared ImageViewPage
+                                                        pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
+                                                            {
+                                                                imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+                                                                sourceSize: imagebackground.imageSourceSize,
+                                                                animatedImage: filetype === MattermostQt.FileAnimatedImage,
+                                                                width: Screen.width
+                                                            })
+                                                    }
+                                                    filestatus = fstatus;
+                                                }
+                                            )
+                                            if( filestatus === MattermostQt.FileRemote ) {
+                                                context.mattermost.get_file(
+                                                            server_index,
+                                                            team_index,
+                                                            channel_type,
+                                                            channel_index,
+                                                            rowindex,
+                                                            fileindex)
+                                                progressCircle.visible = true;
+                                            }
+                                            else if( filestatus === MattermostQt.FileDownloaded ) {
+                                                pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
+                                                    {
+                                                        imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+                                                        animatedImage: filetype === MattermostQt.FileAnimatedImage,
+                                                        sourceSize: imagebackground.imageSourceSize,
+                                                        width: Screen.width
+                                                    })
+                                            }
+                                        }
+                                    } // MouseArea downloadbutton
+                                    ProgressCircle {
+                                        id: progressCircle
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        visible: false
+                                        value: filestatus === MattermostQt.FileDownloading
+                                        onVisibleChanged: {
+                                            context.mattermost.fileDownloadingProgress.connect(
+                                                function onDownloading(id_of_file,progress) {
+                                                    if(id_of_file === file_id)
+                                                        value = progress
+                                                }
+                                            )
+                                        }
+                                    }//ProgressCircle
+                                }
+                            }// file image component
+
+                            Component {
+                                id: filedocument
                                 MouseArea {
-                                    id: downloadbutton
-                                    visible: true
-                                    anchors.fill: parent
+                                    height: Math.max(image.height, imagelabel.height)
+                                    width: widthcontent
+
                                     onClicked: {
                                         context.mattermost.fileStatusChanged.connect(
                                             function onStatusChanged(fid,fstatus) {
                                                 if(fid !==  file_id )
                                                     return
                                                 switch(fstatus){
-//                                                case MattermostQt.FileDownloading:
-//                                                    progressCircle.visible = true;
-//                                                    break;
+                                                case MattermostQt.FileDownloading:
+                                                    progressCircle.visible = true;
+                                                    break;
                                                 case MattermostQt.FileDownloaded:
                                                     progressCircle.visible = false
                                                     progressCircle.enabled = false
-                                                    // here need open prepeared ImageViewPage
-                                                    pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
-                                                        {
-                                                            imagePath: messagesmodel.getFilePath(rowindex,fileindex),
-                                                            sourceSize: imagebackground.imageSourceSize,
-                                                            animatedImage: filetype === MattermostQt.FileAnimatedImage,
-                                                            width: Screen.width
-                                                        })
                                                 }
                                                 filestatus = fstatus;
                                             }
@@ -411,173 +493,113 @@ Page {
                                             progressCircle.visible = true;
                                         }
                                         else if( filestatus === MattermostQt.FileDownloaded ) {
-                                            pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
-                                                {
-                                                    imagePath: messagesmodel.getFilePath(rowindex,fileindex),
-                                                    animatedImage: filetype === MattermostQt.FileAnimatedImage,
-                                                    sourceSize: imagebackground.imageSourceSize,
-                                                    width: Screen.width
-                                                })
+    //                                        pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
+    //                                            {
+    //                                                imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+    //                                                sourceSize: imagebackground.imageSourceSize,
+    //                                                width: Screen.width
+    //                                            })
                                         }
                                     }
-                                } // MouseArea downloadbutton
-                                ProgressCircle {
-                                    id: progressCircle
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    visible: false
-                                    value: filestatus === MattermostQt.FileDownloading
-                                    onVisibleChanged: {
-                                        context.mattermost.fileDownloadingProgress.connect(
-                                            function onDownloading(id_of_file,progress) {
-                                                if(id_of_file === file_id)
-                                                    value = progress
-                                            }
-                                        )
-                                    }
-                                }//ProgressCircle
-                            }
-                        }// file image component
 
-                        Component {
-                            id: filedocument
-                            MouseArea {
-                                height: Math.max(image.height, imagelabel.height)
-                                width: widthcontent
+                                    Row {
+                                        id: fdrow
+                                        anchors.fill: parent
+                                        spacing: Theme.paddingSmall
 
-                                onClicked: {
-                                    context.mattermost.fileStatusChanged.connect(
-                                        function onStatusChanged(fid,fstatus) {
-                                            if(fid !==  file_id )
-                                                return
-                                            switch(fstatus){
-                                            case MattermostQt.FileDownloading:
-                                                progressCircle.visible = true;
-                                                break;
-                                            case MattermostQt.FileDownloaded:
-                                                progressCircle.visible = false
-                                                progressCircle.enabled = false
-                                            }
-                                            filestatus = fstatus;
+                                        onHeightChanged: {
+                                            if(height > 0)
+                                                componentHeight = height
                                         }
-                                    )
-                                    if( filestatus === MattermostQt.FileRemote ) {
-                                        context.mattermost.get_file(
-                                                    server_index,
-                                                    team_index,
-                                                    channel_type,
-                                                    channel_index,
-                                                    rowindex,
-                                                    fileindex)
-                                        progressCircle.visible = true;
+
+                                        Image {
+                                            id: image
+                                            fillMode: Image.PreserveAspectFit
+                                            source: Theme.iconForMimeType(messagesmodel.getFileMimeType(rowindex,fileindex))
+                                            sourceSize.width: Theme.iconSizeMedium
+                                            sourceSize.height: Theme.iconSizeMedium
+                                            height: Theme.iconSizeMedium
+                                            width: Theme.iconSizeMedium
+                                        }//image
+
+                                        Label {
+                                            id: imagelabel
+                                            text: messagesmodel.getFileName(rowindex,fileindex)
+                                            anchors.verticalCenter: image.verticalCenter
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Theme.fontSizeSmall
+                                            font.italic:  true
+                                            color: fontcolor
+                                            truncationMode: TruncationMode.Fade
+                                            width: widthcontent - fdrow.spacing*3 - image.width - filesize.width
+                                            height: contentHeight
+                                        } // label with filename
+
+                                        Label {
+                                            id: filesize
+                                            width: contentWidth
+                                            text: messagesmodel.getFileSize(rowindex,fileindex)
+                                            anchors.verticalCenter: image.verticalCenter
+                                            font.family: Theme.fontFamily
+                                            font.pixelSize: Theme.fontSizeTiny
+                                            font.italic:  true
+                                            color: fontcolor
+                                            height: contentHeight
+                                        }// filename label
                                     }
-                                    else if( filestatus === MattermostQt.FileDownloaded ) {
-//                                        pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
-//                                            {
-//                                                imagePath: messagesmodel.getFilePath(rowindex,fileindex),
-//                                                sourceSize: imagebackground.imageSourceSize,
-//                                                width: Screen.width
-//                                            })
-                                    }
+
+                                    ProgressCircle {
+                                        id: progressCircle
+                                        anchors.verticalCenter: fdrow.verticalCenter
+                                        anchors.left: fdrow.left
+                                        visible: false
+                                        value: 0
+                                        width: image.width
+                                        height: image.height
+                                        onVisibleChanged: {
+                                            context.mattermost.fileDownloadingProgress.connect(
+                                                function onDownloading(id_of_file,progress) {
+                                                    if(id_of_file === file_id)
+                                                        value = progress
+                                                }
+                                            )
+                                        }
+                                    }//ProgressCircle
                                 }
-
-                                Row {
-                                    id: fdrow
-                                    anchors.fill: parent
-                                    spacing: Theme.paddingSmall
-
-                                    onHeightChanged: {
-                                        if(height > 0)
-                                            componentHeight = height
-                                    }
-
-                                    Image {
-                                        id: image
-                                        fillMode: Image.PreserveAspectFit
-                                        source: Theme.iconForMimeType(messagesmodel.getFileMimeType(rowindex,fileindex))
-                                        sourceSize.width: Theme.iconSizeMedium
-                                        sourceSize.height: Theme.iconSizeMedium
-                                        height: Theme.iconSizeMedium
-                                        width: Theme.iconSizeMedium
-                                    }//image
-
-                                    Label {
-                                        id: imagelabel
-                                        text: messagesmodel.getFileName(rowindex,fileindex)
-                                        anchors.verticalCenter: image.verticalCenter
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fontSizeSmall
-                                        font.italic:  true
-                                        color: fontcolor
-                                        truncationMode: TruncationMode.Fade
-                                        width: widthcontent - fdrow.spacing*3 - image.width - filesize.width
-                                        height: contentHeight
-                                    } // label with filename
-
-                                    Label {
-                                        id: filesize
-                                        width: contentWidth
-                                        text: messagesmodel.getFileSize(rowindex,fileindex)
-                                        anchors.verticalCenter: image.verticalCenter
-                                        font.family: Theme.fontFamily
-                                        font.pixelSize: Theme.fontSizeTiny
-                                        font.italic:  true
-                                        color: fontcolor
-                                        height: contentHeight
-                                    }// filename label
-                                }
-
-                                ProgressCircle {
-                                    id: progressCircle
-                                    anchors.verticalCenter: fdrow.verticalCenter
-                                    anchors.left: fdrow.left
-                                    visible: false
-                                    value: 0
-                                    width: image.width
-                                    height: image.height
-                                    onVisibleChanged: {
-                                        context.mattermost.fileDownloadingProgress.connect(
-                                            function onDownloading(id_of_file,progress) {
-                                                if(id_of_file === file_id)
-                                                    value = progress
-                                            }
-                                        )
-                                    }
-                                }//ProgressCircle
-                            }
-                        }
-
-                        Loader {//for different file types
-                            id: fileitemloader
-                            property int   rowindex: indexrow
-                            property color fontcolor: textcolor
-                            property real  widthcontent: textcolumn.width - Theme.paddingSmall
-                            property int   filetype    : messagesmodel.getFileType(indexrow,index)
-                            property int   filestatus  : messagesmodel.getFileStatus(indexrow,index)
-                            property string file_id    : messagesmodel.getFileId(indexrow,index)
-                            property int   fileindex   : index
-                            property real  componentHeight: 0
-
-                            onComponentHeightChanged:{
-                                filesrepeater.summaryHeight[index] = componentHeight + textcolumn.spacing
-                                filesrepeater.trigger = !filesrepeater.trigger;
                             }
 
-                            sourceComponent:
-                                switch(filetype)
-                                {
-                                case MattermostQt.FileImage:
-                                case MattermostQt.FileAnimatedImage:
-                                    fileimage
-                                    break;
-                                case MattermostQt.FileDocument:
-                                default:
-                                    filedocument
-                                    break;
+                            Loader {//for different file types
+                                id: fileitemloader
+                                property int   rowindex: indexrow
+                                property color fontcolor: textcolor
+                                property real  widthcontent: textcolumn.width - Theme.paddingSmall
+                                property int   filetype    : messagesmodel.getFileType(indexrow,index)
+                                property int   filestatus  : messagesmodel.getFileStatus(indexrow,index)
+                                property string file_id    : messagesmodel.getFileId(indexrow,index)
+                                property int   fileindex   : index
+                                property real  componentHeight: 0
+
+                                onComponentHeightChanged:{
+                                    filesrepeater.summaryHeight[index] = componentHeight + textcolumn.spacing
+                                    filesrepeater.trigger = !filesrepeater.trigger;
                                 }
-                        }// Loader for files
-                    }//Repeater of attached files
-                }//Column
+
+                                sourceComponent:
+                                    switch(filetype)
+                                    {
+                                    case MattermostQt.FileImage:
+                                    case MattermostQt.FileAnimatedImage:
+                                        fileimage
+                                        break;
+                                    case MattermostQt.FileDocument:
+                                    default:
+                                        filedocument
+                                        break;
+                                    }
+                            }// Loader for files
+                        }//Repeater of attached files
+                    }//Column
+                }
             }// Row
         }// Component messagelabel
 

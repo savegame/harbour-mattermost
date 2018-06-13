@@ -352,7 +352,7 @@ void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 
 void MessagesModel::slot_messageAdded(QList<MattermostQt::MessagePtr> messages)
 {
-	if(messages.isEmpty())
+	if(messages.isEmpty() || m_channel.isNull() )
 		return;
 	if(messages.begin()->data()->m_channel_id.compare(m_channel->m_id) != 0)
 		return;
