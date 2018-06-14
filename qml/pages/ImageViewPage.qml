@@ -19,7 +19,7 @@ Page {
                 source: (animatedImage)?imagePath:""
                 fillMode: Image.PreserveAspectFit
                 cache: false
-                //asynchronous: true
+                asynchronous: true
                 anchors.fill: parent
                 visible: animatedImage
 //                x: loader_x

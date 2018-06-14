@@ -26,7 +26,7 @@ public:
 	SettingsContainer() : QObject()
 	{// Default settings
 		m_auto_download_image_size = 500 * 1024; // 500 Kb
-		m_show_blobs = true;
+		m_show_blobs = false;
 		m_blobs_opacity = 1.0;
 	}
 

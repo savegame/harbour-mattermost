@@ -337,7 +337,6 @@ Page {
                                             onStatusChanged: playing = (status == AnimatedImage.Ready)
                                             asynchronous: true
                                             cache: false
-    //                                        sourceSize: imagebackground.imageSourceSize
                                             height: imagebackground.itemSize.height
                                             width: imagebackground.itemSize.width
                                         }
@@ -350,11 +349,11 @@ Page {
                                         spacing: Theme.paddingSmall
                                         Row {
                                             id: filename_row
-                                            width: textcolumn.width - Theme.paddingMedium
+                                            width: textcolumn.width
                                             spacing: Theme.paddingMedium
                                             Label {
                                                 id: imagename
-                                                width: Math.min(contentWidth,textcolumn.width - filename_row.spacing - filesize.width)
+                                                width: Math.min(contentWidth,textcolumn.width - filename_row.spacing - filesize.width - Theme.paddingMedium)
                                                 text: messagesmodel.getFileName(rowindex,fileindex)
                                                 font.family: Theme.fontFamily
                                                 font.pixelSize: Theme.fontSizeTiny
