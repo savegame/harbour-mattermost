@@ -123,12 +123,21 @@ public:
 	Q_ENUMS(ServerState)
 
 	enum UserStatus : int {
+		UserNoStatus,
 		UserOnline,
 		UserAway,
 		UserOffline,
 		UserDnd
 	};
 	Q_ENUMS(UserStatus)
+
+	enum UserDataRole {
+		UserStatusRole = Qt::UserRole + 100,
+		UserImageRole,
+		UserNameRole,
+		UserLastActivityRole
+	};
+	Q_ENUMS(UserDataRole)
 
 	/**
 	 * @brief The FileContainer struct
@@ -213,19 +222,34 @@ public:
 	{
 		UserContainer() noexcept {
 			m_update_at = 0;
+			m_last_activity_at = 0;
 		}
 
 		UserContainer(QJsonObject object);
+
+		bool operator ==(const UserContainer &other) const {
+			return other.m_id == m_id;
+		}
+
+		bool operator !=(const UserContainer &other) const {
+			return other.m_id != m_id;
+		}
+
+		bool operator >(const UserContainer &other) const {
+			return other.m_id > m_id;
+		}
+
+		bool operator <(const UserContainer &other) const {
+			return other.m_id < m_id;
+		}
+
 		QString m_id;
 //		qlonglong m_create_at;
 		qlonglong m_update_at;
 		//"delete_at": 0,
 		QString m_username;
-		//"first_name": "string",
 		QString m_first_name;
-		//"last_name": "string",
 		QString m_last_name;
-		//"nickname": "string",
 		QString m_nickname;
 		//"email": "string",
 		//"email_verified": true,
@@ -242,14 +266,14 @@ public:
 		//	"first_name": "string"
 		//},
 		//"props": { },
-		//"last_password_update": 0,
 		qlonglong m_last_password_update;
-		//"last_picture_update": 0,
 		qlonglong m_last_picture_update;
+		qlonglong m_last_activity_at;
 		//"failed_attempts": 0,
 		//"mfa_active": true
 
 		int m_self_index;
+		UserStatus  m_status;
 		QString m_image_path;
 	};
 	typedef QSharedPointer<UserContainer> UserPtr;
@@ -471,7 +495,8 @@ Q_SIGNALS:
 	void messageUpdated(QList<MessagePtr> messages);
 	void updateMessage(MessagePtr m,int role);
 	void messageDeleted(MessagePtr message);
-	void userUpdated(UserPtr user);
+	void userUpdated(UserPtr user, QVector<int> roles);
+	void usersUpdated(QVector<UserPtr> users, QVector<int> roles);
 	void fileStatusChanged(QString file_id, int status);
 	void fileUploaded(int server_index, int file_sc_index);
 //	void fileUploaded(FilePtr file);
@@ -551,7 +576,11 @@ protected:
 	void event_posted(ServerPtr sc, QJsonObject data);
 	void event_post_edited(ServerPtr sc, QJsonObject object);
 	void event_post_deleted(ServerPtr sc, QJsonObject data);
+	void event_status_change(ServerPtr sc, QJsonObject data);
 
+	// helper functions
+	inline UserStatus str2status(const QString &s) const;
+	inline UserPtr    id2user(ServerPtr sc, const QString &id) const;
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
 	void replySSLErrors(QNetworkReply *reply, QList<QSslError> errors);
@@ -567,6 +596,7 @@ protected Q_SLOTS:
 	/** slot for QTimer */
 	void slot_get_teams_unread();
 	void slot_recconect_servers();
+	void slot_user_status();
 protected:
 	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
@@ -582,6 +612,8 @@ protected:
 
 	int    m_update_server_timeout;
 	QTimer m_reconnect_server;
+	int    m_user_status_timeout;
+	QTimer m_user_status_timer;
 
 	/** channels, need update before put to model */
 	//	QList<ChannelContainer>   m_stackedChannels;

@@ -91,16 +91,32 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 		break;
 	case AvatarPath:
 		// show mattermost icon if no Avatar loaded
-		if(channel.isNull())
-			return QVariant("");
-		if( channel->m_dc_user_index < 0 )
-			return QVariant("");
-		if ( channel->m_type != MattermostQt::ChannelDirect )
-			return QVariant("");
-		MattermostQt::ServerPtr server = m_mattermost->m_server[channel->m_server_index];
-		MattermostQt::UserPtr user = server->m_user[channel->m_dc_user_index];
-		QString path = user->m_image_path;
-		return path;
+		{
+			if(channel.isNull())
+				return QVariant("");
+			if( channel->m_dc_user_index < 0 )
+				return QVariant("");
+			if ( channel->m_type != MattermostQt::ChannelDirect )
+				return QVariant("");
+			MattermostQt::ServerPtr server = m_mattermost->m_server[channel->m_server_index];
+			MattermostQt::UserPtr user = server->m_user[channel->m_dc_user_index];
+			QString path = user->m_image_path;
+			return path;
+		}
+		break;
+	case UserStatus:
+		{
+			if(channel.isNull())
+				return QVariant(0);
+			if( channel->m_dc_user_index < 0 )
+				return QVariant(0);
+			if ( channel->m_type != MattermostQt::ChannelDirect )
+				return QVariant(0);
+			MattermostQt::ServerPtr server = m_mattermost->m_server[channel->m_server_index];
+			MattermostQt::UserPtr user = server->m_user[channel->m_dc_user_index];
+			int current_status = user->m_status;
+			return QVariant((int)user->m_status);
+		}
 		break;
 	}
 	return QVariant();
@@ -154,6 +170,7 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	roleNames[DataRoles::TeamIndex]  = QLatin1String("team_index").data();
 	roleNames[DataRoles::ChannelType]  = QLatin1String("channel_type").data();
 	roleNames[DataRoles::AvatarPath]  = QLatin1String("avatar_path").data();
+	roleNames[DataRoles::UserStatus]  = QLatin1String("user_status").data();
 	return roleNames;
 }
 
@@ -169,6 +186,8 @@ void ChannelsModel::setMattermost(MattermostQt *mattermost)
 	connect( m_mattermost.data(), &MattermostQt::channelAdded, this, &ChannelsModel::slot_channelAdded );
 	connect( m_mattermost.data(), &MattermostQt::channelsList, this, &ChannelsModel::slot_channelsList );
 	connect( m_mattermost.data(), &MattermostQt::updateChannel, this, &ChannelsModel::slot_updateChannel );
+	connect( m_mattermost.data(), &MattermostQt::usersUpdated, this, &ChannelsModel::slot_usersUpdated );
+	connect( m_mattermost.data(), &MattermostQt::userUpdated, this, &ChannelsModel::slot_userUpdated );
 }
 
 void ChannelsModel::clear()
@@ -283,6 +302,34 @@ void ChannelsModel::slot_updateChannel(MattermostQt::ChannelPtr channel, QVector
 	}
 	QModelIndex ci = index(headerIndex);
 	dataChanged(ci,ci,roles);
+}
+
+void ChannelsModel::slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles)
+{
+	int headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
+	int endIndex = m_header.size();
+
+	QModelIndex ibegin = index(headerIndex);
+	QModelIndex iend = index(endIndex);
+	dataChanged(ibegin,iend,roles);
+}
+
+void ChannelsModel::slot_userUpdated(MattermostQt::UserPtr user, QVector<int> roles)
+{
+	int headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
+	int endIndex = m_header.size();
+
+	for(int i = headerIndex; i < endIndex; i++)
+	{
+		if(m_channel[i]->m_dc_user_index == user->m_self_index)
+		{
+			headerIndex = i;
+			break;
+		}
+	}
+
+	QModelIndex ibegin = index(headerIndex);
+	dataChanged(ibegin,ibegin,roles);
 }
 
 //void ChannelsModel::setMattermost(MattermostQt *mattermost)

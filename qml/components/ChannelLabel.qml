@@ -13,6 +13,7 @@ Item {
     property int _type
     property int channelType
     property string directChannelImage
+    property int directChannelUserStatus: MattermostQt.UserNoStatus
 
     height: loader.itemHeight
 
@@ -58,27 +59,105 @@ Item {
         id: direct_channel
         Row {
             spacing: Theme.paddingMedium
-            Image {
-                id: userimage
-                source: directChannelImage
+            BackgroundItem {
+                id: avataritem
+                enabled: false
+
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
 
-                Rectangle {
-                    id: roundmask
+                Image {
+                    id: userimage
+                    source: directChannelImage
                     anchors.fill: parent
-                    width: Theme.iconSizeMedium
-                    height: Theme.iconSizeMedium
-                    radius: Theme.iconSizeMedium
-                    visible: false
+
+//                    Rectangle {
+//                        id: roundmask
+//                        anchors.fill: parent
+//                        width: parent.width
+//                        height: parent.width
+//                        radius: width
+//                        visible: false
+
+//                        Rectangle {
+//                            id: statusindicatormask
+//                            width:  parent.width * 0.35 + Theme.paddingSmall
+//                            height: width
+//                            radius: width // its circle
+////                            visible: false
+//                            anchors {
+//                                right: parent.right
+//                                bottom: parent.bottom
+//                                rightMargin: -Theme.paddingSmall*0.5
+//                                bottomMargin: -Theme.paddingSmall*0.5
+//                            }
+//                            color: "black"
+//                        }
+////                        layer.enabled:true
+////                        layer.effect: OpacityMask {
+////                            maskSource: statusindicatormask
+////                        }
+//                    }
+
+                    Canvas {
+                        id: roundmask
+                        anchors.fill: parent
+                        width: parent.width
+                        height: parent.width
+                        visible: false
+
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            var center = width*0.5;
+                            ctx.fillStyle = Qt.rgba(1, 0, 0, 1);
+                            //ctx.fillRect(0, 0, width, height);
+//                            ctx.
+                            ctx.ellipse(0,0,width,height)
+                            ctx.fill()
+                            //ctx.reset()
+                            ctx.fillStyle = Qt.rgba(1,0,0,1);
+                            ctx.ellipse(width*0.5,width*0.5,width,width)
+                            ctx.fill()
+                        }
+                    }
+
+                    // TODO generate avatars in CPP code!!!!
+                    layer.enabled:true
+                    layer.effect: OpacityMask {
+                        maskSource: roundmask
+                    }
                 }
-                // TODO generate avatars in CPP code!!!!
-                layer.enabled:true
-                layer.effect: OpacityMask {
-                    maskSource: roundmask
+
+                Rectangle {
+                    id: statusindicator
+                    width:  avataritem.width * 0.35
+                    height: avataritem.width * 0.35
+                    radius: width // i mean its circle
+                    anchors {
+                        right: parent.right
+                        bottom: parent.bottom
+                    }
+                    property int userStatus : directChannelUserStatus
+                    color: "gray"
+
+                    onUserStatusChanged:
+                        switch(userStatus) {
+                        case MattermostQt.UserOnline:
+                            color = "green"
+                            break;
+                        case MattermostQt.UserAway:
+                            color = "yellow"
+                            break;
+                        case MattermostQt.UserDnd:
+                            color = "red"
+                            break;
+                        default:
+                        case MattermostQt.UserOffline:
+                            color = "gray"
+                            break;
+                        }
                 }
             }
-
             Label {
                 id: labelname
                 text: _display_name

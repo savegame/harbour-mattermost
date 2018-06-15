@@ -22,7 +22,10 @@ public:
 		ServerIndex,
 		TeamIndex,
 		ChannelType,
-		AvatarPath,
+		AvatarPath = MattermostQt::UserImageRole,
+		UserStatus = MattermostQt::UserStatusRole,
+		UserActivity = MattermostQt::UserLastActivityRole,
+		UserName = MattermostQt::UserNameRole,
 	};
 
 	enum ItemType {
@@ -71,6 +74,8 @@ protected Q_SLOTS:
 	void slot_channelAdded(MattermostQt::ChannelPtr channel);
 	void slot_channelsList(QList<MattermostQt::ChannelPtr> list);
 	void slot_updateChannel(MattermostQt::ChannelPtr channel, QVector<int> roles);
+	void slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles);
+	void slot_userUpdated(MattermostQt::UserPtr user, QVector<int> roles);
 private:
 //	QVector<QString> m_display_name;
 	QVector<QString> m_header;

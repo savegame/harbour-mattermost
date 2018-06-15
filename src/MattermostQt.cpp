@@ -74,7 +74,12 @@ MattermostQt::MattermostQt()
 
 	m_update_server_timeout = 5000; // in millisecs
 	m_reconnect_server.setInterval(m_update_server_timeout);
+	m_user_status_timeout = 1000;  // one minute
+	m_user_status_timer.setInterval(m_user_status_timeout);
+	m_user_status_timer.setSingleShot(false);
+
 	connect( &m_reconnect_server, SIGNAL(timeout()), SLOT(slot_recconect_servers()) );
+	connect( &m_user_status_timer, SIGNAL(timeout()), SLOT(slot_user_status()) );
 
 	connect(m_networkManager.data(), SIGNAL(finished(QNetworkReply*)),
 	        this, SLOT(replyFinished(QNetworkReply*)));
@@ -981,6 +986,12 @@ void MattermostQt::post_users_status(int server_index)
 	QUrl url(sc->m_url);
 	url.setPath(urlString);
 	QNetworkRequest request;
+
+	if(sc->m_user.isEmpty())
+	{
+		//m_user_status_timer.start(1000);
+		return;
+	}
 
 	QJsonDocument json;
 	QJsonArray ids;
@@ -1966,8 +1977,17 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 
 void MattermostQt::reply_post_users_status(QNetworkReply *reply)
 {
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	if(server_index < 0 || server_index >= m_server.size() )
+	{
+		qWarning() << "Wrong server index ";
+		return;
+	}
+	ServerPtr sc = m_server[server_index];
 	QByteArray replyData = reply->readAll();
 	QJsonDocument json = QJsonDocument::fromJson(replyData);
+	QVector<UserPtr> users;
+	users.reserve(sc->m_user.size());
 	if( !json.isEmpty())
 	{
 		if(json.isArray() )
@@ -1975,6 +1995,20 @@ void MattermostQt::reply_post_users_status(QNetworkReply *reply)
 			QJsonArray array = json.array();
 			for( int i = 0; i < array.size(); i++ )
 			{
+				QJsonObject userObject = array[i].toObject();
+				QString id = userObject["user_id"].toString();
+				UserPtr current = id2user(sc,id);
+				if(current)
+				{
+					QString s = userObject["status"].toString();
+					UserStatus status = str2status(s);
+					if( current->m_status != status )
+					{
+						current->m_status = status;
+						current->m_last_activity_at = (qlonglong)userObject["last_activity_at"].toDouble(0);
+						users << current;
+					}
+				}
 			}
 		}
 		else
@@ -1982,6 +2016,11 @@ void MattermostQt::reply_post_users_status(QNetworkReply *reply)
 	}
 	else if ( replyData.size() > 0 )
 		qWarning() << replyData.data();
+	if(users.empty()) return;
+	// then send signal with updated users
+	QVector<int> roles;
+	roles << UserLastActivityRole << UserStatusRole;
+	emit usersUpdated(users,roles);
 }
 
 void MattermostQt::reply_error(QNetworkReply *reply)
@@ -2377,7 +2416,9 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 				break;
 			}
 		}
-		emit userUpdated(user);
+		QVector<int> roles;
+		roles << UserImageRole;
+		emit userUpdated(user,roles);
 	}
 	else
 		qWarning() << "User image not found!";
@@ -2654,6 +2695,47 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject obj
 		}
 		return;
 	}
+}
+
+void MattermostQt::event_status_change(MattermostQt::ServerPtr sc, QJsonObject data)
+{
+	qDebug() << data;
+	//{"status":"online","user_id":"gqr15ebytjg7znhh4boz74foxy"}
+	UserStatus status = str2status(data["status"].toString());
+	UserPtr current = id2user(sc,data["user_id"].toString());
+	if(!current)
+	{// TODO try to send request for user (if it not found)
+		// and mark this request (that requested from here)
+		return; // FIXME
+	}
+	current->m_status = status;
+	QVector<int> roles;
+	roles << UserStatusRole;
+	emit userUpdated(current, roles);
+}
+
+MattermostQt::UserStatus MattermostQt::str2status(const QString &s) const
+{
+	if( s.compare("online") == 0 )
+		return UserOnline;
+	else if( s.compare("away") == 0 )
+		return UserAway;
+	else if( s.compare("offline") == 0 )
+		return UserOffline;
+	else if( s.compare("dnd") == 0 )
+		return UserDnd;//do not disturb
+	return UserNoStatus;
+}
+
+MattermostQt::UserPtr MattermostQt::id2user(ServerPtr sc, const QString &id) const
+{
+	// is not fast algorith. but now use it
+	for(int i = 0; sc->m_user.size(); i++)
+	{
+		if( sc->m_user[i]->m_id == id )
+			return sc->m_user[i];
+	}
+	return UserPtr();
 }
 
 void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject data)
@@ -3036,6 +3118,8 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	{
 		qDebug() << event;
 		save_settings();
+		//m_user_status_timer.setSingleShot(false);
+		m_user_status_timer.start();
 		emit serverConnected(sc->m_self_index);
 	}
 	else _compare(posted)
@@ -3044,6 +3128,8 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	    event_post_edited(sc,object);
 	else _compare(post_deleted)
 	    event_post_deleted(sc,data);
+	else _compare(status_change)
+	    event_status_change(sc,data);
 	else
 	    qWarning() << event;
 /** that need release first */
@@ -3075,7 +3161,6 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 //preference_changed
 //preferences_changed
 //preferences_deleted
-//status_change
 //webrtc
 //authentication_challenge
 //license_changed
@@ -3113,6 +3198,14 @@ void MattermostQt::slot_recconect_servers()
 
 			m_server[i]->m_socket->open(url);
 		}
+	}
+}
+
+void MattermostQt::slot_user_status()
+{
+	for(int i = 0; i < m_server.size(); i ++ )
+	{
+		post_users_status(i);
 	}
 }
 
@@ -3267,6 +3360,7 @@ bool MattermostQt::ChannelContainer::load_json(QString server_dir_path)
 
 MattermostQt::UserContainer::UserContainer(QJsonObject object)
 {
+	m_status = UserNoStatus;
 	//"id": "string",
 	m_id = object["id"].toString();
 	//"create_at": 0,
@@ -3297,10 +3391,9 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	//  "first_name": "string"
 	//},
 	//"props": { },
-	//"last_password_update": 0,
 	m_last_password_update = (qlonglong)object["last_password_update"].toDouble();
-	//"last_picture_update": 0,
 	m_last_picture_update = (qlonglong)object["last_picture_update"].toDouble();
+	m_last_activity_at = 0;
 	//"failed_attempts": 0,
 	//"mfa_active": true
 }
