@@ -53,20 +53,20 @@
 <context>
     <name>CoverPage</name>
     <message>
-        <source>Connecting</source>
-        <translation>Соединение</translation>
+        <source>Offline</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Error</source>
-        <translation>Ошибка соединеия</translation>
-    </message>
-    <message>
-        <source>Offline</source>
-        <translation>Не в сети</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Online</source>
-        <translation>В сети</translation>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connecting</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

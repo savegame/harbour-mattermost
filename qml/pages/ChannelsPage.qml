@@ -113,10 +113,7 @@ Page {
                     channelType: channel_type
                     directChannelImage: avatar_path
                     directChannelUserStatus: user_status
-
-                    onDirectChannelUserStatusChanged: {
-                        console.log("User " + _display_name + " status is \"" + directChannelUserStatus +"\"")
-                    }
+                    context: channelspage.context
 
                     x: Theme.horizontalPageMargin
                     anchors {

@@ -33,7 +33,8 @@ public:
 		UserId,
 		CreateAt,
 		IsEdited,
-		MessageIndex
+		MessageIndex,
+		UserStatus = MattermostQt::UserStatusRole,
 	};
 
 public:
@@ -80,12 +81,14 @@ protected slots:
 	void slot_messageDeleted(MattermostQt::MessagePtr message);
 	void slot_updateMessage(MattermostQt::MessagePtr message, int role);
 	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
+	void slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles);
+	void slot_userUpdated(MattermostQt::UserPtr user, QVector<int> roles);
 //	void slot_fileStatusChanged(MattermostQt::FilePtr file);
 private:
 	QString                            m_channel_id;
 	MattermostQt::ChannelPtr           m_channel;
 	QVector<MattermostQt::MessagePtr>  m_messages;
-	QVector<MattermostQt::UserPtr>     m_users;
+//	xxQVector<MattermostQt::UserPtr>     m_users;
 	QPointer<MattermostQt>             m_mattermost;
 };
 

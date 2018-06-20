@@ -172,33 +172,150 @@ Page {
                        Theme.secondaryColor
                        break
                     }
+//                BackgroundItem {
+//                    id: avataritem
+//                    height: Theme.iconSizeMedium
+//                    width: Theme.iconSizeMedium
+//                    enabled: false
+
+//                    Rectangle {
+//                        id: roundmask
+//                        anchors.centerIn: parent
+//                        width: Theme.iconSizeMedium
+//                        height: Theme.iconSizeMedium
+//                        radius: Theme.iconSizeMedium
+//                        visible: false
+//                    }
+//                    // TODO generate avatars in CPP code!!!!
+
+//                    Image{
+//                        source: imagepath
+//                        anchors.fill: parent
+//                        fillMode: Image.PreserveAspectFit
+//                        height: Theme.iconSizeMedium
+//                        width: Theme.iconSizeMedium
+
+//                        layer.enabled:true
+//                        layer.effect: OpacityMask {
+//                            maskSource: roundmask
+//                        }
+//                    }
+
+//                    Rectangle {
+//                        id: statusindicator
+//                        width:  avataritem.width * 0.35
+//                        height: avataritem.width * 0.35
+//                        radius: width // i mean its circle
+//                        anchors {
+//                            right: parent.right
+//                            bottom: parent.bottom
+//                        }
+//                        property int userStatus : userstatus
+//                        color:
+//                            switch(userStatus) {
+//                            case MattermostQt.UserOnline:
+//                                "green"
+//                                break;
+//                            case MattermostQt.UserAway:
+//                                "yellow"
+//                                break;
+//                            case MattermostQt.UserDnd:
+//                                "red"
+//                                break;
+//                            default:
+//                            case MattermostQt.UserOffline:
+//                                "gray"
+//                                break;
+//                            }
+
+//                        onUserStatusChanged:
+//                            switch(userStatus) {
+//                            case MattermostQt.UserOnline:
+//                                color = "green"
+//                                break;
+//                            case MattermostQt.UserAway:
+//                                color = "yellow"
+//                                break;
+//                            case MattermostQt.UserDnd:
+//                                color = "red"
+//                                break;
+//                            default:
+//                            case MattermostQt.UserOffline:
+//                                color = "gray"
+//                                break;
+//                            }
+//                    }
+//                }
                 BackgroundItem {
                     id: avataritem
-                    height: Theme.iconSizeMedium
-                    width: Theme.iconSizeMedium
+                    enabled: false
 
-                    Rectangle {
-                        id: roundmask
-                        anchors.centerIn: parent
-                        width: Theme.iconSizeMedium
-                        height: Theme.iconSizeMedium
-                        radius: Theme.iconSizeMedium
-                        visible: false
-                    }
-                    // TODO generate avatars in CPP code!!!!
-                    layer.enabled:true
-                    layer.effect: OpacityMask {
-                        maskSource: roundmask
-                    }
+                    width: context.avatarSize
+                    height: context.avatarSize
 
-                    Image{
+                    Image {
+                        id: userimage
                         source: imagepath
                         anchors.fill: parent
-                        fillMode: Image.PreserveAspectFit
-                        height: Theme.iconSizeMedium
-                        width: Theme.iconSizeMedium
+
+                        Image {
+                            id: roundmask
+                            anchors.fill: parent
+                            width: parent.width
+                            height: parent.width
+                            source: Qt.resolvedUrl("qrc:/resources/status/status_mask.svg")
+                            visible: false
+                        }
+
+                        // TODO generate avatars in CPP code!!!!
+                        layer.enabled:true
+                        layer.effect: OpacityMask {
+                            maskSource: roundmask
+                        }
+                    }
+
+                    Image {
+                        id: statusindicator
+                        anchors {
+                            fill: parent
+                        }
+                        property int userStatus : userstatus
+                        source:
+                            switch(userStatus) {
+                            case MattermostQt.UserOnline:
+                                Qt.resolvedUrl("qrc:/resources/status/status_online.svg")
+                                break;
+                            case MattermostQt.UserAway:
+                                Qt.resolvedUrl("qrc:/resources/status/status_away.svg")
+                                break;
+                            case MattermostQt.UserDnd:
+                                Qt.resolvedUrl("qrc:/resources/status/status_dnd.svg")
+                                break;
+                            default:
+                            case MattermostQt.UserOffline:
+                                Qt.resolvedUrl("qrc:/resources/status/status_offline.svg")
+                                break;
+                            }
+
+                        onUserStatusChanged:
+                            switch(userStatus) {
+                            case MattermostQt.UserOnline:
+                                Qt.resolvedUrl("qrc:/resources/status/status_online.svg")
+                                break;
+                            case MattermostQt.UserAway:
+                                Qt.resolvedUrl("qrc:/resources/status/status_away.svg")
+                                break;
+                            case MattermostQt.UserDnd:
+                                Qt.resolvedUrl("qrc:/resources/status/status_dnd.svg")
+                                break;
+                            default:
+                            case MattermostQt.UserOffline:
+                                Qt.resolvedUrl("qrc:/resources/status/status_offline.svg")
+                                break;
+                            }
                     }
                 }//BackgroundItem avataritem
+
                 Rectangle {
                     id: textlabelrect
 
@@ -699,6 +816,7 @@ Page {
                     property string username    : user
                     property string iduser      : userid
                     property string createat    : messagecreateat
+                    property int    userstatus  : user_status
 
                     property real  outtotalheight
 //                    property var   heightmap

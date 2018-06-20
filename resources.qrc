@@ -3,5 +3,10 @@
         <file>resources/logo_rect_white.png</file>
         <file>resources/logoHorizontal_WS.png</file>
         <file>resources/mattermost_icon.svg</file>
+        <file>resources/status/status_dnd.svg</file>
+        <file>resources/status/status_away.svg</file>
+        <file>resources/status/status_offline.svg</file>
+        <file>resources/status/status_online.svg</file>
+        <file>resources/status/status_mask.svg</file>
     </qresource>
 </RCC>

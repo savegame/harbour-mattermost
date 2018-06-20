@@ -9,7 +9,60 @@ Item {
     id: context_item
 
     property MattermostQt mattermost: MattermostQt {}
+    property real avatarSize: Theme.iconSizeMedium
 
+    // status mask and statuses
+
+
+    Component {
+        id: statusMask
+        Image {
+            //anchors.fill: parent
+            width: avatarSize
+            height: avatarSize
+            source: Qt.resolvedUrl("qrc:/resources/status/status_mask.svg")
+            visible: false
+        }
+    }
+
+    /*Component {
+        id: statusOnline
+        Image {
+            width: avatarSize
+            height: avatarSize
+            source: Qt.resolvedUrl("qrc:/resources/status/status_online.svg")
+        }
+    }
+
+    Component {
+        id: statusAway
+        Image {
+            width: avatarSize
+            height: avatarSize
+            source: Qt.resolvedUrl("qrc:/resources/status/status_away.svg")
+        }
+    }
+
+    Component {
+        id: statusDnd
+        Image {
+            width: avatarSize
+            height: avatarSize
+            source: Qt.resolvedUrl("qrc:/resources/status/status_dnd.svg")
+        }
+    }
+
+    Component
+    {
+        id: statusOffline
+        Image {
+            width: avatarSize
+            height: avatarSize
+            source: Qt.resolvedUrl("qrc:/resources/status/status_offline.svg")
+        }
+    }*/
+
+    // dbus adaptor
     DBusAdaptor {
         id: dbus
 //        property bool needUpdate: true

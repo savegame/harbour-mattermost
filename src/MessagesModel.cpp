@@ -83,6 +83,21 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				return QVariant("");
 		}
 		break;
+	case MessagesModel::UserStatus:
+		{
+			if( m_messages[row]->m_user_index >= 0
+			        &&  m_messages[row]->m_user_index < m_mattermost->m_server[m_messages[row]->m_server_index]->m_user.size())
+			{
+				MattermostQt::UserPtr user =
+				        m_mattermost->
+				        m_server[m_messages[row]->m_server_index]->
+				        m_user[m_messages[row]->m_user_index];
+				return QVariant(user->m_status);
+			}
+			else
+				return QVariant(0);
+		}
+		break;
 	case MessagesModel::ValidPaths:
 		{
 			if( m_messages[row]->m_file.size() > 0 )
@@ -141,6 +156,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	names[MessagesModel::MessageIndex] = QLatin1String("messageindex").data();
 //	names[MessagesModel::FilePaths] = QLatin1String("filepaths").data();
 	names[MessagesModel::ValidPaths] = QLatin1String("validpaths").data();
+	names[MessagesModel::UserStatus] = QLatin1String("user_status").data();
 	return names;
 }
 
@@ -167,6 +183,11 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 	        this, &MessagesModel::slot_messageDeleted );
 	connect(m_mattermost.data(), &MattermostQt::updateMessage,
 	        this, &MessagesModel::slot_updateMessage );
+
+	connect( m_mattermost.data(), &MattermostQt::usersUpdated,
+	         this, &MessagesModel::slot_usersUpdated );
+	connect( m_mattermost.data(), &MattermostQt::userUpdated,
+	         this, &MessagesModel::slot_userUpdated );
 }
 
 MattermostQt *MessagesModel::getMattermost() const
@@ -434,6 +455,20 @@ void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, in
 	}
 //	if(atEnd())
 	emit atEndChanged();
+}
+
+void MessagesModel::slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles)
+{
+	QModelIndex end = index(m_messages.size() - 1);
+	QModelIndex begin = index(0);
+	dataChanged(begin,end, roles);
+}
+
+void MessagesModel::slot_userUpdated(MattermostQt::UserPtr user, QVector<int> roles)
+{
+	QModelIndex end = index(m_messages.size() - 1);
+	QModelIndex begin = index(0);
+	dataChanged(begin,end, roles);
 }
 
 

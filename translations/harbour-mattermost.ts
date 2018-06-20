@@ -53,7 +53,7 @@
 <context>
     <name>CoverPage</name>
     <message>
-        <source>Connecting</source>
+        <source>Offline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -61,11 +61,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Offline</source>
+        <source>Online</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Online</source>
+        <source>Connecting</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

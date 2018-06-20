@@ -307,7 +307,7 @@ void ChannelsModel::slot_updateChannel(MattermostQt::ChannelPtr channel, QVector
 void ChannelsModel::slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles)
 {
 	int headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
-	int endIndex = m_header.size();
+	int endIndex = m_header.size() - 1;
 
 	QModelIndex ibegin = index(headerIndex);
 	QModelIndex iend = index(endIndex);

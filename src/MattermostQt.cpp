@@ -74,7 +74,7 @@ MattermostQt::MattermostQt()
 
 	m_update_server_timeout = 5000; // in millisecs
 	m_reconnect_server.setInterval(m_update_server_timeout);
-	m_user_status_timeout = 1000;  // one minute
+	m_user_status_timeout = 30000;  // half minute
 	m_user_status_timer.setInterval(m_user_status_timeout);
 	m_user_status_timer.setSingleShot(false);
 
@@ -1388,7 +1388,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 		if( json.isObject() )
 		{
 			QJsonObject object = json.object();
-			qDebug() << object;
+			//qDebug() << object;
 			server->m_user_id = object["id"].toString();
 		}
 		QString server_dir = QString("%0_%1").arg(server->m_self_index).arg(server->m_user_id);
@@ -1402,11 +1402,11 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 	}
 	QList<QByteArray> headerList = reply->rawHeaderList();
 	foreach(QByteArray head, headerList) {
-		qDebug() << head << ":" << reply->rawHeader(head);
+		//qDebug() << head << ":" << reply->rawHeader(head);
 		//search login token
 		if( strcmp(head.data(),"Token") == 0 )
 		{// yes, auth token founded!
-			//add server to server list
+			//add server to servers list
 			ServerPtr server;
 			server.reset(new ServerContainer());
 			server->m_api   = reply->property(P_API).toInt();
@@ -1425,7 +1425,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			if( json.isObject() )
 			{
 				QJsonObject object = json.object();
-				qDebug() << object;
+				//qDebug() << object;
 				server->m_user_id = object["id"].toString();
 			}
 			websocket_connect(server);
@@ -1702,7 +1702,13 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 
 void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 {
-	ServerPtr sc;
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	if( server_index < 0 || server_index >= m_server.size() )
+	{
+		qWarning() << "Wrong server index";
+		return;
+	}
+	ServerPtr sc = m_server[server_index];
 	TeamPtr tc;
 //"id": "string",
 //"create_at": 0,
@@ -1728,10 +1734,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 				ChannelPtr ct( new ChannelContainer(object) );
 
 				// TODO not much secure, need test all parameters
-				ct->m_server_index = reply->property(P_SERVER_INDEX).toInt();
-				sc.reset();
-				sc = m_server[ct->m_server_index];
-
+				ct->m_server_index = server_index;
 				qDebug() << QString("channel \"%0\" : %1").arg(ct->m_display_name).arg(ct->m_id);
 
 				switch( ct->m_type )
@@ -1789,6 +1792,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 			}
 		}
 	}
+	post_users_status(server_index);
 }
 
 void MattermostQt::reply_get_channel(QNetworkReply *reply)
@@ -1878,7 +1882,7 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 
 	if( server_index < 0 || server_index >= m_server.size() )
 	{
-		qWarning() << "Error! Cant find server in servers list!";
+		qWarning() << "Error! Wrong server index";
 		return;
 	}
 	ServerPtr sc = m_server[server_index];

@@ -46,18 +46,45 @@ CoverBackground {
 
     property int server_state: MattermostQt.ServerUnconnected
 
+    function onConnectionError(id,message) {
+        status_text = qsTr("Error")
+        error = message
+    }
+
+    function onServerStateChanged(server_index, state) {
+        server_state = state;
+    }
+
     onContextChanged: {
         // for now, we have just 1 server, and his index is 0
         server_state = context.mattermost.get_server_state(0);
+        context.mattermost.serverStateChanged.connect( function f(server_index, state) {
+            onServerStateChanged(server_index,state)
+        } )
+        context.mattermost.connectionError.connect( function f(id,message) {
+            onConnectionError(id,message)
+        } )
+    }
 
-        context.mattermost.serverStateChanged.connect( function onServerStateChanged(server_index, state) {
-            server_state = state;
-        })
-
-        context.mattermost.connectionError.connect( function onConnectionError(id,message){
-            status_text = qsTr("Error")
-            error = message
-        })
+    onStatusChanged: {
+//        switch(status) {
+//        }
+        //console.log("CoverPage Status " + status)
+        switch(status) {
+        case PageStatus.Active:
+            // when we go to bg mode
+            server_state = context.mattermost.get_server_state(0);
+            context.mattermost.serverStateChanged.connect( function f(server_index, state) {
+                onServerStateChanged(server_index,state)
+            } )
+            context.mattermost.connectionError.connect( function f(id,message) {
+                onConnectionError(id,message)
+            } )
+            break;
+        case PageStatus.Inactive:
+            // when program is opened
+            break;
+        }
     }
 
     onServer_stateChanged: {
