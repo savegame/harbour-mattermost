@@ -1397,6 +1397,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 		if( server->m_cache_path.isEmpty() )
 			server->m_cache_path = m_cache_path + QDir::separator() +  server_dir;
 		websocket_connect(server);
+		// TODO add singnal server Added
 //		emit serverConnected(server->m_self_index);
 		return true;
 	}
@@ -1429,6 +1430,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 				server->m_user_id = object["id"].toString();
 			}
 			websocket_connect(server);
+			// TODO add singnal server Added
 			return true;
 		}
 	}
@@ -3120,7 +3122,7 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 
 	_compare(hello) // that mean we are logged in
 	{
-		qDebug() << event;
+		//qDebug() << event;
 		save_settings();
 		//m_user_status_timer.setSingleShot(false);
 		m_user_status_timer.start();

@@ -55,7 +55,8 @@ DISTFILES += qml/harbour-mattermost.qml \
     dbus/sashikknox.mattermost.service \
     qml/pages/OptionsPage.qml \
     CHANGELOG \
-    CHANGELOG
+    CHANGELOG \
+    qml/pages/AccountsPage.qml
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 

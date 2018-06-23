@@ -476,6 +476,7 @@ public:
 	ChannelPtr channelAt(int server_index, int team_index,
 	                     int channel_type, int channel_index);
 
+	inline const QVector<ServerPtr> &server() const { return m_server; }
 Q_SIGNALS:
 	void serverConnected(int server_index);
 	void serverStateChanged(int server_index, int state);

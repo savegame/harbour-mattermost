@@ -35,6 +35,7 @@ PkgConfigBR:
 # Runtime dependencies which are not automatically detected
 Requires:
   - sailfishsilica-qt5 >= 0.10.9
+  - libgcrypt
 
 # All installed files
 Files:

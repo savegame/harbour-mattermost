@@ -6,7 +6,7 @@
 Name:       harbour-mattermost
 
 # >> macros
-%define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*|libQt5WebSockets.so.5(Qt_5)$
+%define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*|libQt5WebSockets.so.5(Qt_5)|libgcrypt*$
 #%define __requires_exclude ^|libQt5WebSockets.so.*$
 # << macros
 
