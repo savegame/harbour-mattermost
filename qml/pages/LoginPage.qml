@@ -234,7 +234,7 @@ Page {
                     id: cert_picker
                     FilePickerPage {
                         title: qsTr("Choose server certificate")
-                        nameFilters: [ '*.crt', '*.pem' ]
+                        nameFilters: [ '*.crt', '*.pem', '*.cert' ]
                         onSelectedContentPropertiesChanged: {
                             loginpage.certPath = selectedContentProperties.filePath;
                         }
