@@ -478,6 +478,7 @@ public:
 
 	inline const QVector<ServerPtr> &server() const { return m_server; }
 Q_SIGNALS:
+	void serverAdded(ServerPtr server);
 	void serverConnected(int server_index);
 	void serverStateChanged(int server_index, int state);
 	void connectionError(int code, QString message);

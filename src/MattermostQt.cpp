@@ -215,6 +215,7 @@ void MattermostQt::post_login_by_token(QString url, QString token, int api, QStr
 //	server->m_user_id = user_id;
 	m_server.append(server);
 	get_login(server);
+	emit serverAdded(server);
 }
 
 void MattermostQt::get_login(MattermostQt::ServerPtr sc)
@@ -1431,6 +1432,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			}
 			websocket_connect(server);
 			// TODO add singnal server Added
+			emit serverAdded(server);
 			return true;
 		}
 	}

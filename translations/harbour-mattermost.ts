@@ -25,6 +25,49 @@
     </message>
 </context>
 <context>
+    <name>AccountsPage</name>
+    <message>
+        <source>Accounts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connecting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>name: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>url: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>status: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ChannelLabel</name>
     <message>
         <source>Public channes</source>

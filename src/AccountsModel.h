@@ -33,6 +33,10 @@ public:
 
 	MattermostQt *mattermost();
 	void setMattermost(MattermostQt *mattermost);
+
+protected Q_SLOTS:
+	void slotServerAdded(MattermostQt::ServerPtr server);
+	void slotServerStateChanged(int server_index, int state);
 private:
 	QPointer<MattermostQt> m_mattermost;
 };

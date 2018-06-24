@@ -70,4 +70,19 @@ MattermostQt *AccountsModel::mattermost()
 void AccountsModel::setMattermost(MattermostQt *mattermost)
 {
 	m_mattermost = mattermost;
+	connect( m_mattermost.data(), &MattermostQt::serverAdded, this , &AccountsModel::slotServerAdded );
+	connect( m_mattermost.data(), &MattermostQt::serverStateChanged, this , &AccountsModel::slotServerStateChanged );
+}
+
+void AccountsModel::slotServerAdded(MattermostQt::ServerPtr server)
+{
+	beginInsertRows( QModelIndex(), server->m_self_index, server->m_self_index );
+	endInsertRows();
+}
+
+void AccountsModel::slotServerStateChanged(int server_index, int state)
+{
+	QVector<int> roles;
+	roles << RoleStatus;
+	dataChanged( index(server_index), index(server_index), roles );
 }

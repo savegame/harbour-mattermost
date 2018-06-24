@@ -61,8 +61,14 @@ ApplicationWindow
         )
     }
 
+//    initialPage: Component {
+//        LoginPage {
+//            context: mainwindow.context
+//        }
+//    }
+
     initialPage: Component {
-        LoginPage {
+        AccountsPage {
             context: mainwindow.context
         }
     }

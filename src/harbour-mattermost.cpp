@@ -35,6 +35,7 @@
 #include "MattermostQt.h"
 #include "ChannelsModel.h"
 #include "MessagesModel.h"
+#include "AccountsModel.h"
 #include "SailNotify.h"
 
 int main(int argc, char *argv[])
@@ -58,6 +59,7 @@ int main(int argc, char *argv[])
 	qmlRegisterType<TeamsModel>("harbour.sashikknox", 1, 0, "TeamsModel");
 	qmlRegisterType<ChannelsModel>("harbour.sashikknox", 1, 0, "ChannelsModel");
 	qmlRegisterType<MessagesModel>("harbour.sashikknox", 1, 0, "MessagesModel");
+	qmlRegisterType<AccountsModel>("harbour.sashikknox", 1, 0, "AccountsModel");
 
 	// Start the application.
 	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));
