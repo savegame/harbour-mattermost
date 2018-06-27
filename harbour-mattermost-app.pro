@@ -19,8 +19,8 @@ DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 CONFIG += sailfishapp
 CONFIG += qt
 QT += gui qml quick network dbus svg
-PKGCONFIG += \
-    nemonotifications-qt5 libgcrypt
+PKGCONFIG += nemonotifications-qt5
+#PKGCONFIG += libgcrypt
 
 LIBS += -Llibs -lqt5websockets
 INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
@@ -42,7 +42,6 @@ SOURCES += src/harbour-mattermost.cpp \
 
 DISTFILES += qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
-    rpm/harbour-mattermost.changes.in \
     rpm/harbour-mattermost.changes.run.in \
     rpm/harbour-mattermost.spec \
     translations/*.ts \
@@ -57,7 +56,8 @@ DISTFILES += qml/harbour-mattermost.qml \
     CHANGELOG \
     CHANGELOG \
     qml/pages/AccountsPage.qml \
-    LICENSE
+    LICENSE \
+    rpm/harbour-mattermost.changes
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 
