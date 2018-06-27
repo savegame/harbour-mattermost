@@ -1,4 +1,4 @@
-Name: harbour-mattermost
+Name: harbour-mattermost-2_1_3_7
 Summary: Mattermost Sailfish client 
 Version: 0.1.2
 Release: 1
@@ -10,7 +10,7 @@ License: LICENSE
 # This must be generated before uploading a package to a remote build service.
 # Usually this line does not need to be modified.
 Sources:
-- '%{name}-%{version}.tar.bz2'
+- 'harbour-mattermost-2_1_3_7-%{version}.tar.bz2'
 Description: |
   Mattermost native client for SailfishOS
 Configure: none

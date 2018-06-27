@@ -43,7 +43,6 @@ SOURCES += src/harbour-mattermost.cpp \
 DISTFILES += qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
     rpm/harbour-mattermost.changes.run.in \
-    rpm/harbour-mattermost.spec \
     translations/*.ts \
     harbour-mattermost.desktop \
     server.pri \
@@ -57,6 +56,7 @@ DISTFILES += qml/harbour-mattermost.qml \
     CHANGELOG \
     qml/pages/AccountsPage.qml \
     LICENSE \
+    rpm/harbour-mattermost-2_1_3_7.spec \
     rpm/harbour-mattermost.changes
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
