@@ -68,7 +68,7 @@ Page {
             }
             MenuItem {
                 text: qsTr("Options")
-                onClicked: pageStack.push(Qt.resolvedUrl("OptionsPage.qml"))
+                onClicked: pageStack.push(Qt.resolvedUrl("OptionsPage.qml"),{context: teamsPage.context})
             }
         }
 

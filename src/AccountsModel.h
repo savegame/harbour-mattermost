@@ -11,10 +11,11 @@ class AccountsModel : public QAbstractListModel
 
 	enum DataRoles {
 		RoleName = Qt::UserRole,
-		RoleAddress,
+		RoleServerUrl,
 		RoleUsername,
 		RoleStatus,
-		RoleIcon
+		RoleIcon,
+		RoleServerIndex
 	};
 
 	Q_PROPERTY(MattermostQt *mattermost READ mattermost WRITE setMattermost)

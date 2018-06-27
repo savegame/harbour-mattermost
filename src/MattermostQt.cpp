@@ -2933,6 +2933,10 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 		qDebug() << reply;
 //		qDebug() << "Reply: " << reply->readAll();
 		reply_error(reply);
+		for(int i = 0; i < server().size(); i ++ )
+		{
+			server().at(i)->m_socket->ping(QString("ping").toUtf8());
+		}
 	}
 	delete reply;
 }

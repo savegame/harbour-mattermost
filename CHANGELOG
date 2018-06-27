@@ -1,4 +1,6 @@
-* Thu Jun 14  2018 sashikknox <sashikknox@gmail.com> - 0.1.2-1
+* Wed Jun 27  2018 sashikknox <sashikknox@gmail.com> - 0.1.2-1
+- add status icons for users avatars
 - open messages dialog when notification activated
+- fix some bugs
 * Fri Jun 1   2018 sashikknox <sashikknox@gmail.com> - 0.1.1-1
 - remove depricated ImageViewr for support vie images in SailfishOS 2.2.0.29

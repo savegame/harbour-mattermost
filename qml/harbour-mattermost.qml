@@ -61,17 +61,17 @@ ApplicationWindow
         )
     }
 
-//    initialPage: Component {
-//        LoginPage {
-//            context: mainwindow.context
-//        }
-//    }
-
     initialPage: Component {
-        AccountsPage {
+        LoginPage {
             context: mainwindow.context
         }
     }
+
+//    initialPage: Component {
+//        AccountsPage {
+//            context: mainwindow.context
+//        }
+//    }
 
     cover: CoverPage {
         context: mainwindow.context

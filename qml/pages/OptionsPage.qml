@@ -30,12 +30,17 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-
+import Sailfish.Silica 1.0
+import QtGraphicalEffects 1.0
+import harbour.sashikknox 1.0
+import "../components"
+import "../model"
 
 Page {
     id: page
 
-    // The effective value will be restricted by ApplicationWindow.allowedOrientations
+    property Context context
+
     allowedOrientations: Orientation.All
 
     PageHeader {

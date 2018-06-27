@@ -13,11 +13,12 @@ QVariant AccountsModel::headerData(int section, Qt::Orientation orientation, int
 QHash<int, QByteArray> AccountsModel::roleNames() const
 {
 	QHash<int, QByteArray> roleNames;
-	roleNames[RoleName]      = QLatin1String("role_name").data();
-	roleNames[RoleAddress]   = QLatin1String("role_url").data();
-	roleNames[RoleUsername]  = QLatin1String("role_username").data();
-	roleNames[RoleStatus]    = QLatin1String("role_status").data();
-	roleNames[RoleIcon]      = QLatin1String("role_icon").data();
+	roleNames[RoleName]        = QLatin1String("role_name").data();
+	roleNames[RoleServerUrl]   = QLatin1String("role_url").data();
+	roleNames[RoleUsername]    = QLatin1String("role_username").data();
+	roleNames[RoleStatus]      = QLatin1String("role_status").data();
+	roleNames[RoleIcon]        = QLatin1String("role_icon").data();
+	roleNames[RoleServerIndex] = QLatin1String("role_server_index").data();
 	return roleNames;
 }
 
@@ -44,7 +45,7 @@ QVariant AccountsModel::data(const QModelIndex &index, int role) const
 	case RoleName:
 		return server->m_display_name;
 		break;
-	case RoleAddress:
+	case RoleServerUrl:
 		return server->m_url;
 		break;
 	case RoleUsername:
@@ -55,6 +56,9 @@ QVariant AccountsModel::data(const QModelIndex &index, int role) const
 		break;
 	case RoleIcon:
 		return QString("");
+		break;
+	case RoleServerIndex:
+		return server->m_self_index;
 		break;
 	default:
 		break;
