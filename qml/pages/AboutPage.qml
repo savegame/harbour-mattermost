@@ -38,8 +38,21 @@ Page {
 
         LinkedLabel {
             id: aboutlabel
-            text: qsTr("This is unofficial client for <a href=\"https://www.mattermost.org/licensing/\">Mattermost</a> server. ")
-                + qsTr("Thanks to <a href=\"https://t.me/sailfishos/\">Russian SailfishOS Community</a> in Telegram for help.")
+            text: qsTr("This is unofficial client for")
+                  + " <a href=\"https://www.mattermost.org/licensing/\">Mattermost</a> "
+                  + qsTr("server.") + " "
+                  + qsTr("Thanks to")
+                  + " <a href=\"https://t.me/sailfishos/\">"
+                  + qsTr("Russian SailfishOS Community channel")
+                  + "</a> " + qsTr("in Telegram for their help.")
+            width: parent.width
+            wrapMode: Text.Wrap
+            horizontalAlignment: Text.AlignLeft
+        }
+
+        LinkedLabel {
+            id: sourceslink
+            text: qsTr("Sources: ") + "<a href=\"https://gitlab.com/sashikknox/harbour-mattermost\">GitLab</a>"
             width: parent.width
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignLeft
@@ -47,7 +60,9 @@ Page {
 
         LinkedLabel {
             id: donatelink
-            text: qsTr("If you want to donate, you can do that by: <br> <a href=\"http://yasobe.ru/na/sashikknox\">Yandex Money</a>")
+            text: qsTr("If you want to donate, you can do that by:")
+                  + " <br> <a href=\"http://yasobe.ru/na/sashikknox\">"
+                  + qsTr("Yandex Money") + "</a>"
             width: parent.width
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignLeft

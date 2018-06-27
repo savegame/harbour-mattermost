@@ -8,19 +8,39 @@
         <translation></translation>
     </message>
     <message>
-        <source>If you want to donate, you can do that by: &lt;br&gt; &lt;a href=&quot;http://yasobe.ru/na/sashikknox&quot;&gt;Yandex Money&lt;/a&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This is unofficial client for &lt;a href=&quot;https://www.mattermost.org/licensing/&quot;&gt;Mattermost&lt;/a&gt; server. </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Thanks to &lt;a href=&quot;https://t.me/sailfishos/&quot;&gt;Russian SailfishOS Community&lt;/a&gt; in Telegram for help.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Version: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is unofficial client for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thanks to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Russian SailfishOS Community channel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>in Telegram for their help.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sources: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>If you want to donate, you can do that by:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yandex Money</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

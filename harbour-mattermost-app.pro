@@ -56,7 +56,8 @@ DISTFILES += qml/harbour-mattermost.qml \
     qml/pages/OptionsPage.qml \
     CHANGELOG \
     CHANGELOG \
-    qml/pages/AccountsPage.qml
+    qml/pages/AccountsPage.qml \
+    LICENSE
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 

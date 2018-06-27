@@ -8,51 +8,71 @@
         <translation></translation>
     </message>
     <message>
-        <source>If you want to donate, you can do that by: &lt;br&gt; &lt;a href=&quot;http://yasobe.ru/na/sashikknox&quot;&gt;Yandex Money&lt;/a&gt;</source>
-        <translation>Если вы хотите сделать пожертвование, вы можете сделать это используя ссылку ниже: &lt;br&gt; &lt;a href=&quot;http://yasobe.ru/na/sashikknox&quot;&gt;Яндекс Деньги&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>This is unofficial client for &lt;a href=&quot;https://www.mattermost.org/licensing/&quot;&gt;Mattermost&lt;/a&gt; server. </source>
-        <translation>Это неофициальный клиент для &lt;a href=&quot;https://www.mattermost.org/licensing/&quot;&gt;Mattermost&lt;/a&gt; сервера. </translation>
-    </message>
-    <message>
-        <source>Thanks to &lt;a href=&quot;https://t.me/sailfishos/&quot;&gt;Russian SailfishOS Community&lt;/a&gt; in Telegram for help.</source>
-        <translation>Спасибо &lt;a href=&quot;https://t.me/sailfishos/&quot;&gt;русскоязычному сообществу SailfishOS&lt;/a&gt; в Телеграме за их помощь.</translation>
-    </message>
-    <message>
         <source>Version: </source>
         <translation>Версия: </translation>
+    </message>
+    <message>
+        <source>This is unofficial client for</source>
+        <translation>Это неофициальный клиент для</translation>
+    </message>
+    <message>
+        <source>server.</source>
+        <translation>сервера.</translation>
+    </message>
+    <message>
+        <source>Thanks to</source>
+        <translation>Спасибо</translation>
+    </message>
+    <message>
+        <source>Russian SailfishOS Community channel</source>
+        <translation>каналу Русскоязычного SailfishOS сообщества</translation>
+    </message>
+    <message>
+        <source>in Telegram for their help.</source>
+        <translation>в Telegram за их помощь.</translation>
+    </message>
+    <message>
+        <source>Sources: </source>
+        <translation>Исходный код: </translation>
+    </message>
+    <message>
+        <source>If you want to donate, you can do that by:</source>
+        <translation>Пожертвования приветствуются:</translation>
+    </message>
+    <message>
+        <source>Yandex Money</source>
+        <translation>Яндекс Деньги</translation>
     </message>
 </context>
 <context>
     <name>AccountsPage</name>
     <message>
         <source>Accounts</source>
-        <translation type="unfinished"></translation>
+        <translation>Учетные записи</translation>
     </message>
     <message>
         <source>Connected</source>
-        <translation type="unfinished"></translation>
+        <translation>Соединен</translation>
     </message>
     <message>
         <source>Connecting</source>
-        <translation type="unfinished"></translation>
+        <translation>Соединение ...</translation>
     </message>
     <message>
         <source>Offline</source>
-        <translation type="unfinished"></translation>
+        <translation>Нет связи</translation>
     </message>
     <message>
         <source>name: </source>
-        <translation type="unfinished"></translation>
+        <translation>Название: </translation>
     </message>
     <message>
         <source>url: </source>
-        <translation type="unfinished"></translation>
+        <translation>Адрес: </translation>
     </message>
     <message>
         <source>status: </source>
-        <translation type="unfinished"></translation>
+        <translation>Состояние: </translation>
     </message>
     <message>
         <source>Rename</source>
@@ -68,15 +88,15 @@
     </message>
     <message>
         <source>About</source>
-        <translation type="unfinished">О программе</translation>
+        <translation>О программе</translation>
     </message>
     <message>
         <source>Options</source>
-        <translation type="unfinished">Настройки</translation>
+        <translation>Настройки</translation>
     </message>
     <message>
         <source>Add account ...</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить учетную запись ...</translation>
     </message>
 </context>
 <context>
@@ -109,19 +129,19 @@
     <name>CoverPage</name>
     <message>
         <source>Offline</source>
-        <translation type="unfinished"></translation>
+        <translation>Не в сети</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка соединения</translation>
     </message>
     <message>
         <source>Online</source>
-        <translation type="unfinished"></translation>
+        <translation>В сети</translation>
     </message>
     <message>
         <source>Connecting</source>
-        <translation type="unfinished"></translation>
+        <translation>Соединение</translation>
     </message>
 </context>
 <context>
