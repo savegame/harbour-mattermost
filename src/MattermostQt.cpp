@@ -3,6 +3,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QStandardPaths>
+#include <QCryptographicHash>
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -71,7 +72,7 @@ Q_DECLARE_METATYPE(MattermostQt::MessagePtr)
 MattermostQt::MattermostQt()
 {
 	m_networkManager.reset(new QNetworkAccessManager());
-
+	m_delivery_key = 0;
 	m_update_server_timeout = 5000; // in millisecs
 	m_reconnect_server.setInterval(m_update_server_timeout);
 	m_user_status_timeout = 30000;  // half minute
@@ -659,7 +660,17 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	root["channel_id"] = channel->m_id;
 	root["message"] = message;
 	root["file_ids"] = files;
-	root["props"] = "";
+	QJsonObject props;
+	{
+		QString sum = QCryptographicHash::hash(message.toUtf8(), QCryptographicHash::Md5).toHex();
+		DeliveryPtr delivery(new DeliveryContainer());
+		delivery->m_check_sum = sum;
+		delivery->m_channel = channel;
+		m_delivery_messages.insert(m_delivery_key,delivery);
+		props["md5"] = sum;
+		props["delivery_key"] = m_delivery_key++;
+	}
+	root["props"] = props;
 	json.setObject(root);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
@@ -2437,17 +2448,23 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 
 void MattermostQt::reply_post_send_message(QNetworkReply *reply)
 {
+#ifdef _DEBUG
 	qDebug() << reply->readAll();
+#endif
 }
 
 void MattermostQt::reply_delete_message(QNetworkReply *reply)
 {
+#ifdef _DEBUG
 	qDebug() << reply->readAll();
+#endif
 }
 
 void MattermostQt::reply_post_message_edit(QNetworkReply *reply)
 {
+#ifdef _DEBUG
 	qDebug() << reply->readAll();
+#endif
 }
 
 void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
@@ -2478,6 +2495,25 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			message->m_type = MessageMine;
 		else
 			message->m_type = MessageOther;
+	}
+	if( message->m_type == MessageMine && !m_delivery_messages.isEmpty() )
+	{// check  delivery state
+		QJsonObject object = post["props"].toObject();
+		if( !object.isEmpty() ) {
+			int key = object["delivery_key"].toInt();
+			QMap<int,DeliveryPtr>::iterator
+			        it = m_delivery_messages.find(key);
+			if( it != m_delivery_messages.end() )
+			{
+				QString check_sum = object["md5"].toString();
+				DeliveryPtr delivery = it.value();
+				bool checked = (delivery->m_check_sum == check_sum);
+				if(checked) {
+					m_delivery_messages.erase(it);
+					//here we sedn signal< that message is delivered
+				}
+			}
+		}
 	}
 	prepare_user_index(sc->m_self_index,message);
 

@@ -19,6 +19,7 @@ BackgroundItem {
 
     property bool showToolBar: false
     property alias text: textedit.text
+    property bool waitDelivery: false
     height: textedit.height
     property int    attachCount: 0
 
@@ -91,7 +92,6 @@ BackgroundItem {
                 right: button.left
                 leftMargin: Theme.paddingSmall
             }
-            //label: qsTr("Message...") // need timestamp here, its better
 
             font.pixelSize: Theme.fontSizeSmall
             placeholderText: qsTr("Message...")
@@ -119,7 +119,7 @@ BackgroundItem {
                     if(editmode)
                     {
                         context.mattermost.put_message_edit
-                                (textedit.text,
+                                (text,
                                  server_index,
                                  team_index,
                                  channel_type,
@@ -130,14 +130,15 @@ BackgroundItem {
                     else
                     {
                         context.mattermost.post_send_message
-                                (textedit.text,
+                                (text,
                                  server_index,
                                  team_index,
                                  channel_type,
                                  channel_index)
+                        waitDelivery = true
                         attachCount = 0
                     }
-                    text = ""
+                    //text = ""
                 }
             }// onClicked
 

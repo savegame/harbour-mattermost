@@ -407,6 +407,19 @@ public:
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
+	/**
+	 * @brief The DeliveryContainer struct
+	 * info, wich using for message delivery gaurantee
+	 */
+	struct DeliveryContainer
+	{
+		DeliveryContainer() {}
+
+		ChannelPtr m_channel;   /** channel where message sended */
+		QString    m_check_sum; /** check summ of message text */
+	};
+	typedef QSharedPointer<DeliveryContainer> DeliveryPtr;
+
 public:
 	MattermostQt();
 
@@ -603,6 +616,9 @@ protected:
 	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
 	SettingsPtr m_settings;
+
+	QMap<int, DeliveryPtr> m_delivery_messages;
+	int                    m_delivery_key;     // last delivery_key
 
 	QString m_config_path;
 	QString m_data_path;
