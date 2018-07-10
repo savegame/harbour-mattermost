@@ -110,10 +110,17 @@ public:
 	enum MessageType {
 		MessageSystem,// system message
 		MessageOther ,// when ither posted message
-		MessageMine,  // when message posted by myself
+		MessageMine,  // when message posted by current account
 		MessageTypeCount
 	};
 	Q_ENUMS(MessageType)
+
+	enum MessageStatus {
+		MessageNoStatus,
+		MessageSended,
+		MessageDelivered
+	};
+	Q_ENUMS(MessageStatus)
 
 	enum ServerState : int {
 		ServerConnected = QAbstractSocket::ConnectedState,
@@ -188,7 +195,9 @@ public:
 
 	struct MessageContainer {
 		MessageContainer() noexcept
-		{}
+		{
+			m_status = MessageNoStatus;
+		}
 
 		MessageContainer(QJsonObject object);
 
@@ -213,7 +222,7 @@ public:
 		int              m_team_index;
 		int              m_channel_index;
 		int              m_self_index;
-
+		MessageStatus    m_status;
 //		ChannelPtr       m_channel;// test
 	};
 	typedef QSharedPointer<MessageContainer> MessagePtr;
@@ -402,8 +411,8 @@ public:
 		QString                     m_cert_path;
 		QVector<FilePtr>            m_file;
 		QList<FilePtr>              m_unattached_file; /**< uploaded, but not sended files */
-		QList<FilePtr>              m_sended_files; /**<  */
-		QList<MessagePtr>           m_nouser_messages;/**< messages without user */
+		QList<FilePtr>              m_sended_files;    /**<  */
+		QList<MessagePtr>           m_nouser_messages; /**< messages without user */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -417,6 +426,7 @@ public:
 
 		ChannelPtr m_channel;   /** channel where message sended */
 		QString    m_check_sum; /** check summ of message text */
+		MessagePtr m_message;   /** new message container */
 	};
 	typedef QSharedPointer<DeliveryContainer> DeliveryPtr;
 
@@ -508,7 +518,8 @@ Q_SIGNALS:
 	void messageAdded(QList<MessagePtr> messages);
 	void newMessage(MessagePtr message);
 	void messageUpdated(QList<MessagePtr> messages);
-	void updateMessage(MessagePtr m,int role);
+	void messageDelivered(MessagePtr id);
+	void updateMessage(MessagePtr m, QVector<int> role);
 	void messageDeleted(MessagePtr message);
 	void userUpdated(UserPtr user, QVector<int> roles);
 	void usersUpdated(QVector<UserPtr> users, QVector<int> roles);

@@ -34,6 +34,7 @@ public:
 		CreateAt,
 		IsEdited,
 		MessageIndex,
+		MessageStatus,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 
@@ -79,7 +80,7 @@ protected slots:
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageUpdated(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageDeleted(MattermostQt::MessagePtr message);
-	void slot_updateMessage(MattermostQt::MessagePtr message, int role);
+	void slot_updateMessage(MattermostQt::MessagePtr message, QVector<int> role);
 	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
 	void slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles);
 	void slot_userUpdated(MattermostQt::UserPtr user, QVector<int> roles);

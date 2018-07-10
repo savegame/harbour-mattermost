@@ -641,6 +641,7 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	QList<FilePtr>::iterator
 	        it = sc->m_unattached_file.begin(),
 	        end = sc->m_unattached_file.end();
+	QVector<FilePtr> files_ptr;
 	while(it != end)
 	{
 		FilePtr f = *it;
@@ -654,6 +655,7 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 			files.append(f->m_id);
 			it = sc->m_unattached_file.erase(it);
 			sc->m_sended_files.append(f);
+			files_ptr.append(f);
 		}
 	}
 
@@ -669,6 +671,24 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 		m_delivery_messages.insert(m_delivery_key,delivery);
 		props["md5"] = sum;
 		props["delivery_key"] = m_delivery_key++;
+
+		// create an not delivered message
+		MessagePtr msg(new MessageContainer());
+		msg->m_channel_id = channel->m_id;
+		msg->m_message = message;
+		msg->m_type = MessageMine;
+		msg->m_status = MessageSended;
+		msg->m_channel_index = channel_index;
+		msg->m_channel_type = (ChannelType)channel_type;
+		msg->m_team_index = team_index;
+		msg->m_server_index = server_index;
+		msg->m_user_id = sc->m_user_id;
+		msg->m_file = files_ptr;
+		prepare_user_index(server_index,msg);
+		delivery->m_message = msg;
+		QList<MessagePtr> new_messages;
+		new_messages << msg;
+		emit messageAdded(new_messages);
 	}
 	root["props"] = props;
 	json.setObject(root);
@@ -1269,7 +1289,7 @@ void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr
 				break;
 			}
 		}
-	if( message->m_user_index == -1 )
+	if( message->m_user_index == -1 && message->m_status == MessageDelivered )
 	{
 		sc->m_nouser_messages.append(message);
 		get_user_info(server_index, message->m_user_id);
@@ -1938,7 +1958,8 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 			if(m->m_user_id == user->m_id)
 			{
 				m->m_user_index = user->m_self_index;
-				emit updateMessage(m,MessagesModel::SenderUserName);
+				QVector<int> role;
+				role << MessagesModel::SenderUserName;
 				QString path = sc->m_cache_path +
 				        QString("/users/") +
 				        user->m_id +
@@ -1946,10 +1967,12 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 				// check if user has image
 				QFile user_image(path);
 				if( user_image.exists() ) {
-					emit updateMessage(m,MessagesModel::SenderImagePath);
+					role << MessagesModel::SenderImagePath;
+					emit updateMessage(m,role);
 					it = sc->m_nouser_messages.erase(it);
 					continue;
 				}
+				emit updateMessage(m,role);
 			}
 			it++;
 		}
@@ -2418,7 +2441,9 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 			if(m->m_user_id == user->m_id)
 			{
 				m->m_user_index = user->m_self_index;
-				emit updateMessage(m,MessagesModel::SenderImagePath);
+				QVector<int> role;
+				role << MessagesModel::SenderImagePath;
+				emit updateMessage(m,role);
 				it = sc->m_nouser_messages.erase(it);
 				continue;
 			}
@@ -2510,7 +2535,38 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 				bool checked = (delivery->m_check_sum == check_sum);
 				if(checked) {
 					m_delivery_messages.erase(it);
-					//here we sedn signal< that message is delivered
+					//here we send signal< that message is delivered
+//					emit messageDelivered(delivery->m_message);
+					MessagePtr msg = delivery->m_message;
+					QVector<int> roles;
+					roles << MessagesModel::MessageStatus;
+					roles << MessagesModel::CreateAt;
+					if( !msg->m_file.isEmpty() )
+						roles << MessagesModel::FilesCount
+						         << MessagesModel::FilePaths
+						         << MessagesModel::FileNames
+						         << MessagesModel::FileStatuses
+						         << MessagesModel::ValidPaths;
+					msg->m_id = message->m_id;
+					msg->m_status = MessageDelivered;
+					msg->m_create_at = message->m_create_at;
+					msg->m_update_at = message->m_update_at;
+					msg->m_type_string = message->m_type_string;
+					msg->m_delete_at = message->m_delete_at;
+					msg->m_file_ids  = message->m_file_ids;
+					msg->m_filenames = message->m_filenames;
+
+					message = msg;
+					ChannelPtr channel = channelAt(msg->m_server_index,
+					                               msg->m_team_index,
+					                               msg->m_channel_type,
+					                               msg->m_channel_index);
+					msg->m_self_index = channel->m_message.size();
+					channel->m_message.append(message);
+					channel->m_total_msg_count++;
+
+					emit updateMessage(delivery->m_message, roles);
+					return;
 				}
 			}
 		}
@@ -2550,7 +2606,6 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			message->m_self_index    = channel->m_message.size();
 			channel->m_message.append(message);
 			channel->m_total_msg_count++;
-
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
 				get_file_info(sc->m_self_index,-1,(int)ChannelType::ChannelDirect,channel_index,
@@ -2638,7 +2693,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			QList<MessagePtr> new_messages;
 			new_messages << message;
 			emit messageAdded(new_messages);// add messages to model
-			// chek if messed sended from another user, then
+			// chek if message sended from another user, then
 			if( message->m_type != MessageMine )
 				emit newMessage(message);
 		}
@@ -3467,6 +3522,7 @@ int MattermostQt::ServerContainer::get_team_index(QString team_id)
 
 MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 {
+	m_status = MessageDelivered;
 	m_user_index = -1;
 	m_server_index = -1;
 	m_channel_index  = -1;

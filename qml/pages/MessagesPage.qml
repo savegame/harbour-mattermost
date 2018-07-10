@@ -363,6 +363,11 @@ Page {
                                 elide: Text.ElideRight
                                 horizontalAlignment: Text.AlignLeft
                             }// Label timestamp
+                            Label {
+                                id: deliveryStatus
+                                text: "🕒"
+                                visible: (delivery_status !== MattermostQt.MessageDelivered)
+                            }
                         }//Row username and timestamp
 
                         Loader {
@@ -817,6 +822,7 @@ Page {
                     property string iduser      : userid
                     property string createat    : messagecreateat
                     property int    userstatus  : user_status
+                    property int    delivery_status: role_message_status
 
                     property real  outtotalheight
 //                    property var   heightmap
