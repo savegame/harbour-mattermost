@@ -117,7 +117,7 @@ public:
 
 	enum MessageStatus {
 		MessageNoStatus,
-		MessageSended,
+		MessageSent,
 		MessageDelivered
 	};
 	Q_ENUMS(MessageStatus)
@@ -410,8 +410,8 @@ public:
 		QString                     m_ca_cert_path;
 		QString                     m_cert_path;
 		QVector<FilePtr>            m_file;
-		QList<FilePtr>              m_unattached_file; /**< uploaded, but not sended files */
-		QList<FilePtr>              m_sended_files;    /**<  */
+		QList<FilePtr>              m_unattached_file; /**< uploaded, but not sent files */
+		QList<FilePtr>              m_sent_files;    /**<  */
 		QList<MessagePtr>           m_nouser_messages; /**< messages without user */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
@@ -424,7 +424,7 @@ public:
 	{
 		DeliveryContainer() {}
 
-		ChannelPtr m_channel;   /** channel where message sended */
+		ChannelPtr m_channel;   /** channel where message sent */
 		QString    m_check_sum; /** check summ of message text */
 		MessagePtr m_message;   /** new message container */
 	};

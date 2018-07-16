@@ -654,7 +654,7 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 		{
 			files.append(f->m_id);
 			it = sc->m_unattached_file.erase(it);
-			sc->m_sended_files.append(f);
+			sc->m_sent_files.append(f);
 			files_ptr.append(f);
 		}
 	}
@@ -677,7 +677,7 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 		msg->m_channel_id = channel->m_id;
 		msg->m_message = message;
 		msg->m_type = MessageMine;
-		msg->m_status = MessageSended;
+		msg->m_status = MessageSent;
 		msg->m_channel_index = channel_index;
 		msg->m_channel_type = (ChannelType)channel_type;
 		msg->m_team_index = team_index;
@@ -2614,7 +2614,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			QList<MessagePtr> new_messages;
 			new_messages << message;
 			emit messageAdded(new_messages); // add messages to model
-			// chek if messed sended from another user, then
+			// chek if messed sent from another user, then
 			if( message->m_type != MessageMine )
 			// that for notifications
 				emit newMessage(message);
@@ -2670,14 +2670,14 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 				{// search if we already has files
 					bool fileDownloaded = false;
 					QList<FilePtr>::iterator
-					        it = sc->m_sended_files.begin(),
-					        end = sc->m_sended_files.end();
+					        it = sc->m_sent_files.begin(),
+					        end = sc->m_sent_files.end();
 					while(it != end)
 					{
 						FilePtr f = *it;
 						if(f->m_id == message->m_file_ids[k] )
 						{
-							it = sc->m_sended_files.erase(it);
+							it = sc->m_sent_files.erase(it);
 							fileDownloaded = true;
 							f->m_self_index = message->m_file.size();
 							message->m_file.append(f);
@@ -2693,7 +2693,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			QList<MessagePtr> new_messages;
 			new_messages << message;
 			emit messageAdded(new_messages);// add messages to model
-			// chek if message sended from another user, then
+			// chek if message sent from another user, then
 			if( message->m_type != MessageMine )
 				emit newMessage(message);
 		}
