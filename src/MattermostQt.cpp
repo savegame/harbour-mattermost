@@ -175,25 +175,28 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 	reply->setProperty(P_TRUST_CERTIFICATE, trustCertificate );
 
 //	// Load previosly saved certificate
-	if( trustCertificate )
+	if(trustCertificate)
 	{
-		QFile ca_cert_file(ca_cert_path);
-		QFile cert_file(cert_path);
-		ca_cert_file.open(QIODevice::ReadOnly);
-		cert_file.open(QIODevice::ReadOnly);
-		QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
-		QSslCertificate cert(&cert_file, QSsl::Pem);
 		QList<QSslError> errors;
-		errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
-		errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
-		errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
-		errors << QSslError(QSslError::CertificateUntrusted, cert);
-		errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
-		errors << QSslError(QSslError::SelfSignedCertificate, cert);
-		reply->ignoreSslErrors(errors);
+		if( !ca_cert_path.isEmpty() && !cert_path.isEmpty() )
+		{
+			QFile ca_cert_file(ca_cert_path);
+			QFile cert_file(cert_path);
+			ca_cert_file.open(QIODevice::ReadOnly);
+			cert_file.open(QIODevice::ReadOnly);
+			QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
+			QSslCertificate cert(&cert_file, QSsl::Pem);
+			errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
+			errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
+			errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
+			errors << QSslError(QSslError::CertificateUntrusted, cert);
+			errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
+			errors << QSslError(QSslError::SelfSignedCertificate, cert);
+			reply->ignoreSslErrors(errors);
 
-		ca_cert_file.close();
-		cert_file.close();
+			ca_cert_file.close();
+			cert_file.close();
+		}
 	}
 }
 
@@ -2923,10 +2926,10 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject da
 
 void MattermostQt::replyFinished(QNetworkReply *reply)
 {
+	QVariant replyType;
+	replyType = reply->property(P_REPLY_TYPE);
 	if (reply->error() == QNetworkReply::NoError) {
 		//success
-		QVariant replyType;
-		replyType = reply->property(P_REPLY_TYPE);
 
 		if(reply->header(QNetworkRequest::LastModifiedHeader).isValid())
 			qDebug() << "LastModified" << reply->header(QNetworkRequest::LastModifiedHeader);
@@ -3026,7 +3029,8 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 		reply_error(reply);
 		for(int i = 0; i < server().size(); i ++ )
 		{
-			server().at(i)->m_socket->ping(QString("ping").toUtf8());
+			if(server().at(i)->m_socket)
+				server().at(i)->m_socket->ping(QString("ping").toUtf8());
 		}
 	}
 	delete reply;
@@ -3038,6 +3042,10 @@ void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 	QVariant ts = reply->property(P_SERVER_INDEX);
 	if( ts.isValid() )
 		trustCertificate = m_server[ts.toInt()]->m_trust_cert;
+	ts = reply->property(P_TRUST_CERTIFICATE);
+	if( ts.isValid() )
+		trustCertificate = ts.toBool();
+
 	if(trustCertificate)
 	{
 		QList<QSslError> ignoreErrors;
@@ -3531,6 +3539,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 	m_id = object["id"].toString();
 	m_channel_id = object["channel_id"].toString();
 	m_message = object["message"].toString();
+	m_formatted_message = m_message;
 	m_type_string = object["type"].toString();
 	m_user_id = object["user_id"].toString();
 	m_create_at = (qlonglong)object["create_at"].toDouble(0);
@@ -3546,6 +3555,22 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 		m_filenames.append( filenames.at(i).toString() );
 	for(int i = 0; i < file_ids.size(); i++ )
 		m_file_ids.append( file_ids.at(i).toString() );
+
+
+	// generate formatted text
+	int begin_index = 0;
+	int found_index = m_formatted_message.indexOf( QLatin1String("```"),begin_index);
+	while( found_index >= 0 )
+	{
+		int close_index = m_formatted_message.indexOf( QLatin1String("```"), found_index + 3);
+		if(close_index < 0)
+			break;
+		m_formatted_message.replace(found_index,3, QLatin1String("<code>") );
+		m_formatted_message.replace(close_index + 7,3, QLatin1String("</code>") );
+		begin_index = close_index + 9;
+		found_index = m_formatted_message.indexOf( QLatin1String("```"),begin_index);
+	}
+	qDebug();
 }
 
 MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept

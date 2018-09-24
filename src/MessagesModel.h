@@ -35,6 +35,7 @@ public:
 		IsEdited,
 		MessageIndex,
 		MessageStatus,
+		FormattedText,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 

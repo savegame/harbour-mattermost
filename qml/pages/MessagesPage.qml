@@ -380,7 +380,7 @@ Page {
                                 id: messagecomponent
                                 LinkedLabel {
                                     id: textlabel
-                                    plainText: messagetext
+                                    text: messagetext
                                     onContentHeightChanged:
                                     {
                                        componentheight = contentHeight
@@ -811,7 +811,7 @@ Page {
                 }
                 Loader {
                     id: itemloader
-                    property string messagetext : message
+                    property string messagetext : role_formatted_text //message
                     property int    messagetype : type
                     property int    countfiles  : filescount
                     property var    pathsvalid  : validpaths

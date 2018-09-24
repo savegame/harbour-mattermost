@@ -32,6 +32,9 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	case MessagesModel::Text:
 		return QVariant(message->m_message);
 		break;
+	case MessagesModel::FormattedText:
+		return QVariant(message->m_formatted_message);
+		break;
 	case MessagesModel::MessageIndex:
 		if(message->m_status != MattermostQt::MessageDelivered)
 			return -1;
@@ -178,6 +181,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	names[MessagesModel::ValidPaths] = QLatin1String("validpaths").data();
 	names[MessagesModel::UserStatus] = QLatin1String("user_status").data();
 	names[MessagesModel::MessageStatus] = QLatin1String("role_message_status").data();
+	names[MessagesModel::FormattedText] = QLatin1String("role_formatted_text").data();
 	return names;
 }
 
