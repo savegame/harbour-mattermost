@@ -531,6 +531,7 @@ Page {
                                                         pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
                                                             {
                                                                 imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+                                                                previewPath: messagesmodel.getValidPath(rowindex,fileindex),
                                                                 sourceSize: imagebackground.imageSourceSize,
                                                                 animatedImage: filetype === MattermostQt.FileAnimatedImage,
                                                                 width: Screen.width
@@ -553,6 +554,7 @@ Page {
                                                 pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
                                                     {
                                                         imagePath: messagesmodel.getFilePath(rowindex,fileindex),
+                                                        previewPath: messagesmodel.getValidPath(rowindex,fileindex),
                                                         animatedImage: filetype === MattermostQt.FileAnimatedImage,
                                                         sourceSize: imagebackground.imageSourceSize,
                                                         width: Screen.width

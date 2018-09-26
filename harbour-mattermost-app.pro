@@ -12,7 +12,7 @@
 # The name of your application
 TARGET = harbour-mattermost
 
-VERSION = 0.1.2
+VERSION = 0.1.3
 
 DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
