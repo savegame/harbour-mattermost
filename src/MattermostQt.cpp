@@ -2618,6 +2618,8 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 		if( message->m_type != MessageMine )
 			emit newMessage(message);
 	}
+
+	// TODO try formating message
 }
 
 void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject object)
@@ -2933,9 +2935,16 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 		qDebug() << reply;
 //		qDebug() << "Reply: " << reply->readAll();
 		reply_error(reply);
-		for(int i = 0; i < server().size(); i ++ )
+		if( reply->error() == QNetworkReply::AuthenticationRequiredError)
+		{// need authentification
+			// TODO show error in LoginPage about bad authetificaation
+		}
+		else
 		{
-			server().at(i)->m_socket->ping(QString("ping").toUtf8());
+			for(int i = 0; i < server().size(); i ++ )
+			{
+				server().at(i)->m_socket->ping(QString("ping").toUtf8());
+			}
 		}
 	}
 	delete reply;

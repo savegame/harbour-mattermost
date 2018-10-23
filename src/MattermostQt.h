@@ -193,6 +193,7 @@ public:
 		MessageContainer(QJsonObject object);
 
 		QString          m_message;
+		QString          m_formated_message;
 //		QVector<FilePtr> m_file;
 		QVector<QString> m_filenames;
 		QVector<QString> m_file_ids;
