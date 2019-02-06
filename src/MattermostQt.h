@@ -10,7 +10,7 @@
 #include <QNetworkAccessManager>
 #include "QtWebSockets/qwebsocket.h"
 //#include <QtWebSockets/QWebSocket>
-//#include <QtWebSockets>
+//#include <QWebSocket>
 
 /**
  * @brief The SettingsContainer class
@@ -81,8 +81,10 @@ public:
 
 	enum ConnectionError {
 		WrongPassword,
-		SslError
+		SslError,
+		SessionExpired,
 	};
+	Q_ENUMS(ConnectionError)
 
 	enum FileType {
 		FileUnknown,
@@ -414,9 +416,15 @@ public:
 	~MattermostQt();
 
 	Q_INVOKABLE QString getVersion() const;
-	Q_INVOKABLE int get_server_state(int server_index);
-	Q_INVOKABLE int get_server_count() const;
+	// Server helper functions
+	Q_INVOKABLE int     get_server_state(int server_index);
+	Q_INVOKABLE int     get_server_count() const;
 	Q_INVOKABLE QString get_server_name(int server_index) const;
+	Q_INVOKABLE QString get_server_url(int server_index) const;
+	Q_INVOKABLE bool    get_server_trust_certificate(int server_index) const;
+	Q_INVOKABLE QString get_server_cert_path(int server_index) const;
+	Q_INVOKABLE QString get_server_ca_cert_path(int server_index) const;
+
 
 	Q_INVOKABLE void post_login(QString server, QString login, QString password,
 	                            int api = 4,QString display_name = QString("Mattermost Server"),
@@ -482,7 +490,7 @@ Q_SIGNALS:
 	void serverAdded(ServerPtr server);
 	void serverConnected(int server_index);
 	void serverStateChanged(int server_index, int state);
-	void connectionError(int code, QString message);
+	void onConnectionError(int code, QString message, int server_index);
 	void teamAdded(TeamPtr team);
 	void teamsExists(const QVector<MattermostQt::TeamPtr> &teams);
 	void channelsList(QList<ChannelPtr> list);
@@ -584,6 +592,7 @@ protected:
 	// helper functions
 	inline UserStatus str2status(const QString &s) const;
 	inline UserPtr    id2user(ServerPtr sc, const QString &id) const;
+	void  message_format(MessagePtr message);
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
 	void replySSLErrors(QNetworkReply *reply, QList<QSslError> errors);

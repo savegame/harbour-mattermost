@@ -10,13 +10,14 @@
 #include <QFile>
 #include <QDir>
 #include <QUrlQuery>
+#include <QDebug>
 #include <QHttpMultiPart>
 #include <QHttpPart>
 #include <QMimeDatabase>
 #include <QMimeType>
 #include <QCoreApplication>
-//#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
-#include <QtWebSockets>
+#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
+//#include <QWebSocket>
 
 #include "MessagesModel.h"
 #include "ChannelsModel.h"
@@ -52,11 +53,23 @@
 #define scmp(s1,s2) s1.compare(s2) == 0
 #define _compare(string) if( cmp(event,string) )
 
+#ifndef _DEBUG
 #define request_set_headers(requset, server) \
 	request.setHeader(QNetworkRequest::ServerHeader, "application/json"); \
 	request.setHeader(QNetworkRequest::UserAgentHeader, QString("Matterfish v%0").arg(MATTERMOSTQT_VERSION) ); \
 	request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
 	request.setRawHeader("Authorization", QString("Bearer %0").arg(server->m_token).toUtf8())
+#else
+#define request_set_headers(requset, server) \
+	request.setHeader(QNetworkRequest::ServerHeader, "application/json"); \
+	request.setHeader(QNetworkRequest::UserAgentHeader, QString("Matterfish v%0").arg(MATTERMOSTQT_VERSION) ); \
+	if( server->m_cookie.isEmpty() ) \
+	    qCritical() << "Cookie Header is missing!";\
+	else \
+	    request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
+	request.setRawHeader("Authorization", QString("Bearer %0").arg(server->m_token).toUtf8()); \
+	qDebug() << "Authorization " << QString("Bearer %0").arg(server->m_token)
+#endif
 
 #define request_json(requset) \
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json")
@@ -134,6 +147,38 @@ QString MattermostQt::get_server_name(int server_index) const
 	return m_server[server_index]->m_display_name;
 }
 
+QString MattermostQt::get_server_url(int server_index) const
+{
+	if( server_index < 0 || server_index >= m_server.size() )
+		return QString();
+	return m_server[server_index]->m_url;
+}
+
+bool MattermostQt::get_server_trust_certificate(int server_index) const
+{
+	if( server_index < 0 || server_index >= m_server.size() )
+		return false;
+	return m_server[server_index]->m_trust_cert;
+}
+
+QString MattermostQt::get_server_cert_path(int server_index) const
+{
+	if( server_index < 0 || server_index >= m_server.size() )
+		return QString();
+//	if (m_server[server_index]->m_cert_path.isEmpty())
+//	{
+//		m_server[server_index]->m_cert_path = m_server[server_index]->m_data_path + QDir::separator() + QLatin1String("server.crt");
+//	}
+	return m_server[server_index]->m_cert_path;
+}
+
+QString MattermostQt::get_server_ca_cert_path(int server_index) const
+{
+	if( server_index < 0 || server_index >= m_server.size() )
+		return QString();
+	return m_server[server_index]->m_ca_cert_path;
+}
+
 void MattermostQt::post_login(QString server, QString login, QString password,
                               int api,QString display_name,
                               bool trustCertificate, QString ca_cert_path, QString cert_path)
@@ -178,14 +223,19 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 	{
 		QFile ca_cert_file(ca_cert_path);
 		QFile cert_file(cert_path);
-		ca_cert_file.open(QIODevice::ReadOnly);
-		cert_file.open(QIODevice::ReadOnly);
+		if(! ca_cert_file.open(QIODevice::ReadOnly) )
+			qCritical() << "Cant open ca crt file " << ca_cert_path;
+		if(! cert_file.open(QIODevice::ReadOnly) )
+			qCritical() << "Cant open crt file " << cert_path;
 		QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
 		QSslCertificate cert(&cert_file, QSsl::Pem);
 		QList<QSslError> errors;
 		errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
+		errors << QSslError(QSslError::CertificateUntrusted);
 		errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
+		errors << QSslError(QSslError::SelfSignedCertificateInChain);
 		errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
+		errors << QSslError(QSslError::SelfSignedCertificate);
 		errors << QSslError(QSslError::CertificateUntrusted, cert);
 		errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
 		errors << QSslError(QSslError::SelfSignedCertificate, cert);
@@ -1323,6 +1373,10 @@ void MattermostQt::websocket_connect(ServerPtr server)
 
 	if( server->m_trust_cert )
 	{
+		QList<QSslError> errors;
+		errors << QSslError(QSslError::CertificateUntrusted);
+		errors << QSslError(QSslError::SelfSignedCertificateInChain);
+		errors << QSslError(QSslError::SelfSignedCertificate);
 
 		QFile ca_cert_file(server->m_ca_cert_path);
 		QFile cert_file(server->m_cert_path);
@@ -1333,15 +1387,14 @@ void MattermostQt::websocket_connect(ServerPtr server)
 		{
 			QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
 			QSslCertificate cert(&cert_file, QSsl::Pem);
-			QList<QSslError> errors;
 			errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
 			errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
 			errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
 			errors << QSslError(QSslError::CertificateUntrusted, cert);
 			errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
 			errors << QSslError(QSslError::SelfSignedCertificate, cert);
-			socket->ignoreSslErrors(errors);
 		}
+		socket->ignoreSslErrors(errors);
 	}
 
 	connect(socket.data(), SIGNAL(connected()), SLOT(onWebSocketConnected()));
@@ -1375,6 +1428,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 
 bool MattermostQt::reply_login(QNetworkReply *reply)
 {
+//	 TODO here we need check if server already exists, just need update auth data
 	if( reply->property(P_SERVER_INDEX).isValid() )
 	{//login by token
 		ServerPtr server;
@@ -1402,6 +1456,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 //		emit serverConnected(server->m_self_index);
 		return true;
 	}
+	// first login, or update token
 	QList<QByteArray> headerList = reply->rawHeaderList();
 	foreach(QByteArray head, headerList) {
 		//qDebug() << head << ":" << reply->rawHeader(head);
@@ -1421,7 +1476,6 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			server->m_cert  = reply->sslConfiguration();
 			server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
 			server->m_self_index =  m_server.size();
-			m_server.append( server );
 
 			QJsonDocument json = QJsonDocument::fromJson( reply->readAll() );
 			if( json.isObject() )
@@ -1430,9 +1484,34 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 				//qDebug() << object;
 				server->m_user_id = object["id"].toString();
 			}
+
+			// fisrt check if server with used_id and url exists
+			bool is_new_account = true;
+			if( !m_server.isEmpty() )
+			{
+				for(int i = 0; i < m_server.size(); i++ )
+				{
+					if( server->m_url == m_server[i]->m_url &&
+					    server->m_user_id == m_server[i]->m_user_id )
+					{
+						is_new_account = false;
+						m_server[i]->m_token = server->m_token;
+						m_server[i]->m_cookie = server->m_cookie;
+						//server.reset();
+						server = m_server[i];
+						break;
+					}
+				}
+			}
+
+			if(is_new_account)
+				m_server.append( server );
+
 			websocket_connect(server);
-			// TODO add singnal server Added
-			emit serverAdded(server);
+
+			if(is_new_account)
+				emit serverAdded(server);
+
 			return true;
 		}
 	}
@@ -2041,11 +2120,24 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 		{
 			QJsonObject object = json.object();
 			QString error_id = object["id"].toString();
+			QString message = object["message"].toString();
+			qDebug() << object;
 			if( error_id.compare("api.user.check_user_password.invalid.app_error") == 0 )
 			{
-				emit connectionError(ConnectionError::WrongPassword, QObject::trUtf8("Login failed because of invalid password") );
+				emit onConnectionError(ConnectionError::WrongPassword, QObject::trUtf8("Login failed because of invalid password"), -1 );
 			}
+			else if( error_id.compare("api.context.session_expired.app_error") == 0 )
+			{
+				int server_index  = reply->property(P_SERVER_INDEX).toInt();
+				emit onConnectionError(ConnectionError::SessionExpired, message, server_index);
+			}
+			else
+				qWarning() << json;
 		}
+#ifdef _DEBUG
+		qWarning() << json;
+#endif
+
 	}
 	else if ( replyData.size() > 0 )
 		qWarning() << replyData.data();
@@ -2471,6 +2563,9 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			return;
 	}
 	MessagePtr message( new MessageContainer(post) );
+
+	message_format(message);
+
 	message->m_server_index = sc->m_self_index;
 	if(message->m_type == MessageType::MessageTypeCount)
 	{
@@ -2748,6 +2843,28 @@ MattermostQt::UserPtr MattermostQt::id2user(ServerPtr sc, const QString &id) con
 	return UserPtr();
 }
 
+void MattermostQt::message_format(MattermostQt::MessagePtr message)
+{
+	if(message.isNull() || message->m_message.isEmpty())
+		return;
+
+	QString html;
+	QString &m = message->m_message;
+	QStringList tokens;
+	tokens << "\\*.*\\*";
+	for(int i = 0; i < message->m_message.size(); i++)
+	{
+
+	}
+//	QRegExp md("(```|\\*{1,3}(.*^\\*)\\*{1,3}|\^#+)\n");
+//	int last_pos = 0;
+//	while( md.indexIn(m,last_pos) != -1 )
+//	{
+//		if(last_pos = 0)
+//			html += m.left(cap)
+//	}
+}
+
 void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject data)
 {
 	ChannelPtr channel;
@@ -2834,10 +2951,10 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject da
 
 void MattermostQt::replyFinished(QNetworkReply *reply)
 {
+	QVariant replyType;
+	replyType = reply->property(P_REPLY_TYPE);
 	if (reply->error() == QNetworkReply::NoError) {
 		//success
-		QVariant replyType;
-		replyType = reply->property(P_REPLY_TYPE);
 
 		if(reply->header(QNetworkRequest::LastModifiedHeader).isValid())
 			qDebug() << "LastModified" << reply->header(QNetworkRequest::LastModifiedHeader);
@@ -2938,12 +3055,14 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 		if( reply->error() == QNetworkReply::AuthenticationRequiredError)
 		{// need authentification
 			// TODO show error in LoginPage about bad authetificaation
+			//qWarning() << reply->;
 		}
 		else
 		{
 			for(int i = 0; i < server().size(); i ++ )
 			{
-				server().at(i)->m_socket->ping(QString("ping").toUtf8());
+				if(server().at(i)->m_socket)
+					server().at(i)->m_socket->ping(QString("ping").toUtf8());
 			}
 		}
 	}
@@ -3152,7 +3271,7 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	else _compare(status_change)
 	    event_status_change(sc,data);
 	else
-	    qWarning() << event;
+	    qWarning() << message;
 /** that need release first */
 //typing
 //response

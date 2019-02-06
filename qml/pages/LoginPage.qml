@@ -44,6 +44,22 @@ Page {
 
     signal accepted()
 
+    Component.onCompleted: {
+        context.mattermost.onConnectionError.connect(
+            function connectionError(code, message, server_index) {
+                // its mean your token is outdated
+                if( code === MattermostQt.SessionExpired ) {
+                    // then just paste server information to editor lines and ask password
+                    server_name.text = context.mattermost.get_server_name(server_index);
+                    server.text = context.mattermost.get_server_url(server_index);
+                    trust_certificate_switcher.checked = context.mattermost.get_server_trust_certificate(server_index);
+                    ca_cert_text_field.text = context.mattermost.get_server_cert_path(server_index);
+                    cert_text_field.text = context.mattermost.get_server_ca_cert_path(server_index);
+                }
+            }
+        );
+    }
+
     onAccepted: {
         if(use_token_switcher.checked)
             context.mattermost.post_login_by_token(
@@ -69,7 +85,7 @@ Page {
             }
         })
 
-        context.mattermost.connectionError.connect( function onConnectionError(id,message){
+        context.mattermost.onConnectionError.connect( function onConnectionError(id,message,server_index){
             specialmessage.text = message;
             specialmessage.visible = true;
         })
