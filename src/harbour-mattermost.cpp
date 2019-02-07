@@ -30,6 +30,7 @@
 
 #include <QtQuick>
 #include <QCoreApplication>
+#include <QDebug>
 #include <sailfishapp.h>
 #include "TeamsModel.h"
 #include "MattermostQt.h"
@@ -38,8 +39,32 @@
 #include "AccountsModel.h"
 #include "SailNotify.h"
 
+void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+	// TODO Писать лог в базу данных в отдельном потоке
+	QByteArray localMsg = msg.toLocal8Bit();
+	switch (type) {
+	case QtDebugMsg:
+		fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		break;
+	case QtInfoMsg:
+		fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		break;
+	case QtWarningMsg:
+		fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		break;
+	case QtCriticalMsg:
+		fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		break;
+	case QtFatalMsg:
+		fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		//abort();
+	}
+}
+
 int main(int argc, char *argv[])
 {
+	qInstallMessageHandler( myMessageOutput );
 	// Set up QML engine.
 	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
 	QScopedPointer<QQuickView> v(SailfishApp::createView());

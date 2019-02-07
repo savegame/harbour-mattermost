@@ -156,6 +156,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	names[MessagesModel::MessageIndex] = QLatin1String("messageindex").data();
 //	names[MessagesModel::FilePaths] = QLatin1String("filepaths").data();
 	names[MessagesModel::ValidPaths] = QLatin1String("validpaths").data();
+	names[MessagesModel::FormatedText] = QLatin1String("role_formated_text").data();
 	names[MessagesModel::UserStatus] = QLatin1String("user_status").data();
 	return names;
 }

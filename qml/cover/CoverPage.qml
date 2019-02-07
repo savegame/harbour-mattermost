@@ -61,7 +61,7 @@ CoverBackground {
         context.mattermost.serverStateChanged.connect( function f(server_index, state) {
             onServerStateChanged(server_index,state)
         } )
-        context.mattermost.connectionError.connect( function f(id,message) {
+        context.mattermost.onConnectionError.connect( function f(id,message, server_index) {
             onConnectionError(id,message)
         } )
     }
@@ -77,7 +77,7 @@ CoverBackground {
             context.mattermost.serverStateChanged.connect( function f(server_index, state) {
                 onServerStateChanged(server_index,state)
             } )
-            context.mattermost.connectionError.connect( function f(id,message) {
+            context.mattermost.onConnectionError.connect( function f(id,message,server_index) {
                 onConnectionError(id,message)
             } )
             break;
