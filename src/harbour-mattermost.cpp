@@ -41,7 +41,7 @@
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-	// TODO Писать лог в базу данных в отдельном потоке
+	// TODO write log to databse it separate thread
 	QByteArray localMsg = msg.toLocal8Bit();
 	switch (type) {
 	case QtDebugMsg:
@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
 	//
 	// For details see:
 	// https://harbour.jolla.com/faq#1.5.0
-	qmlRegisterType<MattermostQt>("harbour.sashikknox", 1, 0, "MattermostQt");
-	qmlRegisterType<TeamsModel>("harbour.sashikknox", 1, 0, "TeamsModel");
+	qmlRegisterType<MattermostQt> ("harbour.sashikknox", 1, 0, "MattermostQt");
+	qmlRegisterType<TeamsModel>   ("harbour.sashikknox", 1, 0, "TeamsModel");
 	qmlRegisterType<ChannelsModel>("harbour.sashikknox", 1, 0, "ChannelsModel");
 	qmlRegisterType<MessagesModel>("harbour.sashikknox", 1, 0, "MessagesModel");
 	qmlRegisterType<AccountsModel>("harbour.sashikknox", 1, 0, "AccountsModel");

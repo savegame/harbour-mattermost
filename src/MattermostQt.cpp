@@ -53,7 +53,7 @@
 #define scmp(s1,s2) s1.compare(s2) == 0
 #define _compare(string) if( cmp(event,string) )
 
-#ifndef _DEBUG
+#ifdef _RELEASE
 #define request_set_headers(requset, server) \
 	request.setHeader(QNetworkRequest::ServerHeader, "application/json"); \
 	request.setHeader(QNetworkRequest::UserAgentHeader, QString("Matterfish v%0").arg(MATTERMOSTQT_VERSION) ); \
@@ -230,12 +230,12 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 		QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
 		QSslCertificate cert(&cert_file, QSsl::Pem);
 		QList<QSslError> errors;
-		errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
 		errors << QSslError(QSslError::CertificateUntrusted);
-		errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
 		errors << QSslError(QSslError::SelfSignedCertificateInChain);
-		errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
 		errors << QSslError(QSslError::SelfSignedCertificate);
+		errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
+		errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
+		errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
 		errors << QSslError(QSslError::CertificateUntrusted, cert);
 		errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
 		errors << QSslError(QSslError::SelfSignedCertificate, cert);
@@ -298,20 +298,27 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 	{
 		QFile ca_cert_file(sc->m_ca_cert_path);
 		QFile cert_file(sc->m_cert_path);
-		ca_cert_file.open(QIODevice::ReadOnly);
-		cert_file.open(QIODevice::ReadOnly);
-		QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
-		QSslCertificate cert(&cert_file, QSsl::Pem);
 		QList<QSslError> errors;
-		errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
-		errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
-		errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
-		errors << QSslError(QSslError::CertificateUntrusted, cert);
-		errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
-		errors << QSslError(QSslError::SelfSignedCertificate, cert);
+		if( ca_cert_file.open(QIODevice::ReadOnly) )
+		{
+			QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
+			errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
+			errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
+			errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
+			ca_cert_file.close();
+		}
+		if( cert_file.open(QIODevice::ReadOnly) )
+		{
+			QSslCertificate cert(&cert_file, QSsl::Pem);
+			errors << QSslError(QSslError::CertificateUntrusted, cert);
+			errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
+			errors << QSslError(QSslError::SelfSignedCertificate, cert);
+			cert_file.close();
+		}
+		errors << QSslError(QSslError::CertificateUntrusted);
+		errors << QSslError(QSslError::SelfSignedCertificateInChain);
+		errors << QSslError(QSslError::SelfSignedCertificate);
 		reply->ignoreSslErrors(errors);
-		ca_cert_file.close();
-		cert_file.close();
 	}
 }
 
@@ -1380,20 +1387,27 @@ void MattermostQt::websocket_connect(ServerPtr server)
 
 		QFile ca_cert_file(server->m_ca_cert_path);
 		QFile cert_file(server->m_cert_path);
-		bool all_ok =
-		        ca_cert_file.open(QIODevice::ReadOnly) &
-		        cert_file.open(QIODevice::ReadOnly);
-		if(all_ok)
+		if(ca_cert_file.open(QIODevice::ReadOnly))
 		{
 			QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
-			QSslCertificate cert(&cert_file, QSsl::Pem);
 			errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
 			errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
 			errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
+		}
+		else
+			qWarning() << tr("Cant open CA certificate file: \"%0\"").arg(server->m_ca_cert_path);
+		if( cert_file.open(QIODevice::ReadOnly))
+		{
+			QSslCertificate cert(&cert_file, QSsl::Pem);
 			errors << QSslError(QSslError::CertificateUntrusted, cert);
 			errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
 			errors << QSslError(QSslError::SelfSignedCertificate, cert);
 		}
+		else
+			qWarning() << tr("Cant open certificate file: \"%0\"").arg(server->m_cert_path);
+		errors << QSslError(QSslError::CertificateUntrusted);
+		errors << QSslError(QSslError::SelfSignedCertificateInChain);
+		errors << QSslError(QSslError::SelfSignedCertificate);
 		socket->ignoreSslErrors(errors);
 	}
 
@@ -3166,13 +3180,30 @@ void MattermostQt::onWebSocketConnected()
 
 void MattermostQt::onWebSocketSslError(QList<QSslError> errors)
 {
-//	int err = 0;
+	QList<QSslError> ignoreErrors;
 	foreach(QSslError error, errors)
 	{
-//		err = error.error();
-		qWarning() << (int)error.error() << error.errorString();
-	}
+		qWarning() << QLatin1String("SslError")
+		           << (int)error.error()
+		           << QLatin1String(":")
+		           << error.errorString();
 
+		switch( error.error() )
+		{
+		case QSslError::CertificateUntrusted:
+		case QSslError::SelfSignedCertificate:
+		case QSslError::SelfSignedCertificateInChain:
+			// TODO - remove HostNameMistchmach
+			ignoreErrors << error;
+			break;
+		default:
+			ignoreErrors << error;
+			break;
+		}
+	}
+	QWebSocket *socket = qobject_cast<QWebSocket*>(sender());
+	if(socket)
+		socket->ignoreSslErrors(ignoreErrors);
 //	qDebug() << err;
 }
 

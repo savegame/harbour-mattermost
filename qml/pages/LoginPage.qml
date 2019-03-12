@@ -24,10 +24,10 @@ Page {
     property bool canAccept : server_name.isComplete &
                 server.isComplete &
                 login_id.isComplete &
-                ((use_token_switcher.checked)?true:password.isComplete) &
-                ( !trust_certificate_switcher.checked
-                 ? true
-                 : ca_cert_text_field.isComplete & cert_text_field.isComplete )
+                ((use_token_switcher.checked)?true:password.isComplete)
+//                & ( !trust_certificate_switcher.checked
+//                 ? true
+//                 : ca_cert_text_field.isComplete & cert_text_field.isComplete )
 
     property int api: 4
     property string caCertPath
@@ -197,10 +197,9 @@ Page {
                 id: trust_certificate_switcher
                 text: qsTr("trust certificate")
                 onCheckedChanged: {
-                    ca_cert_row.visible = checked
-                    cert_row.visible = checked
-//                    if( checked === true )
-//                        ca_cert_text_field.focus = true
+                    // TODO : delete fields for choosing certificate files, no need more
+                    //ca_cert_row.visible = checked
+                    //cert_row.visible = checked
                 }
             }
 

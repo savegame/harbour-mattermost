@@ -200,6 +200,17 @@
     </message>
 </context>
 <context>
+    <name>MattermostQt</name>
+    <message>
+        <source>Cant open CA certificate file: &quot;%0&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cant open certificate file: &quot;%0&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MessageEditorBar</name>
     <message>
         <source>Message...</source>
