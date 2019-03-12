@@ -935,6 +935,13 @@ Page {
         }
     }
 
+    Component {
+        id: camerapicker
+        CameraPicker {
+
+        }
+    }
+
     MessageEditorBar {
         id: messageeditor
         context: messages.context
@@ -957,6 +964,10 @@ Page {
 
         onAttachFile: {
             pageStack.push(filepicker)
+        }
+
+        onTakePhoto: {
+            pageStack.push(camerapicker)
         }
     } // MessageEditorBar
 }

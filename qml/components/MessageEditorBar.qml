@@ -248,7 +248,7 @@ BackgroundItem {
                 icon.source: "image://theme/icon-m-imaging"
                 width: Theme.iconSizeMedium
                 height: Theme.iconSizeMedium
-                enabled: false
+//                enabled: false
                 onClicked: {
                     showToolBar = false
                     takePhoto()

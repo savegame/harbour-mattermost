@@ -24,13 +24,14 @@ PKGCONFIG += nemonotifications-qt5
 
 LIBS += -Llibs -lqt5websockets
 INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
-INCLUDEPATH += libs/qtwebsockets/include
+#INCLUDEPATH += libs/qtwebsockets/include
 #INCLUDEPATH += libs/qtwebsockets-5.6.2/include/QtWebSockets
 #INCLUDEPATH += libs/qtwebsockets-5.6.2/include
 
 INCLUDEPATH += $$PWD/../../mersdk/targets/SailfishOS-2.1.4.13-i486/usr/include/nemonotifications-qt5
 
 debug: DEFINES += _DEBUG
+!debug: DEFINES += _RELEASE
 
 SOURCES += src/harbour-mattermost.cpp \
     src/TeamsModel.cpp \
@@ -40,22 +41,27 @@ SOURCES += src/harbour-mattermost.cpp \
     src/SailNotify.cpp \
     src/AccountsModel.cpp
 
-DISTFILES += qml/harbour-mattermost.qml \
+
+DISTFILES += \
+    qml/harbour-mattermost.qml \
     qml/cover/CoverPage.qml \
+    qml/pages/TeamsPage.qml \
+    qml/pages/OptionsPage.qml \
+    qml/components/TeamLabel.qml \
+    qml/pages/AccountsPage.qml \
+    qml/components/CameraPicker.qml
+
+DISTFILES += \
     rpm/harbour-mattermost.changes.run.in \
     rpm/harbour-mattermost.spec \
     translations/*.ts \
     harbour-mattermost.desktop \
     server.pri \
-    qml/pages/TeamsPage.qml \
-    qml/components/TeamLabel.qml \
     translations/harbour-mattermost-ru.ts \
     rpm/harbour-mattermost.yaml \
     dbus/sashikknox.mattermost.service \
-    qml/pages/OptionsPage.qml \
     CHANGELOG \
     CHANGELOG \
-    qml/pages/AccountsPage.qml \
     LICENSE \
     rpm/harbour-mattermost.changes
 
