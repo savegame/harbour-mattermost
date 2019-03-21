@@ -4,15 +4,17 @@ import QtSensors 5.1
 import Sailfish.Silica 1.0
 
 Page {
-    allowedOrientations: Orientation.All
+    allowedOrientations: Orientation.Protrait
+    property int shot_orientation: 0
+    property int shot_rotation: 0
     Rectangle {
         anchors.fill: parent
         id: cameraPicker
         border { width: 1; color: "red"; }
 
         property alias captureMode: camera.captureMode
-        //property alias cameraState: camera.cameraState
-        //property alias cameraStatus: camera.cameraStatus
+        property alias cameraState: camera.cameraState
+        property alias cameraStatus: camera.cameraStatus
         property string errorString: ''
         property alias cameraDeviceId: camera.deviceId
         //property alias cameraDigitalZoom: camera.digitalZoom
@@ -77,10 +79,15 @@ Page {
             }
 
 
+//            focus {
+
+//            }
+
             focus {
-                focusMode:Camera.FocusAuto
-                focusPointMode: Camera.FocusPointAuto
+                focusMode: Camera.FocusHyperfocal
+                focusPointMode: Camera.FocusPointCustom
             }
+
 
             flash.mode: CameraFlash.FlashOff// Camera.FlashOn, CameraFlash.FlashOff, Camera.FlashAuto
 
@@ -152,6 +159,7 @@ Page {
             id: orientationSensor
             active: true
             property int rotationAngle: reading.orientation ? getOrientation(reading.orientation) : 0
+            property int orientation: reading.orientation ? reading.orientation : 0
 
             function getOrientation(value) {
                 switch (value) {
@@ -197,14 +205,27 @@ Page {
             }
             //camera.deviceId = _backCameraDeviceId
         }
+
+
+    }
+
+    MouseArea {
+        id: focusPicker
+        anchors.fill: parent
+
+        onClicked: {
+            camera.focus.focusMode = CameraFocus.FocusPointCustom
+            camera.focus.customFocusPoint = Qt.point(mouseX,mouseY)
+            camera.searchAndLock();
+        }
     }
 
     Rectangle {
         id: shotButton
-        border.width: 1
-        border.color: "red"
+        border.width: Theme.iconSizeSmall * 0.075
+        border.color: "white"
 
-        color: "red"
+        color: Qt.rgba(1.0,1.0,1.0,0.3)
         width: Theme.iconSizeLarge
         height: width
         radius: width * 0.5
@@ -221,8 +242,47 @@ Page {
             onClicked: {
                 //camera.imageCapture.ready = true
                 camera.imageCapture.capture();
+                shot_rotation = orientationSensor.rotationAngle
+                shot_orientation = orientationSensor.orientation
+            }
+
+            onPressed: {
+                shotButton.color = Qt.rgba(1.0,1.0,1.0,0.7)
+            }
+
+            onReleased: {
+                shotButton.color = Qt.rgba(1.0,1.0,1.0,0.3)
             }
         }
+
+//        states: [
+//            State {
+//                name: "portrait"
+//                when: orientation == Orientation.Portrait
+//                PropertyChanges {
+//                    target: shotButton
+//                    anchors {
+//                        bottom: parent.bottom
+//                        right: undefined
+//                        horizontalCenter: parent.horizontalCenter
+//                        verticalCenter: undefined
+//                    }
+//                }
+//            },
+//            State {
+//                name: "landscaope"
+//                when: orientation == Orientation.Landscape
+//                PropertyChanges {
+//                    target: shotButton
+//                    anchors {
+//                        bottom: undefined
+//                        right: parent.right
+//                        horizontalCenter: undefined
+//                        verticalCenter: parent.verticalCenter
+//                    }
+//                }
+//            }
+//        ]
     }
 
     Rectangle {
@@ -234,6 +294,8 @@ Page {
         Image {
             id: imageS
             anchors.fill: parent
+            //fillMode: Image.PreserveAspectFit
+            //rotation: shot_rotation
         }
     }
 }
