@@ -27,6 +27,7 @@ Page {
             }
             MenuItem {
                 text: qsTr("Add account ...")
+                onClicked: pageStack.push(Qt.resolvedUrl("LoginPage.qml"),{context: accountsPage.context})
             }
         }
 

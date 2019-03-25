@@ -82,7 +82,7 @@ public:
 	enum ConnectionError {
 		WrongPassword,
 		SslError,
-		SessionExpired,
+		SessionExpired
 	};
 	Q_ENUMS(ConnectionError)
 
@@ -588,6 +588,7 @@ protected:
 	void event_post_edited(ServerPtr sc, QJsonObject object);
 	void event_post_deleted(ServerPtr sc, QJsonObject data);
 	void event_status_change(ServerPtr sc, QJsonObject data);
+	void event_typing(ServerPtr sc, QJsonObject data);
 
 	// helper functions
 	inline UserStatus str2status(const QString &s) const;

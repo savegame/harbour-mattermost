@@ -270,10 +270,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>(edited)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%0 bytes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -291,6 +287,10 @@
     </message>
     <message>
         <source>somebody</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(edited)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -270,10 +270,6 @@
         <translation>Не удалось подключиться к серверу, неверный пароль</translation>
     </message>
     <message>
-        <source>(edited)</source>
-        <translation>(отредактировано)</translation>
-    </message>
-    <message>
         <source>%0 bytes</source>
         <translation>%0 байт</translation>
     </message>
@@ -292,6 +288,10 @@
     <message>
         <source>somebody</source>
         <translation>кто то</translation>
+    </message>
+    <message>
+        <source>(edited)</source>
+        <translation>(изменено)</translation>
     </message>
 </context>
 <context>

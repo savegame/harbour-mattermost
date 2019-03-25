@@ -102,6 +102,10 @@ BackgroundItem {
                 if(focus)
                     showToolBar = false
             }
+
+            onTextChanged: {
+                // send signal "user write"
+            }
         }
 
         IconButton {

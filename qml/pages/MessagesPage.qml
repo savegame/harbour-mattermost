@@ -409,7 +409,7 @@ Page {
                             }
 
                             onImplicitHeightChanged:
-                                console.log("fielsrepeater.implicitHeight " + implicitHeight)
+                                console.log("filesrepeater.implicitHeight " + implicitHeight)
 
                             Component {
                                 id: fileimage
@@ -821,14 +821,6 @@ Page {
                     property int    userstatus  : user_status
 
                     property real  outtotalheight
-//                    property var   heightmap
-//                    onCountfilesChanged: {
-//                        outtotalheight = 0
-//                    }
-
-//                    onHeightmapChanged: {
-//                        console.log(heightmap)
-//                    }
 
                     onOuttotalheightChanged:
                         height = outtotalheight
