@@ -35,7 +35,9 @@ public:
 		ActiveUsers,
 		UserCount,
 		Index,
-		ServerIndex
+		ServerIndex,
+		ServerCustomName,
+		ItemType
 	};
 
 public:

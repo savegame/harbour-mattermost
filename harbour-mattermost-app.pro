@@ -23,7 +23,8 @@ PKGCONFIG += nemonotifications-qt5
 #PKGCONFIG += libgcrypt
 
 LIBS += -Llibs -lqt5websockets
-INCLUDEPATH += libs/qtwebsockets/include/QtWebSockets
+INCLUDEPATH += libs/qtwebsockets/include
+INCLUDEPATH += libs/qtwebsockets/src/websockets
 #INCLUDEPATH += libs/qtwebsockets/include
 #INCLUDEPATH += libs/qtwebsockets-5.6.2/include/QtWebSockets
 #INCLUDEPATH += libs/qtwebsockets-5.6.2/include

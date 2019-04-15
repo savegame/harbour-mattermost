@@ -2171,7 +2171,11 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 
 	}
 	else if ( replyData.size() > 0 )
+	{
+		QString message = replyData.data();
+		emit onConnectionError(ConnectionError::UnknownError, message, -1);
 		qWarning() << replyData.data();
+	}
 }
 
 void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
@@ -3155,7 +3159,10 @@ void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 		reply->ignoreSslErrors(ignoreErrors);
 //		reply->ignoreSslErrors(errors);
 	}
-
+	else
+	{
+		emit onConnectionError(ConnectionError::SslError, "SSL Error", -1);
+	}
 }
 
 void MattermostQt::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)

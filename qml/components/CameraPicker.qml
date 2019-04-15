@@ -4,7 +4,7 @@ import QtSensors 5.1
 import Sailfish.Silica 1.0
 
 Page {
-    allowedOrientations: Orientation.Protrait
+    allowedOrientations: Orientation.Portrait
     property int shot_orientation: 0
     property int shot_rotation: 0
     Rectangle {
@@ -88,6 +88,10 @@ Page {
                 focusPointMode: Camera.FocusPointCustom
             }
 
+//            onFocusChanged: {
+//                focusRect.border.c
+//            }
+
 
             flash.mode: CameraFlash.FlashOff// Camera.FlashOn, CameraFlash.FlashOff, Camera.FlashAuto
 
@@ -97,7 +101,16 @@ Page {
             }
 
             viewfinder {
-                resolution: Qt.size(1280, 720)
+                resolution: switch(orientationSensor.orientation)
+                            {
+                            case Orientation.Landscape:
+                            case Orientation.LandscapeInverted:
+                                Qt.size(720, 1280)
+                            case Orientation.Portrait:
+                            case Orientation.PortraitInverted:
+                            default:
+                                Qt.size(1280, 720)
+                            }
                 minimumFrameRate: 10
                 maximumFrameRate: 30
             }
@@ -173,6 +186,10 @@ Page {
                     return 90
                 }
             }
+
+            onOrientationChanged: {
+
+            }
         }
 
         property string _backCameraDeviceId: ''
@@ -217,6 +234,10 @@ Page {
             camera.focus.focusMode = CameraFocus.FocusPointCustom
             camera.focus.customFocusPoint = Qt.point(mouseX,mouseY)
             camera.searchAndLock();
+
+            focusRect.x = mouseX - focusRect.radius
+            focusRect.y = mouseY - focusRect.radius
+            focusRect.visible = true
         }
     }
 
@@ -283,6 +304,17 @@ Page {
 //                }
 //            }
 //        ]
+    }
+
+    Rectangle {
+        id: focusRect
+        width: Theme.iconSizeLarge * 2
+        height: Theme.iconSizeLarge * 2
+        color: Qt.rgba(0,0,0,0)
+        border.color: Theme.highlightColor
+        border.width: 1
+        radius: Theme.iconSizeLarge
+        visible: false
     }
 
     Rectangle {

@@ -8,7 +8,7 @@
 #include <QMap>
 #include <QTimer>
 #include <QNetworkAccessManager>
-#include "QtWebSockets/qwebsocket.h"
+#include <QtWebSockets/qwebsocket.h>
 //#include <QtWebSockets/QWebSocket>
 //#include <QWebSocket>
 
@@ -82,7 +82,8 @@ public:
 	enum ConnectionError {
 		WrongPassword,
 		SslError,
-		SessionExpired
+		SessionExpired,
+		UnknownError
 	};
 	Q_ENUMS(ConnectionError)
 

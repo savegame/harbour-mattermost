@@ -55,22 +55,26 @@ QVariant TeamsModel::data(const QModelIndex &index, int role) const
 	else if(role == DataRoles::ServerIndex) {
 		return QVariant(m_team[index.row()]->m_server_index);
 	}
+	else if(role == DataRoles::ServerCustomName) {
+		return QVariant( m_mattermost->get_server_name(m_server_index) );
+	}
 	return QVariant();
 }
 
 QHash<int, QByteArray> TeamsModel::roleNames() const
 {
 	QHash<int, QByteArray> roleNames;
-	roleNames[DataRoles::DisplayName]  = QLatin1String("display_name").data();
-	roleNames[DataRoles::Description]  = QLatin1String("description").data();
-	roleNames[DataRoles::Email]        = QLatin1String("email").data();
-	roleNames[DataRoles::TeamId]       = QLatin1String("teamid").data();
-	roleNames[DataRoles::MsgCount]     = QLatin1String("msg_count").data();
-	roleNames[DataRoles::MentionCount] = QLatin1String("mention_count").data();
-	roleNames[DataRoles::ActiveUsers]  = QLatin1String("active_users").data();
-	roleNames[DataRoles::UserCount]    = QLatin1String("user_count").data();
-	roleNames[DataRoles::Index]        = QLatin1String("self_index").data();
-	roleNames[DataRoles::ServerIndex]  = QLatin1String("server_index").data();
+	roleNames[DataRoles::DisplayName]       = QLatin1String("display_name").data();
+	roleNames[DataRoles::Description]       = QLatin1String("description").data();
+	roleNames[DataRoles::Email]             = QLatin1String("email").data();
+	roleNames[DataRoles::TeamId]            = QLatin1String("teamid").data();
+	roleNames[DataRoles::MsgCount]          = QLatin1String("msg_count").data();
+	roleNames[DataRoles::MentionCount]      = QLatin1String("mention_count").data();
+	roleNames[DataRoles::ActiveUsers]       = QLatin1String("active_users").data();
+	roleNames[DataRoles::UserCount]         = QLatin1String("user_count").data();
+	roleNames[DataRoles::Index]             = QLatin1String("self_index").data();
+	roleNames[DataRoles::ServerIndex]       = QLatin1String("server_index").data();
+	roleNames[DataRoles::ServerCustomName]  = QLatin1String("role_server_display_name").data();
 	return roleNames;
 }
 
