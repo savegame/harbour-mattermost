@@ -1,5 +1,6 @@
 #include "MessagesModel.h"
 #include <QDateTime>
+#include "SettingsContainer.h"
 
 MessagesModel::MessagesModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -247,7 +248,7 @@ QString MessagesModel::getValidPath(int row, int i) const
 //			return file->m_thumb_path;
 		return file->m_file_path;
 	}
-	else if( file->m_file_size > m_mattermost->m_settings->m_auto_download_image_size) {
+	else if( file->m_file_size > m_mattermost->m_settings->autoDownloadImageSize() ) {
 		if(!file->m_preview_path.isEmpty() )
 			return file->m_preview_path;
 		else {

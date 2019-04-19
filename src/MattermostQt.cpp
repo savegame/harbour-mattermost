@@ -21,6 +21,7 @@
 
 #include "MessagesModel.h"
 #include "ChannelsModel.h"
+#include "SettingsContainer.h"
 
 // all properties names
 #define P_REPLY_TYPE         "reply_type"
@@ -114,7 +115,7 @@ MattermostQt::MattermostQt()
 	m_download_path = QDir(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation))
 	        .filePath(QCoreApplication::applicationName());
 
-	m_settings.reset(new SettingsContainer());
+	m_settings = nullptr;
 
 	load_settings();
 }
@@ -1385,6 +1386,16 @@ MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_inde
 	return channel;
 }
 
+void MattermostQt::setSettingsContainer(SettingsContainer *settings)
+{
+	m_settings = settings;
+}
+
+SettingsContainer *MattermostQt::settings()
+{
+	return m_settings;
+}
+
 void MattermostQt::websocket_connect(ServerPtr server)
 {
 	// server get us authentificztion token, time to open WebSocket!
@@ -2332,7 +2343,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			if( !QFile::exists(file->m_thumb_path) )
 				get_file_thumbnail(server_index,file->m_self_sc_index);
 
-			if( file->m_has_preview_image && file->m_file_size > m_settings->m_auto_download_image_size
+			if( file->m_has_preview_image && file->m_file_size > m_settings->autoDownloadImageSize()
 			        && !QFile::exists(file->m_preview_path) )
 			{
 				file->m_preview_path.clear();
@@ -2342,7 +2353,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			if( !QFile::exists(file->m_file_path) )
 			{
 				file->m_file_path.clear();
-				if( file->m_file_size <= m_settings->m_auto_download_image_size )
+				if( file->m_file_size <= m_settings->autoDownloadImageSize() )
 				{
 					file->m_file_status = FileDownloading;
 					get_file(file->m_server_index, file->m_team_index,
@@ -2366,7 +2377,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			file->m_thumb_path = file_thumb_path;
 			updateMessage = true;
 		}
-		if(file->m_has_preview_image && file->m_file_size > m_settings->m_auto_download_image_size) {
+		if(file->m_has_preview_image && file->m_file_size > m_settings->autoDownloadImageSize() ) {
 			QString preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
 			if( !QFile::exists(preview_path) )
 				get_file_preview(server_index,file->m_self_sc_index);

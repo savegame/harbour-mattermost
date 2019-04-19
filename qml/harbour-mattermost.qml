@@ -30,7 +30,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import harbour.sashikknox 1.0
+import ru.sashikknox 1.0
 import Nemo.Notifications 1.0
 import "pages"
 import "model"

@@ -40,7 +40,8 @@ SOURCES += src/harbour-mattermost.cpp \
     src/ChannelsModel.cpp \
     src/MessagesModel.cpp \
     src/SailNotify.cpp \
-    src/AccountsModel.cpp
+    src/AccountsModel.cpp \
+    src/SettingsContainer.cpp
 
 
 DISTFILES += \
@@ -89,7 +90,8 @@ HEADERS += \
     src/ChannelsModel.h \
     src/MessagesModel.h \
     src/SailNotify.h \
-    src/AccountsModel.h
+    src/AccountsModel.h \
+    src/SettingsContainer.h
 
 RESOURCES += \
     resources.qrc

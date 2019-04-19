@@ -37,6 +37,7 @@
 #include "ChannelsModel.h"
 #include "MessagesModel.h"
 #include "AccountsModel.h"
+#include "SettingsContainer.h"
 #include "SailNotify.h"
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -80,19 +81,28 @@ int main(int argc, char *argv[])
 	//
 	// For details see:
 	// https://harbour.jolla.com/faq#1.5.0
-	qmlRegisterType<MattermostQt> ("harbour.sashikknox", 1, 0, "MattermostQt");
-	qmlRegisterType<TeamsModel>   ("harbour.sashikknox", 1, 0, "TeamsModel");
-	qmlRegisterType<ChannelsModel>("harbour.sashikknox", 1, 0, "ChannelsModel");
-	qmlRegisterType<MessagesModel>("harbour.sashikknox", 1, 0, "MessagesModel");
-	qmlRegisterType<AccountsModel>("harbour.sashikknox", 1, 0, "AccountsModel");
+	qmlRegisterType<MattermostQt> ("ru.sashikknox", 1, 0, "MattermostQt");
+	qmlRegisterType<TeamsModel>   ("ru.sashikknox", 1, 0, "TeamsModel");
+	qmlRegisterType<ChannelsModel>("ru.sashikknox", 1, 0, "ChannelsModel");
+	qmlRegisterType<MessagesModel>("ru.sashikknox", 1, 0, "MessagesModel");
+	qmlRegisterType<AccountsModel>("ru.sashikknox", 1, 0, "AccountsModel");
+	qmlRegisterSingletonType<SettingsContainer>("ru.sashikknox", 1, 0, "Settings", SeetingsContainer_singletontype_provider );
 
 	// Start the application.
 	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));
 	v->show();
 
 	MattermostQt *m = v->rootObject()->findChild<MattermostQt*>();
-	if(m)
+	SettingsContainer *s = v->rootObject()->findChild<SettingsContainer*>();
+	if(m) {
 		QObject::connect(m, &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );
+		if(s)
+			m->setSettingsContainer(s);
+		else
+			qCritical() << "Cant find SettingsContaier Object, you cant chacnge default settings!";
+	}
+	else
+		qCritical() << "Cant find MattermostQt main Object, possible you cant receive notifications!";
 
 	return app->exec();
 }

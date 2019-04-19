@@ -3,7 +3,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Pickers 1.0
 import "../model"
 import "../components"
-import harbour.sashikknox 1.0
+import ru.sashikknox 1.0
 import QtGraphicalEffects 1.0
 
 Page {
@@ -29,11 +29,7 @@ Page {
 
     property MessagesModel messagesmodel: MessagesModel {
         mattermost: context.mattermost
-//        channelId: channel_id
         onMessagesInitialized: {
-            // nothing
-//            listview.scrollToBottom()
-//            messages.noMoreMessages = atEnd
             if(atEnd === true)
                 pullMenu.visible = false
             if(channel_index >= 0)
@@ -45,8 +41,6 @@ Page {
                     )
         }
         onAtEndChanged: {
-//            messages.noMoreMessages = atEnd
-//            pullMenu.visible = !atEnd
             if(atEnd === true)
                 pullMenu.visible = false
         }

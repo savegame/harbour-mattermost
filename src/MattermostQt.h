@@ -12,38 +12,7 @@
 //#include <QtWebSockets/QWebSocket>
 //#include <QWebSocket>
 
-/**
- * @brief The SettingsContainer class
- * application settings
- */
-class SettingsContainer : public QObject
-{
-	Q_OBJECT
-
-	Q_PROPERTY(bool showBlobs READ showBlobs WRITE setShowBlobs NOTIFY showBlobsChanged)
-	Q_PROPERTY(qreal blobsOpacity READ blobsOpacity WRITE setBlobsOpacity NOTIFY blobsOpacityChanged)
-public:
-	SettingsContainer() : QObject()
-	{// Default settings
-		m_auto_download_image_size = 500 * 1024; // 500 Kb
-		m_show_blobs = false;
-		m_blobs_opacity = 1.0;
-	}
-
-	bool showBlobs() const { return m_show_blobs; }
-	void setShowBlobs(bool show = true) { m_show_blobs = show; emit showBlobsChanged(); }
-
-	bool blobsOpacity() const { return m_blobs_opacity; }
-	void setBlobsOpacity(qreal opacity) { m_blobs_opacity = opacity; emit blobsOpacityChanged(); }
-Q_SIGNALS:
-	void showBlobsChanged();
-	void blobsOpacityChanged();
-public:
-	int   m_auto_download_image_size; // if size less than that, then download automaticly
-	bool  m_show_blobs; // show blobs behind messages
-	qreal m_blobs_opacity; // blobs opacity
-};
-typedef QSharedPointer<SettingsContainer> SettingsPtr;
+class SettingsContainer;
 
 class MattermostQt : public QObject
 {
@@ -51,8 +20,6 @@ class MattermostQt : public QObject
 
 	friend class MessagesModel;
 	friend class ChannelsModel;
-
-	Q_PROPERTY(SettingsContainer *settings READ settings NOTIFY settingsChanged)
 public:
 	enum ReplyType : int {
 		rt_login,
@@ -475,9 +442,6 @@ public:
 	/** functions, called from DBusAdaptor */
 	Q_INVOKABLE void notificationActivated(int server_index, int team_index, int channel_type, int channel_index);
 
-	/** return pointer to settings */
-	SettingsContainer* settings() { return m_settings.data(); }
-
 	/** settings  fucntions */
 	bool save_settings();
 	bool load_settings();
@@ -487,6 +451,11 @@ public:
 	                     int channel_type, int channel_index);
 
 	inline const QVector<ServerPtr> &server() const { return m_server; }
+
+	/** sets pointer to SettingsContainer */
+	void setSettingsContainer(SettingsContainer *settings);
+
+	SettingsContainer *settings();
 Q_SIGNALS:
 	void serverAdded(ServerPtr server);
 	void serverConnected(int server_index);
@@ -614,7 +583,7 @@ protected Q_SLOTS:
 protected:
 	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
-	SettingsPtr m_settings;
+	SettingsContainer    *m_settings;
 
 	QString m_config_path;
 	QString m_data_path;

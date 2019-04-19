@@ -1,7 +1,7 @@
 import QtQuick 2.5
 import Sailfish.Silica 1.0
 import QtGraphicalEffects 1.0
-import harbour.sashikknox 1.0
+import ru.sashikknox 1.0
 import "../components"
 import "../model"
 

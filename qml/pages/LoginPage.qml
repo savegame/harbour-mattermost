@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Pickers 1.0
-import harbour.sashikknox 1.0
+import ru.sashikknox 1.0
 import "../model"
 
 //Dialog {
