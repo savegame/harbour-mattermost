@@ -34,7 +34,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	case MessagesModel::MessageIndex:
 		return QVariant(m_messages[row]->m_self_index);
 		break;
-	case MessagesModel::Type:
+	case MessagesModel::Owner:
 		{
 			return QVariant( (int)m_messages[row]->m_type );
 		}
@@ -145,20 +145,20 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 QHash<int, QByteArray> MessagesModel::roleNames() const
 {
 	QHash<int, QByteArray> names;
-	names[MessagesModel::Text] = QLatin1String("message").data();
-	names[MessagesModel::Type] = QLatin1String("type").data();
-	names[MessagesModel::FilesCount] = QLatin1String("filescount").data();
-	names[MessagesModel::RowIndex] = QLatin1String("rowindex").data();
-	names[MessagesModel::SenderImagePath] = QLatin1String("userimagepath").data();
-	names[MessagesModel::SenderUserName] = QLatin1String("user").data();
-	names[MessagesModel::CreateAt] = QLatin1String("messagecreateat").data();
-	names[MessagesModel::IsEdited] = QLatin1String("messageisedited").data();
-	names[MessagesModel::UserId] = QLatin1String("userid").data();
-	names[MessagesModel::MessageIndex] = QLatin1String("messageindex").data();
-//	names[MessagesModel::FilePaths] = QLatin1String("filepaths").data();
-	names[MessagesModel::ValidPaths] = QLatin1String("validpaths").data();
-	names[MessagesModel::FormatedText] = QLatin1String("role_formated_text").data();
-	names[MessagesModel::UserStatus] = QLatin1String("user_status").data();
+	names[MessagesModel::Text]            = QLatin1String("role_message").data();
+	names[MessagesModel::Owner]           = QLatin1String("role_type").data();
+	names[MessagesModel::FilesCount]      = QLatin1String("role_files_count").data();
+	names[MessagesModel::RowIndex]        = QLatin1String("role_row_index").data();
+	names[MessagesModel::SenderImagePath] = QLatin1String("role_user_image_path").data();
+	names[MessagesModel::SenderUserName]  = QLatin1String("role_user_name").data();
+	names[MessagesModel::CreateAt]        = QLatin1String("role_message_create_at").data();
+	names[MessagesModel::IsEdited]        = QLatin1String("role_message_is_edited").data();
+	names[MessagesModel::UserId]          = QLatin1String("role_user_id").data();
+	names[MessagesModel::MessageIndex]    = QLatin1String("role_message_index").data();
+//	names[MessagesModel::FilePaths]       = QLatin1String("filepaths").data();
+	names[MessagesModel::ValidPaths]      = QLatin1String("role_valid_paths").data();
+	names[MessagesModel::FormatedText]    = QLatin1String("role_formated_text").data();
+	names[MessagesModel::UserStatus]      = QLatin1String("role_user_status").data();
 	return names;
 }
 

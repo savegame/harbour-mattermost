@@ -8,9 +8,12 @@ Item {
 
     id: context_item
 
-    property MattermostQt mattermost: MattermostQt {}
     property real avatarSize: Theme.iconSizeMedium
+    property bool bolbs: Settings.showBlobs
 
+    property MattermostQt mattermost: MattermostQt {
+//        settings =
+    }
     // status mask and statuses
 
 

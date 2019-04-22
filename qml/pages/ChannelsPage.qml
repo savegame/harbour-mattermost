@@ -6,6 +6,7 @@ import ru.sashikknox 1.0
 
 Page {
     id: channelspage
+    layer.enabled: true
     property Context context
     property bool isuptodate: false
 
@@ -135,7 +136,13 @@ Page {
                                     server_index: channelspage.server_index,
                                     channel_index: channellabel._index,
                                     channel_type: channellabel.channelType,
-                                    display_name: channellabel._display_name,
+                                    channel_id: context.mattermost.getChannelId(
+                                                    channelspage.server_index,
+                                                    channelspage.team_index,
+                                                    channellabel.channelType,
+                                                    channellabel._index
+                                                    ),
+                                    channel_name: channellabel._display_name,
                                     context: channelspage.context
                                 } );
                     pageStack.navigateForward(PageStackAction.Animated);

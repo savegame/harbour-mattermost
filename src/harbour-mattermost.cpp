@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
 	//
 	// For details see:
 	// https://harbour.jolla.com/faq#1.5.0
+
 	qmlRegisterType<MattermostQt> ("ru.sashikknox", 1, 0, "MattermostQt");
 	qmlRegisterType<TeamsModel>   ("ru.sashikknox", 1, 0, "TeamsModel");
 	qmlRegisterType<ChannelsModel>("ru.sashikknox", 1, 0, "ChannelsModel");
@@ -98,8 +99,8 @@ int main(int argc, char *argv[])
 		QObject::connect(m, &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );
 		if(s)
 			m->setSettingsContainer(s);
-		else
-			qCritical() << "Cant find SettingsContaier Object, you cant chacnge default settings!";
+//		else
+//			qCritical() << "Cant find SettingsContaier Object, you cant chacnge default settings!";
 	}
 	else
 		qCritical() << "Cant find MattermostQt main Object, possible you cant receive notifications!";

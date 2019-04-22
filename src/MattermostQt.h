@@ -77,13 +77,14 @@ public:
 	};
 	Q_ENUMS(ChannelType)
 
-	enum MessageType {
+	enum MessageOwner {
 		MessageSystem,// system message
 		MessageOther ,// when ither posted message
 		MessageMine,  // when message posted by myself
+		MessageDate,  // date of messages group
 		MessageTypeCount
 	};
-	Q_ENUMS(MessageType)
+	Q_ENUMS(MessageOwner)
 
 	enum ServerState : int {
 		ServerConnected = QAbstractSocket::ConnectedState,
@@ -170,7 +171,7 @@ public:
 		QString          m_id;
 		QString          m_channel_id;
 		QString          m_type_string;
-		MessageType      m_type;
+		MessageOwner     m_type;
 		QString          m_user_id;
 		qlonglong        m_create_at;
 		qlonglong        m_update_at;
@@ -404,6 +405,7 @@ public:
 	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
 	Q_INVOKABLE void get_channel(int server_index, QString channel_id);
+	Q_INVOKABLE void get_channel(int server_index, int team_index, int channel_type, int channel_index);
 //	void get_team(int server_index, QString team_id);
 	void get_team(int server_index, int team_index);
 	void get_file_thumbnail(int server_index, int file_sc_index);
@@ -453,7 +455,7 @@ public:
 	inline const QVector<ServerPtr> &server() const { return m_server; }
 
 	/** sets pointer to SettingsContainer */
-	void setSettingsContainer(SettingsContainer *settings);
+	Q_INVOKABLE void setSettingsContainer(SettingsContainer *settings);
 
 	SettingsContainer *settings();
 Q_SIGNALS:
@@ -583,6 +585,7 @@ protected Q_SLOTS:
 protected:
 	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
+//	QSharedPointer<SettingsContainer>    m_settings;
 	SettingsContainer    *m_settings;
 
 	QString m_config_path;

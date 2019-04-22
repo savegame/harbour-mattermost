@@ -45,13 +45,7 @@ SOURCES += src/harbour-mattermost.cpp \
 
 
 DISTFILES += \
-    qml/harbour-mattermost.qml \
-    qml/cover/CoverPage.qml \
-    qml/pages/TeamsPage.qml \
-    qml/pages/OptionsPage.qml \
-    qml/components/TeamLabel.qml \
-    qml/pages/AccountsPage.qml \
-    qml/components/CameraPicker.qml
+    qml/*
 
 DISTFILES += \
     rpm/harbour-mattermost.changes.run.in \

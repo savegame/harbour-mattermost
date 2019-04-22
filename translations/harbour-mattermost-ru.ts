@@ -220,40 +220,52 @@
         <source>Uploading </source>
         <translation>Загрузка </translation>
     </message>
-</context>
-<context>
-    <name>MessagesPage</name>
-    <message>
-        <source>get older</source>
-        <translation>предыдущие сообщения</translation>
-    </message>
-    <message>
-        <source>Edit</source>
-        <translation>Редатировать</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>Удалить</translation>
-    </message>
-    <message>
-        <source>Reply</source>
-        <translation>Ответить</translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation>Копировать</translation>
-    </message>
     <message>
         <source>Choose image</source>
-        <translation>Выберите изображене</translation>
+        <translation type="unfinished">Выберите изображене</translation>
     </message>
     <message>
         <source>Choose document</source>
-        <translation>Выберите документ</translation>
+        <translation type="unfinished">Выберите документ</translation>
     </message>
     <message>
         <source>Choose file</source>
-        <translation>Выберите файл</translation>
+        <translation type="unfinished">Выберите файл</translation>
+    </message>
+</context>
+<context>
+    <name>MessagesPage_old</name>
+    <message>
+        <source>get older</source>
+        <translation type="unfinished">предыдущие сообщения</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">Редатировать</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Удалить</translation>
+    </message>
+    <message>
+        <source>Reply</source>
+        <translation type="unfinished">Ответить</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Копировать</translation>
+    </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished">Выберите изображене</translation>
+    </message>
+    <message>
+        <source>Choose document</source>
+        <translation type="unfinished">Выберите документ</translation>
+    </message>
+    <message>
+        <source>Choose file</source>
+        <translation type="unfinished">Выберите файл</translation>
     </message>
 </context>
 <context>
@@ -261,6 +273,14 @@
     <message>
         <source>Options</source>
         <translation>Настройки</translation>
+    </message>
+    <message>
+        <source>Show blobs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show blobs unders messages</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

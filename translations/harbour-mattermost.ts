@@ -220,9 +220,21 @@
         <source>Uploading </source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Choose image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose file</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
-    <name>MessagesPage</name>
+    <name>MessagesPage_old</name>
     <message>
         <source>get older</source>
         <translation type="unfinished"></translation>
@@ -260,6 +272,14 @@
     <name>OptionsPage</name>
     <message>
         <source>Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show blobs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show blobs unders messages</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

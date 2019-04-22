@@ -1,8 +1,10 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Pickers 1.0
 import QtGraphicalEffects 1.0
 import ru.sashikknox 1.0
-import "../model"
+import "../../model"
+import ".."
 
 BackgroundItem {
     id: messageeditor
@@ -34,6 +36,64 @@ BackgroundItem {
 //    function fileUploaded(s_index,f_index) {
 
 //    }
+
+    Component {
+        id: imagepicker
+        ImagePickerPage {
+            title: qsTr("Choose image")
+            onSelectedContentPropertiesChanged: {
+                console.log(selectedContentProperties.filePath)
+                context.mattermost.post_file_upload(
+                            server_index,
+                            team_index,
+                            channel_type,
+                            channel_index,
+                            selectedContentProperties.filePath
+                )
+            }
+        }
+    }
+
+    Component {
+        id: documentpicker
+        DocumentPickerPage {
+            title: qsTr("Choose document")
+            onSelectedContentPropertiesChanged: {
+                console.log(selectedContentProperties.filePath)
+                context.mattermost.post_file_upload(
+                            server_index,
+                            team_index,
+                            channel_type,
+                            channel_index,
+                            selectedContentProperties.filePath
+                )
+            }
+        }
+    }
+
+    Component {
+        id: filepicker
+        FilePickerPage {
+            title: qsTr("Choose file")
+            onSelectedContentPropertiesChanged: {
+                console.log(selectedContentProperties.filePath)
+                context.mattermost.post_file_upload(
+                            server_index,
+                            team_index,
+                            channel_type,
+                            channel_index,
+                            selectedContentProperties.filePath
+                )
+            }
+        }
+    }
+
+    Component {
+        id: camerapicker
+        CameraPicker {
+
+        }
+    }
 
     onContextChanged: {
         context.mattermost.fileUploaded.connect( function fileUp(sindex,findex){
@@ -391,5 +451,21 @@ BackgroundItem {
             to: opacity_one
             duration: 200
         }
+    }
+
+    onAttachImage: {
+        pageStack.push(imagepicker)
+    }
+
+    onAtatchDocument: {
+        pageStack.push(documentpicker)
+    }
+
+    onAttachFile: {
+        pageStack.push(filepicker)
+    }
+
+    onTakePhoto: {
+        pageStack.push(camerapicker)
     }
 }

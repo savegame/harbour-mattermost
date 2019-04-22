@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 #include <QtQuick>
 #include <QGradient>
+#include "MattermostQt.h"
 
 #define CONCAT1(a, b) a ## b
 #define CONCAT2(a, b) CONCAT1(a, b)
@@ -44,6 +45,8 @@ class SettingsContainer : public QObject
 public:
 	explicit SettingsContainer(QObject *parent = nullptr);
 
+	static SettingsContainer *getInstance();
+
 	Q_INVOKABLE void resetToDefault();
 };
 
@@ -52,9 +55,13 @@ static QObject *SeetingsContainer_singletontype_provider(QQmlEngine *engine, QJS
 {
 	Q_UNUSED(engine)
 	Q_UNUSED(scriptEngine)
-
-	SettingsContainer *settings = new SettingsContainer();
-	return settings;
+//	engine->
+//	MattermostQt *m = engine->findChild<MattermostQt*>();
+//	if(SettingsContainerSingleton.data())
+//	SettingsContainer *settings = new SettingsContainer();
+//	if(m)
+//		m->setSettingsContainer(settings);
+	return SettingsContainer::getInstance();
 }
 
 #endif // SETTINGSCONTAINER_H

@@ -115,7 +115,8 @@ MattermostQt::MattermostQt()
 	m_download_path = QDir(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation))
 	        .filePath(QCoreApplication::applicationName());
 
-	m_settings = nullptr;
+	m_settings = SettingsContainer::getInstance();
+//	m_settings.reset(new SettingsContainer(this));
 
 	load_settings();
 }
@@ -459,6 +460,14 @@ void MattermostQt::get_channel(int server_index, QString channel_id)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_channel) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 	reply->setProperty(P_CHANNEL_ID, QVariant(channel_id) );
+}
+
+void MattermostQt::get_channel(int server_index, int team_index, int channel_type, int channel_index)
+{
+	QString channel_id = getChannelId(server_index,team_index,channel_type,channel_index);
+	if( channel_id.isEmpty() )
+		return;
+	get_channel(server_index,channel_id);
 }
 
 void MattermostQt::get_team(int server_index, int team_index)
@@ -1685,7 +1694,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 		message->m_channel_index = channel->m_self_index;
 		message->m_self_index = channel->m_message.size();
 		channel->m_message.append(message);
-		if(message->m_type == MessageType::MessageTypeCount)
+		if(message->m_type == MessageOwner::MessageTypeCount)
 		{
 			if(message->m_user_id.compare(sc->m_user_id) == 0 )
 				message->m_type = MessageMine;
@@ -1770,7 +1779,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 		message->m_channel_index = channel->m_self_index;
 //		message->m_self_index = channel->m_message.size();
 		messages.append(message);
-		if(message->m_type == MessageType::MessageTypeCount)
+		if(message->m_type == MessageOwner::MessageTypeCount)
 		{
 			if(message->m_user_id.compare(sc->m_user_id) == 0 )
 				message->m_type = MessageMine;
@@ -2342,8 +2351,10 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 		{
 			if( !QFile::exists(file->m_thumb_path) )
 				get_file_thumbnail(server_index,file->m_self_sc_index);
-
-			if( file->m_has_preview_image && file->m_file_size > m_settings->autoDownloadImageSize()
+			bool download_current_file = true;
+			if( m_settings && file->m_file_size > m_settings->autoDownloadImageSize())
+				download_current_file = false;
+			if( file->m_has_preview_image && !download_current_file
 			        && !QFile::exists(file->m_preview_path) )
 			{
 				file->m_preview_path.clear();
@@ -2353,7 +2364,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			if( !QFile::exists(file->m_file_path) )
 			{
 				file->m_file_path.clear();
-				if( file->m_file_size <= m_settings->autoDownloadImageSize() )
+				if( download_current_file )
 				{
 					file->m_file_status = FileDownloading;
 					get_file(file->m_server_index, file->m_team_index,
@@ -2377,7 +2388,11 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			file->m_thumb_path = file_thumb_path;
 			updateMessage = true;
 		}
-		if(file->m_has_preview_image && file->m_file_size > m_settings->autoDownloadImageSize() ) {
+		bool download_current_file = true;
+		if( m_settings && file->m_file_size > m_settings->autoDownloadImageSize())
+			download_current_file = false;
+
+		if(file->m_has_preview_image && !download_current_file ) {
 			QString preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
 			if( !QFile::exists(preview_path) )
 				get_file_preview(server_index,file->m_self_sc_index);
@@ -2613,7 +2628,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 	message_format(message);
 
 	message->m_server_index = sc->m_self_index;
-	if(message->m_type == MessageType::MessageTypeCount)
+	if(message->m_type == MessageOwner::MessageTypeCount)
 	{
 		if(message->m_user_id.compare(sc->m_user_id) == 0 )
 			message->m_type = MessageMine;
@@ -3664,9 +3679,9 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 	m_update_at = (qlonglong)object["update_at"].toDouble(0);
 	m_delete_at = (qlonglong)object["delete_at"].toDouble(0);
 	if( m_type_string.indexOf("system_") >= 0 )
-		m_type = MessageType::MessageSystem;
+		m_type = MessageOwner::MessageSystem;
 	else
-		m_type = MessageType::MessageTypeCount;
+		m_type = MessageOwner::MessageTypeCount;
 	QJsonArray filenames = object["filenames"].toArray();
 	QJsonArray file_ids = object["file_ids"].toArray();
 	for(int i = 0; i < filenames.size(); i++ )

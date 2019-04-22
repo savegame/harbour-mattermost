@@ -19,7 +19,7 @@ class MessagesModel : public QAbstractListModel
 public:
 	enum DataRoles : int {
 		Text = Qt::UserRole,
-		Type,
+		Owner,
 		FilesCount,
 		FilePaths,
 		ValidPaths,

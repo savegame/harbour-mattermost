@@ -11,6 +11,12 @@ SettingsContainer::SettingsContainer(QObject *parent) : QObject(parent)
 	resetToDefault();
 }
 
+SettingsContainer *SettingsContainer::getInstance()
+{
+	SettingsContainer *singleton = new SettingsContainer();
+	return singleton;
+}
+
 void SettingsContainer::resetToDefault()
 {
 	m_autoDownloadImageSize = 512;
