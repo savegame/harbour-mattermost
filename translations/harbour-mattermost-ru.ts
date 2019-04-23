@@ -282,6 +282,10 @@
         <source>Show blobs unders messages</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Blobs opacity value</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

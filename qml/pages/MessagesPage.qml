@@ -76,9 +76,12 @@ Page {
         verticalLayoutDirection: ListView.BottomToTop
         VerticalScrollDecorator {}
 
-        delegate:  MessageDelegate {
+        delegate:  MessageLabel {
             plainText: role_message
             messageOwner: role_type
+            senderImage: role_user_image_path
+            senderStatus: role_user_status
+            context: messagesPage.context
             anchors {
                 left: messagesListView.left
                 right: messagesListView.right

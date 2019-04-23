@@ -8,7 +8,7 @@ Item {
 
     id: context_item
 
-    property real avatarSize: Theme.iconSizeMedium
+    property real avatarSize: Theme.iconSizeMedium //TODO move it to Settings
     property bool bolbs: Settings.showBlobs
 
     property MattermostQt mattermost: MattermostQt {
