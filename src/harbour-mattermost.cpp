@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 	qmlRegisterType<ChannelsModel>("ru.sashikknox", 1, 0, "ChannelsModel");
 	qmlRegisterType<MessagesModel>("ru.sashikknox", 1, 0, "MessagesModel");
 	qmlRegisterType<AccountsModel>("ru.sashikknox", 1, 0, "AccountsModel");
-	qmlRegisterSingletonType<SettingsContainer>("ru.sashikknox", 1, 0, "Settings", SetingsContainer_singletontype_provider );
+	qmlRegisterSingletonType<SettingsContainer>("ru.sashikknox", 1, 0, "Settings", SettingsContainer_singletontype_provider );
 
 	// Start the application.
 	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));

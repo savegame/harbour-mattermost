@@ -20,6 +20,6 @@ SettingsContainer *SettingsContainer::getInstance()
 void SettingsContainer::resetToDefault()
 {
 	m_autoDownloadImageSize = 512;
-	m_showBlobs =false;
-	m_blobOpacity = 1.0;
+	m_showBlobs = false;
+	m_blobOpacity = 0.7;
 }

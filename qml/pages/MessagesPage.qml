@@ -81,11 +81,9 @@ Page {
             messageOwner: role_type
             senderImage: role_user_image_path
             senderStatus: role_user_status
+            senderName:  role_user_name
             context: messagesPage.context
-            anchors {
-                left: messagesListView.left
-                right: messagesListView.right
-            }
+            width: messagesListView.width
         }
     }
 

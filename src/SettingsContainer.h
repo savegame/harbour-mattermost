@@ -51,7 +51,7 @@ public:
 };
 
 // Second, define the singleton type provider function (callback).
-static QObject *SetingsContainer_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+static QObject *SettingsContainer_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
 	Q_UNUSED(engine)
 	Q_UNUSED(scriptEngine)

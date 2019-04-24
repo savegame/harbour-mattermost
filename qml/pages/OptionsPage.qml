@@ -42,6 +42,8 @@ Page {
                 blobOpacity.enabled = checked
                 blobOpacityLabel.enabled = checked
             }
+
+            Component.onCompleted: checked = Settings.showBlobs
         }
 
         Label {
@@ -53,11 +55,12 @@ Page {
             id: blobOpacity
             width: optionsPage.width
             minimumValue: 0
-            maximumValue: 100
-            stepSize: 10
+            maximumValue: 1
+            stepSize: 0.05
+            Component.onCompleted: value = Settings.blobOpacity
 
             onValueChanged: {
-                Settings.blobOpacity = value * 0.01;
+                Settings.blobOpacity = value ;
             }
         }
     }

@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.6
 import Sailfish.Silica 1.0
 import ru.sashikknox 1.0
 import "../../model"
@@ -27,20 +27,26 @@ BackgroundItem {
     property color blobColor:  Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
     property color secondaryTextColor
 
+    property bool  isMessageMineOrOther: false
+
     onMessageOwnerChanged: {
         switch(messageLabel.messageOwner) {
         case MattermostQt.MessageMine:
-           messageLabel.textColor = Theme.highlightColor
-           break
+            messageLabel.textColor = Theme.highlightColor
+            isMessageMineOrOther = true
+            break
         case MattermostQt.MessageOther:
             messageLabel.textColor = Theme.primaryColor
-            break;
+            isMessageMineOrOther = true
+            break
         case MattermostQt.MessageSystem:
             messageLabel.textColor = Theme.secondaryColor
-            break;
+            isMessageMineOrOther = false
+            break
         default:
-           messageLabel.textColor = Theme.primaryColor
-           break
+            messageLabel.textColor = Theme.primaryColor
+            isMessageMineOrOther = false
+            break
         }
 
         if ( showBlobs === false ) {
@@ -49,45 +55,47 @@ BackgroundItem {
         else {
             switch(messageLabel.messageOwner) {
             case MattermostQt.MessageMine:
-               messageLabel.blobColor = Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
-               break
+                messageLabel.blobColor = Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+                break
             case MattermostQt.MessageOther:
             default:
-               messageLabel.blobColor = Theme.rgba(Theme.highlightColor,Theme.highlightBackgroundOpacity * blobsOpacity)
-               break
+                messageLabel.blobColor = Theme.rgba(Theme.highlightColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+                break
             }
         }
 
         switch(messageLabel.messageOwner) {
         case MattermostQt.MessageMine:
-           messageLabel.secondaryTextColor = Theme.secondaryHighlightColor
-           break
+            messageLabel.secondaryTextColor = Theme.secondaryHighlightColor
+            break
         case MattermostQt.MessageOther:
         default:
-           messageLabel.secondaryTextColor = Theme.secondaryColor
-           break
+            messageLabel.secondaryTextColor = Theme.secondaryColor
+            break
         }
     }
 
     height: messageRow.height
+    property variant blobPos: mapFromItem(messageContent,0,0)
 
     Rectangle {
         id: backroundBlob
-        visible: Settings.showBlobs
+        visible: Settings.showBlobs & messageLabel.isMessageMineOrOther
         color: blobColor
         opacity: blobsOpacity
+
         x: messageContent.x
-        y: messageContent.y
-        width: messageContent.width
-        height: messageContent.height
-        radius: Theme.paddingMedium
+        y: messageContent.y + labelHeader.height + messageContent.spacing
+        width: inBlobContent.width
+        height: inBlobContent.height
+        radius: Theme.paddingLarge
     }
 
     Row {
         id: messageRow
+        leftPadding: Theme.paddingMedium
+        rightPadding: Theme.paddingMedium
         anchors {
-            leftMargin: Theme.paddingMedium
-            rightMargin: Theme.paddingMedium
             left: parent.left
             right: parent.right
         }
@@ -99,43 +107,56 @@ BackgroundItem {
             imagePath: senderImage
             userStatus: senderStatus
             context: messageLabel.context
-            visible: messageOwner == MattermostQt.MessageMine || messageOwner == MattermostQt.MessageOther
+            visible: messageLabel.isMessageMineOrOther
         }
 
         Column {
             id: messageContent
             spacing: Theme.paddingMedium
-            width: messageLabel.width - messageRow.spacing - userAvatar.width - messageLabel.anchors.leftMargin*2
+            width: messageLabel.width - messageRow.spacing - userAvatar.width
 
-            Label {
-                id: userNameLabel
-                text: senderName
-                visible: userAvatar.visible
-                font.pixelSize: Theme.fontSizeTiny
-                color: messageLabel.textColor
+            Row {
+                id: labelHeader
+                Label {
+                    id: userNameLabel
+                    text: messageLabel.senderName
+                    visible: messageLabel.isMessageMineOrOther
+                    font.pixelSize: Theme.fontSizeTiny
+                    color: messageLabel.textColor
+                }
             }
 
-            LinkedLabel {
-                id: plainTextLablel
-                plainText: messageLabel.plainText
-                wrapMode: Text.Wrap
-                font.pixelSize: Theme.fontSizeSmall
-                anchors.margins:
-                    (Settings.showBlobs) ?
-                        Theme.paddingMedium :
-                        0
+            Column
+            {
+                id: inBlobContent
 
-                height: implicitHeight
-                color: messageLabel.textColor
-                elide:
-                    switch(messageOwner) {
-                    case MattermostQt.MessageMine:
-                    case MattermostQt.MessageOther:
-                        Text.ElideLeft
-                        break;
-                    default:
-                        Text.ElideMiddle
-                    }
+                padding:
+                    (messageLabel.isMessageMineOrOther && Settings.showBlobs) ? Theme.paddingMedium : 0
+                anchors.rightMargin: Theme.paddingMedium
+                spacing: Theme.paddingMedium
+
+                LinkedLabel {
+                    id: plainTextLablel
+                    plainText: messageLabel.plainText
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Theme.fontSizeSmall
+                    anchors.margins:
+                        (Settings.showBlobs) ?
+                            Theme.paddingMedium :
+                            0
+                    width: Math.min(messageContent.width - anchors.leftMargin - anchors.rightMargin - inBlobContent.anchors.rightMargin * 2, implicitWidth)
+                    height: implicitHeight
+                    color: messageLabel.textColor
+                    elide:
+                        switch(messageOwner) {
+                        case MattermostQt.MessageMine:
+                        case MattermostQt.MessageOther:
+                            Text.ElideLeft
+                            break;
+                        default:
+                            Text.ElideMiddle
+                        }
+                } // plainTextLabel
             }
         }
     }
