@@ -11,13 +11,17 @@ BackgroundItem {
     property string plainText
     /** owner of message, mine, theirs, system or
       application (like calendar day of messages group)  */
-    property int messageOwner
+    property int messageOwner: -1
     /** user name */
     property string senderName
     /** path to avatar */
     property string senderImage
     /**  sender user status */
     property int senderStatus
+    /** count  of attached files */
+    property int filesCount
+    /** date of mesage */
+    property string messageTimestamp
 
     property bool showBlobs: Settings.showBlobs
     property real blobsOpacity: Settings.blobOpacity
@@ -31,17 +35,21 @@ BackgroundItem {
 
     onMessageOwnerChanged: {
         switch(messageLabel.messageOwner) {
+        case MattermostQt.MessageSystem:
+            messageLabel.textColor = Theme.secondaryColor
+            plainTextLablel.font.pixelSize =  Theme.fontSizeSmall
+            plainTextLablel.horizontalAlignment = Text.AlignHCenter
+            isMessageMineOrOther = false
+            break
         case MattermostQt.MessageMine:
             messageLabel.textColor = Theme.highlightColor
             isMessageMineOrOther = true
+            messageLabel.secondaryTextColor = Theme.secondaryHighlightColor
             break
         case MattermostQt.MessageOther:
             messageLabel.textColor = Theme.primaryColor
             isMessageMineOrOther = true
-            break
-        case MattermostQt.MessageSystem:
-            messageLabel.textColor = Theme.secondaryColor
-            isMessageMineOrOther = false
+            messageLabel.secondaryTextColor = Theme.secondaryColor
             break
         default:
             messageLabel.textColor = Theme.primaryColor
@@ -63,22 +71,13 @@ BackgroundItem {
                 break
             }
         }
-
-        switch(messageLabel.messageOwner) {
-        case MattermostQt.MessageMine:
-            messageLabel.secondaryTextColor = Theme.secondaryHighlightColor
-            break
-        case MattermostQt.MessageOther:
-        default:
-            messageLabel.secondaryTextColor = Theme.secondaryColor
-            break
-        }
     }
 
     height: messageRow.height
     property variant blobPos: mapFromItem(messageContent,0,0)
 
     Rectangle {
+        //TODO create custon own shape for better blod effect ( inside С++ by QSGNode )
         id: backroundBlob
         visible: Settings.showBlobs & messageLabel.isMessageMineOrOther
         color: blobColor
@@ -101,6 +100,9 @@ BackgroundItem {
         }
         spacing: Theme.paddingMedium
         height: Math.max(messageContent.height,userAvatar.height)
+        // TODO make change direction possible
+//        layoutDirection: ( messageLabel.messageOwner == MattermostQt.MessageMine ) ?
+//                             Qt.RightToLeft : Qt.LeftToRight
 
         UserAvatar {
             id: userAvatar
@@ -117,13 +119,23 @@ BackgroundItem {
 
             Row {
                 id: labelHeader
+                spacing: Theme.paddingMedium
+                visible: messageLabel.isMessageMineOrOther
                 Label {
                     id: userNameLabel
                     text: messageLabel.senderName
-                    visible: messageLabel.isMessageMineOrOther
                     font.pixelSize: Theme.fontSizeTiny
                     color: messageLabel.textColor
                 }
+                Label {
+                    id: messageTimestampLabel
+                    text: messageTimestamp
+                    font.pixelSize: Theme.fontSizeTiny
+                    font.family: Theme.fontFamilyHeading
+                    color: messageLabel.secondaryTextColor
+                    elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignLeft
+                }// Label timestamp
             }
 
             Column
@@ -144,18 +156,14 @@ BackgroundItem {
                         (Settings.showBlobs) ?
                             Theme.paddingMedium :
                             0
-                    width: Math.min(messageContent.width - anchors.leftMargin - anchors.rightMargin - inBlobContent.anchors.rightMargin * 2, implicitWidth)
+                    width:
+                        messageLabel.isMessageMineOrOther ?
+                            Math.min(
+                                messageContent.width - anchors.leftMargin - anchors.rightMargin - inBlobContent.anchors.rightMargin * 2,
+                                implicitWidth ) :
+                            messageLabel.width - inBlobContent.anchors.rightMargin * 2
                     height: implicitHeight
                     color: messageLabel.textColor
-                    elide:
-                        switch(messageOwner) {
-                        case MattermostQt.MessageMine:
-                        case MattermostQt.MessageOther:
-                            Text.ElideLeft
-                            break;
-                        default:
-                            Text.ElideMiddle
-                        }
                 } // plainTextLabel
             }
         }

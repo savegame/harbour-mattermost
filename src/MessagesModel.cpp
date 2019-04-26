@@ -27,26 +27,29 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 //		            m_channel->m_type
 //		            );
 	int row = m_messages.size() - 1 - index.row();
+
+	MattermostQt::MessagePtr message = m_messages[row];
+
 	switch (role) {
 	case MessagesModel::Text:
-		return QVariant(m_messages[row]->m_message);
+		return QVariant(message->m_message);
 		break;
 	case MessagesModel::MessageIndex:
-		return QVariant(m_messages[row]->m_self_index);
+		return QVariant(message->m_self_index);
 		break;
 	case MessagesModel::Owner:
 		{
-			return QVariant( (int)m_messages[row]->m_type );
+			return QVariant( (int)message->m_type );
 		}
 		break;
 	case MessagesModel::FilesCount:
 		{
-			return QVariant( (int)m_messages[row]->m_file.size() );
+			return QVariant( (int)message->m_file.size() );
 		}
 		break;
 	case MessagesModel::UserId:
 		{
-			return QVariant( m_messages[row]->m_user_id );
+			return QVariant( message->m_user_id );
 		}
 		break;
 	case MessagesModel::RowIndex:
@@ -56,13 +59,13 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::SenderImagePath:
 		{
-			if( m_messages[row]->m_user_index >= 0
-			         &&  m_messages[row]->m_user_index < m_mattermost->m_server[m_messages[row]->m_server_index]->m_user.size())
+			if( message->m_user_index >= 0
+			         &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
 			{
 				MattermostQt::UserPtr user =
 				        m_mattermost->
-				        m_server[m_messages[row]->m_server_index]->
-				        m_user[m_messages[row]->m_user_index];
+				        m_server[message->m_server_index]->
+				        m_user[message->m_user_index];
 				return QVariant(user->m_image_path);
 			}
 			else
@@ -71,13 +74,13 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::SenderUserName:
 		{
-			if( m_messages[row]->m_user_index >= 0
-			        &&  m_messages[row]->m_user_index < m_mattermost->m_server[m_messages[row]->m_server_index]->m_user.size())
+			if( message->m_user_index >= 0
+			        &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
 			{
 				MattermostQt::UserPtr user =
 				        m_mattermost->
-				        m_server[m_messages[row]->m_server_index]->
-				        m_user[m_messages[row]->m_user_index];
+				        m_server[message->m_server_index]->
+				        m_user[message->m_user_index];
 				return QVariant(user->m_username);
 			}
 			else
@@ -86,13 +89,13 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::UserStatus:
 		{
-			if( m_messages[row]->m_user_index >= 0
-			        &&  m_messages[row]->m_user_index < m_mattermost->m_server[m_messages[row]->m_server_index]->m_user.size())
+			if( message->m_user_index >= 0
+			        &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
 			{
 				MattermostQt::UserPtr user =
 				        m_mattermost->
-				        m_server[m_messages[row]->m_server_index]->
-				        m_user[m_messages[row]->m_user_index];
+				        m_server[message->m_server_index]->
+				        m_user[message->m_user_index];
 				return QVariant(user->m_status);
 			}
 			else
@@ -101,10 +104,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::ValidPaths:
 		{
-			if( m_messages[row]->m_file.size() > 0 )
+			if( message->m_file.size() > 0 )
 			{
 				QVariantList files;
-				for(int i = 0; i < m_messages[row]->m_file.size(); i++ )
+				for(int i = 0; i < message->m_file.size(); i++ )
 				{
 					files.append( getValidPath(row,i) );
 				}
@@ -118,14 +121,14 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		{
 			QDateTime time;
 			QString result;
-			if( m_messages[row]->m_update_at  == m_messages[row]->m_create_at )
+			if( message->m_update_at  == message->m_create_at )
 			{
-				time = QDateTime::fromMSecsSinceEpoch(m_messages[row]->m_create_at);
+				time = QDateTime::fromMSecsSinceEpoch(message->m_create_at);
 				result = time.toString("hh:mm:ss");
 			}
 			else
 			{
-				time = QDateTime::fromMSecsSinceEpoch(m_messages[row]->m_update_at);
+				time = QDateTime::fromMSecsSinceEpoch(message->m_update_at);
 				result = time.toString("hh:mm:ss ") + QObject::trUtf8("(edited)");
 			}
 			return result;
@@ -133,7 +136,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::IsEdited:
 	    {
-		    return QVariant(m_messages[row]->m_update_at  > 0);
+			return QVariant(message->m_update_at  > 0);
 	    }
 		break;
 	default:

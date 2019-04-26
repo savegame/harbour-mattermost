@@ -77,11 +77,13 @@ Page {
         VerticalScrollDecorator {}
 
         delegate:  MessageLabel {
-            plainText: role_message
-            messageOwner: role_type
-            senderImage: role_user_image_path
-            senderStatus: role_user_status
-            senderName:  role_user_name
+            plainText:        role_message
+            messageOwner:     role_type
+            senderImage:      role_user_image_path
+            senderStatus:     role_user_status
+            senderName:       role_user_name
+            filesCount:       role_files_count
+            messageTimestamp: role_message_create_at
             context: messagesPage.context
             width: messagesListView.width
         }
