@@ -22,6 +22,10 @@ BackgroundItem {
     property int filesCount
     /** date of mesage */
     property string messageTimestamp
+    /** MessagesModel */
+    property MessagesModel messagesModel
+    /** index of message in qvector */
+    property int rowIndex
 
     property bool showBlobs: Settings.showBlobs
     property real blobsOpacity: Settings.blobOpacity
@@ -165,6 +169,19 @@ BackgroundItem {
                     height: implicitHeight
                     color: messageLabel.textColor
                 } // plainTextLabel
+
+                AttachedFiles {
+                    id: attachedFiles
+                    anchors.margins:
+                        plainTextLablel.anchors.margins
+                    width: Math.min(implicitWidth, plainTextLablel.width)
+                    model: filesCount
+                    messagesModel: messageLabel.messagesModel
+                    textColor:     messageLabel.textColor
+                    rowIndex:      messageLabel.rowIndex
+                    spacing:       inBlobContent.spacing
+                    height: 30
+                }// files repeater
             }
         }
     }
