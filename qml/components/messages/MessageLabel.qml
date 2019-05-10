@@ -150,22 +150,25 @@ BackgroundItem {
                     (messageLabel.isMessageMineOrOther && Settings.showBlobs) ? Theme.paddingMedium : 0
                 anchors.rightMargin: Theme.paddingMedium
                 spacing: Theme.paddingMedium
+                property real inBlobMargins:
+                    (Settings.showBlobs) ?
+                        Theme.paddingMedium :
+                        0
+                property real maxBlobContentWidth:
+                    messageLabel.isMessageMineOrOther ?
+                        (messageContent.width - inBlobMargins * 2 - inBlobContent.anchors.rightMargin * 2):
+                        (messageLabel.width - inBlobContent.anchors.rightMargin * 2)
 
                 LinkedLabel {
                     id: plainTextLablel
                     plainText: messageLabel.plainText
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.fontSizeSmall
-                    anchors.margins:
-                        (Settings.showBlobs) ?
-                            Theme.paddingMedium :
-                            0
-                    width:
-                        messageLabel.isMessageMineOrOther ?
-                            Math.min(
-                                messageContent.width - anchors.leftMargin - anchors.rightMargin - inBlobContent.anchors.rightMargin * 2,
-                                implicitWidth ) :
-                            messageLabel.width - inBlobContent.anchors.rightMargin * 2
+                    anchors.margins: inBlobContent.inBlobMargins
+                    width: Math.min( inBlobContent.maxBlobContentWidth, implicitWidth )
+//                        messageLabel.isMessageMineOrOther ?
+                             //:
+//                            messageLabel.width - inBlobContent.anchors.rightMargin * 2
                     height: implicitHeight
                     color: messageLabel.textColor
                 } // plainTextLabel
@@ -174,13 +177,12 @@ BackgroundItem {
                     id: attachedFiles
                     anchors.margins:
                         plainTextLablel.anchors.margins
-                    width: Math.min(implicitWidth, plainTextLablel.width)
+                    width: inBlobContent.maxBlobContentWidth//Math.min(implicitWidth, maxBlobContentWidth)
                     model: filesCount
                     messagesModel: messageLabel.messagesModel
                     textColor:     messageLabel.textColor
                     rowIndex:      messageLabel.rowIndex
                     spacing:       inBlobContent.spacing
-                    height: 30
                 }// files repeater
             }
         }

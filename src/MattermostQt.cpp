@@ -1681,6 +1681,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 	QJsonObject::iterator it = posts.begin(),
 	        end = posts.end();
 	bool new_messages = false;
+	int its_all = order.size();
 	for(; it != end; it++ )
 	{
 		MessagePtr message(new MessageContainer(it.value().toObject()));
@@ -1724,9 +1725,9 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 					{
 						get_file_info(
 						            server_index,
-						            team_index,    //temp->m_team_index,
-						            channel_type,  //temp->m_channel_type,
-						            channel_index, //temp->m_channel_index,
+						            team_index,
+						            channel_type,
+						            channel_index,
 						            temp->m_self_index,
 						            temp->m_file_ids[k]);
 					}
@@ -1738,6 +1739,8 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 			}
 		}
 		emit messagesAdded(channel);
+		if(its_all < 60 )
+			emit messagesIsEnd(channel);
 	}
 }
 
@@ -1766,6 +1769,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 	        end = posts.end();
 	messages.reserve(order.size() + channel->m_message.size());
 	bool new_messages = false;
+	int its_all = order.size();
 	for(; it != end; it++ )
 	{
 		MessagePtr message(new MessageContainer(it.value().toObject()));
@@ -1832,6 +1836,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 		}
 	}
 	emit messagesAddedBefore(channel, size);
+
 }
 
 void MattermostQt::reply_get_public_channels(QNetworkReply *reply)

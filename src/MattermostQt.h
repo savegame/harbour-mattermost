@@ -472,6 +472,7 @@ Q_SIGNALS:
 //	void updateChannel()
 	void teamUnread(QString team_id, int msg, int mention);
 	void messagesAdded(ChannelPtr channel);
+	void messagesIsEnd(ChannelPtr channel); // its mean no more messages in channel
 	void messagesAddedBefore(ChannelPtr channel, int count);
 	void messageAdded(QList<MessagePtr> messages);
 	void newMessage(MessagePtr message);

@@ -75,8 +75,10 @@ Q_SIGNALS:
 	void messagesInitialized();
 	void newMessage();
 	void atEndChanged();
+	void messagesEnded();
 protected slots:
 	void slot_messagesAdded(MattermostQt::ChannelPtr channel);
+	void slot_messagesIsEnd(MattermostQt::ChannelPtr channel);
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageUpdated(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageDeleted(MattermostQt::MessagePtr message);

@@ -533,14 +533,6 @@ Page {
                                                         fileindex)
                                             progressCircle.visible = true;
                                         }
-                                        else if( filestatus === MattermostQt.FileDownloaded ) {
-    //                                        pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
-    //                                            {
-    //                                                imagePath: messagesmodel.getFilePath(rowindex,fileindex),
-    //                                                sourceSize: imagebackground.imageSourceSize,
-    //                                                width: Screen.width
-    //                                            })
-                                        }
                                     }
 
                                     Row {

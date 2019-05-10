@@ -25,6 +25,9 @@ Page {
     /** Messages Model from C++ */
     property MessagesModel messagesModel: MessagesModel {
         mattermost: context.mattermost
+        onMessagesEnded: {
+            pullMenu.visible = false;
+        }
     }
 
     /** setting up Messages Model Object */
@@ -74,7 +77,27 @@ Page {
 
         model: messagesModel
         verticalLayoutDirection: ListView.BottomToTop
+
         VerticalScrollDecorator {}
+
+        PullDownMenu {
+            id:pullMenu
+            quickSelect: true
+//            visible: true
+
+            MenuItem{
+                text:qsTr("get older")
+                onClicked:
+                {
+                    context.mattermost.get_posts_before(
+                                server_index,
+                                team_index,
+                                channel_index,
+                                channel_type
+                                )
+                }
+            }// MenuItem
+        }// PullDownMenu
 
         delegate:  MessageLabel {
             messagesModel:    messagesPage.messagesModel

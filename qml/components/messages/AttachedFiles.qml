@@ -38,22 +38,32 @@ Repeater {
             Component.onCompleted: {
                 componentHeight = implicitHeight
             }
-//            onImplicitHeightChanged: {
-//                componentHeight = implicitHeight
-//            }
         }
     }
 
     Component {
         id: fileDocument
-        Label {
-            text: "THIS IS DOCUMENT " + String(fileId)
+        Row {
             Component.onCompleted: {
-                componentHeight = implicitHeight
+                componentHeight = fileNameLabel.implicitHeight
             }
-//            onImplicitHeightChanged: {
-//                componentHeight = implicitHeight
-//            }
+//            height: fileNameLabel.height
+//                anchors.left: parent.left
+//                anchors.right: parent.right
+
+            Label {
+                id: fileNameLabel
+                text: messagesModel.getFileName(rowIndex,fileIndex)
+                //anchors.verticalCenter: image.verticalCenter
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSmall
+                font.italic:  true
+                color: textColor
+                truncationMode: TruncationMode.Fade
+                //width: widthcontent - fdrow.spacing*3 - image.width - filesize.width
+                width: filesRepeater.width
+                //height: implicitHeight
+            } // label with filename
         }
     }
 
@@ -61,7 +71,8 @@ Repeater {
         id: fileitemloader
         //anchors.fill: parent
         property int    fileType    : messagesModel.getFileType(rowIndex,index)
-        property string fileId     : messagesModel.getFileId(rowIndex,index)
+        property string fileId      : messagesModel.getFileId(rowIndex,index)
+        property int    fileIndex   : index
         property real   componentHeight: 5
 
         onComponentHeightChanged:{

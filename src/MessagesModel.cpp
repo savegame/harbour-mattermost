@@ -193,6 +193,9 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 	         this, &MessagesModel::slot_usersUpdated );
 	connect( m_mattermost.data(), &MattermostQt::userUpdated,
 	         this, &MessagesModel::slot_userUpdated );
+
+	connect( m_mattermost.data(), &MattermostQt::messagesIsEnd,
+	         this, &MessagesModel::slot_messagesIsEnd );
 }
 
 MattermostQt *MessagesModel::getMattermost() const
@@ -376,6 +379,14 @@ void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 	emit atEndChanged();
 }
 
+void MessagesModel::slot_messagesIsEnd(MattermostQt::ChannelPtr channel)
+{
+	if( m_channel == channel )
+	{
+		emit messagesEnded();
+	}
+}
+
 void MessagesModel::slot_messageAdded(QList<MattermostQt::MessagePtr> messages)
 {
 	if(messages.isEmpty() || m_channel.isNull() )
@@ -460,6 +471,8 @@ void MessagesModel::slot_messageAddedBefore(MattermostQt::ChannelPtr channel, in
 	}
 //	if(atEnd())
 	emit atEndChanged();
+	if(count < 60)
+		emit messagesEnded();
 }
 
 void MessagesModel::slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles)
