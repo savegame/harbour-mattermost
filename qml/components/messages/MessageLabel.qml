@@ -129,6 +129,7 @@ BackgroundItem {
                     id: userNameLabel
                     text: messageLabel.senderName
                     font.pixelSize: Theme.fontSizeTiny
+                    font.bold: true
                     color: messageLabel.textColor
                 }
                 Label {
@@ -179,6 +180,7 @@ BackgroundItem {
                         plainTextLablel.anchors.margins
                     width: inBlobContent.maxBlobContentWidth//Math.min(implicitWidth, maxBlobContentWidth)
                     model: filesCount
+                    visible: filesCount > 0
                     messagesModel: messageLabel.messagesModel
                     textColor:     messageLabel.textColor
                     rowIndex:      messageLabel.rowIndex

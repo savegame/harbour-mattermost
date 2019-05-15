@@ -19,13 +19,6 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	if ( !index.isValid() || index.row() < 0 || index.row() >= m_messages.size() )
 		return QVariant();
 
-//	if(index.row() == 0 && m_channel->m_message.size() < m_channel->m_total_msg_count && m_channel->m_message.size() > 0)
-//		m_mattermost->get_posts_before(
-//		            m_channel->m_server_index,
-//		            m_channel->m_team_index,
-//		            m_channel->m_self_index,
-//		            m_channel->m_type
-//		            );
 	int row = m_messages.size() - 1 - index.row();
 
 	MattermostQt::MessagePtr message = m_messages[row];
@@ -346,12 +339,12 @@ QString MessagesModel::getFileSize(int row, int i) const
 		return "";
 	MattermostQt::FilePtr file = m_messages[row]->m_file[i];
 	if( file->m_file_size < 1000 )
-		return QObject::trUtf8("%0 bytes").arg(file->m_file_size);
+		return QObject::tr("%0 bytes").arg(file->m_file_size);
 	qreal size = (qreal)file->m_file_size/1024;
 	if( size < 1000 )
-		return QObject::trUtf8("%0 Kb").arg(size,0,'f',1);
+		return QObject::tr("%0 Kb").arg(size,0,'f',1);
 	size = size/1024;
-	return QObject::trUtf8("%0 Mb").arg(size,0,'f',1);
+	return QObject::tr("%0 Mb").arg(size,0,'f',1);
 }
 
 bool MessagesModel::atEnd() const

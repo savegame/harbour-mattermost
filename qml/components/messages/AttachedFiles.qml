@@ -24,7 +24,6 @@ Repeater {
 
     onComputeFinalHeight: {
         height = 0;
-//        filesRepeater.count
         for(var i = 0; i < filesRepeater.count; i++)
         {
             height += summaryHeight[i]
@@ -35,6 +34,7 @@ Repeater {
         id: fileImage
         Label {
             text: "THIS IS IMAGE " + String(fileId)
+            width: filesRepeater.width
             Component.onCompleted: {
                 componentHeight = implicitHeight
             }
@@ -44,23 +44,47 @@ Repeater {
     Component {
         id: fileDocument
         Row {
+            id: fileDocumentRow
+            spacing: Theme.paddingSmall
+
             Component.onCompleted: {
-                componentHeight = fileNameLabel.implicitHeight
+                componentHeight = Math.max(fileNameLabel.implicitHeight, fileTypeIcon.height)
+            }
+
+            Image {
+                id: fileTypeIcon
+                fillMode: Image.PreserveAspectFit
+                source: Theme.iconForMimeType(messagesModel.getFileMimeType(rowIndex,fileIndex))
+                sourceSize.width: Theme.iconSizeMedium
+                sourceSize.height: Theme.iconSizeMedium
+                height: Theme.iconSizeMedium
+                width: Theme.iconSizeMedium
             }
 
             Label {
                 id: fileNameLabel
                 text: messagesModel.getFileName(rowIndex,fileIndex)
-                //anchors.verticalCenter: image.verticalCenter
+                anchors.verticalCenter: fileTypeIcon.verticalCenter
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeSmall
                 font.italic:  true
                 color: textColor
                 truncationMode: TruncationMode.Fade
-                //width: widthcontent - fdrow.spacing*3 - image.width - filesize.width
-                width: filesRepeater.width
+                width: filesRepeater.width - fileDocumentRow.spacing*3 - fileTypeIcon.width - fileSizeLabel.width
                 //height: implicitHeight
             } // label with filename
+
+            Label {
+                id: fileSizeLabel
+                width: contentWidth
+                text: messagesModel.getFileSize(rowIndex,fileIndex)
+                anchors.verticalCenter: fileTypeIcon.verticalCenter
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeTiny
+                font.italic:  true
+                color: textColor
+                height: contentHeight
+            }
         }
     }
 
