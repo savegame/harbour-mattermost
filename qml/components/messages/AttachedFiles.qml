@@ -47,9 +47,6 @@ Repeater {
             Component.onCompleted: {
                 componentHeight = fileNameLabel.implicitHeight
             }
-//            height: fileNameLabel.height
-//                anchors.left: parent.left
-//                anchors.right: parent.right
 
             Label {
                 id: fileNameLabel

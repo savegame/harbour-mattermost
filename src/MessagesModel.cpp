@@ -365,16 +365,12 @@ void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 {
 	if(channel->m_message.size() != m_messages.size() )
 	{
-//		m_messages.reserve(channel->m_message.size());
-//		beginInsertRows(QModelIndex(),0,channel->m_message.size()-1);
-//		m_messages.append(channel->m_message);
 		beginResetModel();
 		m_messages = channel->m_message;
-//		endInsertRows();
 		endResetModel();
 	}
 	m_channel = channel;
-//	if(atEnd())
+
 	emit messagesInitialized();
 	emit atEndChanged();
 }

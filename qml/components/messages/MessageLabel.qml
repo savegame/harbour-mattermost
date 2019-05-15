@@ -165,10 +165,10 @@ BackgroundItem {
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.fontSizeSmall
                     anchors.margins: inBlobContent.inBlobMargins
-                    width: Math.min( inBlobContent.maxBlobContentWidth, implicitWidth )
-//                        messageLabel.isMessageMineOrOther ?
-                             //:
-//                            messageLabel.width - inBlobContent.anchors.rightMargin * 2
+                    width: //Math.min( inBlobContent.maxBlobContentWidth, implicitWidth )
+                        messageLabel.isMessageMineOrOther ?
+                            Math.min( inBlobContent.maxBlobContentWidth, implicitWidth ) :
+                            inBlobContent.maxBlobContentWidth
                     height: implicitHeight
                     color: messageLabel.textColor
                 } // plainTextLabel
