@@ -1,0 +1,42 @@
+s;@CPP@;cc;g
+s;@INSTALL@;/usr/bin/install;g
+s;@INSTALL_PROGRAM@;/usr/bin/install -s -m 755;g
+s;@INSTALL_DATA@;/usr/bin/install -m 444;g
+s;@INSTALL_DIR@;/home/andreev/programming/markdown-qt/thirdparty/discount-2.2.4/config.md;g
+s;@PACKAGE_NAME@;libmarkdown;g
+s;@PACKAGE_VERSION@;2.2.4;g
+s;@GIT@;/usr/bin/git;g
+s;@AR@;/usr/bin/ar;g
+s;@RANLIB@;/usr/bin/ranlib;g
+s;@PKGCONFIG@;/usr/bin/pkg-config;g
+s;@MK_PKGCONFIG@;;g
+s:@DWORD@:unsigned int:g
+s:@WORD@:unsigned short:g
+s:@BYTE@:unsigned char:g
+s;@THEME@;;g
+s;@TABSTOP@;4;g
+s;@AMALLOC@;;g
+s;@H1TITLE@;;g
+s;@LIBS@;;g
+s;@DISTCLEAN@;rm -f;g
+s;@GENERATED_FILES@;Makefile version.c mkdio.h libmarkdown.pc;g
+s;@CC@;cc;g
+s;@CFLAGS@;-g;g
+s;@LDFLAGS@;-g;g
+s;@CPPFLAGS@;;g
+s;@srcdir@;/home/andreev/programming/markdown-qt/thirdparty/discount-2.2.4;g
+s;@prefix@;/usr/local;g
+s;@exedir@;/usr/local/bin;g
+s;@bindir@;/usr/local/bin;g
+s;@sbindir@;/usr/local/sbin;g
+s;@libdir@;/usr/local/lib;g
+s;@libexec@;/usr/local/lib;g
+s;@confdir@;/etc;g
+s;@mandir@;/usr/local/man;g
+s;@FIND@;/usr/bin/find;g
+s;@LN_S@;/usr/bin/ln -s;g
+s;@AR@;/usr/bin/ar;g
+s;@RANLIB@;/usr/bin/ranlib;g
+s;@LD_LIBRARY_PATH@;HERE;g
+s;@CONFIGURE_FILES@;config.cmd config.sub config.h config.mak config.sed config.md librarian.sh config.log;g
+s;@SED@;/usr/bin/sed;g

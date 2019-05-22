@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <QNetworkAccessManager>
 #include <QtWebSockets/qwebsocket.h>
+#include "MarkdownParser.h"
 //#include <QtWebSockets/QWebSocket>
 //#include <QWebSocket>
 
@@ -588,6 +589,7 @@ protected:
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
 //	QSharedPointer<SettingsContainer>    m_settings;
 	SettingsContainer    *m_settings;
+	MarkdownParser       *m_mdParser; /**< simple Markdown parser insterface */
 
 	QString m_config_path;
 	QString m_data_path;

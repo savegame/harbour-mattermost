@@ -1,0 +1,122 @@
+[echo -n] works
+Configuring for [markdown]
+checking out the C compiler
+-rwxrwxr-x. 1 andreev andreev 20736 фев  5 23:00 ngc5961
+-rw-rw-r--. 1 andreev andreev    61 фев  5 23:00 ngc5961.c
+Looking for cpp
+CPP=[cc], CPP_PIPE=[-E -g]
+target=CPP, rest=cc
+generating config.sed
+rm: невозможно удалить 'ngc5961.c': No such file or directory
+looking for install
+ (/usr/bin/install)
+ngc5961.c:1:1: предупреждение: по умолчанию возвращаемый тип функции - «int» [-Wimplicit-int]
+ main() { puts("hello, sailor!"); }
+ ^~~~
+ngc5961.c: В функции «main»:
+ngc5961.c:1:10: предупреждение: неявная декларация функции «puts» [-Wimplicit-function-declaration]
+ main() { puts("hello, sailor!"); }
+          ^~~~
+target=INSTALL, rest=/usr/bin/install
+target=INSTALL_PROGRAM, rest=/usr/bin/install -s -m 755
+target=INSTALL_DATA, rest=/usr/bin/install -m 444
+target=INSTALL_DIR, rest=/home/andreev/programming/markdown-qt/thirdparty/discount-2.2.4/config.md
+target=PACKAGE_NAME, rest=libmarkdown
+target=PACKAGE_VERSION, rest=2.2.4
+target=GIT, rest=/usr/bin/git
+ngc5961.c:1:1: предупреждение: атрибут «destructor» проигнорирован [-Wattributes]
+ extern int thing  __attribute__((__destructor__));
+ ^~~~~~
+target=AR, rest=/usr/bin/ar
+target=RANLIB, rest=/usr/bin/ranlib
+target=PKGCONFIG, rest=/usr/bin/pkg-config
+target=MK_PKGCONFIG, rest=
+checking for "volatile" keyword
+checking for "const" keyword
+Checking for "inline" keyword
+defining WORD & DWORD scalar types
+ngc5961.c: В функции «main»:
+ngc5961.c:14:1: предупреждение: по умолчанию для «argc» принят тип «int» [-Wimplicit-int]
+ main(argc, argv)
+ ^~~~
+OK!OK!looking for header libgen.h
+ (found)
+looking for header stdlib.h
+ (found)
+looking for the alloca function
+looking for header sys/types.h
+ (found)
+looking for header pwd.h
+ (found)
+looking for the getpwuid function
+looking for header sys/stat.h
+ (found)
+looking for the stat function
+special file macros in sys/stat.h:
+ngc5961.c:3:1: предупреждение: по умолчанию возвращаемый тип функции - «int» [-Wimplicit-int]
+ main(argc, argv)
+ ^~~~
+ngc5961.c: В функции «main»:
+ngc5961.c:3:1: предупреждение: по умолчанию для «argc» принят тип «int» [-Wimplicit-int]
+ S_ISSOCK
+ngc5961.c:3:1: предупреждение: по умолчанию возвращаемый тип функции - «int» [-Wimplicit-int]
+ main(argc, argv)
+ ^~~~
+ngc5961.c: В функции «main»:
+ngc5961.c:3:1: предупреждение: по умолчанию для «argc» принят тип «int» [-Wimplicit-int]
+ S_ISCHR
+ngc5961.c:3:1: предупреждение: по умолчанию возвращаемый тип функции - «int» [-Wimplicit-int]
+ main(argc, argv)
+ ^~~~
+ngc5961.c: В функции «main»:
+ngc5961.c:3:1: предупреждение: по умолчанию для «argc» принят тип «int» [-Wimplicit-int]
+ S_ISFIFO
+.
+looking for the srandom function
+looking for the memset function
+looking for the random function
+looking for the strcasecmp function
+ngc5961.c:1:6: предупреждение: несовместимые типы для внутренней функции «strcasecmp» [-Wbuiltin-declaration-mismatch]
+ void strcasecmp();
+      ^~~~~~~~~~
+looking for the strncasecmp function
+ngc5961.c:1:6: предупреждение: несовместимые типы для внутренней функции «strncasecmp» [-Wbuiltin-declaration-mismatch]
+ void strncasecmp();
+      ^~~~~~~~~~~
+looking for the fchdir function
+target=THEME, rest=
+target=TABSTOP, rest=4
+target=AMALLOC, rest=
+target=H1TITLE, rest=
+looking for header malloc.h
+ (found)
+target=LIBS, rest=
+target=DISTCLEAN, rest=rm -f
+target=GENERATED_FILES, rest=Makefile version.c mkdio.h libmarkdown.pc
+target=CC, rest=cc
+target=CFLAGS, rest=-g
+target=LDFLAGS, rest=-g
+target=CPPFLAGS, rest=
+target=srcdir, rest=/home/andreev/programming/markdown-qt/thirdparty/discount-2.2.4
+target=prefix, rest=/usr/local
+target=exedir, rest=/usr/local/bin
+target=bindir, rest=/usr/local/bin
+target=sbindir, rest=/usr/local/sbin
+target=libdir, rest=/usr/local/lib
+target=libexec, rest=/usr/local/lib
+target=confdir, rest=/etc
+target=mandir, rest=/usr/local/man
+find is /usr/bin/find
+target=FIND, rest=/usr/bin/find
+/usr/bin/ln exists, and ln -s works
+target=LN_S, rest=/usr/bin/ln -s
+target=AR, rest=/usr/bin/ar
+target=RANLIB, rest=/usr/bin/ranlib
+target=LD_LIBRARY_PATH, rest=HERE
+target=CONFIGURE_FILES, rest=config.cmd config.sub config.h config.mak config.sed config.md librarian.sh config.log
+sed is /usr/bin/sed
+target=SED, rest=/usr/bin/sed
+generating Makefile
+generating version.c
+generating mkdio.h
+generating libmarkdown.pc

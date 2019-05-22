@@ -16,7 +16,7 @@ VERSION = 0.1.3
 
 DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 
-CONFIG += sailfishapp
+CONFIG += sailfishapp warnoff
 CONFIG += qt
 QT += gui qml quick network dbus svg
 PKGCONFIG += nemonotifications-qt5
@@ -28,6 +28,8 @@ INCLUDEPATH += libs/qtwebsockets/src/websockets
 
 INCLUDEPATH += $$PWD/../../mersdk/targets/SailfishOS-2.1.4.13-i486/usr/include/nemonotifications-qt5
 
+include(libs/discount.pri);
+
 debug: DEFINES += _DEBUG
 !debug: DEFINES += _RELEASE
 
@@ -38,7 +40,9 @@ SOURCES += src/harbour-mattermost.cpp \
     src/MessagesModel.cpp \
     src/SailNotify.cpp \
     src/AccountsModel.cpp \
-    src/SettingsContainer.cpp
+    src/SettingsContainer.cpp \
+    src/MarkdownParser.cpp \
+    src/DiscountMDParser.cpp
 
 DISTFILES += \
     rpm/harbour-mattermost.changes.run.in \
@@ -78,7 +82,9 @@ HEADERS += \
     src/MessagesModel.h \
     src/SailNotify.h \
     src/AccountsModel.h \
-    src/SettingsContainer.h
+    src/SettingsContainer.h \
+    src/MarkdownParser.h \
+    src/DiscountMDParser.h
 
 RESOURCES += \
     resources.qrc

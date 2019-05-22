@@ -122,7 +122,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			else
 			{
 				time = QDateTime::fromMSecsSinceEpoch(message->m_update_at);
-				result = time.toString("hh:mm:ss ") + QObject::trUtf8("(edited)");
+				result = time.toString("hh:mm:ss ") + QObject::tr("(edited)");
 			}
 			return result;
 		}

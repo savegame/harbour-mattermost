@@ -22,6 +22,7 @@
 #include "MessagesModel.h"
 #include "ChannelsModel.h"
 #include "SettingsContainer.h"
+#include "DiscountMDParser.h"
 
 // all properties names
 #define P_REPLY_TYPE         "reply_type"
@@ -84,6 +85,8 @@ Q_DECLARE_METATYPE(MattermostQt::ChannelPtr)
 Q_DECLARE_METATYPE(MattermostQt::MessagePtr)
 
 MattermostQt::MattermostQt()
+    : m_mdParser(nullptr)
+    , m_settings(nullptr)
 {
 	m_networkManager.reset(new QNetworkAccessManager());
 
@@ -118,12 +121,16 @@ MattermostQt::MattermostQt()
 	m_settings = SettingsContainer::getInstance();
 //	m_settings.reset(new SettingsContainer(this));
 
+	m_mdParser = new DiscountMDParser();
+
 	load_settings();
 }
 
 MattermostQt::~MattermostQt()
 {
 	m_server.clear();
+
+	delete m_mdParser;
 }
 
 QString MattermostQt::getVersion() const
