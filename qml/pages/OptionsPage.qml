@@ -41,14 +41,10 @@ Page {
                 Settings.showBlobs = checked;
                 blobOpacity.enabled = checked
                 blobOpacityLabel.enabled = checked
+                blobOpacity.opacity = (checked)?1.0:0.5;
             }
 
             Component.onCompleted: checked = Settings.showBlobs
-        }
-
-        Label {
-            id: blobOpacityLabel
-            text: qsTr("Blobs opacity value")
         }
 
         Slider {
@@ -57,11 +53,23 @@ Page {
             minimumValue: 0
             maximumValue: 1
             stepSize: 0.05
+            label: qsTr("Blobs opacity value")
             Component.onCompleted: value = Settings.blobOpacity
 
             onValueChanged: {
                 Settings.blobOpacity = value ;
             }
+        }
+
+        TextSwitch {
+            id: useMarkdown
+            text: qsTr("Markdown (beta)")
+            description: qsTr("Use markdown formated text in messages")
+            onCheckedChanged: {
+                Settings.formatedText = checked;
+            }
+
+            Component.onCompleted: checked = Settings.formatedText
         }
     }
 

@@ -9,6 +9,7 @@ BackgroundItem {
     objectName: "messageLabel"
     property Context context
     property string plainText
+    property string formatedText
     /** owner of message, mine, theirs, system or
       application (like calendar day of messages group)  */
     property int messageOwner: -1
@@ -160,18 +161,37 @@ BackgroundItem {
                         (messageContent.width - inBlobMargins * 2 - inBlobContent.anchors.rightMargin * 2):
                         (messageLabel.width - inBlobContent.anchors.rightMargin * 2)
 
-                LinkedLabel {
+//                LinkedLabel {
+//                    id: plainTextLablel
+////                    plainText: messageLabel.plainText
+//                    text: messageLabel.formatedText
+//                    wrapMode: Text.Wrap
+//                    font.pixelSize: Theme.fontSizeSmall
+//                    anchors.margins: inBlobContent.inBlobMargins
+//                    width: //Math.min( inBlobContent.maxBlobContentWidth, implicitWidth )
+//                        messageLabel.isMessageMineOrOther ?
+//                            Math.min( inBlobContent.maxBlobContentWidth, implicitWidth ) :
+//                            inBlobContent.maxBlobContentWidth
+//                    height: implicitHeight
+//                    color: messageLabel.textColor
+//                } // plainTextLabel
+                Text {
                     id: plainTextLablel
-                    plainText: messageLabel.plainText
+//                    plainText: messageLabel.plainText
+                    text: Settings.formatedText ? messageLabel.formatedText : messageLabel.plainText
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.fontSizeSmall
+                    font.family: Theme.fontFamily
+                    textFormat: Text.RichText
+
                     anchors.margins: inBlobContent.inBlobMargins
-                    width: //Math.min( inBlobContent.maxBlobContentWidth, implicitWidth )
+                    width:
                         messageLabel.isMessageMineOrOther ?
                             Math.min( inBlobContent.maxBlobContentWidth, implicitWidth ) :
                             inBlobContent.maxBlobContentWidth
                     height: implicitHeight
                     color: messageLabel.textColor
+//                    readOnly: true
                 } // plainTextLabel
 
                 AttachedFiles {

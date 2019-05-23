@@ -102,6 +102,7 @@ Page {
         delegate:  MessageLabel {
             messagesModel:    messagesPage.messagesModel
             plainText:        role_message
+            formatedText:     role_formated_text
             messageOwner:     role_type
             senderImage:      role_user_image_path
             senderStatus:     role_user_status

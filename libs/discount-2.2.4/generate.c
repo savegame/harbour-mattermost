@@ -686,7 +686,7 @@ linkyformat(MMIOT *f, Cstring text, int image, Footnote *ref)
     }
     else if ( (f->flags & MKD_SAFELINK) && !safelink(ref->link) )
 	/* if MKD_SAFELINK, only accept links that are local or
-	 * a well-known protocol
+	 * a well-known protcol
 	 */
 	return 0;
     else
@@ -912,10 +912,12 @@ codespan(MMIOT *f, int size)
 
     if ( size > 1 && peek(f, size-1) == ' ' ) --size;
     if ( peek(f,i) == ' ' ) ++i, --size;
-    
-	Qstring("<pre><span style=\"font-family:monospace\">", f);
+	// TODO here need remove <br/> from previus end line of string
+	Qstring("<span style=\"font-family:monospace\"><pre>", f);
+//	Qstring("<code style=\"font-family:monospace\"><pre>", f);
     code(f, cursor(f)+(i-1), size);
-	Qstring("<span></pre>", f);
+//	Qstring("</pre></code>", f);
+	Qstring("</pre></span>", f);
 } /* codespan */
 
 
@@ -1316,6 +1318,7 @@ text(MMIOT *f)
 	case 0:     break;
 
 	case MKD_EOLN:
+		    //TODO here is need rool for pasting br
 		    Qstring(tag_text(f) ? "  " : "<br/>", f);
 		    break;
 
@@ -1488,8 +1491,10 @@ text(MMIOT *f)
 			for( i = 0; (peek(f,i) != MKD_EOLN) &&  (peek(f,i) != EOF); i++ ) {
 				if ( i > 1 && peek(f,i) == ':' ) {
 					// here is smile!
-					Qstring("<img src=\"qrc:/emoji/emoji.png\"/>", f);
-					mmiotseek(f, mmiottell(f) + i );
+					/** TODO put here path to smile from resources*/
+					// Qstring("<img src=\"qrc:/emoji/emoji.png\"/>", f);
+					/** and uncomment this*/
+					// mmiotseek(f, mmiottell(f) + i );
 					i = -1;
 					break;
 				}

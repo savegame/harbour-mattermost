@@ -1129,6 +1129,13 @@ void MattermostQt::notificationActivated(int server_index, int team_index, int c
 	//
 }
 
+QString MattermostQt::parseMD(const QString &input) const
+{
+	if(!m_mdParser)
+		return QString::Null();
+	return m_mdParser->parse(input);
+}
+
 QString MattermostQt::getUserName(int server_index, int user_index)
 {
 	if(server_index < 0 || server_index >= m_server.size()
@@ -2415,15 +2422,15 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 		}
 		else
 		{
-			QString path = m_pictures_path + QDir::separator() + file->filename();
-//			if( !QFile::exists(path) )
+			QString path = m_documents_path + QDir::separator() + file->filename();
+			if( !QFile::exists(path) )
 				get_file(file->m_server_index, file->m_team_index,
 				         file->m_channel_type, file->m_channel_index,
 				         file->m_message_index, file->m_self_index);
-//			else {
-//				file->m_file_path = path;
-//				updateMessage = true;
-//			}
+			else {
+				file->m_file_path = path;
+				updateMessage = true;
+			}
 		}
 	}
 	if(updateMessage)
@@ -2637,7 +2644,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 	}
 	MessagePtr message( new MessageContainer(post) );
 
-	message_format(message);
+//	message_/format(message);
 
 	message->m_server_index = sc->m_self_index;
 	if(message->m_type == MessageOwner::MessageTypeCount)
@@ -2863,7 +2870,8 @@ void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject obj
 				mc->m_create_at = message->m_create_at;
 				mc->m_update_at = message->m_update_at;
 				mc->m_message = message->m_message;
-				// TODO - check all files (looks like it no need, can change only )
+				mc->m_formated_message.clear();
+				// TODO - check all files (looks like it no need, can change only text )
 //				mc->
 				QList<MessagePtr> messages;
 				messages << mc;
@@ -2933,27 +2941,27 @@ MattermostQt::UserPtr MattermostQt::id2user(ServerPtr sc, const QString &id) con
 	return UserPtr();
 }
 
-void MattermostQt::message_format(MattermostQt::MessagePtr message)
-{
-	if(message.isNull() || message->m_message.isEmpty())
-		return;
+//void MattermostQt::message_format(MattermostQt::MessagePtr message)
+//{
+//	if(message.isNull() || message->m_message.isEmpty())
+//		return;
 
-	QString html;
-	QString &m = message->m_message;
-	QStringList tokens;
-	tokens << "\\*.*\\*";
-	for(int i = 0; i < message->m_message.size(); i++)
-	{
-
-	}
-//	QRegExp md("(```|\\*{1,3}(.*^\\*)\\*{1,3}|\^#+)\n");
-//	int last_pos = 0;
-//	while( md.indexIn(m,last_pos) != -1 )
+//	QString html;
+//	QString &m = message->m_message;
+//	QStringList tokens;
+//	tokens << "\\*.*\\*";
+//	for(int i = 0; i < message->m_message.size(); i++)
 //	{
-//		if(last_pos = 0)
-//			html += m.left(cap)
+
 //	}
-}
+////	QRegExp md("(```|\\*{1,3}(.*^\\*)\\*{1,3}|\^#+)\n");
+////	int last_pos = 0;
+////	while( md.indexIn(m,last_pos) != -1 )
+////	{
+////		if(last_pos = 0)
+////			html += m.left(cap)
+////	}
+//}
 
 void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject data)
 {

@@ -27,6 +27,11 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	case MessagesModel::Text:
 		return QVariant(message->m_message);
 		break;
+	case MessagesModel::FormatedText:
+		if( message->m_formated_message.isEmpty() )
+			message->m_formated_message = m_mattermost->parseMD(message->m_message);
+		return QVariant(message->m_formated_message);
+		break;
 	case MessagesModel::MessageIndex:
 		return QVariant(message->m_self_index);
 		break;

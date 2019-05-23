@@ -30,6 +30,7 @@
     { \
 	    CONCAT2(m_,name_) = value; \
 	    emit SettingsContainer:: CONCAT3(on_, name_, Changed) (); \
+	    emit settingsChanged(); \
 	} \
 
 
@@ -41,6 +42,7 @@ class SettingsContainer : public QObject
 	MT_PROPERTY(int,   autoDownloadImageSize);
 	MT_PROPERTY(bool,  showBlobs);
 	MT_PROPERTY(float, blobOpacity);
+	MT_PROPERTY(bool,  formatedText); // show Markdown text
 
 public:
 	explicit SettingsContainer(QObject *parent = nullptr);
@@ -48,6 +50,9 @@ public:
 	static SettingsContainer *getInstance();
 
 	Q_INVOKABLE void resetToDefault();
+
+Q_SIGNALS:
+	void settingsChanged();
 };
 
 // Second, define the singleton type provider function (callback).

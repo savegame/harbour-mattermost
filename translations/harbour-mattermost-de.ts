@@ -293,6 +293,14 @@
         <source>Blobs opacity value</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Markdown (beta)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use markdown formated text in messages</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

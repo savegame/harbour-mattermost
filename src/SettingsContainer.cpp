@@ -4,6 +4,7 @@
 MT_SET_PROPERTY(int,   autoDownloadImageSize)
 MT_SET_PROPERTY(bool,  showBlobs)
 MT_SET_PROPERTY(float, blobOpacity)
+MT_SET_PROPERTY(bool, formatedText)
 
 
 SettingsContainer::SettingsContainer(QObject *parent) : QObject(parent)
@@ -20,6 +21,7 @@ SettingsContainer *SettingsContainer::getInstance()
 void SettingsContainer::resetToDefault()
 {
 	m_autoDownloadImageSize = 512;
-	m_showBlobs = true;
-	m_blobOpacity = 0.7;
+	m_showBlobs             = true;
+	m_blobOpacity           = 0.7;
+	m_formatedText          = true;
 }

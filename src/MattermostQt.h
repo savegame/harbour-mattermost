@@ -445,6 +445,9 @@ public:
 	/** functions, called from DBusAdaptor */
 	Q_INVOKABLE void notificationActivated(int server_index, int team_index, int channel_type, int channel_index);
 
+	/** Markdown support */
+	Q_INVOKABLE QString parseMD(const QString &input) const;
+
 	/** settings  fucntions */
 	bool save_settings();
 	bool load_settings();
@@ -567,7 +570,7 @@ protected:
 	// helper functions
 	inline UserStatus str2status(const QString &s) const;
 	inline UserPtr    id2user(ServerPtr sc, const QString &id) const;
-	void  message_format(MessagePtr message);
+//	void  message_format(MessagePtr message);
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
 	void replySSLErrors(QNetworkReply *reply, QList<QSslError> errors);
