@@ -32,122 +32,176 @@ Repeater {
 
     Component {
         id: fileImage
-        Label {
-            text: "THIS IS IMAGE " + String(fileId)
+        BackgroundItem {
+            id: imageBackground
+            property size itemSize: messagesModel.getItemSize(rowIndex,fileIndex,filesRepeater.width)
+            property size imageSourceSize: messagesModel.getImageSize(rowIndex,fileIndex)
+            property string imagePath: messagesModel.getThumbPath(rowIndex,fileIndex)
+
+            height: imageWithLabel.height
             width: filesRepeater.width
-            Component.onCompleted: {
-                componentHeight = implicitHeight
-            }
-        }
-    }
 
-    Component {
-        id: fileDocument
-        MouseArea {
-            height: componentHeight
-            width: filesRepeater.width
-            property int fileStatus: MattermostQt.FileRemote
-
-            Component.onCompleted:
-                context.mattermost.fileStatusChanged.connect(
-                    function onStatusChanged(fid,fstatus) {
-                        if(fid !==  fileId )
-                            return
-                        switch(fstatus){
-                        case MattermostQt.FileDownloading:
-                            progressCircle.visible = true;
-                            break;
-                        case MattermostQt.FileDownloaded:
-                            progressCircle.visible = false
-                            progressCircle.enabled = false
-                        }
-                        fileStatus = fstatus;
-                    }
-                )
-
-            onClicked: {
-                if( fileStatus === MattermostQt.FileRemote ) {
-                    context.mattermost.get_file(
-                                server_index,
-                                team_index,
-                                channel_type,
-                                channel_index,
-                                rowIndex,
-                                fileIndex)
-                    progressCircle.visible = true;
-                }
+            onHeightChanged: {
+                if(height > 0)
+                    componentHeight = height
             }
 
-            Row {
-                id: fileDocumentRow
-                spacing: Theme.paddingSmall
-
-                Component.onCompleted: {
-                    componentHeight = Math.max(fileNameLabel.implicitHeight, fileTypeIcon.height)
-                }
+            Component {
+                id: staticImage
 
                 Image {
-                    id: fileTypeIcon
+                    id: image
                     fillMode: Image.PreserveAspectFit
-                    source: Theme.iconForMimeType(messagesModel.getFileMimeType(rowIndex,fileIndex))
-                    sourceSize.width: Theme.iconSizeMedium
-                    sourceSize.height: Theme.iconSizeMedium
-                    height: Theme.iconSizeMedium
-                    width: Theme.iconSizeMedium
+                    source: imageBackground.imagePath
+                    sourceSize: imageBackground.imageSourceSize
 
-                    Image {
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: Theme.iconSizeSmall
-                        height: Theme.iconSizeSmall
-                        source: "image://theme/icon-s-device-download"
-                        visible: fileStatus === MattermostQt.FileRemote
+                    height: imageBackground.itemSize.height
+                    width: imageBackground.itemSize.width
+                    onSourceChanged: {
+                        console.log( source )
                     }
-                }
+                }//image
+            }
 
-                Label {
-                    id: fileNameLabel
-                    text: messagesModel.getFileName(rowIndex,fileIndex)
-                    anchors.verticalCenter: fileTypeIcon.verticalCenter
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.italic:  true
-                    color: textColor
-                    truncationMode: TruncationMode.Fade
-                    width: filesRepeater.width - fileDocumentRow.spacing*3 - fileTypeIcon.width - fileSizeLabel.width
-                    //height: implicitHeight
-                } // label with filename
+            Component {
+                id: animatedimage
 
-                Label {
-                    id: fileSizeLabel
-                    width: contentWidth
-                    text: messagesModel.getFileSize(rowIndex,fileIndex)
-                    anchors.verticalCenter: fileTypeIcon.verticalCenter
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.italic:  true
-                    color: textColor
-                    height: contentHeight
+                AnimatedImage {
+                    id: image
+                    fillMode: Image.PreserveAspectFit
+                    source: imageBackground.imagePath
+                    onStatusChanged: playing = (status == AnimatedImage.Ready)
+                    asynchronous: true
+                    cache: false
+                    height: imageBackground.itemSize.height
+                    width: imageBackground.itemSize.width
                 }
             }
+
+            Column {
+                id: imageWithLabel
+                width: imageBackground.itemSize.width
+                height: imageloader.height + imageNameLabel.height +Theme.paddingSmall
+                spacing: Theme.paddingSmall
+                Row {
+                    id: filename_row
+                    width: textcolumn.width
+                    spacing: Theme.paddingMedium
+                    Label {
+                        id: imageNameLabel
+                        width: Math.min(contentWidth,textcolumn.width - filename_row.spacing - fileSizeLabel.width - Theme.paddingMedium)
+                        text: messagesModel.getFileName(rowIndex,fileIndex)
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeTiny
+                        font.italic:  true
+                        color: filesRepeater.textColor
+                        truncationMode: TruncationMode.Fade
+                        height: contentHeight
+                    }// filename label
+                    Label {
+                        id: fileSizeLabel
+                        width: contentWidth
+                        text: messagesModel.getFileSize(rowIndex,fileIndex)
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeTiny
+                        font.italic:  true
+                        color: fontcolor
+                        height: contentHeight
+                    }// filename label
+                }
+                Loader {
+                    id: imageLoader
+                    width: imageBackground.itemSize.width
+                    height: imageBackground.itemSize.height
+                    asynchronous: true
+                    sourceComponent:
+                        switch(fileType)
+                        {
+//                        case MattermostQt.FileImage:
+//                            staticimage
+//                            break;
+//                        case MattermostQt.FileAnimatedImage:
+//                            animatedimage
+//                            break;
+                        default:
+                            staticImage
+                            break;
+                        }
+                }//imageloader
+            }
+
+            MouseArea {
+                id: downloadbutton
+                visible: true
+                anchors.fill: parent
+                Component.onCompleted: {
+                    context.mattermost.fileStatusChanged.connect(
+                        function onStatusChanged(fid,fstatus) {
+                            if(fid !==  file_id )
+                                return
+                            switch(fstatus){
+                            case MattermostQt.FileDownloaded:
+                                progressCircle.visible = false
+                                progressCircle.enabled = false
+                                // here need open prepeared ImageViewPage
+                                pageStack.push( Qt.resolvedUrl("../../pages/ImageViewPage.qml"),
+                                               {
+                                                   imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
+                                                   previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
+                                                   sourceSize: imageBackground.imageSourceSize,
+                                                   animatedImage: filetype === MattermostQt.FileAnimatedImage,
+                                                   width: Screen.width
+                                               })
+                            }
+                            filestatus = fstatus;
+                        })
+                }
+
+                onClicked: {
+                    if( filestatus === MattermostQt.FileRemote ) {
+                        context.mattermost.get_file(
+                                    server_index,
+                                    team_index,
+                                    channel_type,
+                                    channel_index,
+                                    rowIndex,
+                                    fileIndex)
+                        progressCircle.visible = true;
+                    }
+                    else if( filestatus === MattermostQt.FileDownloaded ) {
+                        pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
+                            {
+                                imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
+                                previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
+                                animatedImage: filetype === MattermostQt.FileAnimatedImage,
+                                sourceSize: imageBackground.imageSourceSize,
+                                width: Screen.width
+                            })
+                    }
+                }
+            } // MouseArea downloadbutton
 
             ProgressCircle {
                 id: progressCircle
-                anchors.verticalCenter: fileDocumentRow.verticalCenter
-                anchors.left: fileDocumentRow.left
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
                 visible: false
-                value: 0
-                width: fileTypeIcon.width
-                height: fileTypeIcon.height
+                value: filestatus === MattermostQt.FileDownloading
                 onVisibleChanged: {
                     context.mattermost.fileDownloadingProgress.connect(
                         function onDownloading(id_of_file,progress) {
-                            if(id_of_file === fileId)
+                            if(id_of_file === file_id)
                                 value = progress
                         }
                     )
                 }
             }//ProgressCircle
+        }
+    }
+
+    Component {
+        id: fileDocument
+        FileDocument {
         }
     }
 

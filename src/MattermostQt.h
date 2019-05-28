@@ -587,6 +587,8 @@ protected Q_SLOTS:
 	void slot_get_teams_unread();
 	void slot_recconect_servers();
 	void slot_user_status();
+	/** */
+	void slot_settingsChanged();
 protected:
 	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;

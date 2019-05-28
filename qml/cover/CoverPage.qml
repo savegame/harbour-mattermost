@@ -119,13 +119,20 @@ CoverBackground {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: Theme.paddingMedium
+        anchors.left: parent.left
+        anchors.right: parent.right
         text: status_text
+        wrapMode: Text.Wrap
         font.pixelSize: Theme.fontSizeLarge
     }
     Label {
         id: error_label
         anchors.top: label.bottom
         text: error
+        anchors.left: parent.left
+        anchors.right: parent.right
+        font.pixelSize: Theme.fontSizeSmall
+        wrapMode: Text.Wrap
     }
 
 //    CoverActionList {

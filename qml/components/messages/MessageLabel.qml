@@ -33,6 +33,7 @@ BackgroundItem {
 
     /** calclating properties */
     property color textColor: Theme.highlightColor
+    property color linkColor: Theme.primaryColor
     property color blobColor:  Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
     property color secondaryTextColor
 
@@ -48,11 +49,13 @@ BackgroundItem {
             break
         case MattermostQt.MessageMine:
             messageLabel.textColor = Theme.highlightColor
+            messageLabel.linkColor = Theme.primaryColor
             isMessageMineOrOther = true
             messageLabel.secondaryTextColor = Theme.secondaryHighlightColor
             break
         case MattermostQt.MessageOther:
             messageLabel.textColor = Theme.primaryColor
+            messageLabel.linkColor = Theme.highlightColor
             isMessageMineOrOther = true
             messageLabel.secondaryTextColor = Theme.secondaryColor
             break
@@ -161,23 +164,8 @@ BackgroundItem {
                         (messageContent.width - inBlobMargins * 2 - inBlobContent.anchors.rightMargin * 2):
                         (messageLabel.width - inBlobContent.anchors.rightMargin * 2)
 
-//                LinkedLabel {
-//                    id: plainTextLablel
-////                    plainText: messageLabel.plainText
-//                    text: messageLabel.formatedText
-//                    wrapMode: Text.Wrap
-//                    font.pixelSize: Theme.fontSizeSmall
-//                    anchors.margins: inBlobContent.inBlobMargins
-//                    width: //Math.min( inBlobContent.maxBlobContentWidth, implicitWidth )
-//                        messageLabel.isMessageMineOrOther ?
-//                            Math.min( inBlobContent.maxBlobContentWidth, implicitWidth ) :
-//                            inBlobContent.maxBlobContentWidth
-//                    height: implicitHeight
-//                    color: messageLabel.textColor
-//                } // plainTextLabel
                 Text {
                     id: plainTextLablel
-//                    plainText: messageLabel.plainText
                     text: Settings.formatedText ? messageLabel.formatedText : messageLabel.plainText
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.fontSizeSmall
@@ -191,7 +179,10 @@ BackgroundItem {
                             inBlobContent.maxBlobContentWidth
                     height: implicitHeight
                     color: messageLabel.textColor
-//                    readOnly: true
+                    linkColor: messageLabel.linkColor
+                    onLinkActivated: {
+                        Qt.openUrlExternally(link);
+                    }
                 } // plainTextLabel
 
                 AttachedFiles {

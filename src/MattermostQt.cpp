@@ -120,6 +120,7 @@ MattermostQt::MattermostQt()
 
 	m_settings = SettingsContainer::getInstance();
 //	m_settings.reset(new SettingsContainer(this));
+	connect(m_settings, SIGNAL(settingsChanged()), SLOT(slot_settingsChanged()));
 
 	m_mdParser = new DiscountMDParser();
 
@@ -3399,7 +3400,6 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	else
 	    qWarning() << message;
 /** that need release first */
-//typing
 //response
 //channel_created
 //channel_deleted
@@ -3473,6 +3473,12 @@ void MattermostQt::slot_user_status()
 	{
 		post_users_status(i);
 	}
+}
+
+void MattermostQt::slot_settingsChanged()
+{
+	// TODO save to settings file
+	save_settings();
 }
 
 MattermostQt::TeamContainer::TeamContainer(QJsonObject &object) noexcept
