@@ -34,12 +34,18 @@ Repeater {
         id: fileImage
         BackgroundItem {
             id: imageBackground
-            property size itemSize: messagesModel.getItemSize(rowIndex,fileIndex,filesRepeater.width)
+            property size itemSize:
+                messagesModel.getItemSize(
+                    rowIndex,
+                    fileIndex,
+                    filesRepeater.width
+                    )
             property size imageSourceSize: messagesModel.getImageSize(rowIndex,fileIndex)
             property string imagePath: messagesModel.getThumbPath(rowIndex,fileIndex)
+            property int fileStatus: MattermostQt.FileRemote
 
             height: imageWithLabel.height
-            width: filesRepeater.width
+            width: Math.min(filesRepeater.width,imageWithLabel.width)
 
             onHeightChanged: {
                 if(height > 0)
@@ -48,19 +54,34 @@ Repeater {
 
             Component {
                 id: staticImage
-
-                Image {
-                    id: image
-                    fillMode: Image.PreserveAspectFit
-                    source: imageBackground.imagePath
-                    sourceSize: imageBackground.imageSourceSize
-
+                Item
+                {
+                    id: imageItem
                     height: imageBackground.itemSize.height
                     width: imageBackground.itemSize.width
-                    onSourceChanged: {
-                        console.log( source )
+
+                    Rectangle {
+                        id: maskRect
+                        radius: Theme.paddingMedium
+                        anchors.fill: parent
+                        visible: false
                     }
-                }//image
+
+                    Image {
+                        id: image
+                        fillMode: Image.PreserveAspectFit
+                        source: imageBackground.imagePath
+                        sourceSize: imageBackground.imageSourceSize
+                        anchors.fill: parent
+                        layer.enabled: true
+                        layer.effect: OpacityMask {
+                            maskSource: maskRect
+                        }
+                        onSourceChanged: {
+                            console.log( source )
+                        }
+                    }//image
+                }
             }
 
             Component {
@@ -75,21 +96,27 @@ Repeater {
                     cache: false
                     height: imageBackground.itemSize.height
                     width: imageBackground.itemSize.width
+                    onWidthChanged:
+                        componentWidth = width;
                 }
             }
 
             Column {
                 id: imageWithLabel
-                width: imageBackground.itemSize.width
-                height: imageloader.height + imageNameLabel.height +Theme.paddingSmall
+                width: fileNameRow.width
+                height: imageLoader.height + imageNameLabel.height + Theme.paddingSmall
                 spacing: Theme.paddingSmall
                 Row {
-                    id: filename_row
-                    width: textcolumn.width
+                    id: fileNameRow
+                    width:
+                        Math.max(
+                            imageNameLabel.width + fileSizeLabel.width + fileNameRow.spacing,
+                            imageBackground.itemSize.width
+                            )
                     spacing: Theme.paddingMedium
                     Label {
                         id: imageNameLabel
-                        width: Math.min(contentWidth,textcolumn.width - filename_row.spacing - fileSizeLabel.width - Theme.paddingMedium)
+                        width: Math.min(contentWidth,filesRepeater.width - fileNameRow.spacing - fileSizeLabel.width - Theme.paddingMedium)
                         text: messagesModel.getFileName(rowIndex,fileIndex)
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeTiny
@@ -105,7 +132,7 @@ Repeater {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeTiny
                         font.italic:  true
-                        color: fontcolor
+                        color: textColor
                         height: contentHeight
                     }// filename label
                 }
@@ -153,12 +180,12 @@ Repeater {
                                                    width: Screen.width
                                                })
                             }
-                            filestatus = fstatus;
+                            fileStatus = fstatus;
                         })
                 }
 
                 onClicked: {
-                    if( filestatus === MattermostQt.FileRemote ) {
+                    if( fileStatus === MattermostQt.FileRemote ) {
                         context.mattermost.get_file(
                                     server_index,
                                     team_index,
@@ -168,7 +195,7 @@ Repeater {
                                     fileIndex)
                         progressCircle.visible = true;
                     }
-                    else if( filestatus === MattermostQt.FileDownloaded ) {
+                    else if( fileStatus === MattermostQt.FileDownloaded ) {
                         pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
                             {
                                 imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
@@ -186,7 +213,7 @@ Repeater {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: false
-                value: filestatus === MattermostQt.FileDownloading
+                //value: fileStatus === MattermostQt.FileDownloading
                 onVisibleChanged: {
                     context.mattermost.fileDownloadingProgress.connect(
                         function onDownloading(id_of_file,progress) {

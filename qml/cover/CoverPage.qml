@@ -115,7 +115,7 @@ CoverBackground {
     }
 
     Label {
-        id: label
+        id: statusLabel
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: Theme.paddingMedium
@@ -123,16 +123,18 @@ CoverBackground {
         anchors.right: parent.right
         text: status_text
         wrapMode: Text.Wrap
+        elide: Text.ElideMiddle
         font.pixelSize: Theme.fontSizeLarge
     }
     Label {
         id: error_label
-        anchors.top: label.bottom
+        anchors.top: statusLabel.bottom
         text: error
         anchors.left: parent.left
         anchors.right: parent.right
         font.pixelSize: Theme.fontSizeSmall
         wrapMode: Text.Wrap
+        elide: Text.ElideMiddle
     }
 
 //    CoverActionList {
