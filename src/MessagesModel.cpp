@@ -407,7 +407,7 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 //	endResetModel();
 
 	QVector<int> roles;
-	roles << CreateAt << Text << ValidPaths << FilesCount;
+	roles << CreateAt << Text << ValidPaths << FilesCount << FormatedText;
 	int br = 0,lt = m_messages.size() - 1;
 	foreach(MattermostQt::MessagePtr m, messages)
 	{
@@ -416,6 +416,7 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 	}
 	lt = m_messages.size() - 1 - lt;
 	br = m_messages.size() - 1 - br;
+	qInfo() << QStringLiteral("Update %0 - %1; Messages size is %2").arg(lt).arg(br).arg(m_messages.size());
 	QModelIndex topLeft = index(br);
 	QModelIndex bottomRight = index(lt);
 	dataChanged(topLeft, bottomRight, roles);
@@ -447,6 +448,7 @@ void MessagesModel::slot_updateMessage(MattermostQt::MessagePtr message, int rol
 
 	QVector<int> roles;
 	roles << role;
+	qDebug() << QStringLiteral("Message %0 [%1] updated by role %2").arg(row).arg(message->m_self_index).arg(QString::fromUtf8(roleNames()[role]));
 	QModelIndex i = index(row);
 	dataChanged(i,i,roles);
 }

@@ -164,7 +164,7 @@ Repeater {
                 Component.onCompleted: {
                     context.mattermost.fileStatusChanged.connect(
                         function onStatusChanged(fid,fstatus) {
-                            if(fid !==  file_id )
+                            if(fid !==  fileId )
                                 return
                             switch(fstatus){
                             case MattermostQt.FileDownloaded:
@@ -196,7 +196,7 @@ Repeater {
                         progressCircle.visible = true;
                     }
                     else if( fileStatus === MattermostQt.FileDownloaded ) {
-                        pageStack.push( Qt.resolvedUrl("ImageViewPage.qml"),
+                        pageStack.push( Qt.resolvedUrl("../../pages/ImageViewPage.qml"),
                             {
                                 imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
                                 previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
@@ -217,7 +217,7 @@ Repeater {
                 onVisibleChanged: {
                     context.mattermost.fileDownloadingProgress.connect(
                         function onDownloading(id_of_file,progress) {
-                            if(id_of_file === file_id)
+                            if(id_of_file === fileId)
                                 value = progress
                         }
                     )

@@ -20,6 +20,8 @@ Page {
 //        contentHeight: ((animatedImage)?image_anim.height:image_static.height)*image_static.scale
         contentWidth: Math.max(image_static.width*image_static.scale, Screen.width)
         contentHeight: Math.max(image_static.height*image_static.scale, Screen.height)
+//        contentX: (imageview.height - contentHeight) * 0.5
+        contentY: (imageview.height - contentHeight) * 0.5
 
         AnimatedImage
         {

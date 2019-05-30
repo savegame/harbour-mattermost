@@ -2354,9 +2354,10 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file->m_self_index = mc->m_file.size();
 	mc->m_file.append(file);
 
-	QList<MessagePtr> messages;
-	messages << mc;
-	bool updateMessage = false;
+	//QList<MessagePtr> messages;
+	//QVector<int> roles;
+	//messages << mc;
+	bool isUpdateMessage = false;
 
 	file->m_self_sc_index = m_server[server_index]->m_file.size();
 	m_server[server_index]->m_file.append(file);
@@ -2397,7 +2398,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			else
 				file->m_file_status = FileDownloaded;
 		}
-		updateMessage = true;
+		isUpdateMessage = true;
 	}
 	else if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
 	{
@@ -2406,7 +2407,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			get_file_thumbnail(server_index,file->m_self_sc_index);
 		else {
 			file->m_thumb_path = file_thumb_path;
-			updateMessage = true;
+			isUpdateMessage = true;
 		}
 		bool download_current_file = true;
 		if( m_settings && file->m_file_size > m_settings->autoDownloadImageSize())
@@ -2418,7 +2419,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 				get_file_preview(server_index,file->m_self_sc_index);
 			else {
 				file->m_preview_path = preview_path;
-				updateMessage = true;
+				isUpdateMessage = true;
 			}
 		}
 		else
@@ -2430,12 +2431,12 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 				         file->m_message_index, file->m_self_index);
 			else {
 				file->m_file_path = path;
-				updateMessage = true;
+				isUpdateMessage = true;
 			}
 		}
 	}
-	if(updateMessage)
-		emit messageUpdated(messages);
+	if(isUpdateMessage)
+		emit updateMessage(mc, (int)MessagesModel::FilesCount);
 	return;
 }
 
