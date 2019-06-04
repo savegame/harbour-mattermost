@@ -100,6 +100,7 @@ Page {
         }// PullDownMenu
 
         delegate:  MessageLabel {
+            id: messageLabel
             messagesModel:    messagesPage.messagesModel
             plainText:        role_message
             formatedText:     role_formated_text
@@ -110,8 +111,17 @@ Page {
             filesCount:       role_files_count
             rowIndex:         role_row_index
             messageTimestamp: role_message_create_at
+            fileStatus:       role_file_status
             context: messagesPage.context
             width: messagesListView.width
+
+            Label {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                font.pixelSize: Theme.fontSizeSmall
+                text: "ri: " + String(messageLabel.rowIndex) + "<br>fc: " + String(messageLabel.filesCount)
+                textFormat: Text.RichText
+            }
         }
     }
 

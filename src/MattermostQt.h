@@ -66,7 +66,9 @@ public:
 	enum FileStatus {
 		FileDownloaded,
 		FileDownloading,
-		FileRemote //that mean not downloaded
+		FileRemote, //that mean not downloaded
+		FileUninitialized,
+		FileRequested,
 	};
 	Q_ENUMS(FileStatus)
 
@@ -116,7 +118,7 @@ public:
 	 * all files list stored in serverptr
 	 */
 	struct FileContainer {
-		FileContainer() noexcept {}
+		FileContainer() noexcept : m_file_status(FileUninitialized) {}
 
 		FileContainer(QJsonObject object) noexcept;
 
@@ -188,6 +190,7 @@ public:
 		int              m_self_index;
 
 //		ChannelPtr       m_channel;// test
+		FilePtr   fileAt(int file_index);
 	};
 	typedef QSharedPointer<MessageContainer> MessagePtr;
 
@@ -289,6 +292,8 @@ public:
 		int m_dc_user_index; /**< if it direct channel, is index*/
 
 		QVector<MessagePtr> m_message;
+
+		MessagePtr messageAt(int message_index);
 	};
 	typedef QSharedPointer<ChannelContainer> ChannelPtr;
 
@@ -455,6 +460,10 @@ public:
 	/** */
 	ChannelPtr channelAt(int server_index, int team_index,
 	                     int channel_type, int channel_index);
+
+	MessagePtr messageAt(int server_index, int team_index,
+	                     int channel_type, int channel_index,
+	                     int message_index);
 
 	inline const QVector<ServerPtr> &server() const { return m_server; }
 

@@ -3,6 +3,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Pickers 1.0
 import "../../model"
 import "../../components"
+import "../../pages"
 import ru.sashikknox 1.0
 import QtGraphicalEffects 1.0
 
@@ -17,6 +18,14 @@ Repeater {
     property int rowIndex
     /** spacing beetwin rows of files components */
     property real spacing
+    /** array of file statuses */
+    property var fileStatus
+
+    property int server_index
+    property int team_index
+    property int channel_type
+    property int channel_index
+    property int message_index
 
     /** own properties */
     property variant summaryHeight: []
@@ -101,6 +110,13 @@ Repeater {
                 }
             }
 
+            Component {
+                id: imageViewPage
+                ImageViewPage {
+
+                }
+            }
+
             Column {
                 id: imageWithLabel
                 width: fileNameRow.width
@@ -171,12 +187,13 @@ Repeater {
                                 progressCircle.visible = false
                                 progressCircle.enabled = false
                                 // here need open prepeared ImageViewPage
-                                pageStack.push( Qt.resolvedUrl("../../pages/ImageViewPage.qml"),
+                                ///home/andreev/Projects/Sailfish/harbour-mattermost/qml/pages/ImageViewPage.qml
+                                pageStack.push( imageViewPage,
                                                {
                                                    imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
                                                    previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
                                                    sourceSize: imageBackground.imageSourceSize,
-                                                   animatedImage: filetype === MattermostQt.FileAnimatedImage,
+                                                   animatedImage: fileType === MattermostQt.FileAnimatedImage,
                                                    width: Screen.width
                                                })
                             }
@@ -196,11 +213,11 @@ Repeater {
                         progressCircle.visible = true;
                     }
                     else if( fileStatus === MattermostQt.FileDownloaded ) {
-                        pageStack.push( Qt.resolvedUrl("../../pages/ImageViewPage.qml"),
+                        pageStack.push( imageViewPage,
                             {
                                 imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
                                 previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
-                                animatedImage: filetype === MattermostQt.FileAnimatedImage,
+                                animatedImage: fileType === MattermostQt.FileAnimatedImage,
                                 sourceSize: imageBackground.imageSourceSize,
                                 width: Screen.width
                             })
@@ -232,12 +249,13 @@ Repeater {
         }
     }
 
-    Loader {//for different file types
+    delegate: Loader {//for different file types
         id: fileitemloader
         //anchors.fill: parent
         property int    fileType    : messagesModel.getFileType(rowIndex,index)
         property string fileId      : messagesModel.getFileId(rowIndex,index)
         property int    fileIndex   : index
+        property int    currentStatus: fileStatus[index]
         property real   componentHeight: 5
 
         onComponentHeightChanged:{

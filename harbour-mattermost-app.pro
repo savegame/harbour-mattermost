@@ -42,7 +42,8 @@ SOURCES += src/harbour-mattermost.cpp \
     src/AccountsModel.cpp \
     src/SettingsContainer.cpp \
     src/MarkdownParser.cpp \
-    src/DiscountMDParser.cpp
+    src/DiscountMDParser.cpp \
+    src/AttachedFilesModel.cpp
 
 DISTFILES += \
     rpm/harbour-mattermost.changes.run.in \
@@ -84,7 +85,8 @@ HEADERS += \
     src/AccountsModel.h \
     src/SettingsContainer.h \
     src/MarkdownParser.h \
-    src/DiscountMDParser.h
+    src/DiscountMDParser.h \
+    src/AttachedFilesModel.h
 
 RESOURCES += \
     resources.qrc

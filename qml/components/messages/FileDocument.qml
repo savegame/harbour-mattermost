@@ -5,7 +5,7 @@ import ru.sashikknox 1.0
 MouseArea {
     height: componentHeight
     width: filesRepeater.width
-    property int fileStatus: MattermostQt.FileRemote
+    property int fileStatus: currentStatus
 
     Component.onCompleted:
         context.mattermost.fileStatusChanged.connect(

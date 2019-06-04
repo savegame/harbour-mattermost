@@ -569,6 +569,28 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 {// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
 	// we think all indexes is right
 	ServerPtr sc = m_server[server_index];
+	MessagePtr m = messageAt(server_index,team_index,channel_type,channel_index,message_index);
+	if(!m) {
+		qCritical() << "Cant find message in channel!";
+		return;
+	}
+	FilePtr f;
+	for(int i = 0; i < m->m_file.size(); i++)
+	{
+		if(m->m_file[i]->m_id != file_id)
+			continue;
+		if(m->m_file[i]->m_file_status != FileStatus::FileUninitialized)
+			return;
+		f = m->m_file[i];
+		break;
+	}
+	if(!f) {
+		f.reset(new FileContainer());
+		f->m_self_index = m->m_file.size();
+		m->m_file.push_back(f);
+	}
+	f->m_file_status = FileStatus::FileRequested;
+
 	//files/{file_id}/info
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
@@ -592,6 +614,7 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
 	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
 	reply->setProperty(P_MESSAGE_INDEX, QVariant(message_index) );
+	reply->setProperty(P_FILE_INDEX, QVariant(f->m_self_index) );
 }
 
 void MattermostQt::get_file(int server_index, int team_index,
@@ -1410,6 +1433,16 @@ MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_inde
 	return channel;
 }
 
+MattermostQt::MessagePtr MattermostQt::messageAt(int server_index, int team_index, int channel_type, int channel_index, int message_index)
+{
+	ChannelPtr c = channelAt(server_index,team_index,channel_type,channel_index);
+	if(!c || c->m_message.size() <= message_index )
+		return MessagePtr();
+	return c->m_message[message_index];
+}
+
+
+
 void MattermostQt::setSettingsContainer(SettingsContainer *settings)
 {
 	m_settings = settings;
@@ -1735,17 +1768,17 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 					channel->m_message[j2] = temp;
 					channel->m_message[j2]->m_self_index = j2;
 					channel->m_message[j]->m_self_index = j;
-
-					for(int k = 0; k < temp->m_file_ids.size(); k++ )
-					{
-						get_file_info(
-						            server_index,
-						            team_index,
-						            channel_type,
-						            channel_index,
-						            temp->m_self_index,
-						            temp->m_file_ids[k]);
-					}
+					// TODO remove get_file_info, becuse it need only when we start view message
+//					for(int k = 0; k < temp->m_file_ids.size(); k++ )
+//					{
+//						get_file_info(
+//						            server_index,
+//						            team_index,
+//						            channel_type,
+//						            channel_index,
+//						            temp->m_self_index,
+//						            temp->m_file_ids[k]);
+//					}
 
 					// get user_index for post
 					prepare_user_index(sc->m_self_index, temp);
@@ -1836,10 +1869,11 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 	messages.append(channel->m_message);
 	channel->m_message.swap(messages);
 	// get files info from new messages
+	// TODO its no need more? becuse it should sck file info from MessagesModel when it need
 	for(int i = 0; i < size; i++)
 	{
 		MessagePtr temp = channel->m_message[i];
-		for(int k = 0; k < temp->m_file_ids.size(); k++ )
+		for(int k = 0; k < temp->m_file_ids.size() && false; k++ )
 		{
 			get_file_info(
 			            server_index,
@@ -2336,6 +2370,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	int channel_type = reply->property(P_CHANNEL_TYPE).toInt();
 	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
 	int message_index = reply->property(P_MESSAGE_INDEX).toInt();
+	int file_index = reply->property(P_FILE_INDEX).toInt();
 
 	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
 	if(!channel)
@@ -2351,8 +2386,8 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	QJsonDocument json = QJsonDocument::fromJson(replyData);
 //	qDebug() << json;
 	FilePtr file(new FileContainer(json.object()));
-	file->m_self_index = mc->m_file.size();
-	mc->m_file.append(file);
+	file->m_self_index = file_index;
+	mc->m_file[file_index] = file;
 
 	//QList<MessagePtr> messages;
 	//QVector<int> roles;
@@ -2436,7 +2471,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 		}
 	}
 	if(isUpdateMessage)
-		emit updateMessage(mc, (int)MessagesModel::FilesCount);
+		emit updateMessage(mc, (int)MessagesModel::FileStatus);
 	return;
 }
 
@@ -2692,6 +2727,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			channel->m_message.append(message);
 			channel->m_total_msg_count++;
 
+			if(false)
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
 				get_file_info(sc->m_self_index,-1,(int)ChannelType::ChannelDirect,channel_index,
@@ -2749,7 +2785,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			message->m_channel_index = channel_index;
 			message->m_self_index    = channel->m_message.size();
 			channel->m_message.append(message);
-
+			if(false)
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
 				if(message->m_type == MessageMine)
@@ -3631,6 +3667,13 @@ bool MattermostQt::ChannelContainer::load_json(QString server_dir_path)
 	return true;
 }
 
+MattermostQt::MessagePtr MattermostQt::ChannelContainer::messageAt(int message_index)
+{
+	if(message_index < 0 || message_index >= m_message.size())
+		return MessagePtr();
+	return m_message[message_index];
+}
+
 MattermostQt::UserContainer::UserContainer(QJsonObject object)
 {
 	m_status = UserNoStatus;
@@ -3715,6 +3758,13 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 		m_filenames.append( filenames.at(i).toString() );
 	for(int i = 0; i < file_ids.size(); i++ )
 		m_file_ids.append( file_ids.at(i).toString() );
+}
+
+MattermostQt::FilePtr MattermostQt::MessageContainer::fileAt(int file_index)
+{
+	if( file_index <0 | file_index >= m_file.size() )
+		return FilePtr;
+	return m_file[file_index];
 }
 
 MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept

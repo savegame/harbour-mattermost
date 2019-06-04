@@ -24,7 +24,7 @@ public:
 		FilePaths,
 		ValidPaths,
 		FileNames,
-		FileStatuses,
+		FileStatus,
 		Thumbinal,
 		FileIcon,
 		RowIndex,

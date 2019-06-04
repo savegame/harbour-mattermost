@@ -27,6 +27,8 @@ BackgroundItem {
     property MessagesModel messagesModel
     /** index of message in qvector */
     property int rowIndex
+    /** variant list of files statuses */
+    property var fileStatus
 
     property bool showBlobs: Settings.showBlobs
     property real blobsOpacity: Settings.blobOpacity
@@ -190,11 +192,13 @@ BackgroundItem {
                     anchors.margins:
                         plainTextLablel.anchors.margins
                     width: inBlobContent.maxBlobContentWidth//Math.min(implicitWidth, maxBlobContentWidth)
-                    model: filesCount
+//                    model: filesCount
+//                    model:
                     visible: filesCount > 0
                     messagesModel: messageLabel.messagesModel
                     textColor:     messageLabel.textColor
                     rowIndex:      messageLabel.rowIndex
+                    fileStatus:    messageLabel.fileStatus
                     spacing:       inBlobContent.spacing
                 }// files repeater
             }

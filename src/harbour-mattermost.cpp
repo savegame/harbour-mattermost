@@ -37,6 +37,7 @@
 #include "ChannelsModel.h"
 #include "MessagesModel.h"
 #include "AccountsModel.h"
+#include "AttachedFilesModel.h"
 #include "SettingsContainer.h"
 #include "SailNotify.h"
 
@@ -82,11 +83,12 @@ int main(int argc, char *argv[])
 	// For details see:
 	// https://harbour.jolla.com/faq#1.5.0
 
-	qmlRegisterType<MattermostQt> ("ru.sashikknox", 1, 0, "MattermostQt");
-	qmlRegisterType<TeamsModel>   ("ru.sashikknox", 1, 0, "TeamsModel");
-	qmlRegisterType<ChannelsModel>("ru.sashikknox", 1, 0, "ChannelsModel");
-	qmlRegisterType<MessagesModel>("ru.sashikknox", 1, 0, "MessagesModel");
-	qmlRegisterType<AccountsModel>("ru.sashikknox", 1, 0, "AccountsModel");
+	qmlRegisterType<MattermostQt>      ("ru.sashikknox", 1, 0, "MattermostQt");
+	qmlRegisterType<TeamsModel>        ("ru.sashikknox", 1, 0, "TeamsModel");
+	qmlRegisterType<ChannelsModel>     ("ru.sashikknox", 1, 0, "ChannelsModel");
+	qmlRegisterType<MessagesModel>     ("ru.sashikknox", 1, 0, "MessagesModel");
+	qmlRegisterType<AccountsModel>     ("ru.sashikknox", 1, 0, "AccountsModel");
+	qmlRegisterType<AttachedFilesModel>("ru.sashikknox", 1, 0, "AttachedFilesModel");
 	qmlRegisterSingletonType<SettingsContainer>("ru.sashikknox", 1, 0, "Settings", SettingsContainer_singletontype_provider );
 
 	// Start the application.
