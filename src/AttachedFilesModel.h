@@ -26,7 +26,9 @@ public:
 		FileCachePath,
 		FileStatus,
 		FileSize,
-		FileMimeType
+		FileMimeType,
+		FileId,
+		FileCount,
 	};
 	Q_ENUM(DataRoles)
 public:
@@ -41,7 +43,11 @@ public:
 	void setMattermost(MattermostQt *mattermost);
 	MattermostQt *getMattermost() const;
 
-	Q_INVOKABLE void init(int server_index,int team_index, int channel_type, int channel_index, int message_index);
+	Q_INVOKABLE void init(int server_index, int team_index, int channel_type, int channel_index, int message_row);
+
+protected Q_SLOTS:
+	void slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<int> roles);
+
 protected:
 	MattermostQt::ChannelPtr           m_channel;
 	MattermostQt::MessagePtr           m_message;

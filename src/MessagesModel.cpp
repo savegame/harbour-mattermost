@@ -42,34 +42,34 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::FilesCount:
 		{
-		    if( message->m_file_ids.size() != message->m_file.size() )
-			{
-				for(int k = 0; k < message->m_file_ids.size(); k++ )
-				{
-					bool is_need_info = true;
-					//check if file info allready downloaded
-					for(int i = 0; i < message->m_file.size(); i++ )
-					{
-						if( message->m_file[i]->m_id.compare( message->m_file_ids[k] ) == 0 )
-						{
-							if( message->m_file[i]->m_file_status != MattermostQt::FileUninitialized )
-							{
-								is_need_info = false;
-								break;
-							}
-						}
-					}
-					if(!is_need_info)
-						continue;
-					m_mattermost->get_file_info(
-					            message->m_server_index,
-					            message->m_team_index,
-					            message->m_channel_type,
-					            message->m_channel_index,
-					            message->m_self_index,
-					            message->m_file_ids[k]);
-				}
-			}
+//		    if( message->m_file_ids.size() != message->m_file.size() )
+//			{
+//				for(int k = 0; k < message->m_file_ids.size(); k++ )
+//				{
+//					bool is_need_info = true;
+//					//check if file info allready downloaded
+//					for(int i = 0; i < message->m_file.size(); i++ )
+//					{
+//						if( message->m_file[i]->m_id.compare( message->m_file_ids[k] ) == 0 )
+//						{
+//							if( message->m_file[i]->m_file_status != MattermostQt::FileUninitialized )
+//							{
+//								is_need_info = false;
+//								break;
+//							}
+//						}
+//					}
+//					if(!is_need_info)
+//						continue;
+//					m_mattermost->get_file_info(
+//					            message->m_server_index,
+//					            message->m_team_index,
+//					            message->m_channel_type,
+//					            message->m_channel_index,
+//					            message->m_self_index,
+//					            message->m_file_ids[k]);
+//				}
+//			}
 			return QVariant( (int)message->m_file.size() );
 		}
 		break;
@@ -331,7 +331,7 @@ QSize MessagesModel::getImageSize(int row, int i) const
 QSizeF MessagesModel::getItemSize(int row, int i, qreal contentWidth) const
 {
 	if(row < 0 || i < 0 || row >= m_messages.size() || i >= m_messages[row]->m_file.size() )
-		return QSizeF();
+		return QSizeF(32,32);
 	MattermostQt::FilePtr file = m_messages[row]->m_file[i];
 	QSize sourceSize = file->m_image_size;
 	if( !file->m_item_size.isEmpty() && file->m_contentwidth == (int)contentWidth )
@@ -492,7 +492,11 @@ void MessagesModel::slot_updateMessage(MattermostQt::MessagePtr message, int rol
 
 	QVector<int> roles;
 	roles << role;
-	qDebug() << QStringLiteral("Message %0 [%1] updated by role %2").arg(row).arg(message->m_self_index).arg(QString::fromUtf8(roleNames()[role]));
+	QHash<int, QByteArray> names = roleNames();
+	if( names.contains(role) )
+		qDebug() << QStringLiteral("Message %0 [%1] updated by role %2").arg(row).arg(message->m_self_index).arg(QString::fromUtf8(names[role]));
+	else
+		qCritical() << QStringLiteral("Undefined role %0").arg(role);
 	QModelIndex i = index(row);
 	dataChanged(i,i,roles);
 }

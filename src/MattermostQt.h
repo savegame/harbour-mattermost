@@ -125,6 +125,8 @@ public:
 		bool save_json(QString server_data_path) const;
 		bool load_json(QString server_data_path);
 
+		void parse_from_json(QJsonObject object);
+
 		QString filename() const { return m_id + QLatin1String("_") + m_name; }
 
 		// file info
@@ -189,7 +191,10 @@ public:
 		int              m_channel_index;
 		int              m_self_index;
 
+		/// special parameters, delete if not use
 //		ChannelPtr       m_channel;// test
+		bool             m_is_files_info_requested; // is files already requested from server
+		qlonglong        m_request_time;  // request time, for repeat if it need
 		FilePtr   fileAt(int file_index);
 	};
 	typedef QSharedPointer<MessageContainer> MessagePtr;
@@ -496,6 +501,10 @@ Q_SIGNALS:
 	void usersUpdated(QVector<UserPtr> users, QVector<int> roles);
 	void fileStatusChanged(QString file_id, int status);
 	void fileUploaded(int server_index, int file_sc_index);
+
+
+	/// renew signals
+	void attachedFilesChanged(MattermostQt::MessagePtr message, QVector<int> roles);
 //	void fileUploaded(FilePtr file);
 
 	/**

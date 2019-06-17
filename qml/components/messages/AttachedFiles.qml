@@ -21,12 +21,6 @@ Repeater {
     /** array of file statuses */
     property var fileStatus
 
-    property int server_index
-    property int team_index
-    property int channel_type
-    property int channel_index
-    property int message_index
-
     /** own properties */
     property variant summaryHeight: []
     signal computeFinalHeight;
@@ -36,6 +30,14 @@ Repeater {
         for(var i = 0; i < filesRepeater.count; i++)
         {
             height += summaryHeight[i]
+        }
+    }
+
+    model: AttachedFilesModel {
+        id: filesModel
+        mattermost: context.mattermost
+        Component.onCompleted: {
+            init(server_index,team_index,channel_type,channel_index,rowIndex)
         }
     }
 
@@ -50,7 +52,7 @@ Repeater {
                     filesRepeater.width
                     )
             property size imageSourceSize: messagesModel.getImageSize(rowIndex,fileIndex)
-            property string imagePath: messagesModel.getThumbPath(rowIndex,fileIndex)
+            property string imagePath: fileThumbnail
             property int fileStatus: MattermostQt.FileRemote
 
             height: imageWithLabel.height
@@ -133,7 +135,7 @@ Repeater {
                     Label {
                         id: imageNameLabel
                         width: Math.min(contentWidth,filesRepeater.width - fileNameRow.spacing - fileSizeLabel.width - Theme.paddingMedium)
-                        text: messagesModel.getFileName(rowIndex,fileIndex)
+                        text: fileName//messagesModel.getFileName(rowIndex,fileIndex)
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeTiny
                         font.italic:  true
@@ -187,7 +189,6 @@ Repeater {
                                 progressCircle.visible = false
                                 progressCircle.enabled = false
                                 // here need open prepeared ImageViewPage
-                                ///home/andreev/Projects/Sailfish/harbour-mattermost/qml/pages/ImageViewPage.qml
                                 pageStack.push( imageViewPage,
                                                {
                                                    imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
@@ -252,10 +253,13 @@ Repeater {
     delegate: Loader {//for different file types
         id: fileitemloader
         //anchors.fill: parent
-        property int    fileType    : messagesModel.getFileType(rowIndex,index)
-        property string fileId      : messagesModel.getFileId(rowIndex,index)
-        property int    fileIndex   : index
-        property int    currentStatus: fileStatus[index]
+        property int    fileType      : role_file_type//messagesModel.getFileType(rowIndex,index)
+        property string fileId        : role_file_id  //messagesModel.getFileId(rowIndex,index)
+        property int    fileIndex     : index
+        property int    currentStatus : role_status   //fileStatus[index]
+        property string filePreview   : role_preview
+        property string fileThumbnail : role_thumbnail
+        property string fileName      : role_file_name
         property real   componentHeight: 5
 
         onComponentHeightChanged:{

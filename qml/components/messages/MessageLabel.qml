@@ -192,8 +192,7 @@ BackgroundItem {
                     anchors.margins:
                         plainTextLablel.anchors.margins
                     width: inBlobContent.maxBlobContentWidth//Math.min(implicitWidth, maxBlobContentWidth)
-//                    model: filesCount
-//                    model:
+
                     visible: filesCount > 0
                     messagesModel: messageLabel.messagesModel
                     textColor:     messageLabel.textColor

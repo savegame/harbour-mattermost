@@ -22,6 +22,7 @@
 #include "MessagesModel.h"
 #include "ChannelsModel.h"
 #include "SettingsContainer.h"
+#include "AttachedFilesModel.h"
 #include "DiscountMDParser.h"
 
 // all properties names
@@ -568,28 +569,33 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
                                  int channel_index, int message_index, QString file_id)
 {// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
 	// we think all indexes is right
+	if( server_index < 0 || server_index >= m_server.size() )
+	{
+		qCritical() << "Wrong server index!";
+		return;
+	}
 	ServerPtr sc = m_server[server_index];
 	MessagePtr m = messageAt(server_index,team_index,channel_type,channel_index,message_index);
 	if(!m) {
 		qCritical() << "Cant find message in channel!";
 		return;
 	}
-	FilePtr f;
-	for(int i = 0; i < m->m_file.size(); i++)
-	{
-		if(m->m_file[i]->m_id != file_id)
-			continue;
-		if(m->m_file[i]->m_file_status != FileStatus::FileUninitialized)
-			return;
-		f = m->m_file[i];
-		break;
-	}
-	if(!f) {
-		f.reset(new FileContainer());
-		f->m_self_index = m->m_file.size();
-		m->m_file.push_back(f);
-	}
-	f->m_file_status = FileStatus::FileRequested;
+//	FilePtr f;
+//	for(int i = 0; i < m->m_file.size(); i++)
+//	{
+//		if(m->m_file[i]->m_id != file_id)
+//			continue;
+//		if(m->m_file[i]->m_file_status != FileStatus::FileUninitialized)
+//			return;
+//		f = m->m_file[i];
+//		break;
+//	}
+//	if(!f) {
+//		f.reset(new FileContainer());
+//		f->m_self_index = m->m_file.size();
+//		m->m_file.push_back(f);
+//	}
+//	f->m_file_status = FileStatus::FileRequested;
 
 	//files/{file_id}/info
 	QString urlString = QLatin1String("/api/v")
@@ -614,7 +620,7 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
 	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
 	reply->setProperty(P_MESSAGE_INDEX, QVariant(message_index) );
-	reply->setProperty(P_FILE_INDEX, QVariant(f->m_self_index) );
+//	reply->setProperty(P_FILE_INDEX, QVariant(f->m_self_index) );
 }
 
 void MattermostQt::get_file(int server_index, int team_index,
@@ -2303,9 +2309,12 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 	}
 	if(!file->m_thumb_path.isEmpty())
 	{
-		QList<MessagePtr> messages;
-		messages << mc;
-		emit messageUpdated(messages);
+//		QList<MessagePtr> messages;
+//		messages << mc;
+//		emit messageUpdated(messages);
+		QVector<int> file_update_roles;
+		file_update_roles << AttachedFilesModel::FileThumbnailPath;
+		emit attachedFilesChanged(mc, file_update_roles);
 	}
 	return;
 }
@@ -2355,9 +2364,12 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 	}
 	if(!file->m_preview_path.isEmpty())
 	{
-		QList<MessagePtr> messages;
-		messages << mc;
-		emit messageUpdated(messages);
+//		QList<MessagePtr> messages;
+//		messages << mc;
+//		emit messageUpdated(messages);
+		QVector<int> file_update_roles;
+		file_update_roles << AttachedFilesModel::FilePreviewPath;
+		emit attachedFilesChanged(mc, file_update_roles);
 	}
 	return;
 }
@@ -2370,7 +2382,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	int channel_type = reply->property(P_CHANNEL_TYPE).toInt();
 	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
 	int message_index = reply->property(P_MESSAGE_INDEX).toInt();
-	int file_index = reply->property(P_FILE_INDEX).toInt();
+//	int file_index = reply->property(P_FILE_INDEX).toInt();
 
 	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
 	if(!channel)
@@ -2386,11 +2398,17 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	QJsonDocument json = QJsonDocument::fromJson(replyData);
 //	qDebug() << json;
 	FilePtr file(new FileContainer(json.object()));
-	file->m_self_index = file_index;
-	mc->m_file[file_index] = file;
+	file->m_self_index = mc->m_file.size();
+	mc->m_file.push_back(file);
 
 	//QList<MessagePtr> messages;
-	//QVector<int> roles;
+	QVector<int> file_update_roles;
+
+	file_update_roles << AttachedFilesModel::FileType;
+	file_update_roles << AttachedFilesModel::FileName;
+	file_update_roles << AttachedFilesModel::FileSize;
+	file_update_roles << AttachedFilesModel::FileMimeType;
+	file_update_roles << AttachedFilesModel::FileCount;
 	//messages << mc;
 	bool isUpdateMessage = false;
 
@@ -2433,6 +2451,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			else
 				file->m_file_status = FileDownloaded;
 		}
+		file_update_roles << AttachedFilesModel::FileStatus;
 		isUpdateMessage = true;
 	}
 	else if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
@@ -2442,6 +2461,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			get_file_thumbnail(server_index,file->m_self_sc_index);
 		else {
 			file->m_thumb_path = file_thumb_path;
+			file_update_roles << AttachedFilesModel::FileThumbnailPath;
 			isUpdateMessage = true;
 		}
 		bool download_current_file = true;
@@ -2454,6 +2474,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 				get_file_preview(server_index,file->m_self_sc_index);
 			else {
 				file->m_preview_path = preview_path;
+				file_update_roles << AttachedFilesModel::FilePreviewPath;
 				isUpdateMessage = true;
 			}
 		}
@@ -2466,12 +2487,14 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 				         file->m_message_index, file->m_self_index);
 			else {
 				file->m_file_path = path;
+				file_update_roles << AttachedFilesModel::FilePath;
 				isUpdateMessage = true;
 			}
 		}
 	}
 	if(isUpdateMessage)
-		emit updateMessage(mc, (int)MessagesModel::FileStatus);
+		emit updateMessage(mc, (int)MessagesModel::FilesCount);
+	emit attachedFilesChanged(mc, file_update_roles);
 	return;
 }
 
@@ -3762,37 +3785,15 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 
 MattermostQt::FilePtr MattermostQt::MessageContainer::fileAt(int file_index)
 {
-	if( file_index <0 | file_index >= m_file.size() )
-		return FilePtr;
+	if( file_index < 0 || file_index >= m_file.size() )
+		return MattermostQt::FilePtr();
 	return m_file[file_index];
 }
 
 MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept
 {
 	//qDebug() << object;
-	m_file_status = FileStatus::FileRemote;
-
-	m_id = object["id"].toString("");
-	m_post_id = object["post_id"].toString("");
-	m_user_id = object["user_id"].toString("");
-	m_mime_type = object["mime_type"].toString("");
-	m_has_preview_image = object["has_preview_image"].toBool(false);
-	m_name = object["name"].toString("");
-	m_file_size = (qlonglong)object["size"].toDouble(0);
-	m_extension = object["extension"].toString("");
-
-	double width = object["width"].toDouble(0);
-	double height = object["height"].toDouble(0);
-	m_image_size.setWidth((int)width);
-	m_image_size.setHeight((int)height);
-	if( m_mime_type.indexOf("image/") >= 0 )
-	{
-		m_file_type = FileImage;
-		if( m_mime_type.compare("image/gif") == 0 )
-			m_file_type = FileAnimatedImage;
-	}
-	else
-		m_file_type = FileUnknown;
+	parse_from_json(object);
 }
 
 bool MattermostQt::FileContainer::save_json(QString server_data_path) const
@@ -3851,4 +3852,31 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 	m_item_size.setHeight(item_size["height"].toDouble());
 	m_contentwidth = obj["content_width"].toInt();
 	return true;
+}
+
+void MattermostQt::FileContainer::parse_from_json(QJsonObject object)
+{
+	m_file_status = FileStatus::FileRemote;
+
+	m_id = object["id"].toString("");
+	m_post_id = object["post_id"].toString("");
+	m_user_id = object["user_id"].toString("");
+	m_mime_type = object["mime_type"].toString("");
+	m_has_preview_image = object["has_preview_image"].toBool(false);
+	m_name = object["name"].toString("");
+	m_file_size = (qlonglong)object["size"].toDouble(0);
+	m_extension = object["extension"].toString("");
+
+	double width = object["width"].toDouble(0);
+	double height = object["height"].toDouble(0);
+	m_image_size.setWidth((int)width);
+	m_image_size.setHeight((int)height);
+	if( m_mime_type.indexOf("image/") >= 0 )
+	{
+		m_file_type = FileImage;
+		if( m_mime_type.compare("image/gif") == 0 )
+			m_file_type = FileAnimatedImage;
+	}
+	else
+		m_file_type = FileUnknown;
 }
