@@ -233,30 +233,42 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 //	// Load previosly saved certificate
 	if( trustCertificate )
 	{
-		QFile ca_cert_file(ca_cert_path);
-		QFile cert_file(cert_path);
 		QList<QSslError> errors;
-		if( ca_cert_file.open(QIODevice::ReadOnly) )
-		{
-			QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
-			errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
-			errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
-			errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
-			ca_cert_file.close();
-		}
-		else
-			qCritical() << "Cant open ca crt file " << ca_cert_path;
 
-		if( cert_file.open(QIODevice::ReadOnly) )
-		{
-			QSslCertificate cert(&cert_file, QSsl::Pem);
-			errors << QSslError(QSslError::CertificateUntrusted, cert);
-			errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
-			errors << QSslError(QSslError::SelfSignedCertificate, cert);
-			cert_file.close();
-		}
+		if(ca_cert_path.isEmpty())
+			qInfo() << "Path to CA certificate file is empty";
 		else
-			qCritical() << "Cant open crt file " << cert_path;
+		{
+			QFile ca_cert_file(ca_cert_path);
+			if( ca_cert_file.open(QIODevice::ReadOnly) )
+			{
+				QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
+				errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
+				errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
+				errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
+				ca_cert_file.close();
+			}
+			else
+				qCritical() << "Cant open ca crt file " << ca_cert_path;
+		}
+
+		if(cert_path.isEmpty())
+			qInfo() << "Path to certificate file is empty";
+		else
+		{
+			QFile cert_file(cert_path);
+			if( cert_file.open(QIODevice::ReadOnly) )
+			{
+				QSslCertificate cert(&cert_file, QSsl::Pem);
+				errors << QSslError(QSslError::CertificateUntrusted, cert);
+				errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
+				errors << QSslError(QSslError::SelfSignedCertificate, cert);
+				cert_file.close();
+			}
+			else
+				qCritical() << "Cant open crt file " << cert_path;
+		}
+
 		errors << QSslError(QSslError::CertificateUntrusted);
 		errors << QSslError(QSslError::SelfSignedCertificateInChain);
 		errors << QSslError(QSslError::SelfSignedCertificate);
@@ -3114,7 +3126,6 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 	replyType = reply->property(P_REPLY_TYPE);
 	if (reply->error() == QNetworkReply::NoError) {
 		//success
-
 		if(reply->header(QNetworkRequest::LastModifiedHeader).isValid())
 			qDebug() << "LastModified" << reply->header(QNetworkRequest::LastModifiedHeader);
 
