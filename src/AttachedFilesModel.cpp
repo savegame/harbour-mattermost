@@ -2,22 +2,23 @@
 
 AttachedFilesModel::AttachedFilesModel(QObject *parent)
 {
-
+	m_init = false;
 }
 
 int AttachedFilesModel::rowCount(const QModelIndex &parent) const
 {
-	if(!m_message)
+	if(!m_message || !m_init)
 		return 0;
 	return m_message->m_file.size();
 }
 
 QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 {
-	if(!m_message)
+	if(!m_message || !m_channel || !m_mattermost || !m_init)
 		return QVariant();
+
 	MattermostQt::FilePtr file = m_message->fileAt(index.row());
-	if(!file)
+	if(file.isNull())
 		return QVariant();
 
 	if( role == FileType ) {
@@ -42,15 +43,21 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 		return QVariant(file->m_file_status);
 	} else
 	if( role == FileSize ) {
-		return QVariant();
+		if( file->m_file_size < 1000 )
+			return QObject::tr("%0 bytes").arg(file->m_file_size);
+		qreal size = (qreal)file->m_file_size/1024;
+		if( size < 1000 )
+			return QObject::tr("%0 Kb").arg(size,0,'f',1);
+		size = size/1024;
+		return QObject::tr("%0 Mb").arg(size,0,'f',1);
 	} else
 	if( role == FileMimeType ) {
-		return QVariant();
+		return QVariant(file->m_mime_type);
 	}  else
 	if( role == FileId ) {
 		return QVariant(file->m_id);
 	}
-	return QVariant();
+	return QVariant("Unknown data type");
 }
 
 QHash<int, QByteArray> AttachedFilesModel::roleNames() const
@@ -81,6 +88,7 @@ MattermostQt *AttachedFilesModel::getMattermost() const
 
 void AttachedFilesModel::init(int server_index, int team_index, int channel_type, int channel_index, int message_row)
 {
+	m_init = true;
 	if(!m_mattermost) {
 		qCritical() << "Mattermost Client Pointer was not set!";
 		return;
@@ -94,21 +102,28 @@ void AttachedFilesModel::init(int server_index, int team_index, int channel_type
 		qWarning() << "Cant find channel";
 		return;
 	}
+
 	// becuse message row inverted from message index
-	int message_index = m_channel->m_message.size() - 1 - message_row;
+	int message_index = message_row;
+//	qDebug() << QString("This messages.size(%0)  index(%2)").arg(m_channel->m_message.size()).arg(message_index);
 	m_message = m_channel->messageAt(message_index);
 	if(!m_message) {
 		qCritical() << "Cant find message mi:" << message_index << "from mr:" << message_row;
 		return;
 	}
 
-//	if(m_message->m_file_ids.size() > 0 && m_message->m_file_ids.size() != m_message->m_file.size())
-	if( !m_message->m_is_files_info_requested )
+//	qDebug() << "Files count  : " << m_message->m_file_ids.size();
+	beginResetModel();
+	if( m_message->m_file_ids.size() != m_message->m_file.size() )
 	{
 		m_message->m_is_files_info_requested = true;
 		for( int i = 0; i < m_message->m_file_ids.size(); i++ )
-			m_mattermost->get_file_info(server_index,team_index,channel_type,channel_index,message_index, m_message->m_file_ids[i]);
+		{
+			QString file_id = m_message->m_file_ids.at(i);
+			m_mattermost->get_file_info(server_index,team_index,channel_type,channel_index,message_index, file_id);
+		}
 	}
+	endResetModel();
 }
 
 void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<int> roles)

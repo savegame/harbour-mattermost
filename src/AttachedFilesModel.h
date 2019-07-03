@@ -18,7 +18,7 @@ class AttachedFilesModel : public QAbstractListModel
 
 public:
 	enum DataRoles {
-		FileType,
+		FileType = 0,
 		FileName,
 		FileThumbnailPath,
 		FilePreviewPath,
@@ -52,6 +52,7 @@ protected:
 	MattermostQt::ChannelPtr           m_channel;
 	MattermostQt::MessagePtr           m_message;
 	QPointer<MattermostQt>             m_mattermost;
+	bool m_init;
 };
 
 #endif // ATTACHEDFILESMODEL_H

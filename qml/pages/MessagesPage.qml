@@ -120,7 +120,7 @@ Page {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 font.pixelSize: Theme.fontSizeSmall
-                text: "ri: " + String(messageLabel.rowIndex) + "<br>fc: " + String(messageLabel.filesCount)
+                text: "mi: " + String(messageLabel.rowIndex) + "<br>fc: " + String(messageLabel.filesCount)
                 textFormat: Text.RichText
             }
         }

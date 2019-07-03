@@ -36,6 +36,7 @@
 #define P_TEAM_INDEX         "team_index"
 #define P_MESSAGE_INDEX      "message_index"
 #define P_FILE_INDEX         "file_index"
+#define P_FILE_ID            "file_id"
 #define P_FILE_PTR           "file_ptr"
 #define P_FILE_PATH          "file_path"
 #define P_MESSAGE_PTR        "message_ptr"
@@ -579,7 +580,8 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 
 void MattermostQt::get_file_info(int server_index, int team_index, int channel_type,
                                  int channel_index, int message_index, QString file_id)
-{// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
+{
+	// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
 	// we think all indexes is right
 	if( server_index < 0 || server_index >= m_server.size() )
 	{
@@ -587,27 +589,37 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 		return;
 	}
 	ServerPtr sc = m_server[server_index];
+
 	MessagePtr m = messageAt(server_index,team_index,channel_type,channel_index,message_index);
 	if(!m) {
 		qCritical() << "Cant find message in channel!";
 		return;
 	}
-//	FilePtr f;
-//	for(int i = 0; i < m->m_file.size(); i++)
-//	{
-//		if(m->m_file[i]->m_id != file_id)
-//			continue;
-//		if(m->m_file[i]->m_file_status != FileStatus::FileUninitialized)
-//			return;
-//		f = m->m_file[i];
-//		break;
-//	}
-//	if(!f) {
-//		f.reset(new FileContainer());
-//		f->m_self_index = m->m_file.size();
-//		m->m_file.push_back(f);
-//	}
-//	f->m_file_status = FileStatus::FileRequested;
+	FilePtr f; // create empty FilePtr , because we request it now
+	// search in requested? and downloaded files same id
+	for(int i = 0; i < m->m_file.size(); i++)
+	{
+		if(m->m_file[i]->m_id != file_id)
+			continue;
+		if(m->m_file[i]->m_file_status != FileStatus::FileUninitialized)
+		{
+			qDebug() << QStringLiteral("File [%0] already requested.").arg(file_id);
+			return;
+		}
+		f = m->m_file[i];
+		break;
+	}
+	if(!f) {
+		f.reset(new FileContainer());
+	}
+	f->m_self_index = m->m_file.size();
+	f->m_message_index = m->m_self_index;
+	f->m_channel_type = m->m_channel_type;
+	f->m_channel_index = m->m_channel_index;
+	f->m_server_index = m->m_server_index;
+	f->m_id = file_id;
+	m->m_file.push_back(f);
+	f->m_file_status = FileStatus::FileRequested;
 
 	//files/{file_id}/info
 	QString urlString = QLatin1String("/api/v")
@@ -626,13 +638,14 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_file_info) );
-	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
-	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
-	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
-	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
-	reply->setProperty(P_MESSAGE_INDEX, QVariant(message_index) );
-//	reply->setProperty(P_FILE_INDEX, QVariant(f->m_self_index) );
+	reply->setProperty(P_REPLY_TYPE,        QVariant(ReplyType::rt_get_file_info) );
+	reply->setProperty(P_SERVER_INDEX,      QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX,        QVariant(team_index) );
+	reply->setProperty(P_CHANNEL_INDEX,     QVariant(channel_index) );
+	reply->setProperty(P_CHANNEL_TYPE,      QVariant((int)channel_type) );
+	reply->setProperty(P_MESSAGE_INDEX,     QVariant(message_index) );
+	reply->setProperty(P_FILE_INDEX,        QVariant(f->m_self_index) );
+	reply->setProperty(P_FILE_ID,           QVariant(f->m_id) );
 }
 
 void MattermostQt::get_file(int server_index, int team_index,
@@ -1379,6 +1392,7 @@ void MattermostQt::prepare_user_index(int server_index, MattermostQt::MessagePtr
 	message->m_user_index = -1;
 	if( message->m_user_id.isEmpty() )
 	{// system message
+		qDebug() << "Seems its system message";
 		return;
 	}
 //	else if( message->m_user_id.compare(sc->m_user_id) == 0 )
@@ -1453,9 +1467,15 @@ MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_inde
 
 MattermostQt::MessagePtr MattermostQt::messageAt(int server_index, int team_index, int channel_type, int channel_index, int message_index)
 {
-	ChannelPtr c = channelAt(server_index,team_index,channel_type,channel_index);
-	if(!c || c->m_message.size() <= message_index )
+	if( message_index < 0 )
+	{
+		qDebug() << "Message index wrong!";
 		return MessagePtr();
+	}
+	ChannelPtr c = channelAt(server_index,team_index,channel_type,channel_index);
+	if(!c || message_index  >= c->m_message.size())
+		return MessagePtr();
+
 	return c->m_message[message_index];
 }
 
@@ -1786,18 +1806,19 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 					channel->m_message[j2] = temp;
 					channel->m_message[j2]->m_self_index = j2;
 					channel->m_message[j]->m_self_index = j;
+#ifdef PRELOAD_FILE_INFOS
 					// TODO remove get_file_info, becuse it need only when we start view message
-//					for(int k = 0; k < temp->m_file_ids.size(); k++ )
-//					{
-//						get_file_info(
-//						            server_index,
-//						            team_index,
-//						            channel_type,
-//						            channel_index,
-//						            temp->m_self_index,
-//						            temp->m_file_ids[k]);
-//					}
-
+					for(int k = 0; k < temp->m_file_ids.size(); k++ )
+					{
+						get_file_info(
+						            server_index,
+						            team_index,
+						            channel_type,
+						            channel_index,
+						            temp->m_self_index,
+						            temp->m_file_ids[k]);
+					}
+#endif
 					// get user_index for post
 					prepare_user_index(sc->m_self_index, temp);
 					break;
@@ -1856,6 +1877,8 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 			else
 				message->m_type = MessageOther;
 		}
+		prepare_user_index(server_index,message);
+
 		new_messages = true;
 	}
 	if(!new_messages)
@@ -1875,7 +1898,6 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 				messages[j2] = temp;
 				messages[j2]->m_self_index = j2;
 				messages[j]->m_self_index = j;
-				prepare_user_index(server_index,temp);
 				break;
 			}
 		}
@@ -1891,6 +1913,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 	for(int i = 0; i < size; i++)
 	{
 		MessagePtr temp = channel->m_message[i];
+#ifdef PRELOAD_FILE_INFOS
 		for(int k = 0; k < temp->m_file_ids.size() && false; k++ )
 		{
 			get_file_info(
@@ -1901,6 +1924,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 			            temp->m_self_index,
 			            temp->m_file_ids[k]);
 		}
+#endif
 	}
 	emit messagesAddedBefore(channel, size);
 
@@ -2122,28 +2146,39 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 	{
 		user->m_self_index = sc->m_user.size();
 		sc->m_user.append(user);
+
+		QString path = sc->m_cache_path +
+		        QString("/users/") +
+		        user->m_id +
+		        QString("/image.png");
+		// check if user has image
+		QFile user_image(path);
+		bool user_image_exists = user_image.exists();
+
 		QList<MessagePtr>::iterator it = sc->m_nouser_messages.begin();
 		while( it != sc->m_nouser_messages.end() )
 		{
 			MessagePtr m = *it;
 			if(m->m_user_id == user->m_id)
 			{
-				m->m_user_index = user->m_self_index;
-				emit updateMessage(m,MessagesModel::SenderUserName);
-				QString path = sc->m_cache_path +
-				        QString("/users/") +
-				        user->m_id +
-				        QString("/image.png");
+				if(m->m_user_index == -1)
+				{
+					m->m_user_index = user->m_self_index;
+					emit updateMessage(m,MessagesModel::SenderUserName);
+				}
+
+
 				// check if user has image
-				QFile user_image(path);
-				if( user_image.exists() ) {
+				if( user_image_exists ) {
 					emit updateMessage(m,MessagesModel::SenderImagePath);
 					it = sc->m_nouser_messages.erase(it);
-					continue;
+					user->m_image_path = path;
 				}
 			}
 			it++;
 		}
+
+//		if( !user_image_exists )
 		get_user_image(server_index,user->m_self_index);
 	}
 
@@ -2389,29 +2424,48 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 {
 	// we think all indexes right
-	int server_index = reply->property(P_SERVER_INDEX).toInt();
-	int team_index = reply->property(P_TEAM_INDEX).toInt();
-	int channel_type = reply->property(P_CHANNEL_TYPE).toInt();
+	int server_index  = reply->property(P_SERVER_INDEX).toInt();
+	int team_index    = reply->property(P_TEAM_INDEX).toInt();
+	int channel_type  = reply->property(P_CHANNEL_TYPE).toInt();
 	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
 	int message_index = reply->property(P_MESSAGE_INDEX).toInt();
-//	int file_index = reply->property(P_FILE_INDEX).toInt();
+	int file_index    = reply->property(P_FILE_INDEX).toInt();
 
-	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
-	if(!channel)
+	MessagePtr mc = messageAt(server_index,team_index,channel_type,channel_index,message_index);
+	if(!mc)
 	{
-		qWarning() << "Cant found channel ";
+		qWarning() << "Cant found message ";
 		return;
 	}
 	ServerPtr sc = m_server[server_index];
 
-	MessagePtr mc = channel->m_message[message_index];
-
 	QByteArray replyData = reply->readAll();
 	QJsonDocument json = QJsonDocument::fromJson(replyData);
-//	qDebug() << json;
-	FilePtr file(new FileContainer(json.object()));
-	file->m_self_index = mc->m_file.size();
-	mc->m_file.push_back(file);
+//#ifdef NO_LOCK
+//	FilePtr file(new FileContainer(json.object()));
+	FilePtr file = mc->fileAt(file_index);
+
+	if(!file){
+		qCritical() << "Something went wrong! File index is emty in reply_get_file_info()!";
+		QString file_id   = reply->property(P_FILE_ID).toString();
+		for(int fi = 0 ; fi < mc->m_file.size(); fi++ )
+		{
+			if( file_id == mc->m_file[fi]->m_id )
+			{
+				file = mc->m_file[fi];
+				break;
+			}
+		}
+		if( !file )
+		{
+			qCritical() << QStringLiteral("File with id(%0) not found in message with id(%1)").arg(file_id).arg(mc->m_id);
+			return;
+		}
+	}
+	file->parse_from_json(json.object());
+
+//	file->m_self_index = mc->m_file.size();
+//	mc->m_file.push_back(file);
 
 	//QList<MessagePtr> messages;
 	QVector<int> file_update_roles;
@@ -2504,10 +2558,45 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			}
 		}
 	}
-	if(isUpdateMessage)
-		emit updateMessage(mc, (int)MessagesModel::FilesCount);
+//	if(isUpdateMessage)
+//		emit updateMessage(mc, (int)MessagesModel::FilesCount);
 	emit attachedFilesChanged(mc, file_update_roles);
 	return;
+}
+
+void MattermostQt::failed_get_file_info(QNetworkReply *reply)
+{
+	int server_index  = reply->property(P_SERVER_INDEX).toInt();
+	int team_index    = reply->property(P_TEAM_INDEX).toInt();
+	int channel_type  = reply->property(P_CHANNEL_TYPE).toInt();
+	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
+	int message_index = reply->property(P_MESSAGE_INDEX).toInt();
+	int file_index    = reply->property(P_FILE_INDEX).toInt();
+	QString file_id   = reply->property(P_FILE_ID).toString();
+
+//	if( reply->error() == QNetworkReply::TimeoutError )
+//	{// send second request for this file
+//	}
+
+	MessagePtr mc = messageAt(server_index,team_index,channel_type,channel_index,message_index);
+	if(!mc)
+	{
+		qCritical() << "Something went wrong! Cant found MessagePtr in failed_get_file_info()!";
+		return;
+	}
+
+	FilePtr file = mc->fileAt(file_index);
+	if(!file){
+		qCritical() << "Something went wrong! File index is emty in failed_get_file_info()!";
+		return;
+	}
+
+
+	file->m_file_status = FileStatus::FileUninitialized;
+
+	QVector<int> file_update_roles;
+	file_update_roles << AttachedFilesModel::FileStatus;
+	emit attachedFilesChanged(mc, file_update_roles);
 }
 
 void MattermostQt::reply_get_file(QNetworkReply *reply)
@@ -2761,13 +2850,13 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			message->m_self_index    = channel->m_message.size();
 			channel->m_message.append(message);
 			channel->m_total_msg_count++;
-
-			if(false)
+#ifdef PRELOAD_FILE_INFOS
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
 			{
 				get_file_info(sc->m_self_index,-1,(int)ChannelType::ChannelDirect,channel_index,
 				                   message->m_self_index, message->m_file_ids[k]);
 			}
+#endif
 			QList<MessagePtr> new_messages;
 			new_messages << message;
 			emit messageAdded(new_messages); // add messages to model
@@ -2844,8 +2933,10 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 					if(fileDownloaded)
 						continue;
 				}
+#ifdef PRELOAD_FILE_INFOS
 				get_file_info(sc->m_self_index,team_index,type,channel_index,
 				                   message->m_self_index, message->m_file_ids[k]);
+#endif
 			}
 			QList<MessagePtr> new_messages;
 			new_messages << message;
@@ -3233,6 +3324,16 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			{
 				if(server().at(i)->m_socket)
 					server().at(i)->m_socket->ping(QString("ping").toUtf8());
+			}
+		}
+
+		if(replyType.isValid())
+		{
+			switch(replyType.toInt())
+			{
+			case ReplyType::rt_get_file_info:
+
+				break;
 			}
 		}
 	}
@@ -3803,7 +3904,6 @@ MattermostQt::FilePtr MattermostQt::MessageContainer::fileAt(int file_index)
 
 MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept
 {
-	//qDebug() << object;
 	parse_from_json(object);
 }
 

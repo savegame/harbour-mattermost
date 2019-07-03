@@ -116,7 +116,7 @@ CoverBackground {
 
     Label {
         id: statusLabel
-        anchors.horizontalCenter: parent.horizontalCenter
+//        anchors.verticalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: Theme.paddingMedium
         anchors.left: parent.left
@@ -124,6 +124,7 @@ CoverBackground {
         text: status_text
         wrapMode: Text.Wrap
         elide: Text.ElideMiddle
+        width: parent.width
         font.pixelSize: Theme.fontSizeLarge
     }
     Label {
@@ -134,6 +135,7 @@ CoverBackground {
         anchors.right: parent.right
         font.pixelSize: Theme.fontSizeSmall
         wrapMode: Text.Wrap
+        width: parent.width
         elide: Text.ElideMiddle
     }
 

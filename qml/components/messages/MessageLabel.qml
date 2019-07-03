@@ -165,7 +165,7 @@ BackgroundItem {
                     messageLabel.isMessageMineOrOther ?
                         (messageContent.width - inBlobMargins * 2 - inBlobContent.anchors.rightMargin * 2):
                         (messageLabel.width - inBlobContent.anchors.rightMargin * 2)
-
+//                height: plainTextLablel.height + (attachments.visible ? (attachments.height + spacing):0)
                 Text {
                     id: plainTextLablel
                     text: Settings.formatedText ? messageLabel.formatedText : messageLabel.plainText
@@ -188,17 +188,16 @@ BackgroundItem {
                 } // plainTextLabel
 
                 AttachedFiles {
-                    id: attachedFiles
-                    anchors.margins:
-                        plainTextLablel.anchors.margins
-                    width: inBlobContent.maxBlobContentWidth//Math.min(implicitWidth, maxBlobContentWidth)
-
-                    visible: filesCount > 0
+                    anchors.margins: plainTextLablel.anchors.margins
+                    maxWidth: inBlobContent.maxBlobContentWidth//Math.min(implicitWidth, maxBlobContentWidth)
                     messagesModel: messageLabel.messagesModel
                     textColor:     messageLabel.textColor
                     rowIndex:      messageLabel.rowIndex
                     fileStatus:    messageLabel.fileStatus
+                    filesCount:    messageLabel.filesCount
                     spacing:       inBlobContent.spacing
+                    visible:       messageLabel.filesCount > 0
+                    enabled:       visible
                 }// files repeater
             }
         }

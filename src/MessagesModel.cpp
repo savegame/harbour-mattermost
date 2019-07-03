@@ -16,10 +16,13 @@ int MessagesModel::rowCount(const QModelIndex &parent) const
 
 QVariant MessagesModel::data(const QModelIndex &index, int role) const
 {
-	if ( !index.isValid() || index.row() < 0 || index.row() >= m_messages.size() )
+	if ( index.row() < 0 || index.row() >= m_messages.size() )
 		return QVariant();
 
 	int row = m_messages.size() - 1 - index.row();
+
+	if ( row < 0 || row >= m_messages.size() )
+		return QVariant();
 
 	MattermostQt::MessagePtr message = m_messages[row];
 
@@ -42,35 +45,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::FilesCount:
 		{
-//		    if( message->m_file_ids.size() != message->m_file.size() )
-//			{
-//				for(int k = 0; k < message->m_file_ids.size(); k++ )
-//				{
-//					bool is_need_info = true;
-//					//check if file info allready downloaded
-//					for(int i = 0; i < message->m_file.size(); i++ )
-//					{
-//						if( message->m_file[i]->m_id.compare( message->m_file_ids[k] ) == 0 )
-//						{
-//							if( message->m_file[i]->m_file_status != MattermostQt::FileUninitialized )
-//							{
-//								is_need_info = false;
-//								break;
-//							}
-//						}
-//					}
-//					if(!is_need_info)
-//						continue;
-//					m_mattermost->get_file_info(
-//					            message->m_server_index,
-//					            message->m_team_index,
-//					            message->m_channel_type,
-//					            message->m_channel_index,
-//					            message->m_self_index,
-//					            message->m_file_ids[k]);
-//				}
-//			}
-			return QVariant( (int)message->m_file.size() );
+		    return QVariant( (int)message->m_file_ids.size() );
 		}
 		break;
 	case MessagesModel::UserId:
@@ -110,7 +85,13 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				return QVariant(user->m_username);
 			}
 			else
-				return QVariant("");
+			{
+				qWarning() << QString("Cant find USER name  message->m_user_index(%0) < size(%1) mid(%3)")
+				              .arg( message->m_user_index)
+				              .arg(m_mattermost->m_server[message->m_server_index]->m_user.size())
+				              .arg( message->m_id);
+				return QVariant("error!");
+			}
 		}
 		break;
 	case MessagesModel::UserStatus:
@@ -486,6 +467,8 @@ void MessagesModel::slot_messageDeleted(MattermostQt::MessagePtr message)
 
 void MessagesModel::slot_updateMessage(MattermostQt::MessagePtr message, int role)
 {
+	if( m_channel.isNull() )
+		return;
 	if(message->m_channel_id.compare(m_channel->m_id) != 0)
 		return;
 	int row = m_messages.size() - 1 - message->m_self_index;

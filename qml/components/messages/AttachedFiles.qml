@@ -9,38 +9,43 @@ import QtGraphicalEffects 1.0
 
 Repeater {
     id: filesRepeater
-    /** in properties */
+
     /** color of main text */
     property color textColor
     /** MessagesModel */
     property MessagesModel messagesModel
     /** index of message in qvector */
     property int rowIndex
-    /** spacing beetwin rows of files components */
-    property real spacing
     /** array of file statuses */
     property var fileStatus
-
+    /** maximum width */
+    property real maxWidth
+    /** spacing of columnt, where filesRepeater situated */
+    property real spacing
     /** own properties */
-    property variant summaryHeight: []
-    signal computeFinalHeight;
+    property var summaryHeight: []
+    /** files count */
+    property int filesCount
 
-    onComputeFinalHeight: {
+    function computeFinalHeight() {
         height = 0;
         for(var i = 0; i < filesRepeater.count; i++)
         {
             height += summaryHeight[i]
         }
+        console.log("Repeater height changed: " + String(height))
     }
 
     model: AttachedFilesModel {
         id: filesModel
         mattermost: context.mattermost
         Component.onCompleted: {
-            init(server_index,team_index,channel_type,channel_index,rowIndex)
+            if(filesRepeater.enabled)
+                init(server_index,team_index,channel_type,channel_index,rowIndex)
         }
     }
 
+    /*// Image and Document Components
     Component {
         id: fileImage
         BackgroundItem {
@@ -139,7 +144,7 @@ Repeater {
                         font.family: Theme.fontFamily
                         font.pixelSize: Theme.fontSizeTiny
                         font.italic:  true
-                        color: filesRepeater.textColor
+                        color: textColor
                         truncationMode: TruncationMode.Fade
                         height: contentHeight
                     }// filename label
@@ -162,12 +167,12 @@ Repeater {
                     sourceComponent:
                         switch(fileType)
                         {
-//                        case MattermostQt.FileImage:
-//                            staticimage
-//                            break;
-//                        case MattermostQt.FileAnimatedImage:
-//                            animatedimage
-//                            break;
+                            //                        case MattermostQt.FileImage:
+                            //                            staticimage
+                            //                            break;
+                            //                        case MattermostQt.FileAnimatedImage:
+                            //                            animatedimage
+                            //                            break;
                         default:
                             staticImage
                             break;
@@ -181,25 +186,25 @@ Repeater {
                 anchors.fill: parent
                 Component.onCompleted: {
                     context.mattermost.fileStatusChanged.connect(
-                        function onStatusChanged(fid,fstatus) {
-                            if(fid !==  fileId )
-                                return
-                            switch(fstatus){
-                            case MattermostQt.FileDownloaded:
-                                progressCircle.visible = false
-                                progressCircle.enabled = false
-                                // here need open prepeared ImageViewPage
-                                pageStack.push( imageViewPage,
-                                               {
-                                                   imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
-                                                   previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
-                                                   sourceSize: imageBackground.imageSourceSize,
-                                                   animatedImage: fileType === MattermostQt.FileAnimatedImage,
-                                                   width: Screen.width
-                                               })
-                            }
-                            fileStatus = fstatus;
-                        })
+                                function onStatusChanged(fid,fstatus) {
+                                    if(fid !==  fileId )
+                                        return
+                                    switch(fstatus){
+                                    case MattermostQt.FileDownloaded:
+                                        progressCircle.visible = false
+                                        progressCircle.enabled = false
+                                        // here need open prepeared ImageViewPage
+                                        pageStack.push( imageViewPage,
+                                                       {
+                                                           imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
+                                                           previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
+                                                           sourceSize: imageBackground.imageSourceSize,
+                                                           animatedImage: fileType === MattermostQt.FileAnimatedImage,
+                                                           width: Screen.width
+                                                       })
+                                    }
+                                    fileStatus = fstatus;
+                                })
                 }
 
                 onClicked: {
@@ -215,13 +220,13 @@ Repeater {
                     }
                     else if( fileStatus === MattermostQt.FileDownloaded ) {
                         pageStack.push( imageViewPage,
-                            {
-                                imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
-                                previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
-                                animatedImage: fileType === MattermostQt.FileAnimatedImage,
-                                sourceSize: imageBackground.imageSourceSize,
-                                width: Screen.width
-                            })
+                                       {
+                                           imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
+                                           previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
+                                           animatedImage: fileType === MattermostQt.FileAnimatedImage,
+                                           sourceSize: imageBackground.imageSourceSize,
+                                           width: Screen.width
+                                       })
                     }
                 }
             } // MouseArea downloadbutton
@@ -234,11 +239,11 @@ Repeater {
                 //value: fileStatus === MattermostQt.FileDownloading
                 onVisibleChanged: {
                     context.mattermost.fileDownloadingProgress.connect(
-                        function onDownloading(id_of_file,progress) {
-                            if(id_of_file === fileId)
-                                value = progress
-                        }
-                    )
+                                function onDownloading(id_of_file,progress) {
+                                    if(id_of_file === fileId)
+                                        value = progress
+                                }
+                                )
                 }
             }//ProgressCircle
         }
@@ -247,6 +252,34 @@ Repeater {
     Component {
         id: fileDocument
         FileDocument {
+        }
+    }
+    //*/
+
+
+    Component {
+        id: label_1
+        Label {
+            text: "[img] " + fileName
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeSmall
+            font.italic:  true
+            color: messageLabel.textColor
+            truncationMode: TruncationMode.Fade
+            width: inBlobContent.maxBlobContentWidth
+        }
+    }
+
+    Component {
+        id: label_2
+        Label {
+            text: "[doc] " + fileName
+            font.family: Theme.fontFamily
+            font.pixelSize: Theme.fontSizeSmall
+            font.italic:  true
+            color: messageLabel.textColor
+            truncationMode: TruncationMode.Fade
+            width: inBlobContent.maxBlobContentWidth
         }
     }
 
@@ -260,15 +293,28 @@ Repeater {
         property string filePreview   : role_preview
         property string fileThumbnail : role_thumbnail
         property string fileName      : role_file_name
+        property string fileSize      : role_size
+        property string mimeType      : role_mime_type
         property real   componentHeight: 5
 
         onComponentHeightChanged:{
+            height = componentHeight
             filesRepeater.summaryHeight[index] = componentHeight + filesRepeater.spacing
-            computeFinalHeight();
+            filesRepeater.computeFinalHeight();
         }
 
-        sourceComponent:
-            switch(fileType)
+        sourceComponent: switch(fileType)
+        {
+        case MattermostQt.FileImage:
+        case MattermostQt.FileAnimatedImage:
+            label_1
+            break;
+        case MattermostQt.FileDocument:
+        default:
+            label_2
+            break;
+        }
+        /*switch(fileType)
             {
             case MattermostQt.FileImage:
             case MattermostQt.FileAnimatedImage:
@@ -278,6 +324,7 @@ Repeater {
             default:
                 fileDocument
                 break;
-            }
+            }*/
     }// Loader for files
 }//Repeater of attached files
+

@@ -13,6 +13,8 @@
 //#include <QtWebSockets/QWebSocket>
 //#include <QWebSocket>
 
+// #define PRELOAD_FILE_INFOS //use old style of loading messages with 
+
 class SettingsContainer;
 
 class MattermostQt : public QObject
@@ -425,6 +427,7 @@ public:
 //	                        int channel_index, int message_index, QString file_id);
 	Q_INVOKABLE void get_file_info(int server_index, int team_index, int channel_type,
 	                   int channel_index, int message_index, QString file_id);
+
 	Q_INVOKABLE void get_file(int server_index, int team_index, int channel_type,
 	                          int channel_index, int message_index, int file_index);
 	Q_INVOKABLE void post_file_upload(int server_index, int team_index, int channel_type,
@@ -578,6 +581,8 @@ protected:
 	void reply_post_send_message(QNetworkReply *reply);
 	void reply_delete_message(QNetworkReply *reply);
 	void reply_post_message_edit(QNetworkReply *reply);
+	// failed replies
+	void failed_get_file_info(QNetworkReply *reply);
 	// events
 	void event_posted(ServerPtr sc, QJsonObject data);
 	void event_post_edited(ServerPtr sc, QJsonObject object);
