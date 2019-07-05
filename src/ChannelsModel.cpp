@@ -159,19 +159,20 @@ Qt::ItemFlags ChannelsModel::flags(const QModelIndex &index) const
 
 QHash<int, QByteArray> ChannelsModel::roleNames() const
 {
-	QHash<int, QByteArray> roleNames;
-	roleNames[DataRoles::DisplayName] = QLatin1String("m_display_name").data();
-	roleNames[DataRoles::Purpose] = QLatin1String("m_purpose").data();
-	roleNames[DataRoles::Header]  = QLatin1String("m_header").data();
-	roleNames[DataRoles::Email]  = QLatin1String("m_email").data();
-	roleNames[DataRoles::Index]  = QLatin1String("m_index").data();
-	roleNames[DataRoles::Type]  = QLatin1String("m_type").data();
-	roleNames[DataRoles::ServerIndex]  = QLatin1String("server_index").data();
-	roleNames[DataRoles::TeamIndex]  = QLatin1String("team_index").data();
-	roleNames[DataRoles::ChannelType]  = QLatin1String("channel_type").data();
-	roleNames[DataRoles::AvatarPath]  = QLatin1String("avatar_path").data();
-	roleNames[DataRoles::UserStatus]  = QLatin1String("user_status").data();
-	return roleNames;
+	// thx to @Kaffeine for that optimization (static const)
+	static const QHash<int, QByteArray> names = {
+	{ DataRoles::DisplayName,  "m_display_name" },
+	{ DataRoles::Purpose,      "m_purpose" },
+	{ DataRoles::Header,       "m_header" },
+	{ DataRoles::Email,        "m_email" },
+	{ DataRoles::Index,        "m_index" },
+	{ DataRoles::Type,         "m_type" },
+	{ DataRoles::ServerIndex,  "server_index" },
+	{ DataRoles::TeamIndex,    "team_index" },
+	{ DataRoles::ChannelType,  "channel_type" },
+	{ DataRoles::AvatarPath,   "avatar_path" },
+	{ DataRoles::UserStatus,   "user_status" } };
+	return names;
 }
 
 MattermostQt *ChannelsModel::mattermost()

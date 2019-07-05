@@ -43,7 +43,7 @@ Repeater {
         }
     }
 
-    // Image Component
+    /*// Image Component
     Component {
         id: fileImage
         BackgroundItem {
@@ -165,12 +165,12 @@ Repeater {
                     sourceComponent:
                         switch(fileType)
                         {
-                            //                        case MattermostQt.FileImage:
-                            //                            staticimage
-                            //                            break;
-                            //                        case MattermostQt.FileAnimatedImage:
-                            //                            animatedimage
-                            //                            break;
+//                        case MattermostQt.FileImage:
+//                            staticimage
+//                            break;
+//                        case MattermostQt.FileAnimatedImage:
+//                            animatedimage
+//                            break;
                         default:
                             staticImage
                             break;
@@ -245,7 +245,7 @@ Repeater {
                 }
             }//ProgressCircle
         }
-    }
+    }//*/
 
     Component {
         id: fileDocument
@@ -255,15 +255,45 @@ Repeater {
     }
 
     Component {
-        id: label_1
-        Label {
-            text: "[img] " + fileName
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeSmall
-            font.italic:  true
-            color: messageLabel.textColor
-            truncationMode: TruncationMode.Fade
-            width: inBlobContent.maxBlobContentWidth
+        id: fileImage
+        MouseArea {
+            id: attachedImage
+            height: imageNameLabel.height
+            width: Math.min(Math.max(fileNameRow.width,realBlobWidth),maxWidth)
+
+            Row {
+                id: fileNameRow
+                width:
+                    Math.min(
+                        imageNameLabel.width + fileSizeLabel.width + fileNameRow.spacing,
+                        maxWidth
+                        )
+                height: imageNameLabel.height
+                spacing: Theme.paddingMedium
+
+                Label {
+                    id: imageNameLabel
+                    width: Math.min(imageNameLabel.contentWidth, maxWidth - fileNameRow.spacing - fileSizeLabel.width - Theme.paddingMedium)
+                    text: fileName
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeTiny
+                    font.italic:  true
+                    color: textColor
+                    truncationMode: TruncationMode.Fade
+                    height: contentHeight
+                }// filename label
+
+                Label {
+                    id: fileSizeLabel
+                    width: implicitWidth
+                    text: fileSize
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeTiny
+                    font.italic:  true
+                    color: textColor
+                    height: implicitHeight
+                }// filename label
+            }
         }
     }
 
@@ -281,7 +311,7 @@ Repeater {
         property string fileSize      : role_size
         property string mimeType      : role_mime_type
         property real   maxWidth      : inBlobContent.maxBlobContentWidth
-        property real   contentWidth  : inBlobContent.width
+        property real   realBlobWidth  : inBlobContent.realBlobContentWidth
         property real   componentHeight: 5
 
         onComponentHeightChanged:{
@@ -294,24 +324,13 @@ Repeater {
         {
         case MattermostQt.FileImage:
         case MattermostQt.FileAnimatedImage:
-            label_1
+            fileImage
             break;
         case MattermostQt.FileDocument:
         default:
             fileDocument
             break;
         }
-        /*switch(fileType)
-            {
-            case MattermostQt.FileImage:
-            case MattermostQt.FileAnimatedImage:
-                fileImage
-                break;
-            case MattermostQt.FileDocument:
-            default:
-                fileDocument
-                break;
-            }*/
     }// Loader for files
 }//Repeater of attached files
 

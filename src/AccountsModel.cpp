@@ -12,14 +12,14 @@ QVariant AccountsModel::headerData(int section, Qt::Orientation orientation, int
 
 QHash<int, QByteArray> AccountsModel::roleNames() const
 {
-	QHash<int, QByteArray> roleNames;
-	roleNames[RoleName]        = QLatin1String("role_name").data();
-	roleNames[RoleServerUrl]   = QLatin1String("role_url").data();
-	roleNames[RoleUsername]    = QLatin1String("role_username").data();
-	roleNames[RoleStatus]      = QLatin1String("role_status").data();
-	roleNames[RoleIcon]        = QLatin1String("role_icon").data();
-	roleNames[RoleServerIndex] = QLatin1String("role_server_index").data();
-	return roleNames;
+	static const QHash<int, QByteArray> names ={
+	{ RoleName,        "role_name" },
+	{ RoleServerUrl,   "role_url" },
+	{ RoleUsername,    "role_username" },
+	{ RoleStatus,      "role_status" },
+	{ RoleIcon,        "role_icon" },
+	{ RoleServerIndex, "role_server_index" } };
+	return names;
 }
 
 int AccountsModel::rowCount(const QModelIndex &parent) const

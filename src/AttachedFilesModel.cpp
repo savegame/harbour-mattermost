@@ -62,17 +62,18 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 
 QHash<int, QByteArray> AttachedFilesModel::roleNames() const
 {
-	QHash<int, QByteArray> names;
-	names[FileType]          = QLatin1String("role_file_type" ).data();
-	names[FileName]          = QLatin1String("role_file_name" ).data();
-	names[FileThumbnailPath] = QLatin1String("role_thumbnail" ).data();
-	names[FilePreviewPath]   = QLatin1String("role_preview"   ).data();
-	names[FilePath]          = QLatin1String("role_file_path" ).data();
-	names[FileCachePath]     = QLatin1String("role_cache_path").data();
-	names[FileStatus]        = QLatin1String("role_status"    ).data();
-	names[FileSize]          = QLatin1String("role_size"      ).data();
-	names[FileMimeType]      = QLatin1String("role_mime_type" ).data();
-	names[FileId]            = QLatin1String("role_file_id"   ).data();
+	// thx to @Kaffeine for that optimization
+	static const QHash<int, QByteArray> names = {
+	{ FileType,          "role_file_type" },
+	{ FileName,          "role_file_name" },
+	{ FileThumbnailPath, "role_thumbnail" },
+	{ FilePreviewPath,   "role_preview" },
+	{ FilePath,          "role_file_path" },
+	{ FileCachePath,     "role_cache_path" },
+	{ FileStatus,        "role_status" },
+	{ FileSize,          "role_size" },
+	{ FileMimeType,      "role_mime_type" },
+	{ FileId,            "role_file_id" } };
 	return names;
 }
 

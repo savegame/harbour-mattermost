@@ -63,19 +63,20 @@ QVariant TeamsModel::data(const QModelIndex &index, int role) const
 
 QHash<int, QByteArray> TeamsModel::roleNames() const
 {
-	QHash<int, QByteArray> roleNames;
-	roleNames[DataRoles::DisplayName]       = QLatin1String("display_name").data();
-	roleNames[DataRoles::Description]       = QLatin1String("description").data();
-	roleNames[DataRoles::Email]             = QLatin1String("email").data();
-	roleNames[DataRoles::TeamId]            = QLatin1String("teamid").data();
-	roleNames[DataRoles::MsgCount]          = QLatin1String("msg_count").data();
-	roleNames[DataRoles::MentionCount]      = QLatin1String("mention_count").data();
-	roleNames[DataRoles::ActiveUsers]       = QLatin1String("active_users").data();
-	roleNames[DataRoles::UserCount]         = QLatin1String("user_count").data();
-	roleNames[DataRoles::Index]             = QLatin1String("self_index").data();
-	roleNames[DataRoles::ServerIndex]       = QLatin1String("server_index").data();
-	roleNames[DataRoles::ServerCustomName]  = QLatin1String("role_server_display_name").data();
-	return roleNames;
+	// thx to @Kaffeine for that optimization (static const)
+	static const QHash<int, QByteArray> names = {
+	{ DataRoles::DisplayName,       "display_name" },
+	{ DataRoles::Description,       "description" },
+	{ DataRoles::Email,             "email" },
+	{ DataRoles::TeamId,            "teamid" },
+	{ DataRoles::MsgCount,          "msg_count" },
+	{ DataRoles::MentionCount,      "mention_count" },
+	{ DataRoles::ActiveUsers,       "active_users" },
+	{ DataRoles::UserCount,         "user_count" },
+	{ DataRoles::Index,             "self_index" },
+	{ DataRoles::ServerIndex,       "server_index" },
+	{ DataRoles::ServerCustomName,  "role_server_display_name" } };
+	return names;
 }
 
 void TeamsModel::activate(const int i)

@@ -166,6 +166,8 @@ BackgroundItem {
                         (messageContent.width - inBlobMargins * 2 - inBlobContent.anchors.rightMargin * 2):
                         (messageLabel.width - inBlobContent.anchors.rightMargin * 2)
 //                height: plainTextLablel.height + (attachments.visible ? (attachments.height + spacing):0)
+                property real realBlobContentWidth:
+                    plainTextLablel.width
                 Label {
                     id: plainTextLablel
                     text: Settings.formatedText ? messageLabel.formatedText : messageLabel.plainText
@@ -188,6 +190,7 @@ BackgroundItem {
                 } // plainTextLabel
 
                 AttachedFiles {
+                    id: attachedFiles
                     anchors.margins: plainTextLablel.anchors.margins
                     maxWidth: inBlobContent.maxBlobContentWidth//Math.min(implicitWidth, maxBlobContentWidth)
                     messagesModel: messageLabel.messagesModel

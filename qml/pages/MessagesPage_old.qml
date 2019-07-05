@@ -843,7 +843,6 @@ Page {
     Component {
         id: camerapicker
         CameraPicker {
-
         }
     }
 

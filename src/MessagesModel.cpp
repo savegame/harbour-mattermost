@@ -169,22 +169,22 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 
 QHash<int, QByteArray> MessagesModel::roleNames() const
 {
-	QHash<int, QByteArray> names;
-	names[MessagesModel::Text]            = QLatin1String("role_message").data();
-	names[MessagesModel::Owner]           = QLatin1String("role_type").data();
-	names[MessagesModel::FilesCount]      = QLatin1String("role_files_count").data();
-	names[MessagesModel::RowIndex]        = QLatin1String("role_row_index").data();
-	names[MessagesModel::SenderImagePath] = QLatin1String("role_user_image_path").data();
-	names[MessagesModel::SenderUserName]  = QLatin1String("role_user_name").data();
-	names[MessagesModel::CreateAt]        = QLatin1String("role_message_create_at").data();
-	names[MessagesModel::IsEdited]        = QLatin1String("role_message_is_edited").data();
-	names[MessagesModel::UserId]          = QLatin1String("role_user_id").data();
-	names[MessagesModel::MessageIndex]    = QLatin1String("role_message_index").data();
-//	names[MessagesModel::FilePaths]       = QLatin1String("filepaths").data();
-	names[MessagesModel::ValidPaths]      = QLatin1String("role_valid_paths").data();
-	names[MessagesModel::FormatedText]    = QLatin1String("role_formated_text").data();
-	names[MessagesModel::FileStatus]      = QLatin1String("role_file_status").data();
-	names[MessagesModel::UserStatus]      = QLatin1String("role_user_status").data();
+	// thx to @Kaffeine for that optimization
+	static const QHash<int, QByteArray> names = {
+	{MessagesModel::Text,            "role_message"},
+	{MessagesModel::Owner,           "role_type"},
+	{MessagesModel::FilesCount,      "role_files_count"},
+	{MessagesModel::RowIndex,        "role_row_index"},
+	{MessagesModel::SenderImagePath, "role_user_image_path"},
+	{MessagesModel::SenderUserName,  "role_user_name"},
+	{MessagesModel::CreateAt,        "role_message_create_at"},
+	{MessagesModel::IsEdited,        "role_message_is_edited"},
+	{MessagesModel::UserId,          "role_user_id"},
+	{MessagesModel::MessageIndex,    "role_message_index"},
+	{MessagesModel::ValidPaths,      "role_valid_paths"},
+	{MessagesModel::FormatedText,    "role_formated_text"},
+	{MessagesModel::FileStatus,      "role_file_status"},
+	{MessagesModel::UserStatus,      "role_user_status"}};
 	return names;
 }
 
