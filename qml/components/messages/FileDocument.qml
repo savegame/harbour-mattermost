@@ -3,29 +3,27 @@ import Sailfish.Silica 1.0
 import ru.sashikknox 1.0
 
 MouseArea {
-    height: componentHeight
-    width: filesRepeater.width
-    property int fileStatus: currentStatus
+    id: fileDocument
+    height: fileDocumentRow.height
+    width:  maxWidth
 
-    Component.onCompleted:
-        context.mattermost.fileStatusChanged.connect(
-            function onStatusChanged(fid,fstatus) {
-                if(fid !==  fileId )
-                    return
-                switch(fstatus){
-                case MattermostQt.FileDownloading:
-                    progressCircle.visible = true;
-                    break;
-                case MattermostQt.FileDownloaded:
-                    progressCircle.visible = false
-                    progressCircle.enabled = false
-                }
-                fileStatus = fstatus;
-            }
-        )
+    property int fileStatus
+//    property string filePath
+
+    onFileStatusChanged: {
+        switch(fileStatus)
+        {
+            case MattermostQt.FileDownloading:
+                progressCircle.visible = true;
+                break;
+            case MattermostQt.FileDownloaded:
+                progressCircle.visible = false
+                progressCircle.enabled = false
+                break;
+        }
+    }
 
     onClicked: {
-        var filePath = null;
         switch(fileStatus) {
         case MattermostQt.FileRemote:
             context.mattermost.get_file(
@@ -38,7 +36,6 @@ MouseArea {
             progressCircle.visible = true;
             break;
         case MattermostQt.FileDownloaded:
-            filePath = messagesModel.getFilePath(rowIndex,fileIndex);
             Qt.openUrlExternally(filePath)
             break;
         }
@@ -47,9 +44,11 @@ MouseArea {
     Row {
         id: fileDocumentRow
         spacing: Theme.paddingSmall
+        height: Math.max(fileNameLabel.implicitHeight, fileTypeIcon.height)
+        //anchors.fill: parent
 
-        Component.onCompleted: {
-            componentHeight = Math.max(fileNameLabel.implicitHeight, fileTypeIcon.height)
+        onHeightChanged: {
+            componentHeight = height
         }
 
         Image {
@@ -73,27 +72,27 @@ MouseArea {
 
         Label {
             id: fileNameLabel
-            text: messagesModel.getFileName(rowIndex,fileIndex)
+            text: fileName
             anchors.verticalCenter: fileTypeIcon.verticalCenter
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSmall
             font.italic:  true
             color: textColor
             truncationMode: TruncationMode.Fade
-            width: filesRepeater.width - fileDocumentRow.spacing*3 - fileTypeIcon.width - fileSizeLabel.width
-            //height: implicitHeight
+            width: maxWidth - fileDocumentRow.spacing*3 - fileTypeIcon.width - fileSizeLabel.width
+            height: implicitHeight
         } // label with filename
 
         Label {
             id: fileSizeLabel
-            width: contentWidth
-            text: messagesModel.getFileSize(rowIndex,fileIndex)
+            text: fileSize
             anchors.verticalCenter: fileTypeIcon.verticalCenter
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeTiny
             font.italic:  true
             color: textColor
-            height: contentHeight
+            width: implicitWidth
+            height: implicitHeight
         }
     }
 
@@ -115,3 +114,4 @@ MouseArea {
         }
     }//ProgressCircle
 }
+

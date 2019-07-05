@@ -46,7 +46,8 @@ public:
 	Q_INVOKABLE void init(int server_index, int team_index, int channel_type, int channel_index, int message_row);
 
 protected Q_SLOTS:
-	void slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<int> roles);
+	void slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<QString> file_ids, QVector<int> roles);
+//	void slot_attachedFileStatusChanged(QString id, MattermostQt::FileStatus status);
 
 protected:
 	MattermostQt::ChannelPtr           m_channel;

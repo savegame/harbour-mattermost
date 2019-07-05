@@ -507,7 +507,7 @@ Q_SIGNALS:
 
 
 	/// renew signals
-	void attachedFilesChanged(MattermostQt::MessagePtr message, QVector<int> roles);
+	void attachedFilesChanged(MattermostQt::MessagePtr message, QVector<QString> file_ids, QVector<int> roles);
 //	void fileUploaded(FilePtr file);
 
 	/**

@@ -27,8 +27,8 @@ BackgroundItem {
     property MessagesModel messagesModel
     /** index of message in qvector */
     property int rowIndex
-    /** variant list of files statuses */
-    property var fileStatus
+//    /** variant list of files statuses */
+//    property var fileStatus
 
     property bool showBlobs: Settings.showBlobs
     property real blobsOpacity: Settings.blobOpacity
@@ -166,7 +166,7 @@ BackgroundItem {
                         (messageContent.width - inBlobMargins * 2 - inBlobContent.anchors.rightMargin * 2):
                         (messageLabel.width - inBlobContent.anchors.rightMargin * 2)
 //                height: plainTextLablel.height + (attachments.visible ? (attachments.height + spacing):0)
-                Text {
+                Label {
                     id: plainTextLablel
                     text: Settings.formatedText ? messageLabel.formatedText : messageLabel.plainText
                     wrapMode: Text.Wrap
@@ -193,7 +193,6 @@ BackgroundItem {
                     messagesModel: messageLabel.messagesModel
                     textColor:     messageLabel.textColor
                     rowIndex:      messageLabel.rowIndex
-                    fileStatus:    messageLabel.fileStatus
                     filesCount:    messageLabel.filesCount
                     spacing:       inBlobContent.spacing
                     visible:       messageLabel.filesCount > 0

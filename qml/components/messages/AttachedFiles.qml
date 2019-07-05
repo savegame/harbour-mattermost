@@ -16,8 +16,6 @@ Repeater {
     property MessagesModel messagesModel
     /** index of message in qvector */
     property int rowIndex
-    /** array of file statuses */
-    property var fileStatus
     /** maximum width */
     property real maxWidth
     /** spacing of columnt, where filesRepeater situated */
@@ -45,7 +43,7 @@ Repeater {
         }
     }
 
-    /*// Image and Document Components
+    // Image Component
     Component {
         id: fileImage
         BackgroundItem {
@@ -252,28 +250,14 @@ Repeater {
     Component {
         id: fileDocument
         FileDocument {
+            fileStatus: currentStatus
         }
     }
-    //*/
-
 
     Component {
         id: label_1
         Label {
             text: "[img] " + fileName
-            font.family: Theme.fontFamily
-            font.pixelSize: Theme.fontSizeSmall
-            font.italic:  true
-            color: messageLabel.textColor
-            truncationMode: TruncationMode.Fade
-            width: inBlobContent.maxBlobContentWidth
-        }
-    }
-
-    Component {
-        id: label_2
-        Label {
-            text: "[doc] " + fileName
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeSmall
             font.italic:  true
@@ -289,12 +273,15 @@ Repeater {
         property int    fileType      : role_file_type//messagesModel.getFileType(rowIndex,index)
         property string fileId        : role_file_id  //messagesModel.getFileId(rowIndex,index)
         property int    fileIndex     : index
+        property string filePath      : role_file_path
         property int    currentStatus : role_status   //fileStatus[index]
         property string filePreview   : role_preview
         property string fileThumbnail : role_thumbnail
         property string fileName      : role_file_name
         property string fileSize      : role_size
         property string mimeType      : role_mime_type
+        property real   maxWidth      : inBlobContent.maxBlobContentWidth
+        property real   contentWidth  : inBlobContent.width
         property real   componentHeight: 5
 
         onComponentHeightChanged:{
@@ -311,7 +298,7 @@ Repeater {
             break;
         case MattermostQt.FileDocument:
         default:
-            label_2
+            fileDocument
             break;
         }
         /*switch(fileType)

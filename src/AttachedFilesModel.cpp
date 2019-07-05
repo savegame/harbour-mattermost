@@ -94,8 +94,8 @@ void AttachedFilesModel::init(int server_index, int team_index, int channel_type
 		return;
 	}
 
-	connect( m_mattermost.data(), SIGNAL(attachedFilesChanged(MattermostQt::MessagePtr,QVector<int>)),
-	         SLOT(slot_attachedFilesChanged(MattermostQt::MessagePtr,QVector<int>)) );
+	connect( m_mattermost.data(), SIGNAL(attachedFilesChanged(MattermostQt::MessagePtr,QVector<QString>, QVector<int>)),
+	         SLOT(slot_attachedFilesChanged(MattermostQt::MessagePtr,QVector<QString>,QVector<int>)) );
 
 	m_channel = m_mattermost->channelAt(server_index,team_index,channel_type,channel_index);
 	if(!m_channel) {
@@ -126,7 +126,7 @@ void AttachedFilesModel::init(int server_index, int team_index, int channel_type
 	endResetModel();
 }
 
-void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<int> roles)
+void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<QString> file_ids, QVector<int> roles)
 {
 	if( !m_message ) {
 		qCritical() << "MessagePtr is emty in AttagedFilesModel";
@@ -134,6 +134,7 @@ void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, Q
 	}
 	if( m != m_message )
 		return;
+
 	for(int i = 0; i < roles.size(); i++)
 	{
 		if( roles[i] == FileCount )
@@ -144,8 +145,24 @@ void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, Q
 		}
 	}
 	QModelIndex topLeft = index(0);
-	QModelIndex bottomRight = index(m_message->m_file.size());
+	QModelIndex bottomRight = index(m_message->m_file.size()?m_message->m_file.size()-1:0);
 	dataChanged(topLeft, bottomRight, roles);
 //	beginResetModel();
 //	endResetModel();
 }
+
+//void AttachedFilesModel::slot_attachedFileStatusChanged(QString id, MattermostQt::FileStatus status)
+//{
+//	if( !m_message ) {
+//		qCritical() << "MessagePtr is emty in AttagedFilesModel";
+//		return;
+//	}
+//	if( m != m_message )
+//		return;
+//	QVector<int> roles;
+//	roles << DataRoles::FileStatus;
+
+//	QModelIndex topLeft = index(0);
+//	QModelIndex bottomRight = index(m_message->m_file.size());
+//	dataChanged(topLeft, bottomRight, roles);
+//}

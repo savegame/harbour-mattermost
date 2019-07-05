@@ -124,9 +124,12 @@ CoverBackground {
         text: status_text
         wrapMode: Text.Wrap
         elide: Text.ElideMiddle
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
         width: parent.width
         font.pixelSize: Theme.fontSizeLarge
     }
+
     Label {
         id: error_label
         anchors.top: statusLabel.bottom
@@ -137,6 +140,8 @@ CoverBackground {
         wrapMode: Text.Wrap
         width: parent.width
         elide: Text.ElideMiddle
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
     }
 
 //    CoverActionList {

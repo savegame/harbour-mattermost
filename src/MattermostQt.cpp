@@ -581,7 +581,6 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 void MattermostQt::get_file_info(int server_index, int team_index, int channel_type,
                                  int channel_index, int message_index, QString file_id)
 {
-	// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
 	// we think all indexes is right
 	if( server_index < 0 || server_index >= m_server.size() )
 	{
@@ -619,7 +618,17 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	f->m_server_index = m->m_server_index;
 	f->m_id = file_id;
 	m->m_file.push_back(f);
-	f->m_file_status = FileStatus::FileRequested;
+
+	// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
+	// first try search file locally
+	if( f->load_json( sc->m_data_path ) )
+	{
+		qInfo() << "File info.json - exists! Try search file data in local storage.";
+		if( f->m_file_status == FileStatus::FileDownloaded )
+			return;
+	}
+	else
+		f->m_file_status = FileStatus::FileRequested;
 
 	//files/{file_id}/info
 	QString urlString = QLatin1String("/api/v")
@@ -2361,7 +2370,7 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 //		emit messageUpdated(messages);
 		QVector<int> file_update_roles;
 		file_update_roles << AttachedFilesModel::FileThumbnailPath;
-		emit attachedFilesChanged(mc, file_update_roles);
+		emit attachedFilesChanged(mc, QVector<QString>(),file_update_roles);
 	}
 	return;
 }
@@ -2416,7 +2425,7 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 //		emit messageUpdated(messages);
 		QVector<int> file_update_roles;
 		file_update_roles << AttachedFilesModel::FilePreviewPath;
-		emit attachedFilesChanged(mc, file_update_roles);
+		emit attachedFilesChanged(mc, QVector<QString>(), file_update_roles);
 	}
 	return;
 }
@@ -2474,7 +2483,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file_update_roles << AttachedFilesModel::FileName;
 	file_update_roles << AttachedFilesModel::FileSize;
 	file_update_roles << AttachedFilesModel::FileMimeType;
-	file_update_roles << AttachedFilesModel::FileCount;
+//	file_update_roles << AttachedFilesModel::FileCount;
 	//messages << mc;
 	bool isUpdateMessage = false;
 
@@ -2485,11 +2494,12 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file->m_channel_index = channel_index;
 	file->m_channel_type = channel_type;
 	file->m_message_index = message_index;
-	if( file->load_json(sc->m_data_path) )
+	// TODO Load_json happens in get_file_info request prepare function, no need it here
+	/*if( file->load_json(sc->m_data_path) )
 	{
 		if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
 		{
-			if( !QFile::exists(file->m_thumb_path) )
+			if( file->m_thumb_path.isEmpty() || !QFile::exists(file->m_thumb_path) )
 				get_file_thumbnail(server_index,file->m_self_sc_index);
 			bool download_current_file = true;
 			if( m_settings && file->m_file_size > m_settings->autoDownloadImageSize())
@@ -2501,7 +2511,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 				get_file_preview(server_index,file->m_self_sc_index);
 				file->m_file_status = FileRemote;
 			}
-			if( !QFile::exists(file->m_file_path) )
+			if( file->m_file_path.isEmpty() || !QFile::exists(file->m_file_path) )
 			{
 				file->m_file_path.clear();
 				if( download_current_file )
@@ -2520,13 +2530,17 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 		file_update_roles << AttachedFilesModel::FileStatus;
 		isUpdateMessage = true;
 	}
-	else if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
+	else//*/
+	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
 	{
-		QString file_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
-		if( !QFile::exists(file_thumb_path) )
+//		QString file_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
+		if( file->m_thumb_path.isEmpty() )
+			file->m_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
+		if( !QFile::exists(file->m_thumb_path) ) {
+			file->m_thumb_path.clear();
 			get_file_thumbnail(server_index,file->m_self_sc_index);
+		}
 		else {
-			file->m_thumb_path = file_thumb_path;
 			file_update_roles << AttachedFilesModel::FileThumbnailPath;
 			isUpdateMessage = true;
 		}
@@ -2535,24 +2549,29 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			download_current_file = false;
 
 		if(file->m_has_preview_image && !download_current_file ) {
-			QString preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
-			if( !QFile::exists(preview_path) )
+			if( file->m_preview_path.isEmpty() )
+				file->m_preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
+			if( !QFile::exists(file->m_preview_path) ) {
+				file->m_preview_path.clear();
 				get_file_preview(server_index,file->m_self_sc_index);
+			}
 			else {
-				file->m_preview_path = preview_path;
 				file_update_roles << AttachedFilesModel::FilePreviewPath;
 				isUpdateMessage = true;
 			}
 		}
 		else
 		{
-			QString path = m_documents_path + QDir::separator() + file->filename();
-			if( !QFile::exists(path) )
+			// TODO - download files to cahce? while user not request "save to gallery" or "download"
+			if(file->m_file_path.isEmpty())
+				file->m_file_path = m_documents_path + QDir::separator() + file->filename();
+			if( !QFile::exists(file->m_file_path) ) {
+				file->m_file_path.clear();
 				get_file(file->m_server_index, file->m_team_index,
 				         file->m_channel_type, file->m_channel_index,
 				         file->m_message_index, file->m_self_index);
+			}
 			else {
-				file->m_file_path = path;
 				file_update_roles << AttachedFilesModel::FilePath;
 				isUpdateMessage = true;
 			}
@@ -2560,7 +2579,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	}
 //	if(isUpdateMessage)
 //		emit updateMessage(mc, (int)MessagesModel::FilesCount);
-	emit attachedFilesChanged(mc, file_update_roles);
+	emit attachedFilesChanged(mc, QVector<QString>(), file_update_roles);
 	return;
 }
 
@@ -2596,7 +2615,7 @@ void MattermostQt::failed_get_file_info(QNetworkReply *reply)
 
 	QVector<int> file_update_roles;
 	file_update_roles << AttachedFilesModel::FileStatus;
-	emit attachedFilesChanged(mc, file_update_roles);
+	emit attachedFilesChanged(mc, QVector<QString>(), file_update_roles);
 }
 
 void MattermostQt::reply_get_file(QNetworkReply *reply)
@@ -2609,7 +2628,8 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 		dowload_dir = m_pictures_path;
 	else
 		dowload_dir = m_download_path;
-
+	// TODO first, save all data to cache dir, and save it to downloads, and images if user request it
+	// download_dir => cache_dir
 	QDir dir(dowload_dir);
 	if( !dir.exists() )
 		dir.mkpath(dowload_dir);
@@ -2636,6 +2656,7 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 	}
 	else
 		file->m_file_status = FileStatus::FileRemote;
+
 	{
 		ChannelPtr channel = channelAt(
 		            file->m_server_index,
@@ -2646,9 +2667,12 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 		if(channel && file->m_message_index >=0 && file->m_message_index < channel->m_message.size())
 		{
 			MessagePtr message = channel->m_message[file->m_message_index];
-			QList<MessagePtr> msgs;
-			msgs << message;
-			emit messageUpdated( msgs );
+//			QList<MessagePtr> msgs;
+//			msgs << message;
+//			emit messageUpdated( msgs );
+			QVector<int> roles;
+			roles << AttachedFilesModel::FileStatus;
+			emit attachedFilesChanged(message, QVector<QString>(),roles);
 		}
 	}
 	emit fileStatusChanged(file->m_id, file->m_file_status);
@@ -3922,6 +3946,8 @@ bool MattermostQt::FileContainer::save_json(QString server_data_path) const
 		return false;
 	QJsonDocument json;
 	QJsonObject obj;
+	obj["name"] = m_name;
+	obj["file_size"] =  double(m_file_size);
 	obj["thumb_path"] = m_thumb_path;
 	obj["file_type"] = (int)m_file_type;
 	obj["file_path"] = m_file_path;
@@ -3931,6 +3957,13 @@ bool MattermostQt::FileContainer::save_json(QString server_data_path) const
 	item_size["height"] = m_item_size.height();
 	obj["item_size"] = item_size;
 	obj["content_width"] = m_contentwidth;
+
+	obj["post_id"] = m_post_id;
+	obj["user_id"] = m_user_id;
+	obj["mime_type"] = m_mime_type;
+	obj["has_preview_image"] = m_has_preview_image ;
+	obj["extension"] = m_extension;
+
 	json.setObject(obj);
 	conf.write( json.toJson() );
 	conf.flush();
@@ -3945,7 +3978,7 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 	        + m_id;
 	fpath += QDir::separator() + QLatin1String("info.json");
 	QFile conf(fpath);
-	conf.setPermissions(QFile::WriteOwner | QFile::ReadOwner);
+	//conf.setPermissions(QFile::WriteOwner | QFile::ReadOwner);
 	if( !conf.open(QFile::ReadOnly) )
 		return false;
 	QJsonDocument json = QJsonDocument::fromJson(conf.readAll());
@@ -3954,6 +3987,8 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 		return false;
 
 	QJsonObject obj = json.object();
+	m_name = obj["name"].toString();
+	m_file_size = qlonglong(obj["file_size"].toDouble());
 	m_thumb_path = obj["thumb_path"].toString();
 	m_file_type = (MattermostQt::FileType)obj["file_type"].toInt();
 	m_file_path = obj["file_path"].toString();
@@ -3962,7 +3997,44 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 	m_item_size.setWidth(item_size["width"].toDouble());
 	m_item_size.setHeight(item_size["height"].toDouble());
 	m_contentwidth = obj["content_width"].toInt();
-	return true;
+
+	m_post_id = obj["post_id"].toString("");
+	m_user_id = obj["user_id"].toString("");
+	m_mime_type = obj["mime_type"].toString("");
+	m_has_preview_image = obj["has_preview_image"].toBool(false);
+	m_extension = obj["extension"].toString("");
+
+	if( m_file_path.isEmpty() || !QFile::exists(m_file_path) )
+	{
+		m_file_path.clear();
+		m_file_status = FileStatus::FileRemote;
+	}
+	else
+		m_file_status = FileStatus::FileDownloaded;
+	bool result = true;
+	if( m_file_type == FileType::FileImage )
+	{
+		if( m_thumb_path.isEmpty() || !QFile::exists(m_thumb_path) )
+		{
+			m_thumb_path.clear();
+			result = false;
+		}
+		if( !m_has_preview_image || m_preview_path.isEmpty() || !QFile::exists(m_preview_path) )
+		{
+			m_has_preview_image = false;
+			m_preview_path.clear();
+			result = false;
+		}
+	}
+
+	if(m_post_id.isEmpty())
+		return false;
+	if(m_user_id.isEmpty())
+		return false;
+	if(m_name.isEmpty())
+		return false;
+
+	return result;
 }
 
 void MattermostQt::FileContainer::parse_from_json(QJsonObject object)
