@@ -258,41 +258,85 @@ Repeater {
         id: fileImage
         MouseArea {
             id: attachedImage
-            height: imageNameLabel.height
+            height: imageWithName.height
             width: Math.min(Math.max(fileNameRow.width,realBlobWidth),maxWidth)
 
-            Row {
-                id: fileNameRow
-                width:
-                    Math.min(
-                        imageNameLabel.width + fileSizeLabel.width + fileNameRow.spacing,
-                        maxWidth
-                        )
-                height: imageNameLabel.height
-                spacing: Theme.paddingMedium
+            Column {
+                id: imageWithName
+                spacing: inBlobContent.spacing
+                height: fileNameRow.height + spacing + imageComponentLoader.height
+                Row {
+                    id: fileNameRow
+                    width:
+                        Math.min(
+                            imageNameLabel.width + fileSizeLabel.width + fileNameRow.spacing,
+                            maxWidth
+                            )
+                    height: imageNameLabel.height
+                    spacing: Theme.paddingMedium
 
-                Label {
-                    id: imageNameLabel
-                    width: Math.min(imageNameLabel.contentWidth, maxWidth - fileNameRow.spacing - fileSizeLabel.width - Theme.paddingMedium)
-                    text: fileName
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.italic:  true
-                    color: textColor
-                    truncationMode: TruncationMode.Fade
-                    height: contentHeight
-                }// filename label
+                    Label {
+                        id: imageNameLabel
+                        width: Math.min(imageNameLabel.contentWidth, maxWidth - fileNameRow.spacing - fileSizeLabel.width - Theme.paddingMedium)
+                        text: fileName
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeTiny
+                        font.italic:  true
+                        color: textColor
+                        truncationMode: TruncationMode.Fade
+                        height: contentHeight
+                    }// filename label
 
-                Label {
-                    id: fileSizeLabel
-                    width: implicitWidth
-                    text: fileSize
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.italic:  true
-                    color: textColor
-                    height: implicitHeight
-                }// filename label
+                    Label {
+                        id: fileSizeLabel
+                        width: implicitWidth
+                        text: fileSize
+                        font.family: Theme.fontFamily
+                        font.pixelSize: Theme.fontSizeTiny
+                        font.italic:  true
+                        color: textColor
+                        height: implicitHeight
+                    }// filename label
+                }
+
+                Component {
+                    id: staticImage
+                    Item
+                    {
+                        id: imageItem
+                        // TODO compute right image
+                        width: image.sourceSize.width
+                        height: image.sourceSize.height
+
+                        Rectangle {
+                            id: maskRect
+                            radius: Theme.paddingMedium
+                            anchors.fill: parent
+                            color: "black"
+                            visible: false
+                        }
+
+                        Image {
+                            id: image
+                            fillMode: Image.PreserveAspectFit
+                            source: fileThumbnail//filePreview === "" ? fileThumbnail : filePreview
+//                            sourceSize: messagesModel.getImageSize(messageRow,fileIndex)
+                            anchors.fill: parent
+                            layer.enabled: true
+                            layer.effect: OpacityMask {
+                                maskSource: maskRect
+                            }
+//                            onSourceChanged: {
+//                                console.log( source )
+//                            }
+                        }//image
+                    }
+                }
+
+                Loader {
+                    id: imageComponentLoader
+                    sourceComponent: staticImage
+                }
             }
         }
     }
