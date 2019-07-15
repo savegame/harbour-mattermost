@@ -23,34 +23,20 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 
 	if( role == FileType ) {
 		return QVariant(file->m_file_type);
-	} else
-	if( role == FileName ) {
+	}
+	else if( role == FileName ) {
 		return QVariant(file->m_name);
-	} else
-	if( role == FileThumbnailPath ) {
-		return QVariant(file->m_thumb_path);
-	} else
-	if( role == FilePreviewPath ) {
-		//return QVariant(file->m_preview_path);
-		if(!file->m_preview_path.isEmpty() )
-			return file->m_preview_path;
-		else {
-			// todo file->m_self_sc_index не готов ко времени первого запроса,
-			// нужно его делать -1 по умолчанию и ждать пока get_file_info не вернет значение
-			m_mattermost->get_file_preview(file->m_server_index, file->m_self_sc_index);
-			return file->m_thumb_path;
-		}
-	} else
-	if( role == FilePath ) {
-		return QVariant(file->m_file_path);
-	} else
-	if( role == FileCachePath ) {
+	}
+	else if( role == FilePath ) {
+		return file->m_file_path;
+	}
+	else if( role == FileCachePath ) {
 		return QVariant();
-	} else
-	if( role == FileStatus ) {
+	}
+	else if( role == FileStatus ) {
 		return QVariant(file->m_file_status);
-	} else
-	if( role == FileSize ) {
+	}
+	else if( role == FileSize ) {
 		if( file->m_file_size < 1000 )
 			return QObject::tr("%0 bytes").arg(file->m_file_size);
 		qreal size = (qreal)file->m_file_size/1024;
@@ -62,18 +48,29 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 	else if( role == FileMimeType ) {
 		return QVariant(file->m_mime_type);
 	}
-	else if( role ==FileImageSize ) {
-		return file->m_image_size;
+	else if ( file->m_file_type == MattermostQt::FileImage ) {
+		if( role == FileThumbnailPath ) {
+			return QVariant(file->m_thumb_path);
+		}
+		else if( role == FilePreviewPath ) {
+			if(!file->m_preview_path.isEmpty() )
+				return file->m_preview_path;
+			else {
+				m_mattermost->get_file_preview(file->m_server_index, file->m_self_sc_index);
+				return file->m_thumb_path;
+			}
+		}
+		else if( role == FileImageSize ) {
+			return file->m_image_size;
+		}
+		else if ( role == FileItemSize ) {
+			return computeItemSize(file);
+		}
 	}
-	else if ( role == FileItemSize ) {
-//		if(file->m_item_size.isEmpty())
-		return computeItemSize(file);
-//		return file->m_item_size;
-	}
-	if( role == FileId ) {
+	else if( role == FileId ) {
 		return QVariant(file->m_id);
 	}
-	return QVariant("Unknown data type");
+	return QVariant();
 }
 
 QHash<int, QByteArray> AttachedFilesModel::roleNames() const
@@ -170,8 +167,8 @@ void AttachedFilesModel::init(int server_index, int team_index, int channel_type
 QSizeF AttachedFilesModel::computeItemSize(MattermostQt::FilePtr file) const
 {
 	QSize sourceSize = file->m_image_size;
-//	if( !file->m_item_size.isEmpty() && file->m_contentwidth == (int)m_maxWidth )
-//		return file->m_item_size;
+	if( !file->m_item_size.isEmpty() && file->m_contentwidth == (int)m_maxWidth )
+		return file->m_item_size;
 
 	/** if file is GIF , we scae it to contentWidth */
 	file->m_contentwidth = (int)m_maxWidth;

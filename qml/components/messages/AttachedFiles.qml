@@ -72,7 +72,7 @@ Repeater {
         property string fileName       : role_file_name
         property string fileSize       : role_size
         property string mimeType       : role_mime_type
-        property string imageSize      : role_image_size
+        property size   imageSize      : role_image_size
         property size   itemSize       : role_item_size
         property real   maxWidth       : inBlobContent.maxBlobContentWidth
         property real   realBlobWidth  : inBlobContent.realBlobContentWidth

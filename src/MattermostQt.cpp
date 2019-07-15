@@ -552,8 +552,14 @@ void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 
 void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 {
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
 	// we think all indexes is right
 	ServerPtr sc = m_server[server_index];
+
+	if( file_sc_index < 0 || file_sc_index >= sc->m_file.size() )
+		return;
+
 	FilePtr file = sc->m_file[file_sc_index];
 	QString file_id = file->m_id;
 	//files/{file_id}/preview
@@ -661,18 +667,18 @@ void MattermostQt::get_file(int server_index, int team_index,
                             int channel_type, int channel_index,
                             int message_index, int file_index)
 {
-	ServerPtr sc = m_server[server_index];
-	ChannelPtr channel;
-	if( channel_type == ChannelDirect )
-		channel = sc->m_direct_channels[channel_index];
-	else {
-		TeamPtr tc = sc->m_teams[team_index];
-		if( channel_type == ChannelPrivate )
-			channel = tc->m_private_channels[channel_index];
-		else
-			channel = tc->m_public_channels[channel_index];
+	MessagePtr message = messageAt(server_index,team_index,channel_type,channel_index,message_index);
+	if(!message)
+	{
+		qCritical() << QString("Message (si:%0,ti:%1,cht:%2,chi:%3,mi:%4) not found")
+		               .arg(server_index)
+		               .arg(team_index)
+		               .arg(channel_type == ChannelPublic?"Public":(channel_type == ChannelPrivate?"Private":"Direct"))
+		               .arg(channel_index)
+		               .arg(message_index);
+		return;
 	}
-	MessagePtr message = channel->m_message[message_index];
+	ServerPtr sc = m_server[server_index];
 	FilePtr file = message->m_file[file_index];
 
 	//files/{file_id}/thumbnail
@@ -2671,7 +2677,7 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 //			msgs << message;
 //			emit messageUpdated( msgs );
 			QVector<int> roles;
-			roles << AttachedFilesModel::FileStatus;
+			roles << AttachedFilesModel::FileStatus << AttachedFilesModel::FilePath;
 			emit attachedFilesChanged(message, QVector<QString>(),roles);
 		}
 	}
@@ -3926,7 +3932,24 @@ MattermostQt::FilePtr MattermostQt::MessageContainer::fileAt(int file_index)
 	return m_file[file_index];
 }
 
+MattermostQt::FileContainer::FileContainer() noexcept
+    : m_file_status(FileUninitialized)
+    , m_self_sc_index(-1)
+    , m_self_index(-1)
+    , m_server_index(-1)
+    , m_channel_index(-1)
+    , m_message_index(-1)
+{
+
+}
+
 MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept
+    : m_file_status(FileUninitialized)
+    , m_self_sc_index(-1)
+    , m_self_index(-1)
+    , m_server_index(-1)
+    , m_channel_index(-1)
+    , m_message_index(-1)
 {
 	parse_from_json(object);
 }

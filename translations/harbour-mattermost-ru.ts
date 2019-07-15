@@ -234,6 +234,25 @@
     </message>
 </context>
 <context>
+    <name>MessageLabel</name>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">Редатировать</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Удалить</translation>
+    </message>
+    <message>
+        <source>Reply</source>
+        <translation type="unfinished">Ответить</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Копировать</translation>
+    </message>
+</context>
+<context>
     <name>MessagesPage</name>
     <message>
         <source>get older</source>

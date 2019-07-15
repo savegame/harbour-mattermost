@@ -4,7 +4,7 @@ import ru.sashikknox 1.0
 import "../../model"
 import ".."
 
-BackgroundItem {
+ListItem {
     id: messageLabel
     objectName: "messageLabel"
     property Context context
@@ -85,6 +85,35 @@ BackgroundItem {
 
     height: messageRow.height
     property variant blobPos: mapFromItem(messageContent,0,0)
+
+    menu: ContextMenu {
+        id: contextmenu
+        MenuItem {
+            text: qsTr("Edit")
+            visible: current_user_id === messageuserid
+            onClicked: {
+                edittext = message
+                editmode = true
+                editmessageindex = messageindex
+            }
+        }
+
+        MenuItem {
+            text: qsTr("Delete")
+            visible: current_user_id === messageuserid
+            onClicked: remove()
+        }
+
+        MenuItem {
+            text: qsTr("Reply")
+            visible: false
+        }
+
+        MenuItem {
+            text: qsTr("Copy")
+            onClicked: Clipboard.text = plainText
+        }
+    }
 
     Rectangle {
         //TODO create custon own shape for better blod effect ( inside С++ by QSGNode )

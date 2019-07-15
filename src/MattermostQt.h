@@ -120,7 +120,7 @@ public:
 	 * all files list stored in serverptr
 	 */
 	struct FileContainer {
-		FileContainer() noexcept : m_file_status(FileUninitialized) {}
+		FileContainer() noexcept;
 
 		FileContainer(QJsonObject object) noexcept;
 

@@ -116,13 +116,13 @@ Page {
             context: messagesPage.context
             width: messagesListView.width
 
-            Label {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                font.pixelSize: Theme.fontSizeSmall
-                text: "mi: " + String(messageLabel.rowIndex) + "<br>fc: " + String(messageLabel.filesCount)
-                textFormat: Text.RichText
-            }
+//            Label {
+//                anchors.right: parent.right
+//                anchors.top: parent.top
+//                font.pixelSize: Theme.fontSizeSmall
+//                text: "mi: " + String(messageLabel.rowIndex) + "<br>fc: " + String(messageLabel.filesCount)
+//                textFormat: Text.RichText
+//            }
         }
     }
 

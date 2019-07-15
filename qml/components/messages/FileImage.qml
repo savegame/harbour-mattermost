@@ -214,10 +214,67 @@ Component {
 MouseArea {
     id: attachedImage
     height: imageWithName.height
-    width: Math.min(Math.max(fileNameRow.width,realBlobWidth),maxWidth)
+    width: Math.min(Math.max(imageWithName.width,realBlobWidth),maxWidth)
+    property int _fileStatus: currentStatus
 
     onHeightChanged: {
         componentHeight = height
+    }
+
+    on_FileStatusChanged: {
+        switch(currentStatus)
+        {
+            case MattermostQt.FileDownloading:
+                progressCircle.visible = true;
+                break;
+            case MattermostQt.FileDownloaded:
+                progressCircle.visible = false
+                progressCircle.enabled = false
+                break;
+        }
+    }
+
+    Component {
+        id: imageViewPage
+        ImageViewPage {
+
+        }
+    }
+
+    function openImageViewer() {
+        pageStack.push( imageViewPage,
+                       {
+                           imagePath: filePath,
+                           previewPath: filePreview,
+                           animatedImage: fileType === MattermostQt.FileAnimatedImage,
+                           sourceSize: imageSize,
+                           width: Screen.width
+                       })
+    }
+
+    onClicked: {
+        switch(currentStatus) {
+        case MattermostQt.FileRemote:
+            context.mattermost.get_file(
+                        server_index,
+                        team_index,
+                        channel_type,
+                        channel_index,
+                        rowIndex,
+                        fileIndex)
+            progressCircle.visible = true;
+            break;
+        case MattermostQt.FileDownloaded:
+            pageStack.push( imageViewPage,
+                           {
+                               imagePath: filePath,
+                               previewPath: filePreview,
+                               animatedImage: fileType === MattermostQt.FileAnimatedImage,
+                               sourceSize: imageSize,
+                               width: Screen.width
+                           })
+            break;
+        }
     }
 
     Column {
@@ -263,9 +320,11 @@ MouseArea {
             Item
             {
                 id: imageItem
-                // TODO compute right image
-                width: image.sourceSize.width
-                height: image.sourceSize.height
+                // TODO compute right image size
+                width: Math.min( Math.max(image.sourceSize.width, Theme.iconSizeLarge) ,maxWidth)
+//                height: width * image.sourceSize.height/image.sourceSize.width
+//                width: itemSize.width;
+                height: width * image.sourceSize.height/image.sourceSize.width
 
                 Rectangle {
                     id: maskRect
@@ -279,19 +338,13 @@ MouseArea {
                     id: image
                     fillMode: Image.PreserveAspectFit
                     source: filePreview === "" ? fileThumbnail : filePreview
-//                            sourceSize: messagesModel.getImageSize(messageRow,fileIndex)
-                    sourceSize: {
-                        width: maxWidth
-                    }
-
+//                    sourceSize: messagesModel.getImageSize(messageRow,fileIndex)
+                    sourceSize: imageSize
                     anchors.fill: parent
                     layer.enabled: true
                     layer.effect: OpacityMask {
                         maskSource: maskRect
                     }
-//                            onSourceChanged: {
-//                                console.log( source )
-//                            }
                 }//image
             }
         }
@@ -299,6 +352,23 @@ MouseArea {
         Loader {
             id: imageComponentLoader
             sourceComponent: staticImage
+        }
+    }
+
+    ProgressCircle {
+        id:  progressCircle
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+        value: 0
+        visible: false
+
+        onVisibleChanged: {
+            context.mattermost.fileDownloadingProgress.connect(
+                function onDownloading(id_of_file,progress) {
+                    if(id_of_file === fileId)
+                        value = progress
+                }
+            )
         }
     }
 }
