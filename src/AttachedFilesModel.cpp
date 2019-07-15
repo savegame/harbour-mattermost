@@ -31,7 +31,15 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 		return QVariant(file->m_thumb_path);
 	} else
 	if( role == FilePreviewPath ) {
-		return QVariant(file->m_preview_path);
+		//return QVariant(file->m_preview_path);
+		if(!file->m_preview_path.isEmpty() )
+			return file->m_preview_path;
+		else {
+			// todo file->m_self_sc_index не готов ко времени первого запроса,
+			// нужно его делать -1 по умолчанию и ждать пока get_file_info не вернет значение
+			m_mattermost->get_file_preview(file->m_server_index, file->m_self_sc_index);
+			return file->m_thumb_path;
+		}
 	} else
 	if( role == FilePath ) {
 		return QVariant(file->m_file_path);
@@ -50,10 +58,18 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 			return QObject::tr("%0 Kb").arg(size,0,'f',1);
 		size = size/1024;
 		return QObject::tr("%0 Mb").arg(size,0,'f',1);
-	} else
-	if( role == FileMimeType ) {
+	}
+	else if( role == FileMimeType ) {
 		return QVariant(file->m_mime_type);
-	}  else
+	}
+	else if( role ==FileImageSize ) {
+		return file->m_image_size;
+	}
+	else if ( role == FileItemSize ) {
+//		if(file->m_item_size.isEmpty())
+		return computeItemSize(file);
+//		return file->m_item_size;
+	}
 	if( role == FileId ) {
 		return QVariant(file->m_id);
 	}
@@ -64,16 +80,18 @@ QHash<int, QByteArray> AttachedFilesModel::roleNames() const
 {
 	// thx to @Kaffeine for that optimization
 	static const QHash<int, QByteArray> names = {
-	{ FileType,          "role_file_type" },
-	{ FileName,          "role_file_name" },
-	{ FileThumbnailPath, "role_thumbnail" },
-	{ FilePreviewPath,   "role_preview" },
-	{ FilePath,          "role_file_path" },
+	{ FileType,          "role_file_type"  },
+	{ FileName,          "role_file_name"  },
+	{ FileThumbnailPath, "role_thumbnail"  },
+	{ FilePreviewPath,   "role_preview"    },
+	{ FilePath,          "role_file_path"  },
 	{ FileCachePath,     "role_cache_path" },
-	{ FileStatus,        "role_status" },
-	{ FileSize,          "role_size" },
-	{ FileMimeType,      "role_mime_type" },
-	{ FileId,            "role_file_id" } };
+	{ FileStatus,        "role_status"     },
+	{ FileSize,          "role_size"       },
+	{ FileMimeType,      "role_mime_type"  },
+	{ FileImageSize,     "role_image_size" },
+	{ FileItemSize,      "role_item_size"  },
+	{ FileId,            "role_file_id"   }};
 	return names;
 }
 
@@ -85,6 +103,28 @@ void AttachedFilesModel::setMattermost(MattermostQt *mattermost)
 MattermostQt *AttachedFilesModel::getMattermost() const
 {
 	return m_mattermost.data();
+}
+
+qreal AttachedFilesModel::getMaxWidth() const
+{
+	return m_maxWidth;
+}
+
+void AttachedFilesModel::setMaxWidth(qreal value)
+{
+	m_maxWidth = value;
+	if(m_message.isNull())
+		return;
+	QVector<int> roles;
+	roles << FileItemSize;
+
+	QModelIndex topLeft = index(0);
+	QModelIndex bottomRight = index(m_message->m_file.size()?m_message->m_file.size()-1:0);
+	for(int i = 0; i < m_message->m_file.size(); i++ )
+	{
+		m_message->m_file[i]->m_item_size = QSizeF();
+	}
+	dataChanged(topLeft, bottomRight, roles);
 }
 
 void AttachedFilesModel::init(int server_index, int team_index, int channel_type, int channel_index, int message_row)
@@ -125,6 +165,43 @@ void AttachedFilesModel::init(int server_index, int team_index, int channel_type
 		}
 	}
 	endResetModel();
+}
+
+QSizeF AttachedFilesModel::computeItemSize(MattermostQt::FilePtr file) const
+{
+	QSize sourceSize = file->m_image_size;
+//	if( !file->m_item_size.isEmpty() && file->m_contentwidth == (int)m_maxWidth )
+//		return file->m_item_size;
+
+	/** if file is GIF , we scae it to contentWidth */
+	file->m_contentwidth = (int)m_maxWidth;
+	if( sourceSize.width() > sourceSize.height() )
+	{
+		if( m_maxWidth > sourceSize.width() && file->m_file_type != MattermostQt::FileAnimatedImage )
+		{
+			file->m_item_size.setWidth( sourceSize.width() );
+			file->m_item_size.setHeight( sourceSize.height() );
+		}
+		else
+		{
+			file->m_item_size.setWidth( m_maxWidth );
+			file->m_item_size.setHeight( m_maxWidth/sourceSize.width() * sourceSize.height()  );
+		}
+	}
+	else
+	{
+		if( m_maxWidth > sourceSize.height() && file->m_file_type != MattermostQt::FileAnimatedImage )
+		{
+			file->m_item_size.setWidth( sourceSize.width() );
+			file->m_item_size.setHeight( sourceSize.height() );
+		}
+		else
+		{
+			file->m_item_size.setWidth( m_maxWidth/sourceSize.height() * sourceSize.width() );
+			file->m_item_size.setHeight( m_maxWidth );
+		}
+	}
+	return file->m_item_size;
 }
 
 void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<QString> file_ids, QVector<int> roles)

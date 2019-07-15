@@ -15,7 +15,7 @@ class AttachedFilesModel : public QAbstractListModel
 	Q_OBJECT
 
 	Q_PROPERTY(MattermostQt *mattermost READ getMattermost WRITE setMattermost)
-
+	Q_PROPERTY(qreal maxWidth READ getMaxWidth WRITE setMaxWidth )
 public:
 	enum DataRoles {
 		FileType = 0,
@@ -28,6 +28,8 @@ public:
 		FileSize,
 		FileMimeType,
 		FileId,
+		FileImageSize,
+		FileItemSize,
 		FileCount,
 	};
 	Q_ENUM(DataRoles)
@@ -43,7 +45,13 @@ public:
 	void setMattermost(MattermostQt *mattermost);
 	MattermostQt *getMattermost() const;
 
+	qreal getMaxWidth() const ;
+	void setMaxWidth(qreal value);
+
 	Q_INVOKABLE void init(int server_index, int team_index, int channel_type, int channel_index, int message_row);
+
+protected:
+	QSizeF computeItemSize(MattermostQt::FilePtr file) const;
 
 protected Q_SLOTS:
 	void slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<QString> file_ids, QVector<int> roles);
@@ -53,6 +61,7 @@ protected:
 	MattermostQt::ChannelPtr           m_channel;
 	MattermostQt::MessagePtr           m_message;
 	QPointer<MattermostQt>             m_mattermost;
+	qreal                              m_maxWidth;
 	bool m_init;
 };
 

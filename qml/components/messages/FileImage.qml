@@ -278,8 +278,12 @@ MouseArea {
                 Image {
                     id: image
                     fillMode: Image.PreserveAspectFit
-                    source: fileThumbnail//filePreview === "" ? fileThumbnail : filePreview
+                    source: filePreview === "" ? fileThumbnail : filePreview
 //                            sourceSize: messagesModel.getImageSize(messageRow,fileIndex)
+                    sourceSize: {
+                        width: maxWidth
+                    }
+
                     anchors.fill: parent
                     layer.enabled: true
                     layer.effect: OpacityMask {

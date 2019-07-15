@@ -3994,8 +3994,8 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 	m_file_path = obj["file_path"].toString();
 	m_preview_path = obj["preview_path"].toString();
 	QJsonObject item_size = obj["item_size"].toObject();
-	m_item_size.setWidth(item_size["width"].toDouble());
-	m_item_size.setHeight(item_size["height"].toDouble());
+//	m_item_size.setWidth(item_size["width"].toDouble());
+//	m_item_size.setHeight(item_size["height"].toDouble());
 	m_contentwidth = obj["content_width"].toInt();
 
 	m_post_id = obj["post_id"].toString("");
