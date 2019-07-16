@@ -119,13 +119,10 @@ Page {
 
             context: messagesPage.context
             width: messagesListView.width
-            showMenuOnPressAndHold: true
+            showMenuOnPressAndHold: isMessageMineOrOther
 
             menu: ContextMenu {
                 id: contextmenu
-                visible: isMessageMineOrOther
-                enabled: isMessageMineOrOther
-                z: 1
 
                 MenuItem {
                     text: qsTr("Edit")

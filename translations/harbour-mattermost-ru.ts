@@ -76,15 +76,15 @@
     </message>
     <message>
         <source>Rename</source>
-		<translation>Переименовать</translation>
+        <translation>Переименовать</translation>
     </message>
     <message>
         <source>Disable</source>
-		<translation>Отключить</translation>
+        <translation>Отключить</translation>
     </message>
     <message>
         <source>Remove</source>
-		<translation>Удалить</translation>
+        <translation>Удалить</translation>
     </message>
     <message>
         <source>About</source>
@@ -222,77 +222,77 @@
     </message>
     <message>
         <source>Choose image</source>
-		<translation>Выберите изображене</translation>
+        <translation>Выберите изображене</translation>
     </message>
     <message>
         <source>Choose document</source>
-		<translation>Выберите документ</translation>
+        <translation>Выберите документ</translation>
     </message>
     <message>
         <source>Choose file</source>
-		<translation>Выберите файл</translation>
+        <translation>Выберите файл</translation>
     </message>
 </context>
 <context>
     <name>MessagesPage</name>
     <message>
         <source>get older</source>
-		<translation>предыдущие сообщения</translation>
+        <translation>предыдущие сообщения</translation>
     </message>
     <message>
         <source>Edit</source>
-		<translation>Редатировать</translation>
+        <translation>Редатировать</translation>
     </message>
     <message>
         <source>Delete</source>
-		<translation>Удалить</translation>
+        <translation>Удалить</translation>
     </message>
     <message>
         <source>Reply</source>
-		<translation>Ответить</translation>
+        <translation>Ответить</translation>
     </message>
     <message>
         <source>Copy</source>
-		<translation>Копировать</translation>
+        <translation>Копировать</translation>
     </message>
     <message>
         <source>Deleting</source>
-		<translation>Удаление</translation>
+        <translation>Удаление</translation>
     </message>
 </context>
 <context>
     <name>MessagesPage_old</name>
     <message>
         <source>get older</source>
-		<translation>предыдущие сообщения</translation>
+        <translation>предыдущие сообщения</translation>
     </message>
     <message>
         <source>Edit</source>
-		<translation>Редатировать</translation>
+        <translation>Редатировать</translation>
     </message>
     <message>
         <source>Delete</source>
-		<translation>Удалить</translation>
+        <translation>Удалить</translation>
     </message>
     <message>
         <source>Reply</source>
-		<translation>Ответить</translation>
+        <translation>Ответить</translation>
     </message>
     <message>
         <source>Copy</source>
-		<translation>Копировать</translation>
+        <translation>Копировать</translation>
     </message>
     <message>
         <source>Choose image</source>
-		<translation>Выберите изображене</translation>
+        <translation>Выберите изображене</translation>
     </message>
     <message>
         <source>Choose document</source>
-		<translation>Выберите документ</translation>
+        <translation>Выберите документ</translation>
     </message>
     <message>
         <source>Choose file</source>
-		<translation>Выберите файл</translation>
+        <translation>Выберите файл</translation>
     </message>
 </context>
 <context>
@@ -303,23 +303,23 @@
     </message>
     <message>
         <source>Show blobs</source>
-		<translation>Фон сообщений</translation>
+        <translation>Фон сообщений</translation>
     </message>
     <message>
         <source>Show blobs unders messages</source>
-		<translation>Показывать задний фон сообщений</translation>
+        <translation>Показывать задний фон сообщений</translation>
     </message>
     <message>
         <source>Blobs opacity value</source>
-		<translation>Уровень прозрачности фона</translation>
+        <translation>Уровень прозрачности фона</translation>
     </message>
     <message>
         <source>Markdown (beta)</source>
-		<translation>Markdown (тестовый режим)</translation>
+        <translation>Markdown (тестовый режим)</translation>
     </message>
     <message>
         <source>Use markdown formated text in messages</source>
-		<translation>Исользовать Markdown форматирование сообщений</translation>
+        <translation>Исользовать Markdown форматирование сообщений</translation>
     </message>
 </context>
 <context>

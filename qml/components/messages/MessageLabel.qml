@@ -85,7 +85,7 @@ ListItem {
         }
     }
 
-    height: messageRow.height + contextmenu.height
+//    height: messageRow.height + contextmenu.height
     contentHeight: messageRow.height
 
     property variant blobPos: mapFromItem(messageContent,0,0)
