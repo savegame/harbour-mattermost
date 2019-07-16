@@ -234,7 +234,11 @@
     </message>
 </context>
 <context>
-    <name>MessageLabel</name>
+    <name>MessagesPage</name>
+    <message>
+        <source>get older</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Edit</source>
         <translation type="unfinished"></translation>
@@ -251,11 +255,8 @@
         <source>Copy</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>MessagesPage</name>
     <message>
-        <source>get older</source>
+        <source>Deleting</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

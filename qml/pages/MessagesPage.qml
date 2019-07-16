@@ -22,6 +22,10 @@ Page {
     property string channel_id
     property string channel_name
 
+    // self properties
+    property string textForEdit: ""
+    property int    editMessageIndex: -1
+
     /** Messages Model from C++ */
     property MessagesModel messagesModel: MessagesModel {
         mattermost: context.mattermost
@@ -99,7 +103,7 @@ Page {
             }// MenuItem
         }// PullDownMenu
 
-        delegate:  MessageLabel {
+        delegate: MessageLabel {
             id: messageLabel
             messagesModel:    messagesPage.messagesModel
             plainText:        role_message
@@ -115,14 +119,51 @@ Page {
 
             context: messagesPage.context
             width: messagesListView.width
+            showMenuOnPressAndHold: true
 
-//            Label {
-//                anchors.right: parent.right
-//                anchors.top: parent.top
-//                font.pixelSize: Theme.fontSizeSmall
-//                text: "mi: " + String(messageLabel.rowIndex) + "<br>fc: " + String(messageLabel.filesCount)
-//                textFormat: Text.RichText
-//            }
+            menu: ContextMenu {
+                id: contextmenu
+                visible: isMessageMineOrOther
+                enabled: isMessageMineOrOther
+                z: 1
+
+                MenuItem {
+                    text: qsTr("Edit")
+                    visible: isMessageEditable
+                    onClicked: {
+                        textForEdit = role_message
+                        editmode = true
+                        editMessageIndex = role_row_index
+                    }
+                }
+
+                MenuItem {
+                    text: qsTr("Delete")
+                    visible: isMessageDeletable
+                    onClicked: {
+                        var si = server_index
+                        var ti = team_index
+                        var ct = channel_type
+                        var ci = channel_index
+                        var mi = role_row_index
+                        Remorse.itemAction(
+                                    messageLabel, qsTr("Deleting"),
+                                    function rm() {
+                                        context.mattermost.delete_message(si,ti,ct,ci,mi)
+                                    })
+                    }
+                }
+
+                MenuItem {
+                    text: qsTr("Reply")
+                    visible: false
+                }
+
+                MenuItem {
+                    text: qsTr("Copy")
+                    onClicked: Clipboard.text = plainText
+                }
+            }
         }
     }
 
@@ -139,4 +180,9 @@ Page {
             bottom: messagesPage.bottom
         } //an
     } // MessageEditorBar
+
+
+//    function remove(server_index, team_index, channel_type, channel_index, message_index) {
+//        context.mattermost.delete_message(server_index,team_index,channel_type,channel_index,message_index)
+//    }
 }

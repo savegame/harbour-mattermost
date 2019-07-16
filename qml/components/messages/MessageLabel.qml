@@ -39,6 +39,8 @@ ListItem {
     property color blobColor:  Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
     property color secondaryTextColor
 
+    property bool  isMessageEditable   : messageOwner === MattermostQt.MessageMine
+    property bool  isMessageDeletable  : messageOwner === MattermostQt.MessageMine
     property bool  isMessageMineOrOther: false
 
     onMessageOwnerChanged: {
@@ -83,37 +85,10 @@ ListItem {
         }
     }
 
-    height: messageRow.height
+    height: messageRow.height + contextmenu.height
+    contentHeight: messageRow.height
+
     property variant blobPos: mapFromItem(messageContent,0,0)
-
-    menu: ContextMenu {
-        id: contextmenu
-        MenuItem {
-            text: qsTr("Edit")
-            visible: current_user_id === messageuserid
-            onClicked: {
-                edittext = message
-                editmode = true
-                editmessageindex = messageindex
-            }
-        }
-
-        MenuItem {
-            text: qsTr("Delete")
-            visible: current_user_id === messageuserid
-            onClicked: remove()
-        }
-
-        MenuItem {
-            text: qsTr("Reply")
-            visible: false
-        }
-
-        MenuItem {
-            text: qsTr("Copy")
-            onClicked: Clipboard.text = plainText
-        }
-    }
 
     Rectangle {
         //TODO create custon own shape for better blod effect ( inside С++ by QSGNode )
