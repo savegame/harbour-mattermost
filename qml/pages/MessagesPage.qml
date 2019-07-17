@@ -114,6 +114,7 @@ Page {
             senderName:       role_user_name
             filesCount:       role_files_count
             rowIndex:         role_row_index
+            //postId:           role_post_id
             messageTimestamp: role_message_create_at
             //fileStatus:       role_file_status
 
@@ -130,7 +131,7 @@ Page {
                     onClicked: {
                         messageEditor.edittext = role_message
                         messageEditor.editmode = true
-                        messageEditor.editMessageIndex = role_row_index
+                        messageEditor.message_index = role_row_index
                     }
                 }
 
@@ -153,7 +154,10 @@ Page {
 
                 MenuItem {
                     text: qsTr("Reply")
-                    visible: false
+                    visible: isMessageMineOrOther
+                    onClicked: {
+                        messageEditor.root_post_id = role_post_id
+                    }
                 }
 
                 MenuItem {

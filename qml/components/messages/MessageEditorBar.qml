@@ -18,6 +18,7 @@ BackgroundItem {
     property bool   editmode: false
     property string edittext
     property int    message_index
+    property string root_post_id   // use when we comment another post
 
     property bool showToolBar: false
     property alias text: textedit.text
@@ -198,7 +199,9 @@ BackgroundItem {
                                  server_index,
                                  team_index,
                                  channel_type,
-                                 channel_index)
+                                 channel_index,
+                                 root_post_id)
+                        root_post_id = ""
                         attachCount = 0
                     }
                     text = ""
