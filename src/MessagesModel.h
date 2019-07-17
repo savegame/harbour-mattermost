@@ -35,6 +35,7 @@ public:
 		IsEdited,
 		MessageIndex,
 		FormatedText,
+		PostId, // post id
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 

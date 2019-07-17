@@ -27,6 +27,8 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	MattermostQt::MessagePtr message = m_messages[row];
 
 	switch (role) {
+	case MessagesModel::PostId:
+		return QVariant(message->m_id);
 	case MessagesModel::Text:
 		return QVariant(message->m_message);
 		break;
@@ -184,7 +186,8 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	{MessagesModel::ValidPaths,      "role_valid_paths"},
 	{MessagesModel::FormatedText,    "role_formated_text"},
 	{MessagesModel::FileStatus,      "role_file_status"},
-	{MessagesModel::UserStatus,      "role_user_status"}};
+	{MessagesModel::UserStatus,      "role_user_status"},
+	{MessagesModel::PostId,          "role_post_id"}};
 	return names;
 }
 

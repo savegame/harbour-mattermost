@@ -631,7 +631,10 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	{
 		qInfo() << "File info.json - exists! Try search file data in local storage.";
 		if( f->m_file_status == FileStatus::FileDownloaded )
+		{
+			emit attachedFilesChanged(m, QVector<QString>(), QVector<int>());
 			return;
+		}
 	}
 	else
 		f->m_file_status = FileStatus::FileRequested;
@@ -769,7 +772,7 @@ void MattermostQt::post_file_upload(int server_index, int team_index, int channe
 }
 
 void MattermostQt::post_send_message(QString message, int server_index, int team_index, int channel_type,
-                                     int channel_index)
+                                     int channel_index, QString root_id)
 {
 	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
 	if(!channel)
@@ -818,6 +821,8 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	root["message"] = message;
 	root["file_ids"] = files;
 	root["props"] = "";
+	if( !root_id.isEmpty() )
+		root["root_id"] = root_id;
 	json.setObject(root);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
@@ -2821,6 +2826,7 @@ void MattermostQt::reply_post_message_edit(QNetworkReply *reply)
 
 void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 {
+	qDebug() << data;
 	ChannelType type = ChannelType::ChannelTypeCount;
 	QString ch_type = data["channel_type"].toString();
 

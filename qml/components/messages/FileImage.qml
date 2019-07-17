@@ -255,6 +255,7 @@ MouseArea {
     onClicked: {
         switch(currentStatus) {
         case MattermostQt.FileRemote:
+        case MattermostQt.FileRequested:
             context.mattermost.get_file(
                         server_index,
                         team_index,
@@ -363,9 +364,11 @@ MouseArea {
         visible: false
 
         onVisibleChanged: {
+            if(!visible)
+                return;
             context.mattermost.fileDownloadingProgress.connect(
                 function onDownloading(id_of_file,progress) {
-                    if(id_of_file === fileId)
+                    if( id_of_file === fileId )
                         value = progress
                 }
             )

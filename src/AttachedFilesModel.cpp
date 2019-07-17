@@ -48,6 +48,10 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 	else if( role == FileMimeType ) {
 		return QVariant(file->m_mime_type);
 	}
+	else if( role == FileId ) {
+		return QVariant(file->m_id);
+	}
+
 	else if ( file->m_file_type == MattermostQt::FileImage ) {
 		if( role == FileThumbnailPath ) {
 			return QVariant(file->m_thumb_path);
@@ -67,8 +71,19 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 			return computeItemSize(file);
 		}
 	}
-	else if( role == FileId ) {
-		return QVariant(file->m_id);
+	else {
+		if( role == FileThumbnailPath ) {
+			return QLatin1String("");
+		}
+		else if( role == FilePreviewPath ) {
+			return QLatin1String("");
+		}
+		else if( role == FileImageSize ) {
+			return QSizeF();
+		}
+		else if ( role == FileItemSize ) {
+			return QSizeF();
+		}
 	}
 	return QVariant();
 }
@@ -210,6 +225,12 @@ void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, Q
 	if( m != m_message )
 		return;
 
+	if( roles.isEmpty() ) // reset model (all data are updated)
+	{
+		beginResetModel();
+		endResetModel();
+		return;
+	}
 	for(int i = 0; i < roles.size(); i++)
 	{
 		if( roles[i] == FileCount )

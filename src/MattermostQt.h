@@ -437,7 +437,7 @@ public:
 	Q_INVOKABLE void post_file_upload(int server_index, int team_index, int channel_type,
 	                                  int channel_index, QString file_path);
 	Q_INVOKABLE void post_send_message(QString message, int server_index, int team_index, int channel_type,
-	                                   int channel_index);
+	                                   int channel_index, QString root_id = QString());
 	Q_INVOKABLE void delete_message(int server_index, int team_index, int channel_type,
 	                                     int channel_index, int message_index);
 	Q_INVOKABLE void put_message_edit(QString text, int server_index, int team_index, int channel_type,
