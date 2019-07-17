@@ -9,7 +9,7 @@ import QtGraphicalEffects 1.0
 
 Page {
     id: messagesPage
-    layer.enabled: true
+//    layer.enabled: true
     objectName: "MessagesPage"
 
     allowedOrientations: Orientation.All
@@ -128,9 +128,9 @@ Page {
                     text: qsTr("Edit")
                     visible: isMessageEditable
                     onClicked: {
-                        textForEdit = role_message
-                        editmode = true
-                        editMessageIndex = role_row_index
+                        messageEditor.edittext = role_message
+                        messageEditor.editmode = true
+                        messageEditor.editMessageIndex = role_row_index
                     }
                 }
 

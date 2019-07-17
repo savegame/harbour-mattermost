@@ -1,4 +1,4 @@
-#ifndef MATTERMOSTQT_H
+﻿#ifndef MATTERMOSTQT_H
 #define MATTERMOSTQT_H
 
 #include <QObject>
@@ -130,6 +130,10 @@ public:
 		void parse_from_json(QJsonObject object);
 
 		QString filename() const { return m_id + QLatin1String("_") + m_name; }
+		QString filedir(QString cache_path) const
+		{
+			return cache_path + QLatin1String("/files/") + m_id;
+		}
 
 		// file info
 		QString m_id;

@@ -2461,7 +2461,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	FilePtr file = mc->fileAt(file_index);
 
 	if(!file){
-		qCritical() << "Something went wrong! File index is emty in reply_get_file_info()!";
+		qCritical() << "Something went wrong! File index is empty in reply_get_file_info()!";
 		QString file_id   = reply->property(P_FILE_ID).toString();
 		for(int fi = 0 ; fi < mc->m_file.size(); fi++ )
 		{
@@ -2629,10 +2629,16 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 	FilePtr file =  reply->property(P_FILE_PTR).value<FilePtr>();
 //	if(file)
 //		qDebug() << file->m_name;
+	if( file->m_server_index < 0 || file->m_server_index >= m_server.size() )
+	{
+		// TODO log Critical error
+		return ;
+	}
+	ServerPtr server = m_server[file->m_server_index];
 	QString dowload_dir;
-	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage)
-		dowload_dir = m_pictures_path;
-	else
+	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage) {
+		dowload_dir = file->filedir(server->m_cache_path);
+	} else
 		dowload_dir = m_download_path;
 	// TODO first, save all data to cache dir, and save it to downloads, and images if user request it
 	// download_dir => cache_dir
