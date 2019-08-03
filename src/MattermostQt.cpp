@@ -52,6 +52,7 @@
 #define P_NEED_SAVE_SETTINGS "save_settings"
 // config file name
 #define F_CONFIG_FILE       "config.json"
+#define F_SETTINGS_FILE       "settings.json"
 // some
 #define cmp(s,t) s.compare(#t) == 0
 #define scmp(s1,s2) s1.compare(s2) == 0
@@ -122,7 +123,7 @@ MattermostQt::MattermostQt()
 
 	m_settings = SettingsContainer::getInstance();
 //	m_settings.reset(new SettingsContainer(this));
-	connect(m_settings, SIGNAL(settingsChanged()), SLOT(slot_settingsChanged()));
+	connect(m_settings, &SettingsContainer::settingsChanged, this, &MattermostQt::slot_settingsChanged);
 
 	m_mdParser = new DiscountMDParser();
 
@@ -1289,14 +1290,32 @@ bool MattermostQt::save_settings()
 	object["servers"] = servers;
 	json.setObject(object);
 
-	QDir dir(m_data_path);
-	if(!dir.exists())
-		dir.mkpath(m_data_path);
-	QFile jsonFile( m_data_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
-	if( !jsonFile.open(QFile::WriteOnly) )
-		return false;
-	jsonFile.write(json.toJson());
-	jsonFile.close();
+	{
+		QDir dir(m_data_path);
+		if(!dir.exists())
+			dir.mkpath(m_data_path);
+		QFile jsonFile( m_data_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
+		if( !jsonFile.open(QFile::WriteOnly) )
+			return false;
+		jsonFile.write(json.toJson());
+		jsonFile.close();
+	}
+
+	json = QJsonDocument();
+//	;
+	QJsonObject settings = m_settings->asJsonObject();
+	json.setObject(settings);
+
+	{
+		QDir dir(m_config_path);
+		if(!dir.exists())
+			dir.mkpath(m_config_path);
+		QFile jsonFile( m_config_path + QDir::separator() + QLatin1String(F_SETTINGS_FILE) );
+		if( !jsonFile.open(QFile::WriteOnly) )
+			return false;
+		jsonFile.write(json.toJson());
+		jsonFile.close();
+	}
 
 	return true;
 }
@@ -1363,6 +1382,28 @@ bool MattermostQt::load_settings()
 		server->m_user_id = user_id;
 		m_server.append(server);
 		get_login(server);
+	}
+	// load settings
+	if(m_settings)
+	{
+		QFile jsonFile( m_config_path + QDir::separator() + QLatin1String(F_SETTINGS_FILE) );
+		if( !jsonFile.open(QFile::ReadOnly | QFile::Text) )
+			return false;
+
+		QJsonParseError error;
+		json = QJsonDocument::fromJson(jsonFile.readAll(), &error);
+		jsonFile.close();
+
+		if( json.isNull() || !json.isObject())
+		{
+			qWarning() << error.errorString();
+			return false;
+		}
+
+		m_settings->fromJsonObject(json.object());
+	}
+	else {
+		qCritical() << "Can't load settings from config folder";
 	}
 	return true;
 }

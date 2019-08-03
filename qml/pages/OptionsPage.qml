@@ -40,7 +40,6 @@ Page {
             onCheckedChanged: {
                 Settings.showBlobs = checked;
                 blobOpacity.enabled = checked
-                blobOpacityLabel.enabled = checked
                 blobOpacity.opacity = (checked)?1.0:0.5;
             }
 

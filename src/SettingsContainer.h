@@ -24,7 +24,6 @@
 	    void CONCAT2(set_,name_) ( type_ value ); \
 	Q_SIGNAL void CONCAT3(on_, name_, Changed) ()
 
-
 #define MT_SET_PROPERTY(type_, name_) \
 	void SettingsContainer:: CONCAT2(set_,name_) ( type_ value ) \
     { \
@@ -51,6 +50,19 @@ public:
 
 	Q_INVOKABLE void resetToDefault();
 
+	/**
+	 * @brief asJsonObject
+	 * write all settings to QJsonObject
+	 * @return
+	 */
+	QJsonObject asJsonObject() const;
+
+	/**
+	 * @brief fromJsonObject
+	 * read settings from json object
+	 * @param object
+	 */
+	void fromJsonObject(const QJsonObject &settings);
 Q_SIGNALS:
 	void settingsChanged();
 };
