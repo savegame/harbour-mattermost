@@ -174,7 +174,9 @@ ListItem {
                     plainTextLablel.width
                 Label {
                     id: plainTextLablel
-                    text: Settings.formatedText ? messageLabel.formatedText : messageLabel.plainText
+                    text: Settings.formatedText
+                          ? "<style>a:link { color: " + messageLabel.linkColor + "; }</style>" + messageLabel.formatedText
+                          : messageLabel.plainText
                     wrapMode: Text.Wrap
                     font.pixelSize: Theme.fontSizeSmall
                     font.family: Theme.fontFamily
@@ -187,7 +189,7 @@ ListItem {
                             inBlobContent.maxBlobContentWidth
                     height: implicitHeight
                     color: messageLabel.textColor
-                    linkColor: messageLabel.linkColor
+//                    linkColor: messageLabel.linkColor
                     onLinkActivated: {
                         Qt.openUrlExternally(link);
                     }
