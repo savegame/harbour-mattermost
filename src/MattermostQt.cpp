@@ -2217,7 +2217,7 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 		bool user_image_exists = user_image.exists();
 
 		QList<MessagePtr>::iterator it = sc->m_nouser_messages.begin();
-		while( it != sc->m_nouser_messages.end() )
+		for( ;it != sc->m_nouser_messages.end(); )
 		{
 			MessagePtr m = *it;
 			if(m->m_user_id == user->m_id)
@@ -2234,6 +2234,7 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 					emit updateMessage(m,MessagesModel::SenderImagePath);
 					it = sc->m_nouser_messages.erase(it);
 					user->m_image_path = path;
+					continue;
 				}
 			}
 			it++;

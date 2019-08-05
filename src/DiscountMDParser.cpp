@@ -10,7 +10,7 @@ extern "C" {
 
 DiscountMDParser::DiscountMDParser()
 {
-	m_flags = MKD_EXPLICITLIST + MKD_GITHUBTAGS /*+ MKD_FENCEDCODE*/;
+	m_flags = MKD_EXPLICITLIST + MKD_GITHUBTAGS + MKD_AUTOLINK/*+ MKD_FENCEDCODE*/;
 }
 
 QString DiscountMDParser::parse(const QString &input)
@@ -37,6 +37,8 @@ QString DiscountMDParser::parse(const QString &input)
 		result = QString::fromUtf8(html_text, size);
 
 	mkd_cleanup(doc);
-	result = result.left(result.lastIndexOf("<br/>"));
+	QString right_text = result.right(result.length() - result.lastIndexOf("<br/>"));
+	if( right_text.remove(" ").length() == 0 )
+		return result.left(result.lastIndexOf("<br/>"));
 	return result;
 }
