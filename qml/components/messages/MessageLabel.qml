@@ -115,8 +115,8 @@ ListItem {
         spacing: Theme.paddingMedium
         height: Math.max(messageContent.height,userAvatar.height)
         // TODO make change direction possible
-//        layoutDirection: ( messageLabel.messageOwner == MattermostQt.MessageMine ) ?
-//                             Qt.RightToLeft : Qt.LeftToRight
+//        layoutDirection: Qt.RightToLeft //( messageLabel.messageOwner == MattermostQt.MessageMine ) ?
+                         //    Qt.RightToLeft : Qt.LeftToRight
 
         UserAvatar {
             id: userAvatar
@@ -135,6 +135,7 @@ ListItem {
                 id: labelHeader
                 spacing: Theme.paddingMedium
                 visible: messageLabel.isMessageMineOrOther
+//                layoutDirection: Qt.RightToLeft
                 Label {
                     id: userNameLabel
                     text: messageLabel.senderName
@@ -156,10 +157,10 @@ ListItem {
             Column
             {
                 id: inBlobContent
-
                 padding:
                     (messageLabel.isMessageMineOrOther && Settings.showBlobs) ? Theme.paddingMedium : 0
                 anchors.rightMargin: Theme.paddingMedium
+                anchors.leftMargin: Theme.paddingMedium
                 spacing: Theme.paddingMedium
                 property real inBlobMargins:
                     (Settings.showBlobs) ?
