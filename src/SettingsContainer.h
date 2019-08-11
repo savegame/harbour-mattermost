@@ -41,6 +41,7 @@ class SettingsContainer : public QObject
 	MT_PROPERTY(int,   autoDownloadImageSize);
 	MT_PROPERTY(bool,  showBlobs);
 	MT_PROPERTY(float, blobOpacity);
+	MT_PROPERTY(float, pageMargin);
 	MT_PROPERTY(bool,  formatedText); // show Markdown text
 
 public:

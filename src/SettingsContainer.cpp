@@ -1,18 +1,13 @@
 #include "SettingsContainer.h"
+#include <sailfishapp.h>
+#include <libsailfishsilica/silicatheme.h>
 
 
 MT_SET_PROPERTY(int,   autoDownloadImageSize)
-//MT_SET_PROPERTY(bool,  showBlobs)
+MT_SET_PROPERTY(bool,  showBlobs)
 MT_SET_PROPERTY(float, blobOpacity)
+MT_SET_PROPERTY(float, pageMargin)
 MT_SET_PROPERTY(bool, formatedText)
-
-
-void SettingsContainer::set_showBlobs ( bool value )
-{
-	m_showBlobs = value;
-	emit SettingsContainer::on_showBlobsChanged();
-	emit settingsChanged();
-}
 
 SettingsContainer::SettingsContainer(QObject *parent) : QObject(parent)
 {
@@ -32,6 +27,7 @@ void SettingsContainer::resetToDefault()
 	m_showBlobs             = true;
 	m_blobOpacity           = 0.7;
 	m_formatedText          = true;
+	m_pageMargin            = Silica::Theme::instance()->paddingMedium();
 }
 
 #define ADD_VALUE(x) settings[#x] = x
@@ -44,6 +40,7 @@ QJsonObject SettingsContainer::asJsonObject() const
 	ADD_VALUE(m_showBlobs);
 	ADD_VALUE(m_blobOpacity);
 	ADD_VALUE(m_formatedText);
+	ADD_VALUE(m_pageMargin);
 	return settings;
 }
 
@@ -53,4 +50,5 @@ void SettingsContainer::fromJsonObject(const QJsonObject &settings)
 	FROM_VALUE(m_showBlobs,toBool());
 	FROM_VALUE(m_blobOpacity,toDouble());
 	FROM_VALUE(m_formatedText,toBool());
+	FROM_VALUE(m_pageMargin,toDouble());
 }
