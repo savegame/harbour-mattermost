@@ -157,6 +157,9 @@ Page {
                     visible: isMessageMineOrOther
                     onClicked: {
                         messageEditor.root_post_id = role_post_id
+                        messageEditor.root_post_index = role_row_index
+                        messageEditor.root_post_message = role_message//role_formated_text
+                        messageEditor.root_post_username = role_user_name
                     }
                 }
 

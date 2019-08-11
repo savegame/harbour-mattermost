@@ -19,14 +19,15 @@ DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 CONFIG += sailfishapp warnoff
 CONFIG += qt
 QT += gui qml quick network dbus svg
-PKGCONFIG += nemonotifications-qt5
+PKGCONFIG += nemonotifications-qt5 sailfishsilica
 #PKGCONFIG += libgcrypt
 
 LIBS += -Llibs -lqt5websockets
 INCLUDEPATH += libs/qtwebsockets/include
 INCLUDEPATH += libs/qtwebsockets/src/websockets
 
-INCLUDEPATH += $$PWD/../../mersdk/targets/SailfishOS-2.1.4.13-i486/usr/include/nemonotifications-qt5
+#INCLUDEPATH += $$PWD/../../SailfishOS/mersdk/targets/SailfishOS-3.1.0.11-i486/usr/include/nemonotifications-qt5
+#INCLUDEPATH += $$PWD/../../SailfishOS/mersdk/targets/SailfishOS-3.1.0.12-i486/usr/include
 
 include(libs/discount.pri);
 

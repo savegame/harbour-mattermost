@@ -39,6 +39,7 @@ import "cover"
 ApplicationWindow
 {
     id: mainwindow
+
     property Context context: Context {}
     property string previewString: ""
 

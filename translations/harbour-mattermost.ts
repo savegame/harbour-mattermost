@@ -232,6 +232,10 @@
         <source>Choose file</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Reply to</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MessagesPage</name>
@@ -319,6 +323,26 @@
     </message>
     <message>
         <source>Use markdown formated text in messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Small</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Large</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Page padding</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -18,11 +18,15 @@ BackgroundItem {
     property bool   editmode: false
     property string edittext
     property int    message_index
-    property string root_post_id   // use when we comment another post
+    // Reply info
+    property string root_post_id    // use when we comment another post
+    property int    root_post_index // index of answered post (not thread post, one if its childs)
+    property string root_post_message
+    property string root_post_username
 
     property bool showToolBar: false
     property alias text: textedit.text
-    height: textedit.height
+    height: textedit.height + replyPostArea.height
     property int    attachCount: 0
 
     // animations
@@ -134,6 +138,85 @@ BackgroundItem {
         anchors.fill: parent
     }
 
+    // Reply Post Area
+    BackgroundItem {
+        id: replyPostArea
+        clip: true
+        visible: height > 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: textarea.top
+
+        height: root_post_id.length > 0 ? Theme.fontSizeSmall * 2 + Theme.paddingMedium: 0;
+
+        Row {
+            id: replyPostInnerArea
+            spacing: Theme.paddingMedium
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: Settings.pageMargin
+            anchors.rightMargin: Settings.pageMargin
+
+            Rectangle {
+                id: line
+                width: Theme.paddingSmall * 0.6
+                height: replyPostArea.height
+                color: Theme.primaryColor
+            }
+
+            Column {
+                id: replyLabelsColumn
+                spacing: Theme.paddingMedium
+//                width: replyPostInnerArea.width - denyReply.width - replyPostInnerArea.anchors.rightMargin
+                Label {
+                    id: headerOfReply
+                    text: "<b>" + qsTr("Reply to") + "</b> " + root_post_username
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeTiny
+                    textFormat: Text.RichText
+                    truncationMode: TruncationMode.Fade
+                }
+
+                Label {
+                    id: replyMessage
+                    text: root_post_message
+                    clip: true
+                    anchors.verticalCenter: fileTypeIcon.verticalCenter
+                    font.family: Theme.fontFamily
+                    font.pixelSize: Theme.fontSizeTiny
+                    font.italic:  true
+                    color: Theme.secondaryColor
+                    wrapMode: Text.NoWrap
+                    truncationMode: TruncationMode.Fade
+                    width: replyPostInnerArea.width - denyReply.width - replyPostInnerArea.spacing*2 - line.width
+                    height: implicitHeight
+                } // label with filename
+            }
+
+            IconButton {
+                id: denyReply
+                anchors {
+                    verticalCenter: replyPostArea.verticalCenter
+                }
+                width: Theme.iconSizeMedium
+                height: Theme.iconSizeMedium
+                //x: messageeditor.width - menu.width - replyLabelsColumn.spacing - width
+                icon.source: "image://theme/icon-m-clear"
+
+                onClicked: {
+                    //root_post_message = ""
+                    root_post_id = ""
+                    root_post_index = -1
+                }
+            }
+        }
+
+        Behavior on height {
+            NumberAnimation { duration: 250 }
+        }
+    }
+
     TouchBlocker {
         id: textarea
         anchors {
@@ -150,7 +233,7 @@ BackgroundItem {
                 left: parent.left
                 bottom: parent.bottom
                 right: button.left
-                leftMargin: Theme.paddingSmall
+                leftMargin: Settings.pageMargin
             }
             //label: qsTr("Message...") // need timestamp here, its better
 
@@ -175,7 +258,7 @@ BackgroundItem {
 //                right: parent.right
                 verticalCenter: textedit.verticalCenter
             }
-            x: messageeditor.width - menu.width - Theme.paddingSmall - width
+            x: messageeditor.width - menu.width - Theme.paddingMedium - width
             icon.source: "image://theme/icon-m-mail"
             onClicked: {
                 if( textedit.text.length === 0 && attachCount === 0 )
@@ -202,6 +285,8 @@ BackgroundItem {
                                  channel_index,
                                  root_post_id)
                         root_post_id = ""
+                        root_post_message = ""
+                        root_post_index = -1
                         attachCount = 0
                     }
                     text = ""
@@ -236,7 +321,7 @@ BackgroundItem {
     Row {
         spacing: Theme.paddingMedium
         anchors {
-            leftMargin: Theme.paddingMedium
+            leftMargin: textedit.anchors.leftMargin
             bottomMargin: Theme.paddingMedium
             left: parent.left
             bottom: parent.bottom
@@ -363,7 +448,7 @@ BackgroundItem {
         height: Theme.iconSizeMedium
         anchors {
             right: parent.right
-            rightMargin: Theme.paddingSmall
+            rightMargin: Settings.pageMargin
             verticalCenter: textarea.verticalCenter
         }
 //        icon.source: "image://theme/icon-m-menu"
@@ -378,9 +463,7 @@ BackgroundItem {
                showToolBar = !showToolBar
             }
         }
-
-
-    }// IconButton
+    }// IconButton id menu
 
     onShowToolBarChanged: {
         if( showToolBar )

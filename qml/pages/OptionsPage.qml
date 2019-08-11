@@ -58,6 +58,12 @@ Page {
             onValueChanged: {
                 Settings.blobOpacity = value ;
             }
+
+            height: useBlobs.checked ? implicitHeight : 0
+            visible: height != 0
+            Behavior on height {
+                NumberAnimation { duration: 200 }
+            }
         }
 
         TextSwitch {
@@ -70,6 +76,42 @@ Page {
 
             Component.onCompleted: checked = Settings.formatedText
         }
+
+        ComboBox {
+            id: pagePaddingSize
+//            visible: false
+            label: qsTr("Page padding")
+
+            menu: ContextMenu {
+                MenuItem {
+                    text: qsTr("None")
+                    onClicked: {
+                        Settings.pageMargin = 0;
+                    }
+                }
+
+                MenuItem {
+                    text: qsTr("Small")
+                    onClicked: {
+                        Settings.pageMargin = Theme.paddingSmall;
+                    }
+                }
+
+                MenuItem {
+                    text: qsTr("Medium")
+                    onClicked: {
+                        Settings.pageMargin = Theme.paddingMedium;
+                    }
+                }
+
+                MenuItem {
+                    text: qsTr("Large")
+                    onClicked: {
+                        Settings.pageMargin = Theme.paddingLarge;
+                    }
+                }
+            }
+        }// Page padding size
     }
 
     SilicaListView {

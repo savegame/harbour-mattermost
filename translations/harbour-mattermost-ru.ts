@@ -232,6 +232,10 @@
         <source>Choose file</source>
         <translation>Выберите файл</translation>
     </message>
+    <message>
+        <source>Reply to</source>
+        <translation>Ответить</translation>
+    </message>
 </context>
 <context>
     <name>MessagesPage</name>
@@ -320,6 +324,26 @@
     <message>
         <source>Use markdown formated text in messages</source>
         <translation>Исользовать Markdown форматирование сообщений</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Без отступа</translation>
+    </message>
+    <message>
+        <source>Small</source>
+        <translation>Маленький</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>Средний</translation>
+    </message>
+    <message>
+        <source>Large</source>
+        <translation>Большой</translation>
+    </message>
+    <message>
+        <source>Page padding</source>
+        <translation>Отступы (от каря экрана)</translation>
     </message>
 </context>
 <context>

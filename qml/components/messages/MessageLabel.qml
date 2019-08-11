@@ -106,8 +106,8 @@ ListItem {
 
     Row {
         id: messageRow
-        leftPadding: Theme.paddingMedium
-        rightPadding: Theme.paddingMedium
+        leftPadding: Settings.pageMargin
+        //rightPadding: Settings.pageMargin
         anchors {
             left: parent.left
             right: parent.right
@@ -129,7 +129,8 @@ ListItem {
         Column {
             id: messageContent
             spacing: Theme.paddingMedium
-            width: messageLabel.width - messageRow.spacing - userAvatar.width
+//            anchors.rightMargin: messageRow.rightPadding
+            width: messageLabel.width - messageRow.spacing - userAvatar.width - Settings.pageMargin
 
             Row {
                 id: labelHeader
@@ -170,7 +171,6 @@ ListItem {
                     messageLabel.isMessageMineOrOther ?
                         (messageContent.width - inBlobMargins * 2 - inBlobContent.anchors.rightMargin * 2):
                         (messageLabel.width - inBlobContent.anchors.rightMargin * 2)
-//                height: plainTextLablel.height + (attachments.visible ? (attachments.height + spacing):0)
                 property real realBlobContentWidth:
                     plainTextLablel.width
                 Label {
