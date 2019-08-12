@@ -157,17 +157,18 @@ BackgroundItem {
             anchors.right: parent.right
             anchors.leftMargin: Settings.pageMargin
             anchors.rightMargin: Settings.pageMargin
+            anchors.topMargin: Theme.paddingSmall
 
             Rectangle {
                 id: line
-                width: Theme.paddingSmall * 0.6
+                width: Theme.paddingSmall * 0.5
                 height: replyPostArea.height
                 color: Theme.primaryColor
             }
 
             Column {
                 id: replyLabelsColumn
-                spacing: Theme.paddingMedium
+                spacing: Theme.paddingSmall
 //                width: replyPostInnerArea.width - denyReply.width - replyPostInnerArea.anchors.rightMargin
                 Label {
                     id: headerOfReply
@@ -213,7 +214,7 @@ BackgroundItem {
         }
 
         Behavior on height {
-            NumberAnimation { duration: 250 }
+            NumberAnimation { duration: 150 }
         }
     }
 

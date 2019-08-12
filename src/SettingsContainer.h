@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QCoreApplication>
 #include <QtQuick>
+#include <QString>
 #include <QGradient>
 #include "MattermostQt.h"
 
@@ -49,6 +50,18 @@ public:
 
 	static SettingsContainer *getInstance();
 
+	/**
+	 * @brief strToSingleLine
+	 * make one line string from multiline
+	 * @param in multiline string
+	 * @return  one line string
+	 */
+	Q_INVOKABLE static QString strToSingleLine(const QString &in);
+
+	/**
+	 * @brief resetToDefault
+	 * reset settings to defalt values
+	 */
 	Q_INVOKABLE void resetToDefault();
 
 	/**

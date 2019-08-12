@@ -21,6 +21,13 @@ SettingsContainer *SettingsContainer::getInstance()
 	return singleton;
 }
 
+QString SettingsContainer::strToSingleLine(const QString &in)
+{
+	QString r = in;
+	r= r.replace(QRegExp("(\\n|\\r\\n)")," ");
+	return r;
+}
+
 void SettingsContainer::resetToDefault()
 {
 	m_autoDownloadImageSize = 512;
