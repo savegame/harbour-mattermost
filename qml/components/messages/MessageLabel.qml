@@ -128,7 +128,7 @@ ListItem {
 
         Column {
             id: messageContent
-            spacing: Theme.paddingMedium
+            spacing: 0//Theme.paddingSmall
 //            anchors.rightMargin: messageRow.rightPadding
             width: messageLabel.width - messageRow.spacing - userAvatar.width - Settings.pageMargin
 

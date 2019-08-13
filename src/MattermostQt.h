@@ -184,6 +184,9 @@ public:
 		QString          m_type_string;
 		MessageOwner     m_type;
 		QString          m_user_id;
+		QString          m_root_id; /**< id of root message of thread*/
+		QString          m_parent_id;
+		QString          m_original_id;
 		qlonglong        m_create_at;
 		qlonglong        m_update_at;
 		qlonglong        m_delete_at;
@@ -196,14 +199,16 @@ public:
 		int              m_team_index;
 		int              m_channel_index;
 		int              m_self_index;
+		Ptr              m_root_message;
 
 		/// special parameters, delete if not use
 //		ChannelPtr       m_channel;// test
 		bool             m_is_files_info_requested; // is files already requested from server
 		qlonglong        m_request_time;  // request time, for repeat if it need
 		FilePtr   fileAt(int file_index);
+		typedef QSharedPointer<MessageContainer> Ptr;
 	};
-	typedef QSharedPointer<MessageContainer> MessagePtr;
+	typedef MessageContainer::Ptr MessagePtr;
 
 	struct UserContainer
 	{
@@ -303,6 +308,7 @@ public:
 		int m_dc_user_index; /**< if it direct channel, is index*/
 
 		QVector<MessagePtr> m_message;
+		QVector<MessagePtr> m_unorder_messages; /** not ordered messages z*/
 
 		MessagePtr messageAt(int message_index);
 	};

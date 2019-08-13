@@ -244,20 +244,20 @@
         <translation>предыдущие сообщения</translation>
     </message>
     <message>
-        <source>Edit</source>
-        <translation>Редатировать</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>Удалить</translation>
-    </message>
-    <message>
         <source>Reply</source>
         <translation>Ответить</translation>
     </message>
     <message>
+        <source>Edit</source>
+        <translation>Редатировать</translation>
+    </message>
+    <message>
         <source>Copy</source>
         <translation>Копировать</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Удалить</translation>
     </message>
     <message>
         <source>Deleting</source>

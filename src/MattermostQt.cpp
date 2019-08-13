@@ -1819,6 +1819,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 	}
 //	if(channel->m_type == ChannelDirect)
 //		team_index = -1;
+	QList<MessagePtr> m_replies;
 
 	ServerPtr sc = m_server[server_index];
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
@@ -3964,6 +3965,13 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 	m_message = object["message"].toString();
 	m_type_string = object["type"].toString();
 	m_user_id = object["user_id"].toString();
+	m_root_id = object["root_id"].toString();
+	m_parent_id = object["parent_id"].toString();
+	m_original_id = object["original_id"].toString();
+	if( !m_root_id.isEmpty() ) {
+		qDebug() << "Reply message:";
+		qDebug() << object;
+	}
 	m_create_at = (qlonglong)object["create_at"].toDouble(0);
 	m_update_at = (qlonglong)object["update_at"].toDouble(0);
 	m_delete_at = (qlonglong)object["delete_at"].toDouble(0);

@@ -126,6 +126,17 @@ Page {
                 id: contextmenu
 
                 MenuItem {
+                    text: qsTr("Reply")
+                    visible: isMessageMineOrOther
+                    onClicked: {
+                        messageEditor.root_post_id = role_post_id
+                        messageEditor.root_post_index = role_row_index
+                        messageEditor.root_post_message = Settings.strToSingleLine(role_message)//role_formated_text
+                        messageEditor.root_post_username = role_user_name
+                    }
+                }
+
+                MenuItem {
                     text: qsTr("Edit")
                     visible: isMessageEditable
                     onClicked: {
@@ -133,6 +144,11 @@ Page {
                         messageEditor.editmode = true
                         messageEditor.message_index = role_row_index
                     }
+                }
+
+                MenuItem {
+                    text: qsTr("Copy")
+                    onClicked: Clipboard.text = plainText
                 }
 
                 MenuItem {
@@ -150,22 +166,6 @@ Page {
                                         context.mattermost.delete_message(si,ti,ct,ci,mi)
                                     })
                     }
-                }
-
-                MenuItem {
-                    text: qsTr("Reply")
-                    visible: isMessageMineOrOther
-                    onClicked: {
-                        messageEditor.root_post_id = role_post_id
-                        messageEditor.root_post_index = role_row_index
-                        messageEditor.root_post_message = Settings.strToSingleLine(role_message)//role_formated_text
-                        messageEditor.root_post_username = role_user_name
-                    }
-                }
-
-                MenuItem {
-                    text: qsTr("Copy")
-                    onClicked: Clipboard.text = plainText
                 }
             }
         }

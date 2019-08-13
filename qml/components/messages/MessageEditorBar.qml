@@ -172,7 +172,7 @@ BackgroundItem {
 //                width: replyPostInnerArea.width - denyReply.width - replyPostInnerArea.anchors.rightMargin
                 Label {
                     id: headerOfReply
-                    text: "<b>" + qsTr("Reply to") + "</b> " + root_post_username
+                    text:  qsTr("Reply to") + "<b>" + root_post_username +"</b> "
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeTiny
                     textFormat: Text.RichText

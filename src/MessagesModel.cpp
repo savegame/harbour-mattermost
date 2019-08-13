@@ -29,11 +29,17 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	switch (role) {
 	case MessagesModel::PostId:
 		return QVariant(message->m_id);
+	case MessagesModel::RootId:
+		return QVariant(message->m_root_id);
+	case MessagesModel::ParentId:
+		return QVariant(message->m_parent_id);
+	case MessagesModel::OriginalId:
+		return QVariant(message->m_original_id);
 	case MessagesModel::Text:
 		return QVariant(message->m_message);
 		break;
 	case MessagesModel::FormatedText:
-		if( message->m_formated_message.isEmpty() )
+		if( messge->m_formated_message.isEmpty() )
 			message->m_formated_message = m_mattermost->parseMD(message->m_message);
 		return QVariant(message->m_formated_message);
 		break;
@@ -187,7 +193,10 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	{MessagesModel::FormatedText,    "role_formated_text"},
 	{MessagesModel::FileStatus,      "role_file_status"},
 	{MessagesModel::UserStatus,      "role_user_status"},
-	{MessagesModel::PostId,          "role_post_id"}};
+	{MessagesModel::PostId,          "role_post_id"},
+	{MessagesModel::RootId,          "role_root_id"},
+	{MessagesModel::OriginalId,      "role_original_id"},
+	{MessagesModel::ParentId,        "role_parent_id"}};
 	return names;
 }
 

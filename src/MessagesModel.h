@@ -36,6 +36,9 @@ public:
 		MessageIndex,
 		FormatedText,
 		PostId, // post id
+		RootId,
+		ParentId,
+		OriginalId,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 
