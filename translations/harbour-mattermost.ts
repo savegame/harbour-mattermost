@@ -232,10 +232,6 @@
         <source>Choose file</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Reply to</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>MessagesPage</name>
@@ -374,6 +370,17 @@
     </message>
     <message>
         <source>(edited)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ReplyMessageItem</name>
+    <message>
+        <source>Reply to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Answer to message from</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

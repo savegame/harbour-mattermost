@@ -39,6 +39,8 @@ public:
 		RootId,
 		ParentId,
 		OriginalId,
+		RootMessage,
+		RootMessageUserName,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 

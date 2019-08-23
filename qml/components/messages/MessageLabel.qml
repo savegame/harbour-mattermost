@@ -27,14 +27,17 @@ ListItem {
     property MessagesModel messagesModel
     /** index of message in qvector */
     property int rowIndex
-//    /** variant list of files statuses */
-//    property var fileStatus
+    /** root message, if message is answer */
+    property string rootMessage
+    /** username if message is answer */
+    property string rootUser
 
     property bool showBlobs: Settings.showBlobs
     property real blobsOpacity: Settings.blobOpacity
 
     /** calclating properties */
     property color textColor: Theme.highlightColor
+    property color textSecondaryColor: Theme.secondaryHighlightColor
     property color linkColor: Theme.primaryColor
     property color blobColor:  Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
     property color secondaryTextColor
@@ -53,12 +56,14 @@ ListItem {
             break
         case MattermostQt.MessageMine:
             messageLabel.textColor = Theme.highlightColor
+            messageLabel.textSecondaryColor =  Theme.secondaryHighlightColor
             messageLabel.linkColor = Theme.primaryColor
             isMessageMineOrOther = true
             messageLabel.secondaryTextColor = Theme.secondaryHighlightColor
             break
         case MattermostQt.MessageOther:
             messageLabel.textColor = Theme.primaryColor
+            messageLabel.textSecondaryColor =  Theme.secondaryColor
             messageLabel.linkColor = Theme.highlightColor
             isMessageMineOrOther = true
             messageLabel.secondaryTextColor = Theme.secondaryColor
@@ -173,6 +178,19 @@ ListItem {
                         (messageLabel.width - inBlobContent.anchors.rightMargin * 2)
                 property real realBlobContentWidth:
                     plainTextLablel.width
+
+                ReplyMessageItem {
+                    id: replyMessage
+                    visible: rootMessage.length > 0
+                    text: rootMessage
+                    username: rootUser
+                    button: false
+                    isAnswer: true
+                    width: (visible) ? inBlobContent.maxBlobContentWidth : 0
+                    textColor: messageLabel.textSecondaryColor
+                    textHeaderColor: messageLabel.textSecondaryColor
+                }
+
                 Label {
                     id: plainTextLablel
                     text: Settings.formatedText

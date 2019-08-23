@@ -232,10 +232,6 @@
         <source>Choose file</source>
         <translation>Выберите файл</translation>
     </message>
-    <message>
-        <source>Reply to</source>
-        <translation>Ответить</translation>
-    </message>
 </context>
 <context>
     <name>MessagesPage</name>
@@ -343,7 +339,7 @@
     </message>
     <message>
         <source>Page padding</source>
-        <translation>Отступы (от каря экрана)</translation>
+        <translation>Отступы (от края экрана)</translation>
     </message>
 </context>
 <context>
@@ -375,6 +371,17 @@
     <message>
         <source>(edited)</source>
         <translation>(изменено)</translation>
+    </message>
+</context>
+<context>
+    <name>ReplyMessageItem</name>
+    <message>
+        <source>Reply to</source>
+        <translation>Ответить</translation>
+    </message>
+    <message>
+        <source>Answer to message from</source>
+        <translation>Ответ на сообщение от</translation>
     </message>
 </context>
 <context>

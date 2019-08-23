@@ -83,6 +83,7 @@ Page {
             label: qsTr("Page padding")
 
             menu: ContextMenu {
+                id: menu
                 MenuItem {
                     text: qsTr("None")
                     onClicked: {
@@ -110,6 +111,25 @@ Page {
                         Settings.pageMargin = Theme.paddingLarge;
                     }
                 }
+
+                Component.onCompleted: {
+                    if( Settings.pageMargin === 0 ) {
+                        pagePaddingSize.currentIndex = 0;
+                    }
+                    else if( Settings.pageMargin === Theme.paddingSmall ) {
+                        pagePaddingSize.currentIndex = 1;
+                    }
+                    else if( Settings.pageMargin === Theme.paddingMedium ) {
+                        pagePaddingSize.currentIndex = 2;
+                    }
+                    else if( Settings.pageMargin === Theme.paddingLarge ) {
+                        pagePaddingSize.currentIndex = Settings.pageMargin;
+                    }
+                }
+            }
+
+            Component.onCompleted: {
+
             }
         }// Page padding size
     }

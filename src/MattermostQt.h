@@ -36,6 +36,7 @@ public:
 		rt_get_team,
 		rt_get_teams_unread,
 		rt_get_posts,
+		rt_get_post,
 		rt_get_posts_since,
 		rt_get_posts_before,
 		rt_get_posts_after,
@@ -169,8 +170,9 @@ public:
 
 
 	struct MessageContainer {
-		MessageContainer() noexcept
-		{}
+		typedef QSharedPointer<MessageContainer> Ptr;
+
+		MessageContainer() noexcept;
 
 		MessageContainer(QJsonObject object);
 
@@ -199,14 +201,16 @@ public:
 		int              m_team_index;
 		int              m_channel_index;
 		int              m_self_index;
-		Ptr              m_root_message;
+		// data for reply message
+		QString          m_root_message;
+		QString          m_root_user_name;
+		int              m_root_user_index;
 
 		/// special parameters, delete if not use
 //		ChannelPtr       m_channel;// test
 		bool             m_is_files_info_requested; // is files already requested from server
 		qlonglong        m_request_time;  // request time, for repeat if it need
 		FilePtr   fileAt(int file_index);
-		typedef QSharedPointer<MessageContainer> Ptr;
 	};
 	typedef MessageContainer::Ptr MessagePtr;
 
@@ -455,6 +459,12 @@ public:
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
 //	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
+	/**
+	 * @brief get_post download post by its id
+	 * @param post_id  post id
+	 * @param message  message ptr, if message is answer, and post_id is root_id
+	 */
+	Q_INVOKABLE void get_post(int server_index, QString post_id, MessagePtr message = MessagePtr());
 	Q_INVOKABLE void get_posts(int server_index, int team_index, int channel_type, int channel_index);
 	Q_INVOKABLE void get_posts_before(int server_index, int team_index, int channel_index, int channel_type);
 	Q_INVOKABLE void post_users_status(int server_index);
@@ -574,6 +584,7 @@ protected:
 	void reply_get_teams(QNetworkReply *reply);
 	void reply_get_team(QNetworkReply *reply);
 	void reply_get_teams_unread(QNetworkReply *reply);
+	void reply_get_post(QNetworkReply *reply);
 	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_posts_before(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
@@ -616,6 +627,7 @@ protected Q_SLOTS:
 	void onWebSocketStateChanged(QAbstractSocket::SocketState state);
 //	void onWebSocketTextFrameReceived(const QString &frame, bool isLastFrame);
 	void onWebSocketTextMessageReceived(const QString &message);
+	void onWebSocketPong(quint64 elapsedTime,QByteArray payload);
 	/** slot for QTimer */
 	void slot_get_teams_unread();
 	void slot_recconect_servers();

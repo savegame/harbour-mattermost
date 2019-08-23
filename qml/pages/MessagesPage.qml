@@ -114,7 +114,8 @@ Page {
             senderName:       role_user_name
             filesCount:       role_files_count
             rowIndex:         role_row_index
-            //postId:           role_post_id
+            rootMessage:      role_root_message
+            rootUser:         role_root_username
             messageTimestamp: role_message_create_at
             //fileStatus:       role_file_status
 

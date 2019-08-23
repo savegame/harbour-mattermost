@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Sailfish.Pickers 1.0
 import QtGraphicalEffects 1.0
@@ -139,82 +139,26 @@ BackgroundItem {
     }
 
     // Reply Post Area
-    BackgroundItem {
+    ReplyMessageItem {
         id: replyPostArea
-        clip: true
-        visible: height > 0
+        anchors.leftMargin: Settings.pageMargin
+        anchors.rightMargin: Settings.pageMargin
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: textarea.top
+        height: root_post_id.length > 0 ? replyPostArea.defaultHeight: 0;
 
-        height: root_post_id.length > 0 ? Theme.fontSizeSmall * 2 + Theme.paddingMedium: 0;
-
-        Row {
-            id: replyPostInnerArea
-            spacing: Theme.paddingMedium
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.leftMargin: Settings.pageMargin
-            anchors.rightMargin: Settings.pageMargin
-            anchors.topMargin: Theme.paddingSmall
-
-            Rectangle {
-                id: line
-                width: Theme.paddingSmall * 0.5
-                height: replyPostArea.height
-                color: Theme.primaryColor
-            }
-
-            Column {
-                id: replyLabelsColumn
-                spacing: Theme.paddingSmall
-//                width: replyPostInnerArea.width - denyReply.width - replyPostInnerArea.anchors.rightMargin
-                Label {
-                    id: headerOfReply
-                    text:  qsTr("Reply to") + "<b>" + root_post_username +"</b> "
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
-                    textFormat: Text.RichText
-                    truncationMode: TruncationMode.Fade
-                }
-
-                Label {
-                    id: replyMessage
-                    text: root_post_message
-                    clip: true
-                    anchors.verticalCenter: fileTypeIcon.verticalCenter
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.italic:  true
-                    color: Theme.secondaryColor
-                    wrapMode: Text.NoWrap
-                    truncationMode: TruncationMode.Fade
-                    width: replyPostInnerArea.width - denyReply.width - replyPostInnerArea.spacing*2 - line.width
-                    height: implicitHeight
-                } // label with filename
-            }
-
-            IconButton {
-                id: denyReply
-                anchors {
-                    verticalCenter: replyPostArea.verticalCenter
-                }
-                width: Theme.iconSizeMedium
-                height: Theme.iconSizeMedium
-                //x: messageeditor.width - menu.width - replyLabelsColumn.spacing - width
-                icon.source: "image://theme/icon-m-clear"
-
-                onClicked: {
-                    //root_post_message = ""
-                    root_post_id = ""
-                    root_post_index = -1
-                }
-            }
-        }
+        button: true
+        text: root_post_message
+        username: root_post_username
 
         Behavior on height {
             NumberAnimation { duration: 150 }
+        }
+
+        onDenyReplyClicked: {
+            root_post_id = ""
+            root_post_index = -1
         }
     }
 

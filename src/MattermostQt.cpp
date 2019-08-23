@@ -1031,6 +1031,49 @@ void MattermostQt::get_teams_unread(int server_index)
 	get_teams_unread(m_server[server_index]);
 }
 
+void MattermostQt::get_post(int server_index, QString post_id, MattermostQt::MessagePtr message)
+{
+	ServerPtr sc;
+	if( !message.isNull() && !message->m_root_id.isEmpty() )
+	{
+		post_id = message->m_root_id;
+		server_index = message->m_server_index;
+	}
+	if ( server_index >=0 && server_index < m_server.size() )
+	{
+		sc = m_server[server_index];
+	}
+	else {
+		qWarning() << "Wrong server index";
+		return;
+	}
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/posts/")
+	        + post_id;
+
+	QUrl url(sc->m_url);
+	url.setPath(urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,sc);
+	request_urlencoded(request);
+
+	if(sc->m_trust_cert) {
+		request.setSslConfiguration(sc->m_cert);
+	}
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_post) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+//	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+//	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel->m_type) );
+//	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel_index) );
+	reply->setProperty(P_MESSAGE_PTR, QVariant::fromValue<MessagePtr>(message) );
+}
+
 void MattermostQt::get_posts(int server_index, int team_index, int channel_type, int channel_index )
 {
 	ChannelPtr channel = channelAt(server_index, team_index, channel_type, channel_index);
@@ -1605,6 +1648,8 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	        SLOT(onWebSocketStateChanged(QAbstractSocket::SocketState)) );
 	connect(socket.data(), SIGNAL(textMessageReceived(QString)),
 	        SLOT(onWebSocketTextMessageReceived(QString)) );
+	connect(socket.data(), SIGNAL(pong(quint64,QByteArray)),
+	        SLOT(onWebSocketPong(quint64,QByteArray)) );
 
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(server->m_api)
@@ -1804,6 +1849,54 @@ void MattermostQt::reply_get_teams_unread(QNetworkReply *reply)
 	}
 }
 
+void MattermostQt::reply_get_post(QNetworkReply *reply)
+{
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+//	int team_index = reply->property(P_TEAM_INDEX).toInt();
+//	int channel_index = reply->property(P_CHANNEL_INDEX).toInt();
+//	int channel_type =reply-> property(P_CHANNEL_TYPE).toInt();
+
+//	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
+	if(server_index <0 || server_index >=m_server.size())
+	{
+		qWarning() << "Wrong server index";
+		return;
+	}
+
+	MessagePtr message = reply-> property(P_MESSAGE_PTR).value<MessagePtr>();
+
+	if(message.isNull())
+	{
+		qWarning() << "Cant read Message pointer";
+		return;
+	}
+
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+
+	MessagePtr mc(new MessageContainer(json.object()));
+	//for first, find user name
+//	mc->m_user_id
+	ServerPtr sc = m_server[server_index];
+	for(int k = 0; k < sc->m_user.size(); k++)
+	{
+		if( mc->m_user_id.compare(sc->m_user[k]->m_id) == 0)
+		{
+			message->m_root_user_name = sc->m_user[k]->m_username;
+			message->m_root_user_index = k;
+			break;
+		}
+	}
+	if(message->m_root_user_name.isEmpty())
+		message->m_root_user_name = "unkown";
+	message->m_root_message = SettingsContainer::getInstance()->strToSingleLine( mc->m_message ); // not formatted text
+
+	//now send signal - message is changed
+	QList<MessagePtr> mlist;
+	mlist.push_back(message);
+	emit messageUpdated(mlist);
+	//TODO if user not exists, need request for user data (!)
+}
+
 void MattermostQt::reply_get_posts(QNetworkReply *reply)
 {
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
@@ -1850,6 +1943,16 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 			else
 				message->m_type = MessageOther;
 		}
+
+		// get user_index for post
+		prepare_user_index(sc->m_self_index, message);
+		// check if message is answer
+		if( !message->m_root_id.isEmpty() )
+		{
+			// here we request root post by id
+			get_post(message->m_server_index, message->m_root_id, message);
+		}
+
 		new_messages = true;
 	}
 	if(new_messages)
@@ -1881,8 +1984,6 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 						            temp->m_file_ids[k]);
 					}
 #endif
-					// get user_index for post
-					prepare_user_index(sc->m_self_index, temp);
 					break;
 				}
 			}
@@ -1930,7 +2031,6 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 		message->m_channel_id = channel->m_id;
 		message->m_channel_type = channel->m_type;
 		message->m_channel_index = channel->m_self_index;
-//		message->m_self_index = channel->m_message.size();
 		messages.append(message);
 		if(message->m_type == MessageOwner::MessageTypeCount)
 		{
@@ -1940,7 +2040,12 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 				message->m_type = MessageOther;
 		}
 		prepare_user_index(server_index,message);
-
+		// check if message is answer
+		if( !message->m_root_id.isEmpty() )
+		{
+			// here we request root post by id
+			get_post(message->m_server_index, message->m_root_id, message);
+		}
 		new_messages = true;
 	}
 	if(!new_messages)
@@ -3043,7 +3148,12 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 			emit newMessage(message);
 	}
 
-	// TODO try formating message
+	// check if message is answer
+	if( !message->m_root_id.isEmpty() )
+	{
+		// here we request root post by id
+		get_post(message->m_server_index, message->m_root_id, message);
+	}
 }
 
 void MattermostQt::event_post_edited(MattermostQt::ServerPtr sc, QJsonObject object)
@@ -3344,6 +3454,8 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			case ReplyType::rt_get_teams_unread:
 				reply_get_teams_unread(reply);
 				break;
+			case ReplyType::rt_get_post:
+				reply_get_post(reply);
 			case ReplyType::rt_get_posts:
 				reply_get_posts(reply);
 				break;
@@ -3566,6 +3678,12 @@ void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
 		return;
 
 	qWarning() << socket->errorString();
+	switch(error)
+	{
+	case QAbstractSocket::SocketTimeoutError :
+		// sgoud i reconnect by my self, or its automatically ?
+		break;
+	}
 }
 
 void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
@@ -3687,7 +3805,12 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 //webrtc
 //authentication_challenge
 //license_changed
-//config_changed
+		//config_changed
+}
+
+void MattermostQt::onWebSocketPong(quint64 elapsedTime, QByteArray payload)
+{
+	// here is we can logging pings
 }
 
 void MattermostQt::slot_get_teams_unread()
@@ -3729,6 +3852,8 @@ void MattermostQt::slot_user_status()
 	for(int i = 0; i < m_server.size(); i ++ )
 	{
 		post_users_status(i);
+		if(server().at(i)->m_socket)
+			server().at(i)->m_socket->ping(QString("ping").toUtf8());
 	}
 }
 
@@ -3953,12 +4078,22 @@ int MattermostQt::ServerContainer::get_team_index(QString team_id)
 	return -1;
 }
 
+MattermostQt::MessageContainer::MessageContainer() noexcept
+{
+	m_user_index = -1;
+	m_server_index = -1;
+	m_channel_index  = -1;
+	m_team_index = -1;
+	m_root_user_index = -1;
+}
+
 MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 {
 	m_user_index = -1;
 	m_server_index = -1;
 	m_channel_index  = -1;
 	m_team_index = -1;
+	m_root_user_index = -1;
 //	qDebug() << object;
 	m_id = object["id"].toString();
 	m_channel_id = object["channel_id"].toString();
@@ -3968,10 +4103,10 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 	m_root_id = object["root_id"].toString();
 	m_parent_id = object["parent_id"].toString();
 	m_original_id = object["original_id"].toString();
-	if( !m_root_id.isEmpty() ) {
-		qDebug() << "Reply message:";
-		qDebug() << object;
-	}
+//	if( !m_root_id.isEmpty() ) {
+//		qDebug() << "Reply message:";
+//		qDebug() << object;
+//	}
 	m_create_at = (qlonglong)object["create_at"].toDouble(0);
 	m_update_at = (qlonglong)object["update_at"].toDouble(0);
 	m_delete_at = (qlonglong)object["delete_at"].toDouble(0);
@@ -3985,6 +4120,12 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 		m_filenames.append( filenames.at(i).toString() );
 	for(int i = 0; i < file_ids.size(); i++ )
 		m_file_ids.append( file_ids.at(i).toString() );
+
+	QJsonValue v = object["metadata"];
+	if( !v.isUndefined() ) {
+		qDebug() << "Message" << m_id << "has metadta:";
+		qDebug() << v.toObject();
+	}
 }
 
 MattermostQt::FilePtr MattermostQt::MessageContainer::fileAt(int file_index)

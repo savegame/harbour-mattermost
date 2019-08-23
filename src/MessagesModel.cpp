@@ -31,6 +31,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		return QVariant(message->m_id);
 	case MessagesModel::RootId:
 		return QVariant(message->m_root_id);
+	case MessagesModel::RootMessage:
+		return message->m_root_message;
+	case MessagesModel::RootMessageUserName:
+		return message->m_root_user_name;
 	case MessagesModel::ParentId:
 		return QVariant(message->m_parent_id);
 	case MessagesModel::OriginalId:
@@ -39,7 +43,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		return QVariant(message->m_message);
 		break;
 	case MessagesModel::FormatedText:
-		if( messge->m_formated_message.isEmpty() )
+		if( message->m_formated_message.isEmpty() )
 			message->m_formated_message = m_mattermost->parseMD(message->m_message);
 		return QVariant(message->m_formated_message);
 		break;
@@ -94,10 +98,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			}
 			else
 			{
-				qWarning() << QString("Cant find USER name  message->m_user_index(%0) < size(%1) mid(%3)")
+				qWarning() << QString("Cant find USER name  message->m_user_index(%0) < size(%1) uid(%3)")
 				              .arg( message->m_user_index)
 				              .arg(m_mattermost->m_server[message->m_server_index]->m_user.size())
-				              .arg( message->m_id);
+				              .arg( message->m_user_id);
 				return QVariant("error!");
 			}
 		}
@@ -179,24 +183,26 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 {
 	// thx to @Kaffeine for that optimization
 	static const QHash<int, QByteArray> names = {
-	{MessagesModel::Text,            "role_message"},
-	{MessagesModel::Owner,           "role_type"},
-	{MessagesModel::FilesCount,      "role_files_count"},
-	{MessagesModel::RowIndex,        "role_row_index"},
-	{MessagesModel::SenderImagePath, "role_user_image_path"},
-	{MessagesModel::SenderUserName,  "role_user_name"},
-	{MessagesModel::CreateAt,        "role_message_create_at"},
-	{MessagesModel::IsEdited,        "role_message_is_edited"},
-	{MessagesModel::UserId,          "role_user_id"},
-	{MessagesModel::MessageIndex,    "role_message_index"},
-	{MessagesModel::ValidPaths,      "role_valid_paths"},
-	{MessagesModel::FormatedText,    "role_formated_text"},
-	{MessagesModel::FileStatus,      "role_file_status"},
-	{MessagesModel::UserStatus,      "role_user_status"},
-	{MessagesModel::PostId,          "role_post_id"},
-	{MessagesModel::RootId,          "role_root_id"},
-	{MessagesModel::OriginalId,      "role_original_id"},
-	{MessagesModel::ParentId,        "role_parent_id"}};
+	{MessagesModel::Text,                "role_message"},
+	{MessagesModel::Owner,               "role_type"},
+	{MessagesModel::FilesCount,          "role_files_count"},
+	{MessagesModel::RowIndex,            "role_row_index"},
+	{MessagesModel::SenderImagePath,     "role_user_image_path"},
+	{MessagesModel::SenderUserName,      "role_user_name"},
+	{MessagesModel::CreateAt,            "role_message_create_at"},
+	{MessagesModel::IsEdited,            "role_message_is_edited"},
+	{MessagesModel::UserId,              "role_user_id"},
+	{MessagesModel::MessageIndex,        "role_message_index"},
+	{MessagesModel::ValidPaths,          "role_valid_paths"},
+	{MessagesModel::FormatedText,        "role_formated_text"},
+	{MessagesModel::FileStatus,          "role_file_status"},
+	{MessagesModel::UserStatus,          "role_user_status"},
+	{MessagesModel::PostId,              "role_post_id"},
+	{MessagesModel::RootId,              "role_root_id"},
+	{MessagesModel::OriginalId,          "role_original_id"},
+	{MessagesModel::ParentId,            "role_parent_id"},
+	{MessagesModel::RootMessage,         "role_root_message"},
+	{MessagesModel::RootMessageUserName, "role_root_username"}};
 	return names;
 }
 
@@ -444,7 +450,7 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 //	endResetModel();
 
 	QVector<int> roles;
-	roles << CreateAt << Text << ValidPaths << FilesCount << FormatedText;
+	roles << CreateAt << Text << ValidPaths << FilesCount << FormatedText << RootId << RootMessage << RootMessageUserName;
 	int br = 0,lt = m_messages.size() - 1;
 	foreach(MattermostQt::MessagePtr m, messages)
 	{

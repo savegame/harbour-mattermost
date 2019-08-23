@@ -20,6 +20,8 @@ Page {
     property int status_server_connecting: MattermostQt.ServerConnecting
     property int status_server_unconnected: MattermostQt.ServerUnconnected
 
+    property int connectionStatus
+
 
     property bool canAccept : server_name.isComplete &
                 server.isComplete &
@@ -75,6 +77,7 @@ Page {
 
     onContextChanged:{
         context.mattermost.serverStateChanged.connect( function onServerConnected(server_index,state){
+            connectionStatus = state;
             if(state === status_server_connected) {
                 var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
                                                   {
@@ -297,4 +300,12 @@ Page {
             }
         }//Column
     }//SilicaFlickable
+
+    BusyIndicator {
+        id: loading
+        size: BusyIndicatorSize.Large
+        anchors.centerIn: parent
+        running: connectionStatus == MattermostQt.ServerConnecting
+        visible: running
+    }
 }
