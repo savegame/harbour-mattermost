@@ -27,7 +27,7 @@ PkgConfigBR:
   - Qt5Qml
   - Qt5Quick
   - nemonotifications-qt5
-  - libgcrypt
+#  - libgcrypt
 
 # Build dependencies without a pkgconfig setup can be listed here
 # PkgBR:

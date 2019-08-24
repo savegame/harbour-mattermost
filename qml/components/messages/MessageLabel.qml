@@ -187,8 +187,8 @@ ListItem {
                     button: false
                     isAnswer: true
                     width: (visible) ? inBlobContent.maxBlobContentWidth : 0
-                    textColor: messageLabel.textSecondaryColor
-                    textHeaderColor: messageLabel.textSecondaryColor
+                    textColor: messageLabel.textColor
+                    textHeaderColor: messageLabel.textColor
                 }
 
                 Label {

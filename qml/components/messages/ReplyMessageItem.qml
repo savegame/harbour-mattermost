@@ -31,7 +31,7 @@ BackgroundItem {
             id: line
             width: Theme.paddingSmall * 0.5
             height: replyPostArea.height
-            color: Theme.primaryColor
+            color: textHeaderColor
         }
 
         Column {
