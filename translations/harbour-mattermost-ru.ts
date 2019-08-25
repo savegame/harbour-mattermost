@@ -211,14 +211,14 @@
     </message>
     <message>
         <source>File: id(%0); </source>
-        <translation type="unfinished"></translation>
+        <translation>Файл: id(%0)</translation>
     </message>
 </context>
 <context>
     <name>MattermostQt::MessageContainer</name>
     <message>
         <source>Empty message</source>
-        <translation type="unfinished"></translation>
+        <translation>Пустое сообщение</translation>
     </message>
 </context>
 <context>
@@ -248,7 +248,7 @@
     <name>MessagesModel</name>
     <message>
         <source>Message deleted</source>
-        <translation type="unfinished"></translation>
+        <translation>Сообщение удалено</translation>
     </message>
 </context>
 <context>
