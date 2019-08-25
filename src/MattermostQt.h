@@ -176,6 +176,8 @@ public:
 
 		MessageContainer(QJsonObject object);
 
+		bool updateRootMessage(MattermostQt *mattermost);
+
 		QString          m_message;
 		QString          m_formated_message;
 //		QVector<FilePtr> m_file;
@@ -205,6 +207,8 @@ public:
 		QString          m_root_message;
 		QString          m_root_user_name;
 		int              m_root_user_index;
+		Ptr              m_root_ptr; // it can be emty, if message not downloaded
+		QList<Ptr>       m_thread_messages; // answers to this message (for dynamic update it, when message is edited)
 
 		/// special parameters, delete if not use
 //		ChannelPtr       m_channel;// test
@@ -492,6 +496,8 @@ public:
 	MessagePtr messageAt(int server_index, int team_index,
 	                     int channel_type, int channel_index,
 	                     int message_index);
+
+	UserPtr  userAt(int server_index, int user_index);
 
 	inline const QVector<ServerPtr> &server() const { return m_server; }
 

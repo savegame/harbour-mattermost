@@ -209,6 +209,17 @@
         <source>Cant open certificate file: &quot;%0&quot;</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>File: id(%0); </source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MattermostQt::MessageContainer</name>
+    <message>
+        <source>Empty message</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MessageEditorBar</name>
@@ -231,6 +242,13 @@
     <message>
         <source>Choose file</source>
         <translation>Выберите файл</translation>
+    </message>
+</context>
+<context>
+    <name>MessagesModel</name>
+    <message>
+        <source>Message deleted</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

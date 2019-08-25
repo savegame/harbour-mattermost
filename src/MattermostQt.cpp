@@ -1038,6 +1038,38 @@ void MattermostQt::get_post(int server_index, QString post_id, MattermostQt::Mes
 	{
 		post_id = message->m_root_id;
 		server_index = message->m_server_index;
+		// try search post in channel
+		ChannelPtr channel = channelAt(server_index,message->m_team_index,message->m_channel_type,message->m_channel_index);
+		if( channel )
+		{
+			if(message->m_self_index >= 0 && message->m_self_index < channel->m_message.size() )
+			{// this should be faster, becuse answered message could near
+				for(int i = message->m_self_index; i > 0; i--)
+				{
+					if( channel->m_message[i]->m_id == message->m_root_id )
+					{
+						message->m_root_ptr = channel->m_message[i];
+						break;
+					}
+				}
+			}
+			else for(int i =0; i < channel->m_message.size(); i++)
+			{
+				if( channel->m_message[i]->m_id == message->m_root_id )
+				{
+					message->m_root_ptr = channel->m_message[i];
+					break;
+				}
+			}
+
+			if( message->updateRootMessage(this) )
+			{
+				QList<MessagePtr> mlist;
+				mlist.push_back(message);
+				emit messageUpdated(mlist);
+				return;
+			}
+		}
 	}
 	if ( server_index >=0 && server_index < m_server.size() )
 	{
@@ -1541,14 +1573,23 @@ MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_inde
 {
 	ChannelPtr channel;
 	if( server_index < 0 || server_index >= m_server.size() )
+	{
+		qCritical() << "Wrong server index";
 		return channel;
+	}
 	if(channel_index < 0)
+	{
+		qCritical() << "Wrong cahnnel index";
 		return channel;
+	}
 	ServerPtr sc = m_server[server_index];
 	if(channel_type == ChannelType::ChannelDirect)
 	{
 		if(channel_index >= sc->m_direct_channels.size() )
+		{
+			qCritical() << "Channel index more than channels size " <<  sc->m_direct_channels.size();
 			return channel;
+		}
 		channel = sc->m_direct_channels[channel_index];
 	}
 	else if( team_index >= 0 && team_index < sc->m_teams.size() ) {
@@ -1562,7 +1603,10 @@ MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_inde
 			channels = &tc->m_private_channels;
 
 		if(!channels || channel_index >= channels->size())
+		{
+			qCritical() << "Channel index more than channels size " <<  channels->size();
 			return channel;
+		}
 
 		channel = channels->at(channel_index);
 	}
@@ -1583,6 +1627,15 @@ MattermostQt::MessagePtr MattermostQt::messageAt(int server_index, int team_inde
 	return c->m_message[message_index];
 }
 
+MattermostQt::UserPtr MattermostQt::userAt(int server_index, int user_index)
+{
+	if( server_index < 0 || server_index >= m_server.size() )
+		return UserPtr();
+	if( user_index < 0 && user_index >= m_server[server_index]->m_user.size() )
+		return UserPtr();
+	return m_server[server_index]->m_user[user_index];
+}
+
 
 
 void MattermostQt::setSettingsContainer(SettingsContainer *settings)
@@ -1592,6 +1645,8 @@ void MattermostQt::setSettingsContainer(SettingsContainer *settings)
 
 SettingsContainer *MattermostQt::settings()
 {
+	if( !m_settings )
+		m_settings = SettingsContainer::getInstance();
 	return m_settings;
 }
 
@@ -1889,7 +1944,14 @@ void MattermostQt::reply_get_post(QNetworkReply *reply)
 	if(message->m_root_user_name.isEmpty())
 		message->m_root_user_name = "unkown";
 	message->m_root_message = SettingsContainer::getInstance()->strToSingleLine( mc->m_message ); // not formatted text
-
+	if(message->m_root_message.isEmpty())
+	{// here we need generate message from files list
+		// get file info, and write file name
+		for( int i = 0 ; i < mc->m_file_ids.size(); i ++ )
+		{
+			message->m_root_message += tr("File: id(%0); ").arg(mc->m_file_ids[i]);
+		}
+	}
 	//now send signal - message is changed
 	QList<MessagePtr> mlist;
 	mlist.push_back(message);
@@ -1907,7 +1969,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
 	if(!channel)
 	{
-		qWarning() << "Chanel not found!";
+		qCritical() << QStringLiteral("Chanel not found! ").arg(server_index).arg(team_index).arg(channel_type).arg(channel_index);
 		return;
 	}
 //	if(channel->m_type == ChannelDirect)
@@ -1923,6 +1985,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 	        end = posts.end();
 	bool new_messages = false;
 	int its_all = order.size();
+	QList<MessagePtr> answers;
 	for(; it != end; it++ )
 	{
 		MessagePtr message(new MessageContainer(it.value().toObject()));
@@ -1949,28 +2012,49 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 		// check if message is answer
 		if( !message->m_root_id.isEmpty() )
 		{
-			// here we request root post by id
-			get_post(message->m_server_index, message->m_root_id, message);
+			answers.append(message);
 		}
 
 		new_messages = true;
 	}
 	if(new_messages)
 	{
+		QVector<MessagePtr> &messages = channel->m_message;
 		// sorting with right order
-		for(int i = 0, j2 = channel->m_message.size() - 1; i < order.size(); i++, j2 = channel->m_message.size() - 1 - i)
+		for(int i = 0, j2 = messages.size() - 1; i < order.size(); i++, j2 = messages.size() - 1 - i)
 		{
 			QString id = order[i].toString();
-			for(int j = channel->m_message.size() - i - 1; j >= 0  ; j--)
+			for(int j = messages.size() - i - 1; j >= 0  ; j--)
 			{
-				if( channel->m_message[j]->m_id.compare(id) == 0 )
+				if( messages[j]->m_id.compare(id) == 0 )
 				{
 					MessagePtr temp;
-					temp = channel->m_message[j];
-					channel->m_message[j] = channel->m_message[j2];
-					channel->m_message[j2] = temp;
-					channel->m_message[j2]->m_self_index = j2;
-					channel->m_message[j]->m_self_index = j;
+					temp = messages[j];
+					messages[j] = messages[j2];
+					messages[j2] = temp;
+					messages[j2]->m_self_index = j2;
+					messages[j]->m_self_index = j;
+
+					for(QList<MessagePtr>::iterator it = answers.begin(), end = answers.end(); it != end; it++)
+					{
+						MessagePtr ans = *it;
+						if( messages[j]->m_id == ans->m_root_id )
+						{
+							ans->m_root_ptr = messages[j];
+							messages[j]->m_thread_messages.append(ans);
+							it = answers.erase(it);
+							ans->updateRootMessage(this);
+							break;
+						}
+						else if( messages[j2]->m_id == ans->m_root_id )
+						{
+							ans->m_root_ptr = messages[j2];
+							messages[j2]->m_thread_messages.append(ans);
+							it = answers.erase(it);
+							ans->updateRootMessage(this);
+							break;
+						}
+					}
 #ifdef PRELOAD_FILE_INFOS
 					// TODO remove get_file_info, becuse it need only when we start view message
 					for(int k = 0; k < temp->m_file_ids.size(); k++ )
@@ -1987,6 +2071,12 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 					break;
 				}
 			}
+		}
+		// here we request root post by id, if there not already loaded
+		for(QList<MessagePtr>::iterator it = answers.begin(), end = answers.end(); it != end; it++)
+		{
+			MessagePtr message = *it;
+			get_post(server_index, message->m_root_id, message);
 		}
 		emit messagesAdded(channel);
 		if(its_all < 60 )
@@ -2020,6 +2110,8 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 	messages.reserve(order.size() + channel->m_message.size());
 	bool new_messages = false;
 	int its_all = order.size();
+	// list of answer messages
+	QList<MessagePtr> answers;
 	for(; it != end; it++ )
 	{
 		MessagePtr message(new MessageContainer(it.value().toObject()));
@@ -2043,8 +2135,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 		// check if message is answer
 		if( !message->m_root_id.isEmpty() )
 		{
-			// here we request root post by id
-			get_post(message->m_server_index, message->m_root_id, message);
+			answers.append(message);
 		}
 		new_messages = true;
 	}
@@ -2065,9 +2156,36 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 				messages[j2] = temp;
 				messages[j2]->m_self_index = j2;
 				messages[j]->m_self_index = j;
+
+				for(QList<MessagePtr>::iterator it = answers.begin(), end = answers.end(); it != end; it++)
+				{
+					MessagePtr ans = *it;
+					if( messages[j]->m_id == ans->m_root_id )
+					{
+						ans->m_root_ptr = messages[j];
+						messages[j]->m_thread_messages.append(ans);
+						ans->updateRootMessage(this);
+						it = answers.erase(it);
+						break;
+					}
+					else if( messages[j2]->m_id == ans->m_root_id )
+					{
+						ans->m_root_ptr = messages[j2];
+						messages[j2]->m_thread_messages.append(ans);
+						ans->updateRootMessage(this);
+						it = answers.erase(it);
+						break;
+					}
+				}
 				break;
 			}
 		}
+	}
+	// here we request root post by id, if there not already loaded
+	for(QList<MessagePtr>::iterator it = answers.begin(), end = answers.end(); it != end; it++)
+	{
+		MessagePtr message = *it;
+		get_post(message->m_server_index, message->m_root_id, *it);
 	}
 	int size = messages.size();
 	// now add new messages to front, and change all indexes after new
@@ -4122,10 +4240,50 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object)
 		m_file_ids.append( file_ids.at(i).toString() );
 
 	QJsonValue v = object["metadata"];
-	if( !v.isUndefined() ) {
-		qDebug() << "Message" << m_id << "has metadta:";
-		qDebug() << v.toObject();
+	if( !v.isUndefined()) {
+		if(v.isObject())
+		{
+			QJsonObject metadata =v.toObject();
+			qDebug() << "Message" << m_id << "has metadta:";
+			qDebug() << metadata.keys();
+		}
+		else {
+			qDebug() << v;
+		}
 	}
+}
+
+bool MattermostQt::MessageContainer::updateRootMessage( MattermostQt *mattermost )
+{
+	if(m_root_ptr.isNull())
+	{
+		return false;
+	}
+	if( !m_root_ptr->m_message.isEmpty() )
+	{
+		m_root_message = SettingsContainer::strToSingleLine(m_root_ptr->m_message);
+	}
+	else if( !m_root_ptr->m_file.isEmpty() ) // make root message from filenames
+	{
+		m_root_message = m_root_ptr->m_file[0]->m_name;
+	}
+	else
+	{
+		m_root_message = tr("Empty message");
+	}
+
+	if( (m_root_user_index == -1 || m_root_user_name.isEmpty()) )
+	{
+		MattermostQt::UserPtr user = mattermost->userAt(m_root_ptr->m_server_index, m_root_ptr->m_user_index);
+		if( user ) {
+			m_root_user_index = m_root_ptr->m_user_index;
+			m_root_user_name = user->m_username;
+		}
+		else {
+			m_root_user_index = -1;
+		}
+	}
+	return true;
 }
 
 MattermostQt::FilePtr MattermostQt::MessageContainer::fileAt(int file_index)

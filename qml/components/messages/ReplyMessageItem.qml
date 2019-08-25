@@ -51,7 +51,6 @@ BackgroundItem {
             Label {
                 id: replyMessage
                 clip: true
-                anchors.verticalCenter: fileTypeIcon.verticalCenter
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeTiny
                 font.italic:  true
@@ -66,7 +65,7 @@ BackgroundItem {
         IconButton {
             id: denyReply
             anchors {
-                verticalCenter: replyPostArea.verticalCenter
+                verticalCenter: replyPostInnerArea.verticalCenter
             }
             width: visible?Theme.iconSizeMedium:0
             height: width

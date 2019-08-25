@@ -31,7 +31,7 @@ Repeater {
         {
             height += summaryHeight[i]
         }
-        console.log("Repeater height changed: " + String(height))
+//        console.log("Repeater height changed: " + String(height))
     }
 
     model: AttachedFilesModel {
