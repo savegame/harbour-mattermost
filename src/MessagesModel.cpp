@@ -457,9 +457,10 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 	for(QList<MattermostQt::MessagePtr>::iterator it = messages.begin(), end = messages.end(); it != end; it++ )
 	{
 		MattermostQt::MessagePtr m = *it;
+		int row = m_messages.size() - 1 - m->m_self_index;
+		QModelIndex i = index(row);
+		dataChanged(i, i, roles);
 
-		lt = (m->m_self_index < lt)?m->m_self_index:lt;
-		br = (m->m_self_index > br)?m->m_self_index:br;
 		for(QList<MattermostQt::MessagePtr>::iterator
 		    it_a = m->m_thread_messages.begin(), end_a = m->m_thread_messages.end();
 		    it_a != end_a; it_a++ )
@@ -471,44 +472,30 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 			dataChanged(i, i, roles);
 		}
 	}
-	lt = m_messages.size() - 1 - lt;
-	br = m_messages.size() - 1 - br;
-//	qInfo() << QStringLiteral("Update %0 - %1; Messages size is %2").arg(lt).arg(br).arg(m_messages.size());
-	QModelIndex topLeft = index(br);
-	QModelIndex bottomRight = index(lt);
-	dataChanged(topLeft, bottomRight, roles);
 }
 
-void MessagesModel::slot_messageDeleted(MattermostQt::MessagePtr message)
+void MessagesModel::slot_messageDeleted(QList<MattermostQt::MessagePtr> messages)
 {
-	if(message->m_channel_id.compare(m_channel->m_id) != 0)
+	if(messages.isEmpty())
 		return;
 
-	QVector<int> roles;
-	roles << RootMessage;
+	MattermostQt::MessagePtr message = messages.first();
+	if(!message || message->m_channel_id.compare(m_channel->m_id) != 0)
+		return;
+
+	int count = 0;
 
 	for(QList<MattermostQt::MessagePtr>::iterator
-	    it = message->m_thread_messages.begin(), end = message->m_thread_messages.end();
-	    it != end; it++ )
+	    it = messages.begin(), end = messages.end();
+	    it != end; it++, count++ )
 	{
-		MattermostQt::MessagePtr ans = *it;
-		int ans_row = m_messages.size() - 1 - ans->m_self_index;
-		ans->m_root_message = tr("Message deleted");
-		QModelIndex i = index(ans_row);
-		dataChanged(i, i, roles);
+		MattermostQt::MessagePtr current = *it;
+		int row = m_messages.size() - 1 - current->m_self_index + count;
+		QModelIndex i = index(row);
+		beginRemoveRows(QModelIndex(), row, row);
+		m_messages.remove(message->m_self_index - count);
+		endRemoveRows();
 	}
-
-	int row = m_messages.size() - 1 - message->m_self_index;
-	beginRemoveRows(QModelIndex(), row, row);
-	m_messages.remove(message->m_self_index);
-	endRemoveRows();
-
-//	QVector<int> roles;
-//	roles << MessageIndex;
-//	int br = m_messages.size() - 1;
-//	QModelIndex topLeft = index(0);
-//	QModelIndex bottomRight = index(m_messages.size() - 1);
-	//	dataChanged(topLeft, bottomRight, roles);
 }
 
 void MessagesModel::slot_updateMessage(MattermostQt::MessagePtr message, int role)

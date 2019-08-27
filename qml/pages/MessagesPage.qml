@@ -117,6 +117,7 @@ Page {
             rootMessage:      role_root_message
             rootUser:         role_root_username
             messageTimestamp: role_message_create_at
+            property string rootId:  role_root_id
             //fileStatus:       role_file_status
 
             context: messagesPage.context
@@ -130,10 +131,17 @@ Page {
                     text: qsTr("Reply")
                     visible: isMessageMineOrOther
                     onClicked: {
-                        messageEditor.root_post_id = role_post_id
-                        messageEditor.root_post_index = role_row_index
-                        messageEditor.root_post_message = Settings.strToSingleLine(role_message)//role_formated_text
-                        messageEditor.root_post_username = role_user_name
+                        if( rootId.length > 0 ) {
+                            messageEditor.root_post_id = role_root_id
+                            messageEditor.root_post_index = role_row_index
+                            messageEditor.root_post_message = rootMessage
+                            messageEditor.root_post_username = rootUser
+                         }else {
+                            messageEditor.root_post_id = role_post_id
+                            messageEditor.root_post_index = role_row_index
+                            messageEditor.root_post_message = Settings.strToSingleLine(role_message)//role_formated_text
+                            messageEditor.root_post_username = role_user_name
+                        }
                     }
                 }
 

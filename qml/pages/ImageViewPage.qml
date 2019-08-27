@@ -4,14 +4,13 @@
 // https://github.com/blacksailer/depecher/blob/master/depecher/qml/pages/PicturePage.qml
 import QtQuick 2.6
 import Sailfish.Silica 1.0
-//import Sailfish.Gallery 1.0
 
 Page {
     id:imageview
     property string imagePath
     property string previewPath
     property bool   animatedImage
-    property alias scaleFactor : image_static.scale
+//    property alias scaleFactor : animatedImage ? image_anim.scale :image_static.scale
     allowedOrientations: Orientation.All
 
     Flickable {
@@ -23,8 +22,12 @@ Page {
 
         Item {
             id: imageContainer
-            width: Math.max(((animatedImage)?image_anim.width:image_static.width)*image_static.scale, flickable.width)
-            height: Math.max(((animatedImage)?image_anim.height:image_static.height)*image_static.scale, flickable.height)
+
+            property real imageWidth : (animatedImage)?image_anim.width*image_anim.scale:image_static.width*image_static.scale
+            property real imageHeight: (animatedImage)?image_anim.height*image_anim.scale:image_static.height*image_static.scale
+
+            width: Math.max(imageWidth, flickable.width)
+            height: Math.max(imageHeight, flickable.height)
 
             property real prevScale: 1
 
@@ -35,14 +38,35 @@ Page {
                 fillMode: Image.PreserveAspectFit
                 cache: false
                 asynchronous: true
-                anchors.fill: parent
+                anchors.centerIn: parent
                 visible: animatedImage
                 opacity: status == Image.Ready ? 1 : 0
                 Behavior on opacity { FadeAnimation{} }
 
                 function fitToScreen() {
+                    if(!visible)
+                        return
                     scale = Math.min(flickable.width / width, flickable.height / height, 1)
                     pinchArea.minScale = scale
+                    imageContainer.prevScale = scale
+                }
+
+                onStatusChanged: {
+                    if(status == Image.Ready)
+                        fitToScreen()
+                }
+
+                onScaleChanged: {
+                    if(!visible)
+                        return
+                    if ((width * scale) > flickable.width) {
+                        var xoff = (pinchArea.pinchCenter.x + flickable.contentX) * scale / imageContainer.prevScale;
+                        flickable.contentX = xoff - pinchArea.pinchCenter.x
+                    }
+                    if ((height * scale) > flickable.height) {
+                        var yoff = (pinchArea.pinchCenter.y + flickable.contentY) * scale / imageContainer.prevScale;
+                        flickable.contentY = yoff - pinchArea.pinchCenter.y
+                    }
                     imageContainer.prevScale = scale
                 }
             }
@@ -56,8 +80,11 @@ Page {
                 visible: !animatedImage
                 asynchronous: true
                 anchors.centerIn: parent
+                autoTransform: true
 
                 function fitToScreen() {
+                    if(!visible)
+                        return
                     scale = Math.min(flickable.width / width, flickable.height / height, 1)
                     pinchArea.minScale = scale
                     imageContainer.prevScale = scale
@@ -70,12 +97,19 @@ Page {
                         sourceSize.height = 3264
                 }
 
+                onStatusChanged: {
+                    if(status == Image.Ready)
+                        fitToScreen()
+                }
+
                 width: flickable.width
 
                 opacity: status == Image.Ready ? 1 : 0
                 Behavior on opacity { FadeAnimation{ duration: 100 } }
 
                 onScaleChanged: {
+                    if(!visible)
+                        return
                     if ((width * scale) > flickable.width) {
                         var xoff = (pinchArea.pinchCenter.x + flickable.contentX) * scale / imageContainer.prevScale;
                         flickable.contentX = xoff - pinchArea.pinchCenter.x
@@ -87,7 +121,6 @@ Page {
                     imageContainer.prevScale = scale
                 }
             }
-
         }
 
         PinchArea {
@@ -127,6 +160,7 @@ Page {
                 id: mousearea
                 anchors.fill: parent
                 onDoubleClicked: {
+                    var scaleFactor = animatedImage ? image_anim.scale :image_static.scale
                     if( scaleFactor < 2 )
                     {
                         pinchArea.pinchCenter  = Qt.point(mouseX/pinchArea.pinch.target.scale, mouseY/pinchArea.pinch.target.scale)
@@ -148,8 +182,8 @@ Page {
 
     NumberAnimation {
         id: zoom_animator
-        target: imageview
-        property: "scaleFactor"
+        target: animatedImage ? image_anim : image_static
+        property: "scale"
         running: false
         duration: 200
         easing.type: Easing.InOutQuad

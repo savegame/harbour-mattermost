@@ -1049,6 +1049,7 @@ void MattermostQt::get_post(int server_index, QString post_id, MattermostQt::Mes
 					if( channel->m_message[i]->m_id == message->m_root_id )
 					{
 						message->m_root_ptr = channel->m_message[i];
+						message->m_root_ptr->m_thread_messages.append(message);
 						break;
 					}
 				}
@@ -1058,6 +1059,7 @@ void MattermostQt::get_post(int server_index, QString post_id, MattermostQt::Mes
 				if( channel->m_message[i]->m_id == message->m_root_id )
 				{
 					message->m_root_ptr = channel->m_message[i];
+					message->m_root_ptr->m_thread_messages.append(message);
 					break;
 				}
 			}
@@ -2035,7 +2037,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 					messages[j2]->m_self_index = j2;
 					messages[j]->m_self_index = j;
 
-					for(QList<MessagePtr>::iterator it = answers.begin(), end = answers.end(); it != end; it++)
+					for(QList<MessagePtr>::iterator it = answers.begin(); it != answers.end(); it++)
 					{
 						MessagePtr ans = *it;
 						if( messages[j]->m_id == ans->m_root_id )
@@ -2044,7 +2046,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 							messages[j]->m_thread_messages.append(ans);
 							it = answers.erase(it);
 							ans->updateRootMessage(this);
-							break;
+//							break;
 						}
 						else if( messages[j2]->m_id == ans->m_root_id )
 						{
@@ -2052,8 +2054,10 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 							messages[j2]->m_thread_messages.append(ans);
 							it = answers.erase(it);
 							ans->updateRootMessage(this);
-							break;
+//							break;
 						}
+						if( it == answers.end() )
+							break;
 					}
 #ifdef PRELOAD_FILE_INFOS
 					// TODO remove get_file_info, becuse it need only when we start view message
@@ -2157,7 +2161,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 				messages[j2]->m_self_index = j2;
 				messages[j]->m_self_index = j;
 
-				for(QList<MessagePtr>::iterator it = answers.begin(), end = answers.end(); it != end; it++)
+				for(QList<MessagePtr>::iterator it = answers.begin(); it != answers.end(); it++)
 				{
 					MessagePtr ans = *it;
 					if( messages[j]->m_id == ans->m_root_id )
@@ -2166,7 +2170,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 						messages[j]->m_thread_messages.append(ans);
 						ans->updateRootMessage(this);
 						it = answers.erase(it);
-						break;
+//						break;
 					}
 					else if( messages[j2]->m_id == ans->m_root_id )
 					{
@@ -2174,8 +2178,10 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 						messages[j2]->m_thread_messages.append(ans);
 						ans->updateRootMessage(this);
 						it = answers.erase(it);
-						break;
+//						break;
 					}
+					if( it == answers.end() )
+						break;
 				}
 				break;
 			}
@@ -2194,11 +2200,10 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 	messages.append(channel->m_message);
 	channel->m_message.swap(messages);
 	// get files info from new messages
-	// TODO its no need more? becuse it should sck file info from MessagesModel when it need
+#ifdef PRELOAD_FILE_INFOS
 	for(int i = 0; i < size; i++)
 	{
 		MessagePtr temp = channel->m_message[i];
-#ifdef PRELOAD_FILE_INFOS
 		for(int k = 0; k < temp->m_file_ids.size() && false; k++ )
 		{
 			get_file_info(
@@ -2209,8 +2214,8 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 			            temp->m_self_index,
 			            temp->m_file_ids[k]);
 		}
-#endif
 	}
+#endif
 	emit messagesAddedBefore(channel, size);
 
 }
@@ -3113,8 +3118,6 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject data)
 	}
 	MessagePtr message( new MessageContainer(post) );
 
-//	message_/format(message);
-
 	message->m_server_index = sc->m_self_index;
 	if(message->m_type == MessageOwner::MessageTypeCount)
 	{
@@ -3418,31 +3421,11 @@ MattermostQt::UserPtr MattermostQt::id2user(ServerPtr sc, const QString &id) con
 	return UserPtr();
 }
 
-//void MattermostQt::message_format(MattermostQt::MessagePtr message)
-//{
-//	if(message.isNull() || message->m_message.isEmpty())
-//		return;
-
-//	QString html;
-//	QString &m = message->m_message;
-//	QStringList tokens;
-//	tokens << "\\*.*\\*";
-//	for(int i = 0; i < message->m_message.size(); i++)
-//	{
-
-//	}
-////	QRegExp md("(```|\\*{1,3}(.*^\\*)\\*{1,3}|\^#+)\n");
-////	int last_pos = 0;
-////	while( md.indexIn(m,last_pos) != -1 )
-////	{
-////		if(last_pos = 0)
-////			html += m.left(cap)
-////	}
-//}
-
 void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject data)
 {
 	ChannelPtr channel;
+
+	qDebug() << data;
 
 	QJsonObject post = data["post"].toObject();
 	if( post.isEmpty() )
@@ -3516,9 +3499,73 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject da
 		}
 		if(deleted && index >= 0)
 		{
+			// here we update all messages, with link to this message
+
+			if(!deleted->m_thread_messages.isEmpty())
+			{
+				for(QList<MattermostQt::MessagePtr>::iterator
+				    it = deleted->m_thread_messages.begin(), end = deleted->m_thread_messages.end();
+				    it != end; it++ )
+				{
+					MattermostQt::MessagePtr ans = *it;
+//					ans->m_root_message = tr("Message deleted"); ans->m_root_ptr.reset();
+					for(int i = index; i < channel->m_message.size();)
+					{
+						if( ans == channel->m_message[i] )
+						{
+							channel->m_message.remove(i);
+						}
+						else {
+							i++;
+						}
+					}
+				}
+			}
+
 			for(int i = index; i < channel->m_message.size(); i++ )
 				channel->m_message[i]->m_self_index = i;
-			emit messageDeleted(deleted);
+			deleted->m_thread_messages.prepend(deleted);
+			emit messageDeleted(deleted->m_thread_messages);
+			deleted->m_thread_messages.pop_front();
+
+			for(QList<MattermostQt::MessagePtr>::iterator
+			    it = deleted->m_thread_messages.begin(), end = deleted->m_thread_messages.end();
+			    it != end; it++ )
+			{
+				// check if messages has its own replies
+				// (its possible ony by API, but not in ofccicial client)
+				MessagePtr answer = *it;
+				if(!answer->m_thread_messages.isEmpty())
+				{
+					for(QList<MattermostQt::MessagePtr>::iterator
+					    t_it = answer->m_thread_messages.begin(), t_end = answer->m_thread_messages.end();
+					    t_it != t_end; t_it++ )
+					{
+						MessagePtr reply = *t_it;
+						reply->m_root_ptr = MessagePtr();
+						reply->m_root_id.clear();
+						reply->m_root_message.clear();
+
+					}
+					emit messageUpdated(answer->m_thread_messages);
+				}
+			}
+
+			if(deleted->m_root_ptr)
+			{
+				MessagePtr root_ptr = deleted->m_root_ptr;
+				for(QList<MattermostQt::MessagePtr>::iterator
+				    it = root_ptr->m_thread_messages.begin(), end = root_ptr->m_thread_messages.end();
+				    it != end; it++ )
+				{
+					MessagePtr current = *it;
+					if( current == deleted )
+					{
+						root_ptr->m_thread_messages.erase(it);
+						break;
+					}
+				}
+			}
 		}
 		return;
 	}

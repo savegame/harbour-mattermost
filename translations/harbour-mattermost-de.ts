@@ -245,13 +245,6 @@
     </message>
 </context>
 <context>
-    <name>MessagesModel</name>
-    <message>
-        <source>Message deleted</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>MessagesPage</name>
     <message>
         <source>get older</source>

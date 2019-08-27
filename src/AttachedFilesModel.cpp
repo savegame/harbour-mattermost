@@ -219,7 +219,7 @@ QSizeF AttachedFilesModel::computeItemSize(MattermostQt::FilePtr file) const
 void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, QVector<QString> file_ids, QVector<int> roles)
 {
 	if( !m_message ) {
-		qCritical() << "MessagePtr is emty in AttagedFilesModel";
+		qCritical() << "MessagePtr is empty in AttachedFilesModel";
 		return;
 	}
 	if( m != m_message )

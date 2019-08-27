@@ -350,9 +350,60 @@ MouseArea {
             }
         }
 
+        Component {
+            id: animatedImage
+
+            Item
+            {
+                id: imageItem
+
+                width: Math.min( Math.max(image.sourceSize.width, Theme.iconSizeLarge) ,maxWidth)
+                height: width * image.sourceSize.height/image.sourceSize.width
+
+                Rectangle {
+                    id: maskRect
+                    radius: Theme.paddingMedium
+                    anchors.fill: parent
+                    color: "black"
+                    visible: false
+                }
+
+                AnimatedImage {
+                    id: image
+                    fillMode: Image.PreserveAspectFit
+                    source: filePath
+                    onStatusChanged: {
+                        var isReady = status == AnimatedImage.Ready
+                        playing = isReady
+                        if(isReady && filePath.length > 0)
+                            thumbImage.opacity = 0
+                    }
+                    asynchronous: true
+                    cache: false
+
+                    Image {
+                        id: thumbImage
+                        fillMode: Image.PreserveAspectFit
+                        source: fileThumbnail
+                        sourceSize: imageSize
+                        anchors.fill: parent
+                        visible: opacity > 0
+                        Behavior on opacity {
+                            NumberAnimation { duration: 50 }
+                        }
+                    }
+
+                    layer.enabled: true
+                    layer.effect: OpacityMask {
+                        maskSource: maskRect
+                    }
+                }
+            }
+        }
+
         Loader {
             id: imageComponentLoader
-            sourceComponent: staticImage
+            sourceComponent: fileType === MattermostQt.FileAnimatedImage ? animatedImage : staticImage
         }
     }
 

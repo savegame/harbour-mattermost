@@ -87,7 +87,7 @@ protected slots:
 	void slot_messagesIsEnd(MattermostQt::ChannelPtr channel);
 	void slot_messageAdded(QList<MattermostQt::MessagePtr> messages);
 	void slot_messageUpdated(QList<MattermostQt::MessagePtr> messages);
-	void slot_messageDeleted(MattermostQt::MessagePtr message);
+	void slot_messageDeleted(QList<MattermostQt::MessagePtr> messages);
 	void slot_updateMessage(MattermostQt::MessagePtr message, int role);
 	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
 	void slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles);

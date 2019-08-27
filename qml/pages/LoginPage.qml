@@ -92,6 +92,8 @@ Page {
             specialmessage.text = message;
             specialmessage.visible = true;
         })
+
+        loading.running = true;
     }
 
     SilicaFlickable {
