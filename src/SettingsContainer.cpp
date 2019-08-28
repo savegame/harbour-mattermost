@@ -8,6 +8,7 @@ MT_SET_PROPERTY(bool,  showBlobs)
 MT_SET_PROPERTY(float, blobOpacity)
 MT_SET_PROPERTY(float, pageMargin)
 MT_SET_PROPERTY(bool, formatedText)
+MT_SET_PROPERTY(bool,  debug)
 
 SettingsContainer::SettingsContainer(QObject *parent) : QObject(parent)
 {
@@ -35,6 +36,7 @@ void SettingsContainer::resetToDefault()
 	m_blobOpacity           = 0.7;
 	m_formatedText          = true;
 	m_pageMargin            = Silica::Theme::instance()->paddingMedium();
+	m_debug                 = false;
 }
 
 #define ADD_VALUE(x) settings[#x] = x

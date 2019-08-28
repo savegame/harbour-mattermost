@@ -4,6 +4,7 @@
 // https://github.com/blacksailer/depecher/blob/master/depecher/qml/pages/PicturePage.qml
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import ru.sashikknox 1.0
 
 Page {
     id:imageview
@@ -44,16 +45,33 @@ Page {
                 Behavior on opacity { FadeAnimation{} }
 
                 function fitToScreen() {
-                    if(!visible)
+                    if(!animatedImage)
                         return
-                    scale = Math.min(flickable.width / width, flickable.height / height, 1)
-                    pinchArea.minScale = scale
-                    imageContainer.prevScale = scale
+                    if( flickable.width == 0 || flickable.height == 0 )
+                    {
+                        flickable.onWidthChanged.connect( function f() {
+                            image_anim.fitToScreen()
+                        });
+                        return
+                    }
+
+                    var s = Math.min(flickable.width / width, flickable.height / height)
+                    var c = height / width;
+                    width *= s
+                    height = width * c;
                 }
 
                 onStatusChanged: {
-                    if(status == Image.Ready)
-                        fitToScreen()
+//                    if(status == Image.Ready)
+//                        fitToScreen()
+                }
+
+                onSourceSizeChanged: {
+                    if( sourceSize.width > 3264 )
+                        sourceSize.width = 3264
+                    if( sourceSize.height > 3264 )
+                        sourceSize.height = 3264
+                    fitToScreen();
                 }
 
                 onScaleChanged: {
@@ -83,11 +101,25 @@ Page {
                 autoTransform: true
 
                 function fitToScreen() {
-                    if(!visible)
+//                    if(!visible)
+//                        return
+                    if( flickable.width == 0 || flickable.height == 0 )
+                    {
+                        flickable.onWidthChanged.connect( function f() {
+                            image_static.fitToScreen();
+                        });
                         return
-                    scale = Math.min(flickable.width / width, flickable.height / height, 1)
-                    pinchArea.minScale = scale
-                    imageContainer.prevScale = scale
+                    }
+
+                    var s = Math.min(flickable.width / width, flickable.height / height)
+//                    if( scale > 1.0 )
+//                    {
+                    var c = height / width;
+                    width *= s
+                    height = width * c;
+//                    height *= s
+//                    }
+//                    imageContainer.prevScale = scale
                 }
 
                 onSourceSizeChanged: {
@@ -95,14 +127,15 @@ Page {
                         sourceSize.width = 3264
                     if( sourceSize.height > 3264 )
                         sourceSize.height = 3264
+//                    width = sourceSize.width
+//                    height = sourceSize.height
+                    fitToScreen();
                 }
 
                 onStatusChanged: {
                     if(status == Image.Ready)
                         fitToScreen()
                 }
-
-                width: flickable.width
 
                 opacity: status == Image.Ready ? 1 : 0
                 Behavior on opacity { FadeAnimation{ duration: 100 } }
@@ -143,12 +176,12 @@ Page {
             onPinchFinished: {
                 var _scale = animatedImage ? image_anim.scale : image_static.scale
                 if (_scale < pinchArea.minScale) {
-                    //                        bounceBackAnimation.to = pinchArea.minScale
+                    //                        bounceBackAnimation.to = pinchArea.pinch.minimumScale
                     //                        bounceBackAnimation.start()
                 }
                 else if (_scale > pinchArea.maxScale) {
-                    //                        bounceBackAnimation.to = pinchArea.maxScale
-                    //                        bounceBackAnimation.start()
+                    //bounceBackAnimation.to = pinchArea.pinch.maximumScale
+                    //bounceBackAnimation.start()
                 }
             }
 
@@ -161,17 +194,18 @@ Page {
                 anchors.fill: parent
                 onDoubleClicked: {
                     var scaleFactor = animatedImage ? image_anim.scale :image_static.scale
-                    if( scaleFactor < 2 )
+                    var maxScale = pinchArea.pinch.maximumScale * 0.5
+                    if( scaleFactor < maxScale )
                     {
                         pinchArea.pinchCenter  = Qt.point(mouseX/pinchArea.pinch.target.scale, mouseY/pinchArea.pinch.target.scale)
                         zoom_animator.from = scaleFactor;
-                        zoom_animator.to = 2;
+                        zoom_animator.to = maxScale;
                         zoom_animator.start()
                     }
-                    else if ( scaleFactor >= 2 )
+                    else //if ( scaleFactor >= maxScale )
                     {
                         zoom_animator.from = scaleFactor;
-                        zoom_animator.to = 1;
+                        zoom_animator.to = pinchArea.pinch.minimumScale;
                         zoom_animator.start()
                     }
                 }
@@ -189,16 +223,24 @@ Page {
         easing.type: Easing.InOutQuad
     }
 
-    /** some debug data
+    /** some debug data */
+    Rectangle {
+        id: debugBG
+        visible: Settings.debug
+        color: Qt.rgba(0,0,0,0.3)
+        anchors.fill: parent
+        anchors.margins: Theme.pageStackIndicatorWidth
+    }
+
     Column {
         id: debugData
-        visible: true
+        visible: Settings.debug;
         anchors.fill: parent
         anchors.margins: Theme.pageStackIndicatorWidth
 
         Label {
             id: pinchScale
-            text: "pinchArea.scale " + String(pinchArea.pinch.target.scale)
+            text: "pinchArea.scale " + String(animatedImage ? image_anim.scale : image_static.scale)
         }
         Label {
             id: pinchCenterX
@@ -208,6 +250,7 @@ Page {
             id: pinchCenterY
             text: "pinchArea.pinchCenter.x " + String(pinchArea.pinchCenter.y)
         }
+
         Label {
             id: contentPosX
             text: "flickable.contetX " + String(flickable.contentX)
@@ -223,8 +266,18 @@ Page {
         }
         Label {
             id: targetPosY
-            text: "flickable.height" + String(flickable.height)
+            text: "flickable.height " + String(flickable.height)
+        }
+
+        Label {
+            id: targetW
+            text: "target.width " + String( animatedImage ? image_anim.width : image_static.width)
+        }
+        Label {
+            id: targetH
+            text: "target.height " + String(animatedImage ? image_anim.height : image_static.height)
         }
     }
+
     // end of some debug data */
 }

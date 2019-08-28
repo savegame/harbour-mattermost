@@ -322,10 +322,10 @@ MouseArea {
             {
                 id: imageItem
                 // TODO compute right image size
-                width: Math.min( Math.max(image.sourceSize.width, Theme.iconSizeLarge) ,maxWidth)
+                width: Math.min( Math.max(image.sourceSize.width, maxWidth * 0.6) ,maxWidth)
 //                height: width * image.sourceSize.height/image.sourceSize.width
 //                width: itemSize.width;
-                height: width * image.sourceSize.height/image.sourceSize.width
+                height: Math.min( width * image.sourceSize.height/image.sourceSize.width, maxWidth)
 
                 Rectangle {
                     id: maskRect
@@ -357,8 +357,8 @@ MouseArea {
             {
                 id: imageItem
 
-                width: Math.min( Math.max(image.sourceSize.width, Theme.iconSizeLarge) ,maxWidth)
-                height: width * image.sourceSize.height/image.sourceSize.width
+                width: Math.min( Math.max(image.sourceSize.width, maxWidth * 0.6) ,maxWidth)
+                height: Math.min( width * image.sourceSize.height/image.sourceSize.width, maxWidth)
 
                 Rectangle {
                     id: maskRect
@@ -372,6 +372,7 @@ MouseArea {
                     id: image
                     fillMode: Image.PreserveAspectFit
                     source: filePath
+                    anchors.fill: parent
                     onStatusChanged: {
                         var isReady = status == AnimatedImage.Ready
                         playing = isReady

@@ -49,10 +49,14 @@ Page {
         }
 
         VideoOutput {
-            id: viewfinder
+            id: videooutpt
             source: camera
             anchors.fill: parent
             focus : visible // to receive focus and capture key events when visible
+
+            Component.onCompleted: {
+                console.log( "Current resolutions " + String(camera.viewfinder.resolution) )
+            }
         }
 
         Image {
@@ -61,12 +65,39 @@ Page {
 
     }
 
+    MouseArea {
+        id: allScreen
+        anchors.fill: parent
+
+        onClicked:  {
+            camera.focus.focusMode = CameraFocus.FocusPointCustom
+            camera.focus.focusPointMode = CameraFocus.FocusPointCustom
+            camera.focus.customFocusPoint = Qt.point(mouseX,mouseY)
+            camera.searchAndLock();
+
+            focusRect.visible = true
+            focusRect.x = mouseX - focusRect.radius
+            focusRect.y = mouseY - focusRect.radius
+        }
+
+        Rectangle {
+            id: focusRect
+            visible: false
+            width: Theme.iconSizeLarge * 2
+            height: width
+            radius: width * 0.5
+            color: Qt.rgba(0,0,0,0)
+            border.color: Theme.primaryColor
+            border.width: Theme.paddingSmall
+        }
+    }
+
     Keys.enabled: true
     Keys.priority: Keys.BeforeItem
     Keys.onPressed: {
         if( event.key == Qt.Key_CameraFocus )
         {
-            camera.focus.focusMode = CameraFocus.FocusManual
+            camera.focus.focusMode = Camera.FocusHyperfocal//CameraFocus.FocusManual
             camera.focus.focusPointMode = CameraFocus.FocusPointCenter
             //camera.focus.customFocusPoint = Qt.point(parent.width*0.5,parent.height * 0.5)
             camera.searchAndLock();

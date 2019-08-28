@@ -172,7 +172,9 @@ Page {
                         Remorse.itemAction(
                                     messageLabel, qsTr("Deleting"),
                                     function rm() {
-                                        context.mattermost.delete_message(si,ti,ct,ci,mi)
+                                        if(Settings.debug)
+                                            console.log( "mi = " + String(mi) + "; role_row_index = " + String(role_row_index)  )
+                                        context.mattermost.delete_message(si,ti,ct,ci,role_row_index)
                                     })
                     }
                 }

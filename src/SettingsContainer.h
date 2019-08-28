@@ -44,6 +44,7 @@ class SettingsContainer : public QObject
 	MT_PROPERTY(float, blobOpacity);
 	MT_PROPERTY(float, pageMargin);
 	MT_PROPERTY(bool,  formatedText); // show Markdown text
+	MT_PROPERTY(bool,  debug);
 
 public:
 	explicit SettingsContainer(QObject *parent = nullptr);
