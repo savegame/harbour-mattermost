@@ -222,7 +222,7 @@ ListItem {
                 AttachedFiles {
                     id: attachedFiles
                     anchors.margins: plainTextLablel.anchors.margins
-                    maxWidth: inBlobContent.maxBlobContentWidth//Math.min(implicitWidth, maxBlobContentWidth)
+                    maxWidth: Math.min(inBlobContent.maxBlobContentWidth,messagesListHeight)
                     messagesModel: messageLabel.messagesModel
                     textColor:     messageLabel.textColor
                     rowIndex:      messageLabel.rowIndex

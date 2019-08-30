@@ -118,7 +118,7 @@ Page {
             rootUser:         role_root_username
             messageTimestamp: role_message_create_at
             property string rootId:  role_root_id
-            //fileStatus:       role_file_status
+            property real messagesListHeight: messagesListView.height
 
             onContentHeightChanged: {
                 role_item_height = contentHeight;

@@ -74,10 +74,10 @@ Repeater {
         property string mimeType       : role_mime_type
         property size   imageSize      : role_image_size
         property size   itemSize       : role_item_size
-        property real   maxWidth       : inBlobContent.maxBlobContentWidth
+        property real   maxWidth       : filesRepeater.maxWidth
         property real   realBlobWidth  : inBlobContent.realBlobContentWidth
         property real   componentHeight: 5
-        property point  sizeCoef
+        property point  sizeCoef        // coeficient for right computing size of preview
 
         onImageSizeChanged: {
             if(imageSize.width > imageSize.height)
