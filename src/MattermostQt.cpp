@@ -4280,7 +4280,10 @@ bool MattermostQt::MessageContainer::updateRootMessage( MattermostQt *mattermost
 	}
 	else if( !m_root_ptr->m_file.isEmpty() ) // make root message from filenames
 	{
-		m_root_message = m_root_ptr->m_file[0]->m_name;
+		if( m_root_ptr->m_file[0]->m_file_type == FileAnimatedImage ||  m_root_ptr->m_file[0]->m_file_type == FileImage )
+			m_root_message = tr("Image: ") + m_root_ptr->m_file[0]->m_name;
+		else
+			m_root_message = tr("File: ") + m_root_ptr->m_file[0]->m_name;
 	}
 	else
 	{

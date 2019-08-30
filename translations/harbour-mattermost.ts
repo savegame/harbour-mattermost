@@ -220,6 +220,14 @@
         <source>Empty message</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Image: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File: </source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MessageEditorBar</name>

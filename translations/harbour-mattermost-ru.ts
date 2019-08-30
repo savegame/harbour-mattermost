@@ -203,11 +203,11 @@
     <name>MattermostQt</name>
     <message>
         <source>Cant open CA certificate file: &quot;%0&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Cant open certificate file: &quot;%0&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>File: id(%0); </source>
@@ -219,6 +219,14 @@
     <message>
         <source>Empty message</source>
         <translation>Пустое сообщение</translation>
+    </message>
+    <message>
+        <source>Image: </source>
+        <translation>Изображение: </translation>
+    </message>
+    <message>
+        <source>File: </source>
+        <translation>Файл: </translation>
     </message>
 </context>
 <context>

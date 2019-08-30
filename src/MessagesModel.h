@@ -97,7 +97,7 @@ protected slots:
 	void slot_messageAddedBefore(MattermostQt::ChannelPtr channel, int count);
 	void slot_usersUpdated(QVector<MattermostQt::UserPtr> users, QVector<int> roles);
 	void slot_userUpdated(MattermostQt::UserPtr user, QVector<int> roles);
-//	void slot_fileStatusChanged(MattermostQt::FilePtr file);
+	void slot_attachedFilesChanged(MattermostQt::MessagePtr message, QVector<QString> file_ids, QVector<int> roles);
 private:
 	QString                            m_channel_id;
 	MattermostQt::ChannelPtr           m_channel;

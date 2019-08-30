@@ -34,7 +34,6 @@ MouseArea {
     Component {
         id: imageViewPage
         ImageViewPage {
-
         }
     }
 
@@ -44,7 +43,7 @@ MouseArea {
                            imagePath: filePath,
                            previewPath: filePreview,
                            animatedImage: fileType == MattermostQt.FileAnimatedImage,
-                           sourceSize: imageSize,
+                           imageSize: imageSize,
                            width: Screen.width
                        })
     }

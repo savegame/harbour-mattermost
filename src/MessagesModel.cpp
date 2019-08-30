@@ -275,6 +275,9 @@ void MessagesModel::setMattermost(MattermostQt *mattermost)
 
 	connect( m_mattermost.data(), &MattermostQt::messagesIsEnd,
 	         this, &MessagesModel::slot_messagesIsEnd );
+
+	connect( m_mattermost.data(), &MattermostQt::attachedFilesChanged,
+	         this, &MessagesModel::slot_attachedFilesChanged );
 }
 
 MattermostQt *MessagesModel::getMattermost() const
@@ -555,7 +558,7 @@ void MessagesModel::slot_updateMessage(MattermostQt::MessagePtr message, int rol
 	dataChanged(i,i,roles);
 
 	roles.clear();
-	role << RootMessage << RootMessageUserName;
+	roles << RootMessage << RootMessageUserName;
 	for(QList<MattermostQt::MessagePtr>::iterator
 	    it = message->m_thread_messages.begin(), end = message->m_thread_messages.end();
 	    it != end; it++ )
@@ -598,6 +601,28 @@ void MessagesModel::slot_userUpdated(MattermostQt::UserPtr user, QVector<int> ro
 	QModelIndex end = index(m_messages.size() - 1);
 	QModelIndex begin = index(0);
 	dataChanged(begin,end, roles);
+}
+
+void MessagesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr message, QVector<QString> file_ids, QVector<int> roles)
+{
+	if(!message || m_messages.empty() )
+		return;
+	if( message->m_channel_id != m_messages.front()->m_channel_id )
+		return;
+
+	roles.clear();
+	roles << RootMessage << RootMessageUserName;
+
+	for(QList<MattermostQt::MessagePtr>::iterator
+	    it = message->m_thread_messages.begin(), end = message->m_thread_messages.end();
+	    it != end; it++ )
+	{
+		MattermostQt::MessagePtr ans = *it;
+		int ans_row = m_messages.size() - 1 - ans->m_self_index;
+		ans->updateRootMessage(m_mattermost.data());
+		QModelIndex i = index(ans_row);
+		dataChanged(i, i, roles);
+	}
 }
 
 

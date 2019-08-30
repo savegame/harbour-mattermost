@@ -11,6 +11,7 @@ Page {
     property string imagePath
     property string previewPath
     property bool   animatedImage
+    property size   imageSize
 //    property alias scaleFactor : animatedImage ? image_anim.scale :image_static.scale
     allowedOrientations: Orientation.All
 
@@ -47,6 +48,7 @@ Page {
                 function fitToScreen() {
                     if(!animatedImage)
                         return
+
                     if( flickable.width == 0 || flickable.height == 0 )
                     {
                         flickable.onWidthChanged.connect( function f() {
@@ -59,11 +61,6 @@ Page {
                     var c = height / width;
                     width *= s
                     height = width * c;
-                }
-
-                onStatusChanged: {
-//                    if(status == Image.Ready)
-//                        fitToScreen()
                 }
 
                 onSourceSizeChanged: {
@@ -101,8 +98,6 @@ Page {
                 autoTransform: true
 
                 function fitToScreen() {
-//                    if(!visible)
-//                        return
                     if( flickable.width == 0 || flickable.height == 0 )
                     {
                         flickable.onWidthChanged.connect( function f() {
@@ -112,14 +107,9 @@ Page {
                     }
 
                     var s = Math.min(flickable.width / width, flickable.height / height)
-//                    if( scale > 1.0 )
-//                    {
                     var c = height / width;
                     width *= s
                     height = width * c;
-//                    height *= s
-//                    }
-//                    imageContainer.prevScale = scale
                 }
 
                 onSourceSizeChanged: {
@@ -176,8 +166,8 @@ Page {
             onPinchFinished: {
                 var _scale = animatedImage ? image_anim.scale : image_static.scale
                 if (_scale < pinchArea.minScale) {
-                    //                        bounceBackAnimation.to = pinchArea.pinch.minimumScale
-                    //                        bounceBackAnimation.start()
+                    //bounceBackAnimation.to = pinchArea.pinch.minimumScale
+                    //bounceBackAnimation.start()
                 }
                 else if (_scale > pinchArea.maxScale) {
                     //bounceBackAnimation.to = pinchArea.pinch.maximumScale
