@@ -120,6 +120,11 @@ Page {
             property string rootId:  role_root_id
             //fileStatus:       role_file_status
 
+            onContentHeightChanged: {
+                role_item_height = contentHeight;
+//                messagesModel.setData(index,contentHeight, MessagesModel.ItemSize)
+            }
+
             context: messagesPage.context
             width: messagesListView.width
             showMenuOnPressAndHold: isMessageMineOrOther
@@ -174,7 +179,7 @@ Page {
                                     function rm() {
                                         if(Settings.debug)
                                             console.log( "mi = " + String(mi) + "; role_row_index = " + String(role_row_index)  )
-                                        context.mattermost.delete_message(si,ti,ct,ci,role_row_index)
+                                        context.mattermost.delete_message(si,ti,ct,ci,mi)
                                     })
                     }
                 }

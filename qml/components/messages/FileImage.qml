@@ -7,215 +7,12 @@ import "../../pages"
 import ru.sashikknox 1.0
 import QtGraphicalEffects 1.0
 
-/*// Image Component
-Component {
-    id: fileImage
-    BackgroundItem {
-        id: imageBackground
-        property size itemSize:
-            messagesModel.getItemSize(
-                rowIndex,
-                fileIndex,
-                filesRepeater.width
-                )
-        property size imageSourceSize: messagesModel.getImageSize(rowIndex,fileIndex)
-        property string imagePath: fileThumbnail
-        property int fileStatus: MattermostQt.FileRemote
-
-        height: imageWithLabel.height
-        width: Math.min(filesRepeater.width,imageWithLabel.width)
-
-        onHeightChanged: {
-            if(height > 0)
-                componentHeight = height
-        }
-
-        Component {
-            id: staticImage
-            Item
-            {
-                id: imageItem
-                height: imageBackground.itemSize.height
-                width: imageBackground.itemSize.width
-
-                Rectangle {
-                    id: maskRect
-                    radius: Theme.paddingMedium
-                    anchors.fill: parent
-                    visible: false
-                }
-
-                Image {
-                    id: image
-                    fillMode: Image.PreserveAspectFit
-                    source: imageBackground.imagePath
-                    sourceSize: imageBackground.imageSourceSize
-                    anchors.fill: parent
-                    layer.enabled: true
-                    layer.effect: OpacityMask {
-                        maskSource: maskRect
-                    }
-                    onSourceChanged: {
-                        console.log( source )
-                    }
-                }//image
-            }
-        }
-
-        Component {
-            id: animatedimage
-
-            AnimatedImage {
-                id: image
-                fillMode: Image.PreserveAspectFit
-                source: imageBackground.imagePath
-                onStatusChanged: playing = (status == AnimatedImage.Ready)
-                asynchronous: true
-                cache: false
-                height: imageBackground.itemSize.height
-                width: imageBackground.itemSize.width
-                onWidthChanged:
-                    componentWidth = width;
-            }
-        }
-
-        Component {
-            id: imageViewPage
-            ImageViewPage {
-
-            }
-        }
-
-        Column {
-            id: imageWithLabel
-            width: fileNameRow.width
-            height: imageLoader.height + imageNameLabel.height + Theme.paddingSmall
-            spacing: Theme.paddingSmall
-            Row {
-                id: fileNameRow
-                width:
-                    Math.max(
-                        imageNameLabel.width + fileSizeLabel.width + fileNameRow.spacing,
-                        imageBackground.itemSize.width
-                        )
-                spacing: Theme.paddingMedium
-                Label {
-                    id: imageNameLabel
-                    width: Math.min(contentWidth,filesRepeater.width - fileNameRow.spacing - fileSizeLabel.width - Theme.paddingMedium)
-                    text: fileName//messagesModel.getFileName(rowIndex,fileIndex)
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.italic:  true
-                    color: textColor
-                    truncationMode: TruncationMode.Fade
-                    height: contentHeight
-                }// filename label
-                Label {
-                    id: fileSizeLabel
-                    width: contentWidth
-                    text: messagesModel.getFileSize(rowIndex,fileIndex)
-                    font.family: Theme.fontFamily
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.italic:  true
-                    color: textColor
-                    height: contentHeight
-                }// filename label
-            }
-            Loader {
-                id: imageLoader
-                width: imageBackground.itemSize.width
-                height: imageBackground.itemSize.height
-                asynchronous: true
-                sourceComponent:
-                    switch(fileType)
-                    {
-//                        case MattermostQt.FileImage:
-//                            staticimage
-//                            break;
-//                        case MattermostQt.FileAnimatedImage:
-//                            animatedimage
-//                            break;
-                    default:
-                        staticImage
-                        break;
-                    }
-            }//imageloader
-        }
-
-        MouseArea {
-            id: downloadbutton
-            visible: true
-            anchors.fill: parent
-            Component.onCompleted: {
-                context.mattermost.fileStatusChanged.connect(
-                            function onStatusChanged(fid,fstatus) {
-                                if(fid !==  fileId )
-                                    return
-                                switch(fstatus){
-                                case MattermostQt.FileDownloaded:
-                                    progressCircle.visible = false
-                                    progressCircle.enabled = false
-                                    // here need open prepeared ImageViewPage
-                                    pageStack.push( imageViewPage,
-                                                   {
-                                                       imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
-                                                       previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
-                                                       sourceSize: imageBackground.imageSourceSize,
-                                                       animatedImage: fileType === MattermostQt.FileAnimatedImage,
-                                                       width: Screen.width
-                                                   })
-                                }
-                                fileStatus = fstatus;
-                            })
-            }
-
-            onClicked: {
-                if( fileStatus === MattermostQt.FileRemote ) {
-                    context.mattermost.get_file(
-                                server_index,
-                                team_index,
-                                channel_type,
-                                channel_index,
-                                rowIndex,
-                                fileIndex)
-                    progressCircle.visible = true;
-                }
-                else if( fileStatus === MattermostQt.FileDownloaded ) {
-                    pageStack.push( imageViewPage,
-                                   {
-                                       imagePath: messagesModel.getFilePath(rowIndex,fileIndex),
-                                       previewPath: messagesModel.getValidPath(rowIndex,fileIndex),
-                                       animatedImage: fileType === MattermostQt.FileAnimatedImage,
-                                       sourceSize: imageBackground.imageSourceSize,
-                                       width: Screen.width
-                                   })
-                }
-            }
-        } // MouseArea downloadbutton
-
-        ProgressCircle {
-            id: progressCircle
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: false
-            //value: fileStatus === MattermostQt.FileDownloading
-            onVisibleChanged: {
-                context.mattermost.fileDownloadingProgress.connect(
-                            function onDownloading(id_of_file,progress) {
-                                if(id_of_file === fileId)
-                                    value = progress
-                            }
-                            )
-            }
-        }//ProgressCircle
-    }
-}//*/
-
 MouseArea {
     id: attachedImage
     height: imageWithName.height
     width: Math.min(Math.max(imageWithName.width,realBlobWidth),maxWidth)
     property int _fileStatus: currentStatus
+    property real pictureMaxWidth: maxWidth //* 0.9
 
     onHeightChanged: {
         componentHeight = height
@@ -246,7 +43,7 @@ MouseArea {
                        {
                            imagePath: filePath,
                            previewPath: filePreview,
-                           animatedImage: fileType === MattermostQt.FileAnimatedImage,
+                           animatedImage: fileType == MattermostQt.FileAnimatedImage,
                            sourceSize: imageSize,
                            width: Screen.width
                        })
@@ -322,10 +119,10 @@ MouseArea {
             {
                 id: imageItem
                 // TODO compute right image size
-                width: Math.min( Math.max(image.sourceSize.width, maxWidth * 0.6) ,maxWidth)
-//                height: width * image.sourceSize.height/image.sourceSize.width
-//                width: itemSize.width;
-                height: Math.min( width * image.sourceSize.height/image.sourceSize.width, maxWidth)
+                width: pictureMaxWidth * sizeCoef.x
+                height: pictureMaxWidth * sizeCoef.y
+
+                property size maxSize: Qt.size(maxWidth,maxWidth)
 
                 Rectangle {
                     id: maskRect
@@ -337,9 +134,9 @@ MouseArea {
 
                 Image {
                     id: image
+
                     fillMode: Image.PreserveAspectFit
                     source: filePreview === "" ? fileThumbnail : filePreview
-//                    sourceSize: messagesModel.getImageSize(messageRow,fileIndex)
                     sourceSize: imageSize
                     anchors.fill: parent
                     layer.enabled: true
@@ -357,8 +154,8 @@ MouseArea {
             {
                 id: imageItem
 
-                width: Math.min( Math.max(image.sourceSize.width, maxWidth * 0.6) ,maxWidth)
-                height: Math.min( width * image.sourceSize.height/image.sourceSize.width, maxWidth)
+                width: pictureMaxWidth * sizeCoef.x
+                height: pictureMaxWidth * sizeCoef.y
 
                 Rectangle {
                     id: maskRect
@@ -382,6 +179,7 @@ MouseArea {
                     asynchronous: true
                     cache: false
 
+
                     Image {
                         id: thumbImage
                         fillMode: Image.PreserveAspectFit
@@ -390,7 +188,7 @@ MouseArea {
                         anchors.fill: parent
                         visible: opacity > 0
                         Behavior on opacity {
-                            NumberAnimation { duration: 50 }
+                            NumberAnimation { duration: 200 }
                         }
                     }
 

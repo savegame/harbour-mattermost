@@ -52,7 +52,7 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 		return QVariant(file->m_id);
 	}
 
-	else if ( file->m_file_type == MattermostQt::FileImage ) {
+	else if ( file->m_file_type == MattermostQt::FileImage ||  file->m_file_type == MattermostQt::FileAnimatedImage ) {
 		if( role == FileThumbnailPath ) {
 			return QVariant(file->m_thumb_path);
 		}
@@ -240,11 +240,11 @@ void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, Q
 			return;
 		}
 	}
-	QModelIndex topLeft = index(0);
-	QModelIndex bottomRight = index(m_message->m_file.size()?m_message->m_file.size()-1:0);
-	dataChanged(topLeft, bottomRight, roles);
-//	beginResetModel();
-//	endResetModel();
+//	QModelIndex topLeft = index(0);
+//	QModelIndex bottomRight = index(m_message->m_file.size()?m_message->m_file.size()-1:0);
+//	dataChanged(topLeft, bottomRight, roles);
+	beginResetModel();
+	endResetModel();
 }
 
 //void AttachedFilesModel::slot_attachedFileStatusChanged(QString id, MattermostQt::FileStatus status)

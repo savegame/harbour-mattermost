@@ -32,6 +32,7 @@ public:
 		SenderUserName,
 		UserId,
 		CreateAt,
+		CreateDate,
 		IsEdited,
 		MessageIndex,
 		FormatedText,
@@ -41,8 +42,11 @@ public:
 		OriginalId,
 		RootMessage,
 		RootMessageUserName,
+		ItemHeight,
+		PageOrientation,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
+	Q_ENUM(DataRoles)
 
 public:
 	explicit MessagesModel(QObject *parent = nullptr);
@@ -50,6 +54,7 @@ public:
 	// Basic functionality:
 	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+	virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
 
 	virtual QHash<int, QByteArray> roleNames() const override;
 

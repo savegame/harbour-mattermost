@@ -630,7 +630,8 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	// first try search file locally
 	if( f->load_json( sc->m_data_path ) )
 	{
-		qInfo() << "File info.json - exists! Try search file data in local storage.";
+		if( m_settings->debug() )
+			qInfo() << "File info.json - exists! Try search file data in local storage.";
 		if( f->m_file_status == FileStatus::FileDownloaded )
 		{
 			emit attachedFilesChanged(m, QVector<QString>(), QVector<int>());
@@ -841,6 +842,8 @@ void MattermostQt::delete_message(int server_index, int team_index, int channel_
 	if(!channel)
 		return;
 	ServerPtr sc = m_server[server_index];
+	if( message_index <0 || message_index >= channel->m_message.size() )
+		return;
 	MessagePtr message = channel->m_message[message_index];
 
 	QString urlString = QLatin1String("/api/v")
@@ -2776,45 +2779,10 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file->m_channel_index = channel_index;
 	file->m_channel_type = channel_type;
 	file->m_message_index = message_index;
-	// TODO Load_json happens in get_file_info request prepare function, no need it here
-	/*if( file->load_json(sc->m_data_path) )
-	{
-		if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
-		{
-			if( file->m_thumb_path.isEmpty() || !QFile::exists(file->m_thumb_path) )
-				get_file_thumbnail(server_index,file->m_self_sc_index);
-			bool download_current_file = true;
-			if( m_settings && file->m_file_size > m_settings->autoDownloadImageSize())
-				download_current_file = false;
-			if( file->m_has_preview_image && !download_current_file
-			        && !QFile::exists(file->m_preview_path) )
-			{
-				file->m_preview_path.clear();
-				get_file_preview(server_index,file->m_self_sc_index);
-				file->m_file_status = FileRemote;
-			}
-			if( file->m_file_path.isEmpty() || !QFile::exists(file->m_file_path) )
-			{
-				file->m_file_path.clear();
-				if( download_current_file )
-				{
-					file->m_file_status = FileDownloading;
-					get_file(file->m_server_index, file->m_team_index,
-					         file->m_channel_type, file->m_channel_index,
-					         file->m_message_index, file->m_self_index);
-				}
-				else
-					file->m_file_status = FileRemote;
-			}
-			else
-				file->m_file_status = FileDownloaded;
-		}
-		file_update_roles << AttachedFilesModel::FileStatus;
-		isUpdateMessage = true;
-	}
-	else//*/
+
 	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
 	{
+		file_update_roles << AttachedFilesModel::FileImageSize;
 //		QString file_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
 		if( file->m_thumb_path.isEmpty() )
 			file->m_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
@@ -4383,10 +4351,13 @@ bool MattermostQt::FileContainer::save_json(QString server_data_path) const
 	obj["file_type"] = (int)m_file_type;
 	obj["file_path"] = m_file_path;
 	obj["preview_path"] = m_preview_path;
-	QJsonObject item_size;
-	item_size["width"] = m_item_size.width();
-	item_size["height"] = m_item_size.height();
-	obj["item_size"] = item_size;
+	QJsonObject size;
+	size["width"] = m_item_size.width();
+	size["height"] = m_item_size.height();
+	obj["item_size"] = size;
+	size["width"] = m_image_size.width();
+	size["height"] = m_image_size.height();
+	obj["image_size"] = size;
 	obj["content_width"] = m_contentwidth;
 
 	obj["post_id"] = m_post_id;

@@ -168,6 +168,15 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			return result;
 		}
 		break;
+	case MessagesModel::CreateDate:
+		{
+			QDateTime time;
+			QString result;
+			time = QDateTime::fromMSecsSinceEpoch(message->m_create_at);
+			result = time.toString("dd.MM.YYYY");
+			return result;
+		}
+		break;
 	case MessagesModel::IsEdited:
 	    {
 			return QVariant(message->m_update_at  > 0);
@@ -177,6 +186,32 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	}
 	return QVariant();
+}
+
+bool MessagesModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+	if ( index.row() < 0 || index.row() >= m_messages.size() )
+		return false;
+
+	int row = m_messages.size() - 1 - index.row();
+
+	if ( row < 0 || row >= m_messages.size() )
+		return false;
+
+	MattermostQt::MessagePtr message = m_messages[row];
+	switch(role)
+	{
+	case MessagesModel::PageOrientation:
+		break;
+	case MessagesModel::ItemHeight:
+		if(m_mattermost->settings()->debug())
+			qDebug() << "Item size changed " << value.toDouble();
+		break;
+	default:
+		return false;
+	}
+
+	return true;
 }
 
 QHash<int, QByteArray> MessagesModel::roleNames() const
@@ -190,6 +225,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	{MessagesModel::SenderImagePath,     "role_user_image_path"},
 	{MessagesModel::SenderUserName,      "role_user_name"},
 	{MessagesModel::CreateAt,            "role_message_create_at"},
+	{MessagesModel::CreateDate,          "role_create_date"},
 	{MessagesModel::IsEdited,            "role_message_is_edited"},
 	{MessagesModel::UserId,              "role_user_id"},
 	{MessagesModel::MessageIndex,        "role_message_index"},
@@ -202,7 +238,9 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	{MessagesModel::OriginalId,          "role_original_id"},
 	{MessagesModel::ParentId,            "role_parent_id"},
 	{MessagesModel::RootMessage,         "role_root_message"},
-	{MessagesModel::RootMessageUserName, "role_root_username"}};
+	{MessagesModel::RootMessageUserName, "role_root_username"},
+	{MessagesModel::ItemHeight,          "role_item_height"},
+	{MessagesModel::PageOrientation,     "role_page_orientation"}};
 	return names;
 }
 
@@ -211,7 +249,7 @@ Qt::ItemFlags MessagesModel::flags(const QModelIndex &index) const
 	Q_UNUSED(index)
 //	if (!index.isValid())
 //		return Qt::NoItemFlags;
-	return Qt::ItemIsEnabled; // FIXME: Implement me!
+	return Qt::ItemIsEnabled | Qt::ItemIsEditable; // FIXME: Implement me!
 }
 
 void MessagesModel::setMattermost(MattermostQt *mattermost)

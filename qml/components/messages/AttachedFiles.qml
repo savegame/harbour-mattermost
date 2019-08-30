@@ -77,6 +77,20 @@ Repeater {
         property real   maxWidth       : inBlobContent.maxBlobContentWidth
         property real   realBlobWidth  : inBlobContent.realBlobContentWidth
         property real   componentHeight: 5
+        property point  sizeCoef
+
+        onImageSizeChanged: {
+            if(imageSize.width > imageSize.height)
+            {
+                sizeCoef.x = 1.0
+                sizeCoef.y = imageSize.height /imageSize.width
+            }
+            else
+            {
+                sizeCoef.x = imageSize.width / imageSize.height
+                sizeCoef.y = 1.0
+            }
+        }
 
         onComponentHeightChanged:{
             height = componentHeight

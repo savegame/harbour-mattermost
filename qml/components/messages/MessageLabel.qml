@@ -40,7 +40,6 @@ ListItem {
     property color textSecondaryColor: Theme.secondaryHighlightColor
     property color linkColor: Theme.primaryColor
     property color blobColor:  Theme.rgba(Theme.primaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
-    property color secondaryTextColor
 
     property bool  isMessageEditable   : messageOwner === MattermostQt.MessageMine
     property bool  isMessageDeletable  : messageOwner === MattermostQt.MessageMine
@@ -59,14 +58,12 @@ ListItem {
             messageLabel.textSecondaryColor =  Theme.secondaryHighlightColor
             messageLabel.linkColor = Theme.primaryColor
             isMessageMineOrOther = true
-            messageLabel.secondaryTextColor = Theme.secondaryHighlightColor
             break
         case MattermostQt.MessageOther:
             messageLabel.textColor = Theme.primaryColor
             messageLabel.textSecondaryColor =  Theme.secondaryColor
             messageLabel.linkColor = Theme.highlightColor
             isMessageMineOrOther = true
-            messageLabel.secondaryTextColor = Theme.secondaryColor
             break
         default:
             messageLabel.textColor = Theme.primaryColor
@@ -111,14 +108,22 @@ ListItem {
 
     Row {
         id: messageRow
-        leftPadding: Settings.pageMargin
+//        anchors.leftMargin: cc/ćSettings.pageMargin
         //rightPadding: Settings.pageMargin
+        anchors.leftMargin: Settings.pageMargin
+        anchors.rightMargin: Settings.pageMargin
+
         anchors {
             left: parent.left
             right: parent.right
         }
         spacing: Theme.paddingMedium
         height: Math.max(messageContent.height,userAvatar.height)
+
+//        onHeightChanged: {
+//            role_item_size = height;
+//        }
+
         // TODO make change direction possible
 //        layoutDirection: Qt.RightToLeft //( messageLabel.messageOwner == MattermostQt.MessageMine ) ?
                          //    Qt.RightToLeft : Qt.LeftToRight
@@ -154,7 +159,7 @@ ListItem {
                     text: messageTimestamp
                     font.pixelSize: Theme.fontSizeTiny
                     font.family: Theme.fontFamilyHeading
-                    color: messageLabel.secondaryTextColor
+                    color: messageLabel.textSecondaryColor
                     elide: Text.ElideRight
                     horizontalAlignment: Text.AlignLeft
                 }// Label timestamp
