@@ -99,12 +99,17 @@ MattermostQt::MattermostQt()
 	m_user_status_timer.setInterval(m_user_status_timeout);
 	m_user_status_timer.setSingleShot(false);
 
+	m_ping_server_timeout = 15000; //15 seconds
+//	m_ping_server_timer.setInterval(m_ping_server_timeout);
+//	m_ping_server_timer.setSingleShot(false);
+
 	connect( &m_reconnect_server, SIGNAL(timeout()), SLOT(slot_recconect_servers()) );
 	connect( &m_user_status_timer, SIGNAL(timeout()), SLOT(slot_user_status()) );
 
 	connect(m_networkManager.data(), SIGNAL(finished(QNetworkReply*)),
 	        this, SLOT(replyFinished(QNetworkReply*)));
-
+	connect(m_networkManager.data(), SIGNAL(networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility)),
+	        this, SLOT(slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility)));
 	connect(m_networkManager.data(),SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
 	        this, SLOT(replySSLErrors(QNetworkReply*,QList<QSslError>)));
 
@@ -282,19 +287,13 @@ void MattermostQt::post_login_by_token(QString url, QString token, int api, QStr
 {
 //	QString url = QString("%0")
 	ServerPtr server( new ServerContainer(url,token,api) );
-//	server->m_data_path = m_data_path + QDir::separator() +  object["server_dir"].toString("");
-//	server->m_cache_path = m_cache_path + QDir::separator() +  object["server_dir"].toString("");
-//	if(server->m_data_path.isEmpty())
-//	{
-//		server->m_data_path = m_data_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
-//		server->m_cache_path = m_cache_path + QDir::separator() + QString("%0_%1").arg(i).arg(user_id);
-//	}
 	server->m_trust_cert = trustCertificate;
 	server->m_display_name = display_name;
 	server->m_self_index = m_server.size();
 	server->m_ca_cert_path = ca_cert_path;
 	server->m_cert_path = cert_path;
 //	server->m_user_id = user_id;
+	server->m_ping_timer.setInterval( m_ping_server_timeout );
 	m_server.append(server);
 	get_login(server);
 	emit serverAdded(server);
@@ -626,16 +625,28 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 	f->m_id = file_id;
 	m->m_file.push_back(f);
 
-	// TODO first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
-	// first try search file locally
+	// first look file info in filesystem {conf_dir}/{server_dir}/files/{file_id}/file.json
 	if( f->load_json( sc->m_data_path ) )
 	{
-		if( m_settings->debug() )
-			qInfo() << "File info.json - exists! Try search file data in local storage.";
-		if( f->m_file_status == FileStatus::FileDownloaded )
+		if( f->m_file_type == FileImage || f->m_file_type == FileAnimatedImage )
+		{// check for bug (files info saved in harbour-mattermost < 0.1.3  saved withoud image_size)
+			if( f->m_image_size.width() <= 0 || f->m_image_size.height() <=0 )
+			{
+				f->m_file_status = FileStatus::FileRequested;
+				// need get file_info again
+				if( m_settings->debug() )
+					qDebug() << QStringLiteral("File id[%0] info requesteg again, because of wrong image_size parameter").arg(f->m_id);
+			}
+		}
+		else
 		{
-			emit attachedFilesChanged(m, QVector<QString>(), QVector<int>());
-			return;
+			if( m_settings->debug() )
+				qInfo() << "File info.json - exists! Try search file data in local storage.";
+			if( f->m_file_status == FileStatus::FileDownloaded )
+			{
+				emit attachedFilesChanged(m, QVector<QString>(), QVector<int>());
+				return;
+			}
 		}
 	}
 	else
@@ -1460,6 +1471,7 @@ bool MattermostQt::load_settings()
 		server->m_ca_cert_path = server->m_data_path + QDir::separator() +  ca_cert_path;
 		server->m_cert_path = server->m_data_path + QDir::separator() + cert_path;
 		server->m_user_id = user_id;
+		server->m_ping_timer.setInterval( m_ping_server_timeout );
 		m_server.append(server);
 		get_login(server);
 	}
@@ -1779,6 +1791,7 @@ bool MattermostQt::reply_login(QNetworkReply *reply)
 			server->m_cert  = reply->sslConfiguration();
 			server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
 			server->m_self_index =  m_server.size();
+			server->m_ping_timer.setInterval( m_ping_server_timeout );
 
 			QJsonDocument json = QJsonDocument::fromJson( reply->readAll() );
 			if( json.isObject() )
@@ -2780,6 +2793,8 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file->m_channel_type = channel_type;
 	file->m_message_index = message_index;
 
+	bool download_current_file = false;
+
 	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
 	{
 		file_update_roles << AttachedFilesModel::FileImageSize;
@@ -2794,9 +2809,9 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			file_update_roles << AttachedFilesModel::FileThumbnailPath;
 			isUpdateMessage = true;
 		}
-		bool download_current_file = true;
-		if( m_settings && file->m_file_size > m_settings->autoDownloadImageSize())
-			download_current_file = false;
+
+		if( m_settings && file->m_file_size <= m_settings->autoDownloadImageSize())
+			download_current_file = true;
 
 		if(file->m_has_preview_image && !download_current_file ) {
 			if( file->m_preview_path.isEmpty() )
@@ -2810,22 +2825,24 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 				isUpdateMessage = true;
 			}
 		}
-		else
-		{
-			// TODO - download files to cahce? while user not request "save to gallery" or "download"
-			if(file->m_file_path.isEmpty())
-				file->m_file_path = m_documents_path + QDir::separator() + file->filename();
-			if( !QFile::exists(file->m_file_path) ) {
-				file->m_file_path.clear();
-				get_file(file->m_server_index, file->m_team_index,
-				         file->m_channel_type, file->m_channel_index,
-				         file->m_message_index, file->m_self_index);
-			}
-			else {
-				file_update_roles << AttachedFilesModel::FilePath;
-				isUpdateMessage = true;
-			}
-		}
+
+
+	}// file image
+	// TODO - download files to cahce? while user not request "save to gallery" or "download"
+//	QString file_path = m_documents_path + QDir::separator() + file->filename();
+	if(file->m_file_path.isEmpty())
+		file->m_file_path = m_documents_path + QDir::separator() + file->filename();
+	if( !QFile::exists(file->m_file_path) ) {
+		file->m_file_path.clear();
+		if(download_current_file)
+			get_file(file->m_server_index, file->m_team_index,
+			         file->m_channel_type, file->m_channel_index,
+			         file->m_message_index, file->m_self_index);
+	}
+	else {
+		file->m_file_status = FileStatus::FileDownloaded;
+		file_update_roles << AttachedFilesModel::FilePath;
+		isUpdateMessage = true;
 	}
 //	if(isUpdateMessage)
 //		emit updateMessage(mc, (int)MessagesModel::FilesCount);
@@ -3670,6 +3687,44 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 	delete reply;
 }
 
+void MattermostQt::slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible)
+{
+	// TODO stop all pings, requsets and other, when network is not accessible
+	switch(accessible)
+	{
+	case QNetworkAccessManager::UnknownAccessibility:
+	case QNetworkAccessManager::Accessible:
+		if( accessible == QNetworkAccessManager::UnknownAccessibility)
+			qDebug() << "QNAM accesibility changed: UnknownAccessibility";
+		else
+			qDebug() << "QNAM accesibility changed: Accessible";
+		for(int i = 0; i < m_server.size(); i++)
+		{
+			ServerPtr server = m_server[i];
+			if( server->m_state != ServerConnected ) {
+				slot_recconect_servers();
+				m_reconnect_server.start();
+			}
+		}
+		break;
+	case QNetworkAccessManager::NotAccessible:
+		qDebug() << "QNAM accesibility changed: NotAccessible";
+		// TODO here we need of all servers connections
+		for(int i = 0; i < m_server.size(); i++)
+		{
+			ServerPtr server = m_server[i];
+//			server->m_socket->st
+			server->m_state = ServerState::ServerUnconnected;
+			server->m_socket->close(QWebSocketProtocol::CloseCodeAbnormalDisconnection, QString("Client closing") );
+			serverStateChanged(i, server->m_state);
+			server->m_ping_timer.stop();
+			m_user_status_timer.stop();
+			m_reconnect_server.stop();
+		}
+		break;
+	}
+}
+
 void MattermostQt::replySSLErrors(QNetworkReply *reply, QList<QSslError> errors)
 {
 	bool trustCertificate = false;
@@ -3771,6 +3826,9 @@ void MattermostQt::onWebSocketConnected()
 	json.setObject(root);
 
 	sc->m_socket->sendTextMessage(json.toJson().data());
+	sc->m_ping_timer.setProperty(P_SERVER_INDEX, server_index);
+	connect(&sc->m_ping_timer, SIGNAL(timeout()), this, SLOT(slot_ping_timeout()));
+	sc->m_ping_timer.start();
 //	emit serverConnected(server_index);
 }
 
@@ -3821,7 +3879,7 @@ void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
 
 void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 {
-	qDebug() << state;
+	qDebug() << "WebSocket state changed: "<< state;
 	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
 	if(!socket) // strange situation, if it happens
 		return;
@@ -3944,6 +4002,21 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 void MattermostQt::onWebSocketPong(quint64 elapsedTime, QByteArray payload)
 {
 	// here is we can logging pings
+	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
+	if(!socket) // strange situation, if it happens
+		return;
+	QVariant sId = socket->property(P_SERVER_INDEX);
+	if(!sId.isValid()) // that too strange!!! that cant be!
+		return;
+	int server_index = sId.toInt();
+	if( server_index < 0 || server_index >= m_server.size() )
+	{
+		qCritical() << "Wrong server index onWebSocketPong;";
+		return;
+	}
+	ServerPtr sc = m_server[server_index];
+	if(m_settings && m_settings->debug())
+		qDebug() << "All right, server is online";
 }
 
 void MattermostQt::slot_get_teams_unread()
@@ -3970,11 +4043,6 @@ void MattermostQt::slot_recconect_servers()
 			        .replace("http://","ws://");
 			QUrl url(serUrl);
 			url.setPath(urlString);
-
-//			QNetworkRequest request;
-//			request_set_headers(request,m_server[i]);
-//			request.setUrl(url);
-
 			m_server[i]->m_socket->open(url);
 		}
 	}
@@ -3988,6 +4056,54 @@ void MattermostQt::slot_user_status()
 		if(server().at(i)->m_socket)
 			server().at(i)->m_socket->ping(QString("ping").toUtf8());
 	}
+}
+
+void MattermostQt::slot_ping_timeout()
+{
+	QTimer *timer = qobject_cast<QTimer*>(sender());
+	if(!timer) {
+		qCritical() << "Wrong sender!";
+		return;
+	}
+	//	int server_index = timer->userData(Qt::UserRole)->
+	ServerPtr server;
+	QVariant sin = timer->property(P_SERVER_INDEX);
+	bool ok;
+	int server_index = sin.toInt(&ok);
+	if(ok && (server_index < 0 || server_index >= m_server.size() || !sin.isValid() ))
+		ok = false;
+	if( ok )
+	{
+		server = m_server[server_index];
+	}
+	else
+	{
+		qWarning() << "Cant get server index, try to find it";
+
+		for(int i = 0; i < m_server.size(); i++)
+		{
+			if( &m_server[i]->m_ping_timer == timer )
+			{
+				server = m_server[i];
+				break;
+			}
+		}
+
+		if( server.isNull() )
+		{
+			qCritical() << "Cant find server pointer;";
+			return;
+		}
+	}
+
+	if( server->m_socket.isNull() )
+	{
+		qWarning() << "No exists web socket!";
+		return;
+	}
+	if(m_settings && m_settings->debug())
+		qDebug() << QStringLiteral("Send ping request by websocket to %0 (%1)").arg(server->m_display_name).arg(server->m_url);
+	server->m_socket->ping();
 }
 
 void MattermostQt::slot_settingsChanged()
@@ -4399,8 +4515,8 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 	m_file_path = obj["file_path"].toString();
 	m_preview_path = obj["preview_path"].toString();
 	QJsonObject item_size = obj["item_size"].toObject();
-//	m_item_size.setWidth(item_size["width"].toDouble());
-//	m_item_size.setHeight(item_size["height"].toDouble());
+	m_item_size.setWidth(item_size["width"].toDouble());
+	m_item_size.setHeight(item_size["height"].toDouble());
 	m_contentwidth = obj["content_width"].toInt();
 
 	m_post_id = obj["post_id"].toString("");
@@ -4417,8 +4533,18 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 	else
 		m_file_status = FileStatus::FileDownloaded;
 	bool result = true;
-	if( m_file_type == FileType::FileImage )
+	if( m_file_type == FileType::FileImage || m_file_type == FileType::FileAnimatedImage )
 	{
+		if( obj.contains("image_size") )
+		{
+			QJsonObject image_size = obj["image_size"].toObject();
+			m_image_size.setWidth( image_size["width"].toInt() );
+			m_image_size.setHeight( image_size["height"].toInt() );
+		}
+		else {
+			m_image_size = QSize(-1,-1);
+		}
+
 		if( m_thumb_path.isEmpty() || !QFile::exists(m_thumb_path) )
 		{
 			m_thumb_path.clear();

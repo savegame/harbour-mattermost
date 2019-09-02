@@ -76,7 +76,7 @@ Page {
             top: pageHeader.bottom
             bottom: messageEditor.top
         }
-        spacing: Theme.paddingSmall
+        spacing: Theme.paddingMedium
         clip: true
 
         model: messagesModel

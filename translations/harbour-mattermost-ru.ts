@@ -203,11 +203,11 @@
     <name>MattermostQt</name>
     <message>
         <source>Cant open CA certificate file: &quot;%0&quot;</source>
-        <translation></translation>
+        <translation>Невозможно открыть файл центра сертификации: &quot;%0&quot</translation>
     </message>
     <message>
         <source>Cant open certificate file: &quot;%0&quot;</source>
-        <translation></translation>
+        <translation>Невозможно открыть файл сертификата &quot;%0&quot</translation>
     </message>
     <message>
         <source>File: id(%0); </source>

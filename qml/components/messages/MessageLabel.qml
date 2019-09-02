@@ -99,7 +99,7 @@ ListItem {
         color: blobColor
         opacity: blobsOpacity
 
-        x: messageContent.x
+        x: messageContent.x + inBlobContent.anchors.leftMargin
         y: messageContent.y + labelHeader.height + messageContent.spacing
         width: inBlobContent.width
         height: inBlobContent.height

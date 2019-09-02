@@ -379,6 +379,7 @@ public:
 			m_api = api;
 			m_token = token;
 			m_trust_cert = false;
+			m_ping_timer.setSingleShot(false);
 		}
 
 		~ServerContainer() ;
@@ -407,6 +408,8 @@ public:
 		QList<FilePtr>              m_unattached_file; /**< uploaded, but not sended files */
 		QList<FilePtr>              m_sended_files; /**<  */
 		QList<MessagePtr>           m_nouser_messages;/**< messages without user */
+
+		QTimer                      m_ping_timer;
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -623,6 +626,7 @@ protected:
 //	void  message_format(MessagePtr message);
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
+	void slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
 	void replySSLErrors(QNetworkReply *reply, QList<QSslError> errors);
 	void replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 	void replyUploadProgress(qint64 bytesReceived, qint64 bytesTotal);
@@ -634,10 +638,12 @@ protected Q_SLOTS:
 //	void onWebSocketTextFrameReceived(const QString &frame, bool isLastFrame);
 	void onWebSocketTextMessageReceived(const QString &message);
 	void onWebSocketPong(quint64 elapsedTime,QByteArray payload);
+
 	/** slot for QTimer */
 	void slot_get_teams_unread();
 	void slot_recconect_servers();
 	void slot_user_status();
+	void slot_ping_timeout();
 	/** */
 	void slot_settingsChanged();
 protected:
@@ -657,9 +663,11 @@ protected:
 
 	int    m_update_server_timeout;
 	QTimer m_reconnect_server;
+	// TODO make get user status when server is connected, and users is grabbed
 	int    m_user_status_timeout;
 	QTimer m_user_status_timer;
-
+	// ping server timer
+	int    m_ping_server_timeout;
 	/** channels, need update before put to model */
 	//	QList<ChannelContainer>   m_stackedChannels;
 };
