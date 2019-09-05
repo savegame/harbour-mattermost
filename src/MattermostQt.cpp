@@ -3704,6 +3704,7 @@ void MattermostQt::slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAc
 			if( server->m_state != ServerConnected ) {
 				slot_recconect_servers();
 				m_reconnect_server.start();
+				m_user_status_timer.start();
 			}
 		}
 		break;
@@ -3716,7 +3717,7 @@ void MattermostQt::slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAc
 //			server->m_socket->st
 			server->m_state = ServerState::ServerUnconnected;
 			server->m_socket->close(QWebSocketProtocol::CloseCodeAbnormalDisconnection, QString("Client closing") );
-			serverStateChanged(i, server->m_state);
+			emit serverStateChanged(i, server->m_state);
 			server->m_ping_timer.stop();
 			m_user_status_timer.stop();
 			m_reconnect_server.stop();
@@ -3895,9 +3896,11 @@ void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 	case QAbstractSocket::UnconnectedState:
 		m_reconnect_server.start();
 		sc->m_state = (int)state;
+		emit serverStateChanged(server_index, (int)state);
 		break;
 	case QAbstractSocket::ConnectingState:
 		sc->m_state = (int)state;
+		emit serverStateChanged(server_index, (int)state);
 		break;
 	case QAbstractSocket::ConnectedState:
 		{

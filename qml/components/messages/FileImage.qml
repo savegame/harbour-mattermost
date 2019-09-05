@@ -65,7 +65,7 @@ MouseArea {
             pageStack.push( imageViewPage,
                            {
                                imagePath: filePath,
-                               previewPath: filePreview,
+                               previewPath: filePreview,//fileThumbnail,
                                animatedImage: fileType === MattermostQt.FileAnimatedImage,
                                imageSize: imageSize
 //                               width: Screen.width

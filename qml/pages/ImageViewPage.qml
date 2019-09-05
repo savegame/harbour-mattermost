@@ -74,8 +74,6 @@ Page {
         Item {
             id: imageContainer
 
-//            property real imageWidth : (animatedImage)?image_anim.width*image_anim.scale:image_static.width*image_static.scale
-//            property real imageHeight: (animatedImage)?image_anim.height*image_anim.scale:image_static.height*image_static.scale
             property real imageWidth : image_preview.width*image_preview.scale
             property real imageHeight: image_preview.height*image_preview.scale
             width: Math.max(imageWidth, flickable.width)
@@ -92,46 +90,21 @@ Page {
                 asynchronous: true
                 anchors.centerIn: parent
                 visible: animatedImage
-                opacity: status == Image.Ready ? 1 : 0
-//                sourceSize: imageSize
-                Behavior on opacity { FadeAnimation{} }
 
-                function fitToScreen() {
-                    if(!animatedImage)
-                        return
-
-                    if( flickable.width == 0 || flickable.height == 0 )
-                    {
-                        flickable.onWidthChanged.connect( function f() {
-                            image_anim.fitToScreen()
-                        });
-                        return
-                    }
-
-                    var s = Math.min(flickable.width / width, flickable.height / height)
-                    var c = height / width;
-                    width *= s
-                    height = width * c;
-                }
+                scale: image_preview.scale
+                width: image_preview.width
+                height: image_preview.height
 
                 onSourceSizeChanged: {
                     if(sourceSize != imageSize)
                         sourceSize = imageSize;
-                    fitToScreen();
                 }
 
-                onScaleChanged: {
-                    if(!visible)
-                        return
-                    if ((width * scale) > flickable.width) {
-                        var xoff = (pinchArea.pinchCenter.x + flickable.contentX) * scale / imageContainer.prevScale;
-                        flickable.contentX = xoff - pinchArea.pinchCenter.x
+                onStatusChanged: {
+                    if(status == Image.Ready)
+                    {
+                        image_preview.opacity = 0
                     }
-                    if ((height * scale) > flickable.height) {
-                        var yoff = (pinchArea.pinchCenter.y + flickable.contentY) * scale / imageContainer.prevScale;
-                        flickable.contentY = yoff - pinchArea.pinchCenter.y
-                    }
-                    imageContainer.prevScale = scale
                 }
             }
 
@@ -147,47 +120,20 @@ Page {
                 autoTransform: true
                 sourceSize: imageSize
 
-                function fitToScreen() {
-                    if( flickable.width == 0 || flickable.height == 0 )
-                    {
-                        flickable.onWidthChanged.connect( function f() {
-                            image_static.fitToScreen();
-                        });
-                        return
-                    }
-
-                    var s = Math.min(flickable.width / width, flickable.height / height)
-                    var c = height / width;
-                    width *= s
-                    height = width * c;
-                }
+                scale: image_preview.scale
+                width: image_preview.width
+                height: image_preview.height
 
                 onSourceSizeChanged: {
                     if(sourceSize != imageSize)
                         sourceSize = imageSize;
-                    fitToScreen();
                 }
 
                 onStatusChanged: {
                     if(status == Image.Ready)
-                        fitToScreen()
-                }
-
-                opacity: status == Image.Ready ? 1 : 0
-                Behavior on opacity { FadeAnimation{ duration: 100 } }
-
-                onScaleChanged: {
-                    if(!visible)
-                        return
-                    if ((width * scale) > flickable.width) {
-                        var xoff = (pinchArea.pinchCenter.x + flickable.contentX) * scale / imageContainer.prevScale;
-                        flickable.contentX = xoff - pinchArea.pinchCenter.x
+                    {
+                        image_preview.opacity = 0
                     }
-                    if ((height * scale) > flickable.height) {
-                        var yoff = (pinchArea.pinchCenter.y + flickable.contentY) * scale / imageContainer.prevScale;
-                        flickable.contentY = yoff - pinchArea.pinchCenter.y
-                    }
-                    imageContainer.prevScale = scale
                 }
             }
 
@@ -195,7 +141,7 @@ Page {
                 id: image_preview
                 source: previewPath
 //                visible: (opacity > 0 && previewPath.length != 0)
-                opacity: status == Image.Ready ? 1 : 0
+                opacity: 1
                 Behavior on opacity { FadeAnimation{ duration: 200 } }
                 anchors.centerIn: parent
                 autoTransform: true
