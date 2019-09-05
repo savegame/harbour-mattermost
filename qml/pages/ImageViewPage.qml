@@ -6,14 +6,63 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import ru.sashikknox 1.0
 
+//allowedOrientations: Orientation.All
+
+//property alias imagePath: imageview.imagePath
+//property alias previewPath: imageview.previewPath
+//property alias animatedImage: imageview.animatedImage
+//property alias imageSize: imageview.imageSize
+
+//ImageViewer {
+//    id: imageview
+//    anchors.fill: parent
+//}
+
 Page {
     id:imageview
     property string imagePath
     property string previewPath
     property bool   animatedImage
     property size   imageSize
-//    property alias scaleFactor : animatedImage ? image_anim.scale :image_static.scale
     allowedOrientations: Orientation.All
+
+    property bool showBackground: true
+
+    Rectangle {
+        id: backgroundRect
+        visible: showBackground
+        color: Qt.rgba(0,0,0,1)
+        anchors.fill: parent
+//        opacity: 0
+
+//        Component.onCompleted: {
+//            opacity = 1.0
+//        }
+
+//        Behavior on opacity {
+//            NumberAnimation { duration: 100 }
+//        }
+    }
+
+    onImageSizeChanged: {
+        if( imageSize.height > imageSize.width )
+        {
+            var c =  imageSize.width / imageSize.height;
+            if( imageSize.height > 3264 )
+            {
+                imageSize = Qt.size(3264 * c,3264);
+            }
+        }
+        else
+        {
+            var c =  imageSize.height / imageSize.width ;
+            if( imageSize.width > 3264 )
+            {
+                imageSize = Qt.size(3264,3264 * c);
+            }
+        }
+
+    }
 
     Flickable {
         id: flickable
@@ -25,9 +74,10 @@ Page {
         Item {
             id: imageContainer
 
-            property real imageWidth : (animatedImage)?image_anim.width*image_anim.scale:image_static.width*image_static.scale
-            property real imageHeight: (animatedImage)?image_anim.height*image_anim.scale:image_static.height*image_static.scale
-
+//            property real imageWidth : (animatedImage)?image_anim.width*image_anim.scale:image_static.width*image_static.scale
+//            property real imageHeight: (animatedImage)?image_anim.height*image_anim.scale:image_static.height*image_static.scale
+            property real imageWidth : image_preview.width*image_preview.scale
+            property real imageHeight: image_preview.height*image_preview.scale
             width: Math.max(imageWidth, flickable.width)
             height: Math.max(imageHeight, flickable.height)
 
@@ -43,6 +93,7 @@ Page {
                 anchors.centerIn: parent
                 visible: animatedImage
                 opacity: status == Image.Ready ? 1 : 0
+//                sourceSize: imageSize
                 Behavior on opacity { FadeAnimation{} }
 
                 function fitToScreen() {
@@ -64,10 +115,8 @@ Page {
                 }
 
                 onSourceSizeChanged: {
-                    if( sourceSize.width > 3264 )
-                        sourceSize.width = 3264
-                    if( sourceSize.height > 3264 )
-                        sourceSize.height = 3264
+                    if(sourceSize != imageSize)
+                        sourceSize = imageSize;
                     fitToScreen();
                 }
 
@@ -96,6 +145,7 @@ Page {
                 asynchronous: true
                 anchors.centerIn: parent
                 autoTransform: true
+                sourceSize: imageSize
 
                 function fitToScreen() {
                     if( flickable.width == 0 || flickable.height == 0 )
@@ -113,12 +163,8 @@ Page {
                 }
 
                 onSourceSizeChanged: {
-                    if( sourceSize.width > 3264 )
-                        sourceSize.width = 3264
-                    if( sourceSize.height > 3264 )
-                        sourceSize.height = 3264
-//                    width = sourceSize.width
-//                    height = sourceSize.height
+                    if(sourceSize != imageSize)
+                        sourceSize = imageSize;
                     fitToScreen();
                 }
 
@@ -144,17 +190,74 @@ Page {
                     imageContainer.prevScale = scale
                 }
             }
+
+            Image {
+                id: image_preview
+                source: previewPath
+//                visible: (opacity > 0 && previewPath.length != 0)
+                opacity: status == Image.Ready ? 1 : 0
+                Behavior on opacity { FadeAnimation{ duration: 200 } }
+                anchors.centerIn: parent
+                autoTransform: true
+                sourceSize: imageview.imageSize
+
+                onSourceSizeChanged:
+                {
+                    if( sourceSize.width != imageview.imageSize.width )
+                    {
+                        sourceSize = imageSize
+                    }
+                }
+
+                onStatusChanged: {
+                    if( status != Image.Ready )
+                        return
+                    fitToScreen()
+                }
+
+                function fitToScreen() {
+
+                    if( flickable.width == 0 || flickable.height == 0 )
+                    {
+                        flickable.onWidthChanged.connect( function f() {
+                            image_preview.fitToScreen()
+                        });
+                        return
+                    }
+
+                    var s = Math.min(flickable.width / width, flickable.height / height)
+                    var c = height / width;
+                    if( s <= 0.000001 || c <= 0.000001 )
+                        return;
+                    width *= s
+                    height = width * c;
+                }
+
+                onScaleChanged: {
+                    if(!visible)
+                        return
+                    if ((width * scale) > flickable.width) {
+                        var xoff = (pinchArea.pinchCenter.x + flickable.contentX) * scale / imageContainer.prevScale;
+                        flickable.contentX = xoff - pinchArea.pinchCenter.x
+                    }
+                    if ((height * scale) > flickable.height) {
+                        var yoff = (pinchArea.pinchCenter.y + flickable.contentY) * scale / imageContainer.prevScale;
+                        flickable.contentY = yoff - pinchArea.pinchCenter.y
+                    }
+                    imageContainer.prevScale = scale
+                }
+            }
         }
 
         PinchArea {
             id: pinchArea
             anchors.fill: parent
-    //            pinch.target: animatedImage ? image_anim : image_static
+            pinch.target: image_preview//animatedImage ? image_anim : image_static
             pinch.minimumScale: 1
             pinch.maximumScale: 4
 
             Component.onCompleted: {
-                pinch.target = animatedImage ? image_anim : image_static
+                pinch.target = image_preview//animatedImage ? image_anim : image_static
             }
 
             property point pinchCenter: Qt.point(flickable.width * 0.5, flickable.height * 0.5)
@@ -164,7 +267,7 @@ Page {
             }
 
             onPinchFinished: {
-                var _scale = animatedImage ? image_anim.scale : image_static.scale
+                var _scale = image_preview.scale //animatedImage ? image_anim.scale : image_static.scale
                 if (_scale < pinchArea.minScale) {
                     //bounceBackAnimation.to = pinchArea.pinch.minimumScale
                     //bounceBackAnimation.start()
@@ -183,7 +286,7 @@ Page {
                 id: mousearea
                 anchors.fill: parent
                 onDoubleClicked: {
-                    var scaleFactor = animatedImage ? image_anim.scale :image_static.scale
+                    var scaleFactor = image_preview.scale//animatedImage ? image_anim.scale :image_static.scale
                     var maxScale = pinchArea.pinch.maximumScale * 0.5
                     if( scaleFactor < maxScale )
                     {
@@ -206,7 +309,7 @@ Page {
 
     NumberAnimation {
         id: zoom_animator
-        target: animatedImage ? image_anim : image_static
+        target: image_preview //animatedImage ? image_anim : image_static
         property: "scale"
         running: false
         duration: 200

@@ -43,8 +43,8 @@ MouseArea {
                            imagePath: filePath,
                            previewPath: filePreview,
                            animatedImage: fileType == MattermostQt.FileAnimatedImage,
-                           imageSize: imageSize,
-                           width: Screen.width
+                           imageSize: imageSize
+//                           width: Screen.width
                        })
     }
 
@@ -67,8 +67,8 @@ MouseArea {
                                imagePath: filePath,
                                previewPath: filePreview,
                                animatedImage: fileType === MattermostQt.FileAnimatedImage,
-                               sourceSize: imageSize,
-                               width: Screen.width
+                               imageSize: imageSize
+//                               width: Screen.width
                            })
             break;
         }
