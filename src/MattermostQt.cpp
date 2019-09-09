@@ -24,6 +24,7 @@
 #include "SettingsContainer.h"
 #include "AttachedFilesModel.h"
 #include "DiscountMDParser.h"
+#include "AccountsModel.h"
 
 // all properties names
 #define P_REPLY_TYPE         "reply_type"
@@ -198,6 +199,29 @@ QString MattermostQt::get_server_ca_cert_path(int server_index) const
 	return m_server[server_index]->m_ca_cert_path;
 }
 
+void MattermostQt::set_server_enabled(int server_index, const bool enabled)
+{
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
+	ServerPtr server = m_server[server_index];
+	if( enabled == server->m_enabled )
+		return;
+	server->m_enabled = enabled;
+
+	emit serverChanged(server, QVector<int>() << AccountsModel::RoleIsEnabled );
+	if(server->m_enabled )
+	{
+		server->m_ping_timer.stop();
+		server->m_state = ServerUnconnected;
+		emit serverStateChanged(server_index, ServerUnconnected);
+	}
+	else {
+//		get_login(server);
+		slot_recconect_servers();
+		m_reconnect_server.start();
+	}
+}
+
 void MattermostQt::post_login(QString server, QString login, QString password,
                               int api,QString display_name,
                               bool trustCertificate, QString ca_cert_path, QString cert_path)
@@ -301,8 +325,9 @@ void MattermostQt::post_login_by_token(QString url, QString token, int api, QStr
 
 void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 {
-	// login by saved token
-
+	if( sc->m_state == ServerLogin )
+		return;
+	sc->m_state = ServerLogin;
 	// fix api minimum version
 	if(sc->m_api <= 3)
 		sc->m_api = 4;
@@ -847,14 +872,37 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	reply->setProperty(P_CHANNEL_TYPE, QVariant((int)channel_type) );
 }
 
-void MattermostQt::delete_message(int server_index, int team_index, int channel_type, int channel_index, int message_index)
+void MattermostQt::delete_message(int server_index, int team_index, int channel_type, int channel_index, int message_index, QString message_id)
 {
 	ChannelPtr channel = channelAt(server_index, team_index,channel_type,channel_index);
 	if(!channel)
 		return;
 	ServerPtr sc = m_server[server_index];
+	int search_from_index = 0;
+	int search_increment = 1;
 	if( message_index <0 || message_index >= channel->m_message.size() )
-		return;
+	{
+		if(message_id.isEmpty())
+			return;
+		if( message_index >= channel->m_message.size() )
+		{
+			search_from_index = channel->m_message.size() - 1;
+			search_increment = -1;
+		}
+		message_index = -1;
+	}
+	for(int i = search_from_index; i >= 0; i+=search_increment )
+	{
+		if( channel->m_message[i]->m_id == message_id )
+		{
+			message_index = i;
+			break;
+		}
+	}
+	if( message_index == -1 )
+	{
+		qCritical() << "Seems, message already deleted! id("<< message_id <<")";
+	}
 	MessagePtr message = channel->m_message[message_index];
 
 	QString urlString = QLatin1String("/api/v")
@@ -1352,6 +1400,7 @@ bool MattermostQt::save_settings()
 		server["token"] = sc->m_token;
 		server["name"] = sc->m_display_name;
 		server["trust_certificate"] = sc->m_trust_cert;
+		server["enabled"] = sc->m_enabled;
 
 		server_dir_path = QString("%0_%1").arg(i).arg(sc->m_user_id);
 
@@ -1448,6 +1497,9 @@ bool MattermostQt::load_settings()
 		QString display_name = object["name"].toString();
 		QString ca_cert_path = object["ca_cert_path"].toString();
 		QString cert_path = object["cert_path"].toString();
+		bool    is_server_enabled = true;
+		if( object.contains("enabled") )
+			is_server_enabled = object["enabled"].toBool();
 		bool trust_certificate = object["trust_certificate"].toBool();
 
 		if( user_id.isEmpty() || url.isEmpty() || token.isEmpty() )
@@ -1472,6 +1524,7 @@ bool MattermostQt::load_settings()
 		server->m_cert_path = server->m_data_path + QDir::separator() + cert_path;
 		server->m_user_id = user_id;
 		server->m_ping_timer.setInterval( m_ping_server_timeout );
+		server->m_enabled =is_server_enabled;
 		m_server.append(server);
 		get_login(server);
 	}
@@ -3908,7 +3961,7 @@ void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 			bool need_reconnect = false;
 			for(int i = 0; i < m_server.size(); i++ )
 			{
-				if( m_server[i]->m_state != ServerConnected )
+				if( m_server[i]->m_state == ServerUnconnected )
 					need_reconnect = true;
 			}
 			if(!need_reconnect)
@@ -4035,7 +4088,12 @@ void MattermostQt::slot_recconect_servers()
 //	bool stop = false;
 	for(int i = 0; i < m_server.size(); i ++ )
 	{
-		if( m_server[i]->m_state == ServerUnconnected  && m_server[i]->m_socket)
+		if( !m_server[i]->m_enabled )
+			continue;
+		if( !m_server[i]->m_socket ) {
+			get_login(m_server[i]);
+		}
+		else if( m_server[i]->m_state == ServerUnconnected)
 		{
 			QString urlString = QLatin1String("/api/v")
 			        + QString::number(m_server[i]->m_api)

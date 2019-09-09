@@ -174,12 +174,13 @@ Page {
                         var ct = channel_type
                         var ci = channel_index
                         var mi = role_row_index
+                        var mid = role_post_id
                         Remorse.itemAction(
                                     messageLabel, qsTr("Deleting"),
                                     function rm() {
                                         if(Settings.debug)
                                             console.log( "mi = " + String(mi) + "; role_row_index = " + String(role_row_index)  )
-                                        context.mattermost.delete_message(si,ti,ct,ci,mi)
+                                        context.mattermost.delete_message(si,ti,ct,ci,mi,mid)
                                     })
                     }
                 }

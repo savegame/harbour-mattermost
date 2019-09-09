@@ -17,6 +17,7 @@ QHash<int, QByteArray> AccountsModel::roleNames() const
 	{ RoleServerUrl,   "role_url" },
 	{ RoleUsername,    "role_username" },
 	{ RoleStatus,      "role_status" },
+	{ RoleIsEnabled,   "role_is_enabled" },
 	{ RoleIcon,        "role_icon" },
 	{ RoleServerIndex, "role_server_index" } };
 	return names;
@@ -54,6 +55,9 @@ QVariant AccountsModel::data(const QModelIndex &index, int role) const
 	case RoleStatus:
 		return server->m_state;
 		break;
+	case RoleIsEnabled:
+		return server->m_enabled;
+		break;
 	case RoleIcon:
 		return QString("");
 		break;
@@ -76,6 +80,7 @@ void AccountsModel::setMattermost(MattermostQt *mattermost)
 	m_mattermost = mattermost;
 	connect( m_mattermost.data(), &MattermostQt::serverAdded, this , &AccountsModel::slotServerAdded );
 	connect( m_mattermost.data(), &MattermostQt::serverStateChanged, this , &AccountsModel::slotServerStateChanged );
+	connect( m_mattermost.data(), &MattermostQt::serverChanged, this , &AccountsModel::slotServerChanged );
 }
 
 void AccountsModel::slotServerAdded(MattermostQt::ServerPtr server)
@@ -89,4 +94,9 @@ void AccountsModel::slotServerStateChanged(int server_index, int state)
 	QVector<int> roles;
 	roles << RoleStatus;
 	dataChanged( index(server_index), index(server_index), roles );
+}
+
+void AccountsModel::slotServerChanged(MattermostQt::ServerPtr server, QVector<int> roles)
+{
+	dataChanged( index(server->m_self_index), index(server->m_self_index), roles );
 }

@@ -95,7 +95,8 @@ public:
 	enum ServerState : int {
 		ServerConnected = QAbstractSocket::ConnectedState,
 		ServerConnecting = QAbstractSocket::ConnectingState,
-		ServerUnconnected = QAbstractSocket::UnconnectedState
+		ServerUnconnected = QAbstractSocket::UnconnectedState,
+		ServerLogin // when server just start logging in
 	};
 	Q_ENUMS(ServerState)
 
@@ -371,7 +372,7 @@ public:
 	struct ServerContainer
 	{
 	public:
-		ServerContainer() : m_api(4), m_trust_cert(false) {}
+		ServerContainer() : m_api(4), m_trust_cert(false), m_enabled(true) {}
 
 		ServerContainer(QString url, QString token, int api)
 		{
@@ -380,6 +381,7 @@ public:
 			m_token = token;
 			m_trust_cert = false;
 			m_ping_timer.setSingleShot(false);
+			m_enabled = true;
 		}
 
 		~ServerContainer() ;
@@ -408,6 +410,7 @@ public:
 		QList<FilePtr>              m_unattached_file; /**< uploaded, but not sended files */
 		QList<FilePtr>              m_sended_files; /**<  */
 		QList<MessagePtr>           m_nouser_messages;/**< messages without user */
+		bool                        m_enabled; /**< is server is enabled */
 
 		QTimer                      m_ping_timer;
 	};
@@ -427,6 +430,7 @@ public:
 	Q_INVOKABLE bool    get_server_trust_certificate(int server_index) const;
 	Q_INVOKABLE QString get_server_cert_path(int server_index) const;
 	Q_INVOKABLE QString get_server_ca_cert_path(int server_index) const;
+	Q_INVOKABLE void    set_server_enabled(int server_index, const bool enabled);
 
 
 	Q_INVOKABLE void post_login(QString server, QString login, QString password,
@@ -456,7 +460,7 @@ public:
 	Q_INVOKABLE void post_send_message(QString message, int server_index, int team_index, int channel_type,
 	                                   int channel_index, QString root_id = QString());
 	Q_INVOKABLE void delete_message(int server_index, int team_index, int channel_type,
-	                                     int channel_index, int message_index);
+	                                     int channel_index, int message_index, QString message_id = QString());
 	Q_INVOKABLE void put_message_edit(QString text, int server_index, int team_index, int channel_type,
 	                                     int channel_index, int message_index);
 
@@ -512,6 +516,7 @@ Q_SIGNALS:
 	void serverAdded(ServerPtr server);
 	void serverConnected(int server_index);
 	void serverStateChanged(int server_index, int state);
+	void serverChanged(ServerPtr server, QVector<int> roles);
 	void onConnectionError(int code, QString message, int server_index);
 	void teamAdded(TeamPtr team);
 	void teamsExists(const QVector<MattermostQt::TeamPtr> &teams);

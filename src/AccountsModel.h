@@ -15,10 +15,12 @@ class AccountsModel : public QAbstractListModel
 		RoleUsername,
 		RoleStatus,
 		RoleIcon,
+		RoleIsEnabled,
 		RoleServerIndex
 	};
-
 	Q_PROPERTY(MattermostQt *mattermost READ mattermost WRITE setMattermost)
+
+	friend class MattermostQt;
 public:
 	explicit AccountsModel(QObject *parent = nullptr);
 
@@ -38,6 +40,7 @@ public:
 protected Q_SLOTS:
 	void slotServerAdded(MattermostQt::ServerPtr server);
 	void slotServerStateChanged(int server_index, int state);
+	void slotServerChanged(MattermostQt::ServerPtr server, QVector<int> roles);
 private:
 	QPointer<MattermostQt> m_mattermost;
 };

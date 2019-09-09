@@ -8,6 +8,7 @@ import "../model"
 Page {
     id: accountsPage
     property Context context
+    property MattermostQt mattermost: context.mattermost
 
     property AccountsModel accauntsModel: AccountsModel {
         mattermost: context.mattermost
@@ -65,11 +66,13 @@ Page {
                     id: contextmenu
                     MenuItem {
                         text: qsTr("Rename")
-                        enabled: false
                     }
 
                     MenuItem {
-                        text: qsTr("Disable")
+                        text: role_is_enabled ? qsTr("Disable") : qsTr("Enable")
+                        onClicked: {
+                            context.mattermost.set_server_enabled(index,!role_is_enabled);
+                        }
                     }
 
                     MenuItem {
@@ -106,7 +109,7 @@ Page {
                         bottomMargin: Theme.paddingSmall
                     }
 
-                    BackgroundItem {
+                    Item {
                         id: iconItem
                         width: Theme.iconSizeMedium
                         height: width
@@ -131,7 +134,7 @@ Page {
                             source: serverIcon
                             maskSource: iconMask
                         }
-                    }//BackgroundItem
+                    }//Item
 
                     Label {
                         id: serverName
@@ -146,11 +149,14 @@ Page {
                             case MattermostQt.ServerUnconnected:
                                 qsTr("Offline")
                                 break;
+                            case MattermostQt.ServerLogin:
+                                qsTr("Loggining")
+                                break;
                             }
                         font.pixelSize: Theme.fontSizeLarge
                         text: qsTr("name: ") + role_name + "\n" +
                               qsTr("url: ") + role_url + "\n" +
-                              qsTr("status: ") + statusText
+                              qsTr("status: ") + role_is_enabled?statusText:qsTr("Disabled")
                         height: contentHeight
                         width: parent.width - parent.spacing - iconItem.width
                     }//Label
