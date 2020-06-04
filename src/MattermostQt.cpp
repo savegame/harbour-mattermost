@@ -226,7 +226,7 @@ MattermostQt::MattermostQt(QObject *parent )
 	}
 
 	m_cache_path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-	if( m_cache_path.lastIndexOf( QCoreApplication::organizationName()) != -1 )
+	if( m_cache_path.lastIndexOf( QStringLiteral(".cache/").arg(QCoreApplication::organizationName()) ) != -1 )
 	{	// this wrong path, try fix it
 // its /home/nemo/.local/share/sashikknox/harbour-mattermost
 

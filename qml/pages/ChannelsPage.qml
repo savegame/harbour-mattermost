@@ -142,14 +142,14 @@ Page {
                 id: panim
                 running: first_run
                 property int dur: 200
-                //                NumberAnimation  {
-                //                    target: bgitem
-                //                    property: "height"
-                //                    easing.type: Easing.OutQuad
-                //                    from: 0
-                //                    to: channellabel.height;
-                //                    duration: panim.dur
-                //                }
+//                NumberAnimation  {
+//                    target: bgitem
+//                    property: "height"
+//                    easing.type: Easing.OutQuad
+//                    from: 0
+//                    to: channellabel.height;
+//                    duration: panim.dur
+//                }
                 NumberAnimation {
                     target: bgitem
                     property: "opacity"

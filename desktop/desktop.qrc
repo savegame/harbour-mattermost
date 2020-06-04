@@ -7,5 +7,8 @@
         <file>qml/components/PageHeader.qml</file>
         <file>qml/components/CButton.qml</file>
         <file>qml/panels/LoginPanel.qml</file>
+        <file>qml/components/CCheckBox.qml</file>
+        <file>qml/panels/ChannelsPanel.qml</file>
+        <file>qml/panels/TeamsPanel.qml</file>
     </qresource>
 </RCC>

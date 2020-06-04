@@ -54,8 +54,15 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 
 	switch(role) {
 	case DisplayName:
-		if(channel.isNull() || channel->m_display_name.isEmpty())
+		if(channel.isNull() || channel->m_display_name.isEmpty()) {
+			if( m_header_index[ItemType::HeaderPublic] == index.row() )
+				return tr("Public Channels");
+			else if( m_header_index[ItemType::HeaderPrivate] == index.row() )
+				return tr("Private Channels");
+			else if( m_header_index[ItemType::HeaderDirect] == index.row() )
+				return tr("Direct Channels");
 			return QObject::trUtf8("somebody");
+		}
 		else
 			return QVariant(channel->m_display_name);
 		break;
@@ -143,6 +150,18 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 		if ( channel.isNull() )
 			return QVariant(0);
 		return channel->m_user_typing.size();
+	case RoleChannelId:
+		if ( channel.isNull() )
+			return QVariant(0);
+		return channel->m_id;
+	case RoleServerIndex:
+		if ( channel.isNull() )
+			return QVariant(0);
+		return channel->m_server_index;
+	case RoleChannelIndex:
+		if ( channel.isNull() )
+			return QVariant(0);
+		return channel->m_self_index;
 	}
 	return QVariant();
 }
@@ -199,7 +218,10 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	{ DataRoles::UserStatus,      "user_status" },
 	{ DataRoles::MessageUnread,   "role_msg_unread" },
 	{ DataRoles::MentionCount,    "role_mention_count" },
-	{ DataRoles::RoleUsersTyping, "role_users_typing" }};
+	{ DataRoles::RoleUsersTyping, "role_users_typing" },
+	{ DataRoles::RoleChannelId,   "role_channel_id" },
+	{ DataRoles::RoleServerIndex, "role_server_index" },
+	{ DataRoles::RoleChannelIndex,"role_channel_index" }};
 	return names;
 }
 

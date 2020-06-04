@@ -8,7 +8,8 @@ TARGET = mostqute
 
 DEFINES += DESKTOP_APP
 DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
-DEFINES += EMOJI_PATH=\\\"/usr/share/$$TARGET/emoji\\\"
+#DEFINES += EMOJI_PATH=\\\"/usr/share/$$TARGET/emoji\\\"
+DEFINES += EMOJI_PATH=\\\"$$PWD/resources/emoji\\\"
 
 debug: DEFINES += _DEBUG
 

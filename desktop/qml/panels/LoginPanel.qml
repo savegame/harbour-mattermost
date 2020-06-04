@@ -1,5 +1,7 @@
 import QtQuick          2.6
 import QtQuick.Controls 1.4
+import QtQuick.Controls.Styles 1.0
+
 import ru.sashikknox    1.0
 import "../components"
 import "../panels"
@@ -13,6 +15,7 @@ Panel {
     property alias userName: userNameEdit.text
     property alias userPassword: userPasswordEdit.text
     property alias buttonEnabled: acceptButton.enabled
+    property alias trustCertificate: trustCertButtom.checked
 
     Flickable {
         id: flickable
@@ -101,6 +104,19 @@ Panel {
                 echoMode: TextInput.Password
                 passwordCharacter: "\u2022"
                 passwordMaskDelay: 400
+            }
+
+            Item {
+                width: Theme.paddingSmall
+                height: Theme.paddingSmall
+            }
+
+
+            CCheckBox {
+                id: trustCertButtom
+                checked: true
+                anchors.left: userPasswordEdit.left
+                text: qsTr("Trust certificate")
             }
 
             Item {

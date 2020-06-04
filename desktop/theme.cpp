@@ -5,6 +5,8 @@
 class ThemePrivate {
 public:
 	Theme::ColorScheme colorScheme;
+	QColor highlightColor;
+	QColor highlightBackgroundColor;
 	QColor primaryColor;
 	QColor overlayBackgroundColor;
 	qreal paddingSmall;
@@ -15,6 +17,10 @@ public:
 	int fontSizeLarge;
 	qreal pixelRatio;
 	qreal borderWidth;
+
+	qreal iconSizeSmall ;
+	qreal iconSizeMedium;
+	qreal iconSizeLarge ;
 };
 
 Theme *Theme::getInstance()
@@ -34,16 +40,22 @@ Theme::Theme(QObject *parent)
 {
 	p = new ThemePrivate();
 	p->colorScheme = ColorScheme::DarkOnLight;
-	p->primaryColor = QColor(0,0,0);
+	p->primaryColor             = QColor(0,0,0);
+	p->highlightColor.setNamedColor("#0b2875");
+	p->highlightBackgroundColor.setNamedColor("#ccd7e2");
 	p->overlayBackgroundColor = QColor(255,255,255);
 	p->pixelRatio = 3.14;
 	p->borderWidth =  (1.0 < p->pixelRatio * 0.35) ?  p->pixelRatio * 0.35 : 1.0;
 	p->paddingSmall  = p->pixelRatio * 2;
-	p->paddingMedium = p->pixelRatio * 2.75;
+	p->paddingMedium = p->pixelRatio * 2.5;
 	p->paddingLarge  = p->pixelRatio * 3.14;
 	p->fontSizeSmall  = 12;
 	p->fontSizeMedium = 16;
 	p->fontSizeLarge  = 20;
+
+	p->iconSizeSmall  = p->paddingLarge * 3;
+	p->iconSizeMedium = p->paddingLarge * 5;
+	p->iconSizeLarge  = p->paddingLarge * 7;
 }
 
 Theme::~Theme()
@@ -87,6 +99,21 @@ int Theme::fontSizeLarge() const
 	return p->fontSizeLarge;
 }
 
+qreal Theme::iconSizeSmall() const
+{
+	return p->iconSizeSmall;
+}
+
+qreal Theme::iconSizeMedium() const
+{
+	return p->iconSizeMedium;
+}
+
+qreal Theme::iconSizeLarge() const
+{
+	return p->iconSizeLarge;
+}
+
 QColor Theme::primaryColor() const
 {
 	return p->primaryColor;
@@ -110,4 +137,14 @@ qreal Theme::paddingMedium() const
 qreal Theme::paddingLarge() const
 {
 	return p->paddingLarge;
+}
+
+QColor Theme::highlightColor() const
+{
+	return p->highlightColor;
+}
+
+QColor Theme::highlightBackgroundColor() const
+{
+	return p->highlightBackgroundColor;
 }

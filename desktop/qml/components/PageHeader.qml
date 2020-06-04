@@ -6,4 +6,5 @@ CLabel {
     font.bold: true
     elide: Text.ElideMiddle
     horizontalAlignment: Text.AlignHCenter
+    verticalAlignment: Text.AlignVCenter
 }

@@ -33,6 +33,9 @@ public:
 		MessageUnread,  // count of unreaded messages
 		MentionCount,   // count of mention
 		RoleUsersTyping, // when we have event user_typing, here a count of users
+		RoleChannelId,
+		RoleServerIndex,
+		RoleChannelIndex,
 	};
 
 	enum ItemType {

@@ -44,10 +44,10 @@ class Theme : public QObject
 //	Q_PROPERTY(qreal itemSizeHuge READ itemSizeHuge CONSTANT FINAL)
 
 //	Q_PROPERTY(qreal iconSizeExtraSmall READ iconSizeExtraSmall CONSTANT FINAL)
-//	Q_PROPERTY(qreal iconSizeSmall READ iconSizeSmall CONSTANT FINAL)
+	Q_PROPERTY(qreal iconSizeSmall READ iconSizeSmall CONSTANT FINAL)
 //	Q_PROPERTY(qreal iconSizeSmallPlus READ iconSizeSmallPlus CONSTANT FINAL)
-//	Q_PROPERTY(qreal iconSizeMedium READ iconSizeMedium CONSTANT FINAL)
-//	Q_PROPERTY(qreal iconSizeLarge READ iconSizeLarge CONSTANT FINAL)
+	Q_PROPERTY(qreal iconSizeMedium READ iconSizeMedium CONSTANT FINAL)
+	Q_PROPERTY(qreal iconSizeLarge READ iconSizeLarge CONSTANT FINAL)
 //	Q_PROPERTY(qreal iconSizeExtraLarge READ iconSizeExtraLarge CONSTANT FINAL)
 //	Q_PROPERTY(qreal iconSizeLauncher READ iconSizeLauncher CONSTANT FINAL)
 
@@ -73,8 +73,8 @@ class Theme : public QObject
 
 //	Q_PROPERTY(float pageStackIndicatorWidth READ pageStackIndicatorWidth CONSTANT FINAL)
 //	Q_PROPERTY(float highlightBackgroundOpacity READ highlightBackgroundOpacity CONSTANT FINAL)
-//	Q_PROPERTY(QColor highlightColor READ highlightColor NOTIFY highlightColorChanged FINAL)
-//	Q_PROPERTY(QColor highlightBackgroundColor READ highlightBackgroundColor NOTIFY highlightBackgroundColorChanged FINAL)
+	Q_PROPERTY(QColor highlightColor READ highlightColor NOTIFY highlightColorChanged FINAL)
+	Q_PROPERTY(QColor highlightBackgroundColor READ highlightBackgroundColor NOTIFY highlightBackgroundColorChanged FINAL)
 //	Q_PROPERTY(QColor highlightDimmerColor READ highlightDimmerColor NOTIFY highlightDimmerColorChanged FINAL)
 	Q_PROPERTY(QColor primaryColor READ primaryColor NOTIFY primaryColorChanged FINAL)
 //	Q_PROPERTY(QColor secondaryColor READ secondaryColor NOTIFY secondaryColorChanged FINAL)
@@ -158,10 +158,10 @@ public:
 //	qreal itemSizeExtraLarge() const;
 //	qreal itemSizeHuge() const;
 //	qreal iconSizeExtraSmall() const;
-//	qreal iconSizeSmall() const;
+	qreal iconSizeSmall() const;
 //	qreal iconSizeSmallPlus() const;
-//	qreal iconSizeMedium() const;
-//	qreal iconSizeLarge() const;
+	qreal iconSizeMedium() const;
+	qreal iconSizeLarge() const;
 //	qreal iconSizeExtraLarge() const;
 //	qreal iconSizeLauncher() const;
 //	qreal buttonWidthExtraSmall() const;
@@ -178,8 +178,8 @@ public:
 
 //	QStringList launcherIconDirectories();
 
-//	QColor highlightColor() const;
-//	QColor highlightBackgroundColor() const;
+	QColor highlightColor() const;
+	QColor highlightBackgroundColor() const;
 //	QColor highlightDimmerColor() const;
 	QColor primaryColor() const;
 //	QColor secondaryColor() const;
