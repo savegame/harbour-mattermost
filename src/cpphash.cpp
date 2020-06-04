@@ -163,7 +163,11 @@ int CppHash::find_emoji(const char *emoji_short_name, int size, char **picture_p
 	QHash<QString, QString>::iterator it =  d->emoji.find(short_name);
 	if ( it != d->emoji.end() )
 	{
+#ifdef DESKTOP_APP
+		QString path_pic = QStringLiteral("file://%0/%1").arg(EMOJI_PATH).arg(it.value());
+#else
 		QString path_pic = QStringLiteral("%0/%1").arg(EMOJI_PATH).arg(it.value());
+#endif
 		d->buffer = path_pic.toLocal8Bit();
 		*picture_path = d->buffer.data();
 		return path_pic.size();

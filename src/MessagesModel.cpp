@@ -614,12 +614,15 @@ void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 //		m_channel->m_message = channel->m_message;
 //		endResetModel();
 //	}
-
+#ifdef DESKTOP_APP
+	m_channel = channel;
+#else
 	if( !m_channel )
 		m_channel = channel;
 	else if ( m_channel != channel) {
 		return;
 	}
+#endif
 
 //	beginInsertRows(QModelIndex(),0,0);
 //	endInsertRows();

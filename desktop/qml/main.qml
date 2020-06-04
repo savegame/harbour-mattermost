@@ -64,6 +64,7 @@ Item {
 
         onChannelClicked: {
             messagesPanel.headerText = channel_name
+            MattermostQt.get_posts(server_index,team_index,channel_type,channel_index)
         }
     } // ChannelsPanel
 
@@ -73,9 +74,13 @@ Item {
         property alias headerText: pageHeader.text
 
         radius: 0
+
         anchors {
             left: channelsPanel.right
             right: parent.right
+            top: parent.top
+            bottom: parent.bottom
+            leftMargin: -Theme.borderWidth
             topMargin: -Theme.borderWidth
             rightMargin: -Theme.borderWidth
         }
@@ -103,20 +108,40 @@ Item {
                 right: parent.right
                 bottom: parent.bottom
             }
+//            anchors.fill: parent
 
             footer: Item {
                 height: Theme.iconSizeLarge
+                anchors.left: parent.left
+                anchors.right: parent.right
             }
 
             model: MessagesModel {
                 mattermost: MattermostQt
             }
 
-            delegate: CLabel {
-                font.pixelSize: Theme.fontSizeSmall
-                text: "<style>a:link { color: " + Theme.highlightColor + "; }</style>" +  role_formated_text
-                wrapMode: Text.Wrap
-                textFormat: Text.RichText
+            delegate: Panel {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.topMargin: Theme.paddingSmall
+                height: Math.max(Theme.iconSizeSmall, messageText.contentHeight + Theme.paddingMedium * 2)
+
+                Component.onCompleted: {
+                    console.log("Index is " + index)
+                }
+
+                CLabel {
+                    id: messageText
+                    font.pixelSize: Theme.fontSizeMedium
+                    anchors.fill: parent
+                    anchors.margins: Theme.paddingMedium
+                    text: "<style>a:link { color: " + Theme.highlightColor + "; }</style>" +  role_formated_text
+                    wrapMode: Text.Wrap
+                    textFormat: Text.RichText
+                    onLinkActivated: {
+                        Qt.openUrlExternally(link);
+                    }
+                }
             }
         }
     }

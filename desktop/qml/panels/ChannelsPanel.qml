@@ -43,6 +43,7 @@ Panel {
                 id: channelIcon
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                visible: isChannel
                 source: switch(channel_type) {
                     case MattermostQt.ChannelPublic :
                         Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f4ac.svg")
@@ -52,7 +53,7 @@ Panel {
                         break
                     case MattermostQt.ChannelDirect :
                     default:
-                        return Qt.resolvedUrl("file://" + avatar_path )
+                        return (avatar_path.length) ? Qt.resolvedUrl("file://" + avatar_path ) : Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f4ac.svg")
                 }
 
                 width: Theme.iconSizeSmall
