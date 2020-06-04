@@ -37,7 +37,11 @@ public:
 		LogLevelCritical = QtCriticalMsg,
 		LogLevelFatal = QtFatalMsg,
 		LogLevelInfo = QtInfoMsg,
+#ifdef _DEBUG
+		LogLevelDefault =  LogLevelDebug,
+#else
 		LogLevelDefault =  LogLevelFatal,
+#endif
 	};
 	Q_ENUM(LogLevel)
 
@@ -109,13 +113,8 @@ static QObject *SettingsContainer_singletontype_provider(QQmlEngine *engine, QJS
 {
 	Q_UNUSED(engine)
 	Q_UNUSED(scriptEngine)
-//	engine->
-//	MattermostQt *m = engine->findChild<MattermostQt*>();
-//	if(SettingsContainerSingleton.data())
-//	SettingsContainer *settings = new SettingsContainer();
-//	if(m)
-//		m->setSettingsContainer(settings);
 	return SettingsContainer::getInstance();
 }
+
 
 #endif // SETTINGSCONTAINER_H

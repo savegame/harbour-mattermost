@@ -11,6 +11,7 @@
 #include <QtWebSockets/qwebsocket.h>
 #include "MarkdownParser.h"
 #include <MattermostQt_gobal.h>
+#include <QtQuick>
 //#include <QtWebSockets/QWebSocket>
 //#include <QWebSocket>
 
@@ -24,6 +25,9 @@ class MattermostQt : public QObject
 
 	friend class MessagesModel;
 	friend class ChannelsModel;
+//	friend QObject* MattermostQt_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine);
+public:
+	static MattermostQt *getInstance();
 public:
 	enum ReplyType : int {
 		rt_login = 0,
@@ -652,6 +656,7 @@ public:
 	int messageUnread() const;
 
 Q_SIGNALS:
+	void libraryIsInitialized();
 	void onApplciationStatusChanged();
 	void messageUnreadChanged();
 
@@ -856,5 +861,13 @@ protected:
 	//	QList<ChannelContainer>   m_stackedChannels;
 	ApplicationStatus m_appStatus = ApplicationStatus::AppInactive;
 };
+
+// Second, define the singleton type provider function (callback).
+static QObject *MattermostQt_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+	Q_UNUSED(engine)
+	Q_UNUSED(scriptEngine)
+	return MattermostQt::getInstance();
+}
 
 #endif // MATTERMOSTQT_H

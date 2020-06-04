@@ -1,6 +1,12 @@
 #include "SettingsContainer.h"
+
+#include <QJsonObject>
+#include <QJsonArray>
+
+#ifdef SAILFISHAPP
 #include <sailfishapp.h>
 #include <libsailfishsilica/silicatheme.h>
+#endif
 
 #define SET_SETTINGS_PROPERTY(_t, _n) MT_SET_PROPERTY_2(SettingsContainer, _t, _n, settingsChanged)
 // TODO make two difenes for RW properties and R only properties
@@ -43,17 +49,21 @@ QString SettingsContainer::strToSingleLine(const QString &in)
 
 void SettingsContainer::resetToDefault()
 {
+#ifdef SAILFISHAPP
+	m_pageMargin            = Silica::Theme::instance()->paddingMedium();
+#else
+	m_pageMargin            = 12; // TODO pageMargin for other platforms
+#endif
 	m_autoDownloadImageSize = 512;
 	m_showBlobs             = true;
 	m_blobOpacity           = 0.7;
 	m_formatedText          = true;
-	m_pageMargin            = Silica::Theme::instance()->paddingMedium();
 	m_pageMarginEnum        = SettingsContainer::MarginMedium;
 	m_sendIcon              = true;
 	m_searchInChannels      = true;
 	m_useCameraPicker       = true;
 	m_useLog                = true;
-	m_logLevel              = LogLevelFatal;
+	m_logLevel              = LogLevelDefault;
 }
 
 #define ADD_VALUE(x) settings[#x] = x
@@ -121,13 +131,25 @@ void SettingsContainer::fromJsonObject(const QJsonObject &settings)
 		m_pageMargin = 0;
 		break;
 	case Margin::MarginSmall:
+#ifdef SAILFISHAPP
 		m_pageMargin = Silica::Theme::instance()->paddingSmall();
+#else
+		m_pageMargin = 10;// TODO pageMargin for other platforms
+#endif
 		break;
 	case Margin::MarginMedium:
+#ifdef SAILFISHAPP
 		m_pageMargin = Silica::Theme::instance()->paddingMedium();
+#else
+		m_pageMargin = 14;// TODO pageMargin for other platforms
+#endif
 		break;
 	case Margin::MarginLarge:
+#ifdef SAILFISHAPP
 		m_pageMargin = Silica::Theme::instance()->paddingLarge();
+#else
+		m_pageMargin = 18;// TODO pageMargin for other platforms
+#endif
 		break;
 	}
 }

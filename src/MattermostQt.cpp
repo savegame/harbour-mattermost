@@ -96,6 +96,17 @@ Q_DECLARE_METATYPE(MattermostQt::MessagePtr)
 #define BIND_REPLY_FUNCTION(name) m_reply_func[ReplyType:: CONCAT2(rt_,name) ] = &MattermostQt:: CONCAT2(reply_, name)
 #define BIND_EVENT_FUNCTION(name) m_event_func[EventType:: CONCAT2(et_,name) ] = &MattermostQt:: CONCAT2(event_, name)
 
+MattermostQt *MattermostQt::getInstance()
+{
+	static MattermostQt *mattermost = new MattermostQt();
+	static bool first_call = true;
+	if( first_call ) {
+		first_call = false;
+		qInfo() << QStringLiteral("MattermostQt::getInstance() first call: MattermostQt static object alloicated.");
+	}
+	return mattermost;
+}
+
 void MattermostQt::bind_reply_functions()
 {
 	memset(m_reply_func, NULL, sizeof(void*)*ReplyTypeCount );
@@ -192,13 +203,13 @@ MattermostQt::MattermostQt(QObject *parent )
 	        .filePath(QCoreApplication::applicationName());
 
 	m_data_path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-	if( m_data_path.indexOf( QCoreApplication::organizationName()) != -1 )
+	if( m_data_path.lastIndexOf( QCoreApplication::organizationName()) != -1 )
 	{	// this wrong path, try fix it
 		// its /home/nemo/.local/share/sashikknox/harbour-mattermost
 
 		QString wrong_path = m_data_path + QStringLiteral("/");
 		QDir dataDir(wrong_path);
-		m_data_path.remove( QCoreApplication::organizationName().append("/") );
+		m_data_path.remove( m_data_path.lastIndexOf( QCoreApplication::organizationName()) , QCoreApplication::organizationName().append("/").length() );
 
 		if( dataDir.exists() )
 		{ // try it move to right location
@@ -215,13 +226,13 @@ MattermostQt::MattermostQt(QObject *parent )
 	}
 
 	m_cache_path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-	if( m_cache_path.indexOf( QCoreApplication::organizationName()) != -1 )
+	if( m_cache_path.lastIndexOf( QCoreApplication::organizationName()) != -1 )
 	{	// this wrong path, try fix it
 // its /home/nemo/.local/share/sashikknox/harbour-mattermost
 
 		QString wrong_path = m_cache_path + QStringLiteral("/");
 		QDir cacheDir(wrong_path);
-		m_cache_path.remove( QCoreApplication::organizationName().append("/") );
+		m_cache_path.remove( m_cache_path.lastIndexOf( QCoreApplication::organizationName()) , QCoreApplication::organizationName().append("/").length() );
 
 		if( cacheDir.exists() )
 		{ // try it move to right location
@@ -261,6 +272,8 @@ MattermostQt::MattermostQt(QObject *parent )
 	m_mdParser = new DiscountMDParser();
 
 	load_settings();
+
+	emit libraryIsInitialized();
 }
 
 MattermostQt::~MattermostQt()
@@ -2389,8 +2402,9 @@ void MattermostQt::websocket_connect(ServerPtr server)
 void MattermostQt::reply_login(QNetworkReply *reply)
 {
 	ASSERT_REPLY(reply_login)
-	        //	 TODO here we need check if server already exists, just need update auth data
-	        if( reply->property(P_SERVER_INDEX).isValid() )
+
+	//	 TODO here we need check if server already exists, just need update auth data
+	if( reply->property(P_SERVER_INDEX).isValid() )
 	{//login by token
 		ServerPtr server;
 
@@ -4566,10 +4580,10 @@ MattermostQt::MessagePtr MattermostQt::id2message(MattermostQt::ChannelPtr chann
 const QString MattermostQt::generateCachePath(bool *isOk) const
 {
 	QString cache_path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-	if( cache_path.indexOf( QCoreApplication::organizationName()) != -1 )
+	if( cache_path.indexOf( QStringLiteral(".cache/%0").arg(QCoreApplication::organizationName()) ) != -1 )
 	{	// this wrong path, try fix it
 		// its /home/nemo/.local/share/sashikknox/harbour-mattermost
-		cache_path.remove( QCoreApplication::organizationName().append("/") );
+		cache_path.remove( cache_path.lastIndexOf(QCoreApplication::organizationName().append("/")) , QCoreApplication::organizationName().append("/").length() );
 		if(isOk)
 			*isOk = false;
 	}

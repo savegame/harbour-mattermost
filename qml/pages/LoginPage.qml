@@ -16,9 +16,9 @@ Page {
 
     // that need, because error "MattermostQt.ServerConnected undeclared", when
     // MattermostQt objected deleted and change his state to Unconnected
-    property int status_server_connected: MattermostQt.ServerConnected
-    property int status_server_connecting: MattermostQt.ServerConnecting
-    property int status_server_unconnected: MattermostQt.ServerUnconnected
+    readonly property int status_server_connected: MattermostQt.ServerConnected
+    readonly property int status_server_connecting: MattermostQt.ServerConnecting
+    readonly property int status_server_unconnected: MattermostQt.ServerUnconnected
 
     property int connectionStatus: status_server_unconnected
 
@@ -67,9 +67,9 @@ Page {
         );
         if ( context.mattermost.get_server_count() === 1 ) {
             server_id = 0;
-            server_name.text = context.mattermost.get_server_name(0);
-            server.text = context.mattermost.get_server_url(0);
-            trust_certificate_switcher.checked = context.mattermost.get_server_trust_certificate(0);
+            server_name.text = context.mattermost.get_server_name(server_id);
+            server.text = context.mattermost.get_server_url(server_id);
+            trust_certificate_switcher.checked = context.mattermost.get_server_trust_certificate(server_id);
         }
     }
 
@@ -88,9 +88,9 @@ Page {
 
     onContextChanged:{
         // TODO when multi user ablity is enbled? need rewrite this part
-        connectionStatus = context.mattermost.get_server_state(0)
+        connectionStatus = context.mattermost.get_server_state(server_id)
         context.mattermost.serverStateChanged.connect( function onServerConnected(server_index,state){
-            if( server_index !== 0 )
+            if( server_index !== server_id )
                 console.debug("Server index is " + server_index )
             connectionStatus = state;
             if(state === status_server_connected) {

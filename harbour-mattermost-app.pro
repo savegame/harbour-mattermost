@@ -17,7 +17,7 @@ for( l, LINES_ALL ): {
 
 VERSION = $${VER_VERSION}-$${VER_RELEASE}
 message("Version is "$$VERSION)
-
+DEFINES += SAILFISHAPP
 DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 DEFINES += EMOJI_PATH=\\\"/usr/share/$$TARGET/emoji\\\"
 

@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/components/CLabel.qml</file>
+        <file>qml/components/Panel.qml</file>
+        <file>qml/components/LineEdit.qml</file>
+        <file>qml/components/PageHeader.qml</file>
+        <file>qml/components/CButton.qml</file>
+        <file>qml/panels/LoginPanel.qml</file>
+    </qresource>
+</RCC>

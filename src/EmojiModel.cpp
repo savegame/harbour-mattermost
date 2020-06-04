@@ -237,7 +237,7 @@ void EmojiModel::loadEmoji()
 void EmojiModel::onUsedReactionsChanged()
 {
 	QStringList short_names = SettingsContainer::getInstance()->usedReactions();
-	int maxAliases = SettingsContainer::getInstance()->usedReactionsCount();
+//	int maxAliases = SettingsContainer::getInstance()->usedReactionsCount();
 	int out_from = 0, out_to = 0;
 	if(!short_names.isEmpty())
 	{
