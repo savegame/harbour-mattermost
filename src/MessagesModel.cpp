@@ -253,6 +253,14 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				emoji.push_back( message->m_reactions[i].m_emoji );
 			return QVariant::fromValue(emoji);
 		}
+	case MessagesModel::RoleServerIndex:
+		return message->m_server_index;
+	case MessagesModel::RoleTeamIndex:
+		return message->m_team_index;
+	case MessagesModel::RoleChannelIndex:
+		return message->m_channel_index;
+	case MessagesModel::RoleChannelType:
+		return message->m_channel_type;
 	default:
 		break;
 	}
@@ -319,7 +327,11 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	{MessagesModel::RoleReactionsPaths,    "role_reactions_paths"},
 	{MessagesModel::RoleReactionsAddCount, "role_reactions_add_count"},
 	{MessagesModel::RoleReactionsIsMine,   "role_reactions_is_mine"},
-	{MessagesModel::RoleReactionsEmoji,    "role_reactions_emoji"}};
+	{MessagesModel::RoleReactionsEmoji,    "role_reactions_emoji"},
+	{MessagesModel::RoleServerIndex,       "role_server_index"},
+	{MessagesModel::RoleTeamIndex,         "role_team_index"},
+	{MessagesModel::RoleChannelIndex,      "role_channel_index"},
+	{MessagesModel::RoleChannelType,       "role_channel_type"}};
 	return names;
 }
 
@@ -376,7 +388,9 @@ void MessagesModel::setChannelId(QString id)
 
 QString MessagesModel::getChannelId() const
 {
-	return m_channel_id;
+	if(m_channel)
+		return m_channel->m_id;
+	return QString();
 }
 
 int MessagesModel::messageCount() const
@@ -861,3 +875,101 @@ void MessagesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr message, 
 
 
 
+
+ReverseProxyMessagesModel::ReverseProxyMessagesModel(QObject *parent)
+    :QAbstractProxyModel(parent)
+{
+
+}
+
+ReverseProxyMessagesModel::~ReverseProxyMessagesModel()
+{
+
+}
+
+void ReverseProxyMessagesModel::setSourceModel(QAbstractItemModel *sourceModel)
+{
+	QAbstractProxyModel::setSourceModel(sourceModel);
+	if( MessagesModel *model = qobject_cast<MessagesModel*>(sourceModel) )
+	{
+		connect(model, &MessagesModel::messagesInitialized, this, &ReverseProxyMessagesModel::parentModelReseted);
+		connect(model, &MessagesModel::dataChanged, this, &ReverseProxyMessagesModel::slot_dataChanged);
+		connect(model, &MessagesModel::rowsAboutToBeInserted, this, &ReverseProxyMessagesModel::slot_rowsAboutToBeInserted);
+		connect(model, &MessagesModel::rowsInserted, this, &ReverseProxyMessagesModel::slot_rowsInserted);
+		connect(model, &MessagesModel::rowsAboutToBeRemoved, this, &ReverseProxyMessagesModel::slot_rowsAboutToBeRemoved);
+		connect(model, &MessagesModel::rowsRemoved, this, &ReverseProxyMessagesModel::slot_rowsRemoved);
+	}
+}
+
+QModelIndex ReverseProxyMessagesModel::mapToSource(const QModelIndex &proxyIndex) const
+{
+	if(!sourceModel() || proxyIndex.row() < 0 )
+		return QModelIndex();
+	int count = sourceModel()->rowCount();
+	return createIndex(count - proxyIndex.row() - 1, 0);
+}
+
+QModelIndex ReverseProxyMessagesModel::mapFromSource(const QModelIndex &sourceIndex) const
+{
+	if(!sourceModel() || sourceIndex.row() < 0 )
+		return QModelIndex();
+	int count = sourceModel()->rowCount();
+	return createIndex(count - sourceIndex.row() - 1, 0);
+}
+
+int ReverseProxyMessagesModel::rowCount(const QModelIndex &parent) const
+{
+	Q_UNUSED(parent)
+	if(!sourceModel())
+		return 0;
+	return sourceModel()->rowCount();
+}
+
+int ReverseProxyMessagesModel::columnCount(const QModelIndex &parent) const
+{
+	Q_UNUSED(parent)
+	return 1;
+}
+
+QModelIndex ReverseProxyMessagesModel::index(int row, int column, const QModelIndex &parent) const
+{
+	Q_UNUSED(parent)
+	return createIndex(row,column);
+}
+
+QModelIndex ReverseProxyMessagesModel::parent(const QModelIndex &child) const
+{
+	Q_UNUSED(child)
+	return QModelIndex();
+}
+
+void ReverseProxyMessagesModel::parentModelReseted()
+{
+	beginResetModel();
+	endResetModel();
+}
+
+void ReverseProxyMessagesModel::slot_dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles )
+{
+	emit dataChanged( mapFromSource(topLeft), mapFromSource(bottomRight), roles );
+}
+
+void ReverseProxyMessagesModel::slot_rowsAboutToBeInserted(const QModelIndex &parent, int start, int end)
+{
+	beginInsertRows( mapFromSource(parent), sourceModel()->rowCount() - 1 - start,  sourceModel()->rowCount() - 1 - end );
+}
+
+void ReverseProxyMessagesModel::slot_rowsInserted(const QModelIndex &parent, int start, int end)
+{
+	endInsertRows();
+}
+
+void ReverseProxyMessagesModel::slot_rowsAboutToBeRemoved(const QModelIndex &parent, int start, int end)
+{
+	beginRemoveRows( mapFromSource(parent), sourceModel()->rowCount() - 1 - start,  sourceModel()->rowCount() - 1 - end );
+}
+
+void ReverseProxyMessagesModel::slot_rowsRemoved(const QModelIndex &parent, int start, int end)
+{
+	endRemoveRows();
+}

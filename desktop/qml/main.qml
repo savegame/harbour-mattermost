@@ -68,82 +68,8 @@ Item {
         }
     } // ChannelsPanel
 
-    Panel {
+    MessagesPanel {
         id: messagesPanel
-
-        property alias headerText: pageHeader.text
-
-        radius: 0
-
-        anchors {
-            left: channelsPanel.right
-            right: parent.right
-            top: parent.top
-            bottom: parent.bottom
-            leftMargin: -Theme.borderWidth
-            topMargin: -Theme.borderWidth
-            rightMargin: -Theme.borderWidth
-        }
-
-        Panel {
-            id: headerPanel
-            radius: 0
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: -Theme.borderWidth
-            height: Theme.iconSizeMedium
-            PageHeader {
-                id: pageHeader
-                anchors.fill: parent
-            }
-        }
-
-        ListView {
-            id: messagesList
-            clip: true
-            anchors {
-                top: headerPanel.bottom
-                left: parent.left
-                right: parent.right
-                bottom: parent.bottom
-            }
-//            anchors.fill: parent
-
-            footer: Item {
-                height: Theme.iconSizeLarge
-                anchors.left: parent.left
-                anchors.right: parent.right
-            }
-
-            model: MessagesModel {
-                mattermost: MattermostQt
-            }
-
-            delegate: Panel {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.topMargin: Theme.paddingSmall
-                height: Math.max(Theme.iconSizeSmall, messageText.contentHeight + Theme.paddingMedium * 2)
-
-                Component.onCompleted: {
-                    console.log("Index is " + index)
-                }
-
-                CLabel {
-                    id: messageText
-                    font.pixelSize: Theme.fontSizeMedium
-                    anchors.fill: parent
-                    anchors.margins: Theme.paddingMedium
-                    text: "<style>a:link { color: " + Theme.highlightColor + "; }</style>" +  role_formated_text
-                    wrapMode: Text.Wrap
-                    textFormat: Text.RichText
-                    onLinkActivated: {
-                        Qt.openUrlExternally(link);
-                    }
-                }
-            }
-        }
     }
 
 

@@ -10,5 +10,8 @@
         <file>qml/components/CCheckBox.qml</file>
         <file>qml/panels/ChannelsPanel.qml</file>
         <file>qml/panels/TeamsPanel.qml</file>
+        <file>qml/panels/MessagesPanel.qml</file>
+        <file>qml/components/ScrollBar.qml</file>
+        <file>qml/components/AvatarItem.qml</file>
     </qresource>
 </RCC>

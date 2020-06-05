@@ -16,20 +16,18 @@ Rectangle {
 
 
     onFocusChanged: {
-        if( textInput.childChangeFocus )
-            return;
-        textInput.focus = focus
+        if(focus != textInput.focus)
+            textInput.focus = focus
     }
 
     height: textInput.contentHeight + Theme.paddingSmall
     color: Theme.overlayBackgroundColor
     border.width: Theme.borderWidth
-    border.color: Theme.primaryColor
+    border.color:  textInput.focus ? Theme.highlightColor : Theme.primaryColor
     radius: Theme.paddingMedium
 
     TextInput {
         id: textInput
-        property bool childChangeFocus: false
         color: Theme.primaryColor
         font.pixelSize: Theme.fontSizeMedium
         anchors.verticalCenter: parent.verticalCenter
@@ -38,5 +36,10 @@ Rectangle {
         anchors.right: parent.right
         anchors.leftMargin: lineEditRect.radius
         anchors.rightMargin: lineEditRect.radius
+
+        onFocusChanged: {
+//            if(lineEditRect.focus != focus)
+//                lineEditRect.focus = focus
+        }
     }
 }

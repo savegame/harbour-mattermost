@@ -2,6 +2,7 @@
 #define MESSAGESMODEL_H
 
 #include <QAbstractListModel>
+#include <QAbstractProxyModel>
 
 #include <QSharedPointer>
 #include <QPointer>
@@ -52,6 +53,10 @@ public:
 		RoleReactionsAddCount, // how many users add this reaction
 		RoleReactionsIsMine, // if current user too set this reaction
 		RoleReactionsEmoji,
+		RoleServerIndex,
+		RoleTeamIndex,
+		RoleChannelIndex,
+		RoleChannelType,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 	Q_ENUM(DataRoles)
@@ -92,7 +97,7 @@ public:
 	Q_INVOKABLE QString getReactionPath(int row, int reaction_index) const;
 	Q_INVOKABLE int getReactionCount(int row, int reaction_index) const;
 	bool    atEnd() const;
-//	Q_INVOKABLE int   getImageSize(int row, int i) const;
+	//	Q_INVOKABLE int   getImageSize(int row, int i) const;
 
 	int isPageActive() const;
 	void setPageActive(bool active);
@@ -119,11 +124,38 @@ protected slots:
 private:
 	QString                            m_channel_id;
 	MattermostQt::ChannelPtr           m_channel;
-//	QVector<MattermostQt::MessagePtr>  m_messages;
-//	xxQVector<MattermostQt::UserPtr>   m_users;
 	QPointer<MattermostQt>             m_mattermost;
 	bool                               m_isPageActive = false;
 	mutable bool                       m_request_channel_viewed = false;
+};
+
+class ReverseProxyMessagesModel : public QAbstractProxyModel
+{
+	Q_OBJECT
+public:
+
+	explicit ReverseProxyMessagesModel(QObject *parent = nullptr);
+	~ReverseProxyMessagesModel();
+
+	virtual void setSourceModel(QAbstractItemModel *sourceModel) override;
+
+	Q_INVOKABLE virtual QModelIndex mapToSource(const QModelIndex &proxyIndex) const override;
+	Q_INVOKABLE virtual QModelIndex mapFromSource(const QModelIndex &sourceIndex) const override;
+
+	Q_INVOKABLE virtual int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+	Q_INVOKABLE virtual int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+
+	Q_INVOKABLE virtual QModelIndex index(int row, int column,
+	                                      const QModelIndex &parent = QModelIndex()) const override;
+	Q_INVOKABLE virtual QModelIndex parent(const QModelIndex &child) const override;
+
+private Q_SLOTS:
+	void parentModelReseted();
+	void slot_dataChanged(const QModelIndex & topLeft, const QModelIndex & bottomRight, const QVector<int> &roles);
+	void slot_rowsAboutToBeInserted(const QModelIndex & parent, int start, int end);
+	void slot_rowsInserted(const QModelIndex & parent, int start, int end);
+	void slot_rowsAboutToBeRemoved(const QModelIndex & parent, int start, int end);
+	void slot_rowsRemoved(const QModelIndex & parent, int start, int end);
 };
 
 #endif // MESSAGESMODEL_H

@@ -32,38 +32,78 @@ Panel {
 
         delegate: Rectangle {
             id: delegateItem
-            width: parent ? parent.width : 400
+            anchors {
+                left: parent.left
+                right: parent.right
+                leftMargin: -Theme.paddingSmall + Theme.borderWidth
+                rightMargin: -Theme.paddingSmall + Theme.borderWidth
+            }
+
             height: Theme.iconSizeSmall + (( m_type != ChannelsModel.Channel ) ? 0 : Theme.paddingMedium)
 
             color: ( channelsPanel.channel_id == role_channel_id && m_type == ChannelsModel.Channel) ? Theme.highlightBackgroundColor : Theme.overlayBackgroundColor
 
             readonly property bool isChannel: m_type == ChannelsModel.Channel
 
-            Image {
+            Component {
                 id: channelIcon
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                visible: isChannel
-                source: switch(channel_type) {
-                    case MattermostQt.ChannelPublic :
-                        Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f4ac.svg")
-                        break
-                    case MattermostQt.ChannelPrivate :
-                        Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f512.svg")
-                        break
-                    case MattermostQt.ChannelDirect :
-                    default:
-                        return (avatar_path.length) ? Qt.resolvedUrl("file://" + avatar_path ) : Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f4ac.svg")
-                }
 
-                width: Theme.iconSizeSmall
-                height: Theme.iconSizeSmall
+                Image {
+                    visible: isChannel
+                    source: switch(channel_type) {
+                            case MattermostQt.ChannelPublic :
+                                Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f4ac.svg")
+                                break
+                            case MattermostQt.ChannelPrivate :
+                                Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f512.svg")
+                                break
+                            case MattermostQt.ChannelDirect :
+                            default:
+                                return (avatar_path.length) ? Qt.resolvedUrl("file://" + avatar_path ) : Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f4ac.svg")
+                            }
+
+                    width: Theme.iconSizeSmall
+                    height: Theme.iconSizeSmall
+
+                    layer.enabled: true
+                    layer.effect: OpacityMask {
+                        maskSource: maskRect
+                    }
+
+                    Rectangle {
+                        id: maskRect
+                        visible: false
+                        anchors.fill: parent
+                        radius: width * 0.5
+                    }
+                }
+            }
+
+            Component {
+                id: avatarIcon
+
+                AvatarItem {
+                    source: (avatar_path.length) ? Qt.resolvedUrl("file://" + avatar_path ) : Qt.resolvedUrl("file://" + MattermostQt.emojiPath() + "/svg/1f4ac.svg")
+                    userStatus: user_status
+                    width: Theme.iconSizeSmall + Theme.paddingSmall
+                    height: Theme.iconSizeSmall + Theme.paddingSmall
+                }
+            }
+
+            Loader {
+                id: channelIconlLoader
+                sourceComponent: (channel_type == MattermostQt.ChannelDirect) ? avatarIcon : channelIcon
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.paddingSmall
+                anchors.topMargin: (channel_type == MattermostQt.ChannelDirect) ? Theme.paddingMedium * 0.5 + Theme.paddingSmall * 0.3: Theme.paddingMedium * 0.5
             }
 
             CLabel {
-                anchors.left: channelIcon.right
+                anchors.left: channelIconlLoader.right
                 anchors.right: parent.right
                 anchors.leftMargin: Theme.paddingSmall
+                anchors.rightMargin: Theme.paddingSmall
                 anchors.verticalCenter: parent.verticalCenter
                 text: m_display_name
                 horizontalAlignment: ( delegateItem.isChannel ) ? Text.AlignLeft : Text.AlignRight

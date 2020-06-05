@@ -44,29 +44,7 @@ Panel {
                     maskSource: maskRect
                 }
 
-                Rectangle {LoginPanel {
-                        id: loginPanel
-                        anchors.centerIn: parent
-
-                        maxLineEditWidth: lineEditWidth
-
-                        visible: opacity > 0
-                        width: Math.min(lineEditWidth + Theme.paddingLarge*4, parent.width - Theme.paddingLarge * 2)
-                        height: parent.height - Theme.paddingLarge * 2
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: 200 }
-                        }
-
-                        Component.onCompleted:  {
-                            if ( MattermostQt.get_server_count() === 1 ) {
-                                server_id = 0
-                                serverName = MattermostQt.get_server_name(server_id)
-                                serverUrl  = MattermostQt.get_server_url(server_id)
-                                trustCertificate = MattermostQt.get_server_trust_certificate(server_id);
-                            }
-                        }
-                    }
+                Rectangle {
                     id: maskRect
                     anchors.fill: teamIcon
                     radius: Theme.paddingMedium

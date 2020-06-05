@@ -22,8 +22,8 @@ CheckBox {
             border.width: Theme.borderWidth
             Rectangle {
                 visible: control.checked
-                color: "#555"
-                border.color: "#333"
+                color: Theme.highlightBackgroundColor
+                border.color: Theme.highlightColor
                 radius: Theme.paddingMedium
                 anchors.margins: Theme.paddingSmall * 0.5
                 anchors.fill: parent

@@ -55,6 +55,7 @@ int main(int argc, char** argv)
 	qmlRegisterType<TeamsModel>        ("ru.sashikknox", 1, 0, "TeamsModel");
 	qmlRegisterType<ChannelsModel>     ("ru.sashikknox", 1, 0, "ChannelsModel");
 	qmlRegisterType<MessagesModel>     ("ru.sashikknox", 1, 0, "MessagesModel");
+	qmlRegisterType<ReverseProxyMessagesModel> ("ru.sashikknox", 1, 0, "ReverseProxyMessagesModel");
 	qmlRegisterType<AccountsModel>     ("ru.sashikknox", 1, 0, "AccountsModel");
 	qmlRegisterType<AttachedFilesModel>("ru.sashikknox", 1, 0, "AttachedFilesModel");
 	qmlRegisterType<EmojiModel>        ("ru.sashikknox", 1, 0, "EmojiModel");
