@@ -66,11 +66,19 @@ Item {
         }
 
         delegate: Item {
+            id: delegateItem
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.topMargin: Theme.paddingSmall
             anchors.bottomMargin: Theme.paddingSmall
             height: Math.max(avatarIcon.height,  Math.max(Theme.iconSizeSmall, contentColumn.height + Theme.paddingSmall * 2) )
+
+            property int si: role_server_index
+            property int ti: role_team_index
+            property int ci: role_channel_index
+            property int ct: role_channel_type
+            property int mi: role_message_index
+            property int fc: role_files_count
 
             AvatarItem {
                 id: avatarIcon
@@ -118,6 +126,7 @@ Item {
                         anchors.top: parent.top
                         anchors.left: parent.left
                         anchors.right: parent.right
+                        anchors.topMargin  : Theme.paddingMedium
                         anchors.leftMargin : Theme.paddingMedium
                         anchors.rightMargin: Theme.paddingMedium
                         text: "<style>a:link { color: " + Theme.highlightColor + "; }</style>" +  role_formated_text
@@ -127,10 +136,12 @@ Item {
                             Qt.openUrlExternally(link);
                         }
                         height: contentHeight
+                        visible: role_formated_text.length > 0
                     }// formatted text
 
                     Column {
                         id: messageContent
+                        visible: delegateItem.fc > 0
                         spacing: Theme.paddingSmall
                         anchors.top: messageText.bottom
                         anchors.left: parent.left
@@ -140,15 +151,15 @@ Item {
 
                         Repeater {
                             id: filesRepeater
-                            enabled: role_files_count > 0
+                            enabled: delegateItem.fc > 0
                             model: AttachedFilesModel {
                                 mattermost: MattermostQt
                                 maxWidth: 400
-                                serverIndex: role_server_index //server_index
-                                teamIndex: role_team_index
-                                channelType: role_channel_type
-                                channelIndex: role_channel_index
-                                messageRow: role_message_index
+                                serverIndex: delegateItem.si //server_index
+                                teamIndex: delegateItem.ti
+                                channelType: delegateItem.ct
+                                channelIndex: delegateItem.ci
+                                messageRow: delegateItem.mi
                             }
 
                             anchors.left: parent.left
@@ -158,6 +169,8 @@ Item {
                                 id: filesCount
                                 anchors.left: parent.left
                                 anchors.right: parent.right
+                                anchors.leftMargin : Theme.paddingMedium
+                                anchors.rightMargin: Theme.paddingMedium
                                 height: contentHeight
                                 text: role_file_name
                             }

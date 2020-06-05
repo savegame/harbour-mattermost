@@ -113,22 +113,12 @@ Panel {
                 anchors.fill: parent
                 enabled: delegateItem.isChannel
                 onClicked: {
-                    console.log("team_index: " + team_index +
-                    "server_index: " + role_server_index +
-                    "channel_index: "+ role_channel_index, +
-                    "channel_type: " + channel_type, +
-                    "channel_id: "   + role_channel_id, +
-                    "channel_name:"  + m_display_name )
-
                     channelsPanel.channel_id = role_channel_id
                     channelsPanel.channel_name = m_display_name
                     channelsPanel.team_index = team_index
                     channelsPanel.server_index = role_server_index
                     channelsPanel.channel_index = role_channel_index
                     channelsPanel.channel_type = channel_type
-
-//                    delegateItem.color = Theme.highlightBackgroundColor
-
                     channelClicked()
                 }
             }

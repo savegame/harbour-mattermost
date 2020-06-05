@@ -194,7 +194,7 @@ void AttachedFilesModel::init(int server_index, int team_index, int channel_type
 	// becuse message row inverted from message index
 	m_message = m_channel->messageAt(message_row);
 	if(!m_message) {
-		qCritical() << "Cant find message mi:" << message_row << "from mr:" << message_row;
+		qCritical() << "Cant find message mi:" << message_row ;
 		return;
 	}
 
