@@ -23,14 +23,7 @@ Item {
         onServerStateChanged :{
             if( server_index !== server_id )
                 console.debug("Server index is " + server_index )
-//            connectionStatus = state;
             if(state === MattermostQt.ServerConnected) {
-//              var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
-//                                                  {
-//                                                      server_index: server_index,
-//                                                      servername: context.mattermost.get_server_name(server_index),
-//                                                      context: loginpage.context
-//                                                  })
                 loginPanel.buttonEnabled = false
                 loginPanel.opacity = 0
                 MattermostQt.get_teams(server_id)
@@ -39,8 +32,7 @@ Item {
         }
 
         onOnConnectionError: {
-            console.log(" Error: " +message)
-//            specialmessage.opacity = 1.0;
+            console.log(" Error: " + message)
         }
     }
 

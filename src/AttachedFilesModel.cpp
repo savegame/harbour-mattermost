@@ -176,11 +176,11 @@ void AttachedFilesModel::setMaxWidth(qreal value)
 
 void AttachedFilesModel::init(int server_index, int team_index, int channel_type, int channel_index, int message_row)
 {
-	m_init = true;
 	if(!m_mattermost) {
 		qCritical() << "Mattermost Client Pointer was not set!";
 		return;
 	}
+	m_init = true;
 
 	connect( m_mattermost.data(), SIGNAL(attachedFilesChanged(MattermostQt::MessagePtr,QVector<QString>,  QVectorInt)),
 	         SLOT(slot_attachedFilesChanged(MattermostQt::MessagePtr,QVector<QString>, QVectorInt)) );

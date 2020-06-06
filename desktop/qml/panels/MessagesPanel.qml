@@ -56,14 +56,23 @@ Item {
             anchors.right: parent.right
         }
 
-        model: ReverseProxyMessagesModel {
-            sourceModel: MessagesModel {
-                mattermost: MattermostQt
-                onMessagesInitialized: {
-                    messagesList.positionViewAtEnd()
-                }
+//        model: ReverseProxyMessagesModel {
+//            sourceModel: MessagesModel {
+//                mattermost: MattermostQt
+//                onMessagesInitialized: {
+//                    messagesList.positionViewAtEnd()
+//                }
+//            }
+//        }
+
+        model:  MessagesModel {
+            mattermost: MattermostQt
+            onMessagesInitialized: {
+                messagesList.positionViewAtEnd()
             }
         }
+
+        verticalLayoutDirection: ListView.BottomToTop
 
         delegate: Item {
             id: delegateItem
@@ -114,11 +123,7 @@ Item {
                     anchors.right: parent.right
                     anchors.topMargin: Theme.paddingSmall
                     anchors.bottomMargin: Theme.paddingSmall
-                    height: Math.max(Theme.iconSizeSmall, messageContent.height + messageText.height + Theme.paddingMedium * 2)
-
-                    Component.onCompleted:  {
-                        messageContent.forceLayout()
-                    }
+                    height: Math.max(Theme.iconSizeSmall, messageContentLoader.height + messageText.height + Theme.paddingMedium * 2)
 
                     CLabel {
                         id: messageText
@@ -135,47 +140,95 @@ Item {
                         onLinkActivated: {
                             Qt.openUrlExternally(link);
                         }
-                        height: contentHeight
+                        height: visible ? contentHeight : 0
                         visible: role_formated_text.length > 0
                     }// formatted text
 
-                    Column {
-                        id: messageContent
-                        visible: delegateItem.fc > 0
-                        spacing: Theme.paddingSmall
+                    Loader {
+                        id: messageContentLoader
+
                         anchors.top: messageText.bottom
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        leftPadding:  Theme.paddingMedium
-                        rightPadding: Theme.paddingMedium
 
-                        Repeater {
-                            id: filesRepeater
-                            enabled: delegateItem.fc > 0
-                            model: AttachedFilesModel {
-                                mattermost: MattermostQt
-                                maxWidth: 400
-                                serverIndex: delegateItem.si //server_index
-                                teamIndex: delegateItem.ti
-                                channelType: delegateItem.ct
-                                channelIndex: delegateItem.ci
-                                messageRow: delegateItem.mi
-                            }
-
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-
-                            CLabel {
-                                id: filesCount
+                        Component {
+                            id: filesComponent
+                            Column {
+                                id: messageContent
+                                visible: delegateItem.fc > 0
+                                spacing: Theme.paddingSmall
+                                anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.right: parent.right
-                                anchors.leftMargin : Theme.paddingMedium
-                                anchors.rightMargin: Theme.paddingMedium
-                                height: contentHeight
-                                text: role_file_name
-                            }
-                        }// filesREpeater
-                    }
+                                leftPadding:  Theme.paddingMedium
+                                rightPadding: Theme.paddingMedium
+
+                                Repeater {
+                                    id: filesRepeater
+                                    enabled: delegateItem.fc > 0
+                                    model: AttachedFilesModel {
+                                        mattermost: MattermostQt
+                                        maxWidth: 400
+                                        serverIndex: delegateItem.si //server_index
+                                        teamIndex: delegateItem.ti
+                                        channelType: delegateItem.ct
+                                        channelIndex: delegateItem.ci
+                                        messageRow: delegateItem.mi
+                                    }
+
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+
+                                    CLabel {
+                                        id: fileNameLabel
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.leftMargin : Theme.paddingMedium
+                                        anchors.rightMargin: Theme.paddingMedium
+                                        height: contentHeight
+                                        text: role_file_name
+                                    }
+
+                                    Loader {
+                                        id: fileItemLoader
+                                        visible: role_file_type == MattermostQt.FileImage
+                                        anchors {
+                                            //top: fileNameLabel.bottom
+                                            topMargin: Theme.paddingSmall
+                                            left: parent.left
+                                            right: parent.right
+                                            leftMargin : Theme.paddingMedium
+                                            rightMargin: Theme.paddingMedium
+                                        }
+
+                                        Component {
+                                            id: fileStaticImageComponent
+                                            Image {
+                                                anchors {
+                                                    top: parent.top
+                                                    left: parent.left
+//                                                    right: parent.right
+                                                }
+                                                asynchronous: true
+                                                source: "file://" + role_preview
+                                                autoTransform: true
+                                                fillMode: Image.PreserveAspectFit
+                                                height: Theme.paddingLarge * 50
+                                            }
+                                        }
+
+                                        sourceComponent: visible ? fileStaticImageComponent : undefined
+                                    }// FileTypeLoader
+//                                    Column {
+//                                        spacing: Theme.paddingSmall
+//                                    }// Column
+
+                                }// filesREpeater
+                            }// Column
+                        }
+
+                        sourceComponent: (delegateItem.fc > 0) ? filesComponent : undefined
+                    }// Files Repeater Loader
                 }
             }
 

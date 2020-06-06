@@ -1,5 +1,5 @@
 TEMPLATE = app
-VERSION = 0.2.0
+VERSION = 0.2.2
 
 CONFIG += qt
 QT += core gui widgets network websockets quick quickwidgets network
