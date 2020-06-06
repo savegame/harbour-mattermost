@@ -70,13 +70,13 @@ Item {
             height: contentHeight
         }
 
-        Panel {
+        Item {
             id: messagePanel
             anchors.left: role_type != MattermostQt.MessageMine ? parent.left : undefined
             anchors.right: role_type != MattermostQt.MessageMine ? undefined : parent.right
-            anchors.topMargin: Theme.paddingSmall
-            anchors.bottomMargin: Theme.paddingSmall
-            height: Math.max(Theme.iconSizeSmall, messageAttachmentLoader.height + messageText.height + Theme.paddingMedium * 2)
+//            anchors.topMargin: Theme.paddingSmall
+//            anchors.bottomMargin: Theme.paddingSmall
+            height: Math.max(Theme.iconSizeSmall, messageAttachmentLoader.height + messageText.height + Theme.paddingSmall * 2)
 //            width: Math.min(contentColumn.width - (role_type != MattermostQt.MessageMine ? avatarIcon.width : 0), messageText.contentWidth + Theme.paddingMedium * 2)
 //            width: Math.min( contentColumn.width - (role_type != MattermostQt.MessageMine ? avatarIcon.width : 0), messageText.implicitWidth + Theme.paddingMedium * 2)
             width: contentColumn.width - (role_type != MattermostQt.MessageMine ? avatarIcon.width : 0)
@@ -89,13 +89,24 @@ Item {
                 anchors.right: parent.right
             }
 
+            Panel {
+                anchors.left: role_type != MattermostQt.MessageMine ? messageText.left : undefined
+                anchors.right: role_type != MattermostQt.MessageMine ? undefined : messageText.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: role_type != MattermostQt.MessageMine  ? -Theme.paddingMedium : 0
+//                anchors.topMargin: -Theme.paddingMedium
+                anchors.rightMargin: role_type == MattermostQt.MessageMine  ? -Theme.paddingMedium : 0
+                width: Math.min(messageText.implicitWidth + Theme.paddingMedium * 2, parent.width )
+            }
+
             CLabel {
                 id: messageText
                 font.pixelSize: Theme.fontSizeMedium
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.right: role_type == MattermostQt.MessageMine ? parent.right : rightAnchorItem.left
-                anchors.topMargin  : Theme.paddingMedium
+//                anchors.topMargin  : Theme.paddingMedium
                 anchors.leftMargin : Theme.paddingMedium
                 anchors.rightMargin: Theme.paddingMedium
                 text: "<style>a:link { color: " + Theme.highlightColor + "; }</style>" +  messageItem.formated_text
