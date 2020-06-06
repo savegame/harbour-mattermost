@@ -283,7 +283,11 @@ void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, Q
 void AttachedFilesModel::slot_onIndexChanged()
 {
 	AF_CHECK_DEF(serverIndex);
-	AF_CHECK_DEF(teamIndex);
+//	AF_CHECK_DEF(teamIndex);
+	if( m_teamIndex == -1 ) {
+		if( channelType() != MattermostQt::ChannelDirect )
+			return;
+	}
 	AF_CHECK_DEF(channelType);
 	AF_CHECK_DEF(channelIndex);
 	AF_CHECK_DEF(messageRow);

@@ -5,6 +5,7 @@ import QtGraphicalEffects 1.0
 import ru.sashikknox      1.0
 import "../components"
 import "../panels"
+import "../items"
 
 Item {
     id: messagesPanel
@@ -56,182 +57,29 @@ Item {
             anchors.right: parent.right
         }
 
-//        model: ReverseProxyMessagesModel {
-//            sourceModel: MessagesModel {
-//                mattermost: MattermostQt
-//                onMessagesInitialized: {
-//                    messagesList.positionViewAtEnd()
-//                }
-//            }
-//        }
-
-        model:  MessagesModel {
-            mattermost: MattermostQt
-            onMessagesInitialized: {
-                messagesList.positionViewAtEnd()
+        model: ReverseProxyMessagesModel {
+            sourceModel: MessagesModel {
+                mattermost: MattermostQt
+                onMessagesInitialized: {
+                    messagesList.positionViewAtEnd()
+                }
             }
         }
 
-        verticalLayoutDirection: ListView.BottomToTop
+//        verticalLayoutDirection: ListView.BottomToTop
 
-        delegate: Item {
-            id: delegateItem
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.topMargin: Theme.paddingSmall
-            anchors.bottomMargin: Theme.paddingSmall
-            height: Math.max(avatarIcon.height,  Math.max(Theme.iconSizeSmall, contentColumn.height + Theme.paddingSmall * 2) )
-
-            property int si: role_server_index
-            property int ti: role_team_index
-            property int ci: role_channel_index
-            property int ct: role_channel_type
-            property int mi: role_message_index
-            property int fc: role_files_count
-
-            AvatarItem {
-                id: avatarIcon
-
-                anchors {
-                    left: parent.left
-                    top: parent.top
-                }
-                width: Theme.iconSizeMedium
-                height: Theme.iconSizeMedium
-
-                source: role_user_image_path != undefined ? Qt.resolvedUrl("file://" + role_user_image_path) : ""
-                userStatus: role_user_status
-            }// avatarItem
-
-            Column {
-                id: contentColumn
-                spacing: Theme.paddingSmall
-                anchors.left: avatarIcon.right
-                anchors.right: parent.right
-
-                CLabel {
-                    id: userLabel
-                    font.pixelSize: Theme.fontSizeSmall
-                    text: role_user_name
-                    anchors.left: parent.left
-                    height: contentHeight
-                }
-
-                Panel {
-                    id: messagePanel
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.topMargin: Theme.paddingSmall
-                    anchors.bottomMargin: Theme.paddingSmall
-                    height: Math.max(Theme.iconSizeSmall, messageContentLoader.height + messageText.height + Theme.paddingMedium * 2)
-
-                    CLabel {
-                        id: messageText
-                        font.pixelSize: Theme.fontSizeMedium
-                        anchors.top: parent.top
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.topMargin  : Theme.paddingMedium
-                        anchors.leftMargin : Theme.paddingMedium
-                        anchors.rightMargin: Theme.paddingMedium
-                        text: "<style>a:link { color: " + Theme.highlightColor + "; }</style>" +  role_formated_text
-                        wrapMode: Text.Wrap
-                        textFormat: Text.RichText
-                        onLinkActivated: {
-                            Qt.openUrlExternally(link);
-                        }
-                        height: visible ? contentHeight : 0
-                        visible: role_formated_text.length > 0
-                    }// formatted text
-
-                    Loader {
-                        id: messageContentLoader
-
-                        anchors.top: messageText.bottom
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-
-                        Component {
-                            id: filesComponent
-                            Column {
-                                id: messageContent
-                                visible: delegateItem.fc > 0
-                                spacing: Theme.paddingSmall
-                                anchors.top: parent.top
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                leftPadding:  Theme.paddingMedium
-                                rightPadding: Theme.paddingMedium
-
-                                Repeater {
-                                    id: filesRepeater
-                                    enabled: delegateItem.fc > 0
-                                    model: AttachedFilesModel {
-                                        mattermost: MattermostQt
-                                        maxWidth: 400
-                                        serverIndex: delegateItem.si //server_index
-                                        teamIndex: delegateItem.ti
-                                        channelType: delegateItem.ct
-                                        channelIndex: delegateItem.ci
-                                        messageRow: delegateItem.mi
-                                    }
-
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-
-                                    CLabel {
-                                        id: fileNameLabel
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.leftMargin : Theme.paddingMedium
-                                        anchors.rightMargin: Theme.paddingMedium
-                                        height: contentHeight
-                                        text: role_file_name
-                                    }
-
-                                    Loader {
-                                        id: fileItemLoader
-                                        visible: role_file_type == MattermostQt.FileImage
-                                        anchors {
-                                            //top: fileNameLabel.bottom
-                                            topMargin: Theme.paddingSmall
-                                            left: parent.left
-                                            right: parent.right
-                                            leftMargin : Theme.paddingMedium
-                                            rightMargin: Theme.paddingMedium
-                                        }
-
-                                        Component {
-                                            id: fileStaticImageComponent
-                                            Image {
-                                                anchors {
-                                                    top: parent.top
-                                                    left: parent.left
-//                                                    right: parent.right
-                                                }
-                                                asynchronous: true
-                                                source: "file://" + role_preview
-                                                autoTransform: true
-                                                fillMode: Image.PreserveAspectFit
-                                                height: Theme.paddingLarge * 50
-                                            }
-                                        }
-
-                                        sourceComponent: visible ? fileStaticImageComponent : undefined
-                                    }// FileTypeLoader
-//                                    Column {
-//                                        spacing: Theme.paddingSmall
-//                                    }// Column
-
-                                }// filesREpeater
-                            }// Column
-                        }
-
-                        sourceComponent: (delegateItem.fc > 0) ? filesComponent : undefined
-                    }// Files Repeater Loader
-                }
-            }
-
+        delegate: MessageLabelItem {
+            server_index  : role_server_index
+            team_index    : role_team_index
+            channel_index : role_channel_index
+            channel_type  : role_channel_type
+            message_index : role_message_index
+            files_count   : role_files_count
+            post_id       : role_post_id
+            user_status   : role_user_status
+            user_image    : role_user_image_path
+            user_name     : role_user_name
+            formated_text : role_formated_text
         }
     }
 
@@ -270,4 +118,3 @@ Item {
         }
     }
 }
-

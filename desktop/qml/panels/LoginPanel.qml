@@ -5,6 +5,7 @@ import QtQuick.Controls.Styles 1.0
 import ru.sashikknox    1.0
 import "../components"
 import "../panels"
+import "../items"
 
 Panel {
     id: loginPanel

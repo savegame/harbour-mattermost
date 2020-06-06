@@ -5,6 +5,7 @@ import QtGraphicalEffects 1.0
 import ru.sashikknox      1.0
 import "../qml/components"
 import "../qml/panels"
+import "../qml/items"
 
 Item {
     id: mainView

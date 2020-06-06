@@ -12,6 +12,8 @@
         <file>qml/panels/TeamsPanel.qml</file>
         <file>qml/panels/MessagesPanel.qml</file>
         <file>qml/components/ScrollBar.qml</file>
-        <file>qml/components/AvatarItem.qml</file>
+        <file>qml/items/AvatarItem.qml</file>
+        <file>qml/items/ImageFileItem.qml</file>
+        <file>qml/items/MessageLabelItem.qml</file>
     </qresource>
 </RCC>

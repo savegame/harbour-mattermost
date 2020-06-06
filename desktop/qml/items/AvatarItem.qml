@@ -5,6 +5,7 @@ import QtGraphicalEffects 1.0
 import ru.sashikknox      1.0
 import "../components"
 import "../panels"
+import "../items"
 
 Item {
     id: avatarIcon
