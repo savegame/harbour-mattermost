@@ -46,13 +46,13 @@ Item {
             left: parent.left
             top: parent.top
         }
-        width: Theme.iconSizeMedium
+        width: (role_type == MattermostQt.MessageSystem) ? 0 : Theme.iconSizeMedium
         height: Theme.iconSizeMedium
 
         source:     messageItem.user_image != undefined ? Qt.resolvedUrl("file://" + messageItem.user_image) : ""
         userStatus: messageItem.user_status
 
-        visible: role_type != MattermostQt.MessageMine
+        visible: /*role_type != MattermostQt.MessageMine &&*/ role_type == MattermostQt.MessageOther
     }// avatarItem
 
     Column {
@@ -67,19 +67,16 @@ Item {
             text: messageItem.user_name
             anchors.left: role_type != MattermostQt.MessageMine ? parent.left : undefined
             anchors.right: role_type != MattermostQt.MessageMine ? undefined : parent.right
-            height: contentHeight
+            height: visible ? contentHeight : 0
+            visible: role_type != MattermostQt.MessageSystem
         }
 
         Item {
             id: messagePanel
             anchors.left: role_type != MattermostQt.MessageMine ? parent.left : undefined
             anchors.right: role_type != MattermostQt.MessageMine ? undefined : parent.right
-//            anchors.topMargin: Theme.paddingSmall
-//            anchors.bottomMargin: Theme.paddingSmall
             height: Math.max(Theme.iconSizeSmall, messageAttachmentLoader.height + messageText.height + Theme.paddingSmall * 2)
-//            width: Math.min(contentColumn.width - (role_type != MattermostQt.MessageMine ? avatarIcon.width : 0), messageText.contentWidth + Theme.paddingMedium * 2)
-//            width: Math.min( contentColumn.width - (role_type != MattermostQt.MessageMine ? avatarIcon.width : 0), messageText.implicitWidth + Theme.paddingMedium * 2)
-            width: contentColumn.width - (role_type != MattermostQt.MessageMine ? avatarIcon.width : 0)
+            width: contentColumn.width - avatarIcon.width //(role_type != MattermostQt.MessageMine ? avatarIcon.width * 2: avatarIcon.width)
 
             Item {
                 // right anchor item for masseges from other user
@@ -90,33 +87,46 @@ Item {
             }
 
             Panel {
+                id: mesasgeBlob
+                visible: role_type != MattermostQt.MessageSystem
                 anchors.left: role_type != MattermostQt.MessageMine ? messageText.left : undefined
                 anchors.right: role_type != MattermostQt.MessageMine ? undefined : messageText.right
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 anchors.leftMargin: role_type != MattermostQt.MessageMine  ? -Theme.paddingMedium : 0
-//                anchors.topMargin: -Theme.paddingMedium
+                anchors.topMargin: -Theme.paddingSmall
+//                anchors.bottomMargin: Theme.paddingSmall
                 anchors.rightMargin: role_type == MattermostQt.MessageMine  ? -Theme.paddingMedium : 0
+                radius: Theme.paddingLarge
                 width: Math.min(messageText.implicitWidth + Theme.paddingMedium * 2, parent.width )
-            }
+            } // messageBlob
 
             CLabel {
                 id: messageText
                 font.pixelSize: Theme.fontSizeMedium
                 anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: role_type == MattermostQt.MessageMine ? parent.right : rightAnchorItem.left
-//                anchors.topMargin  : Theme.paddingMedium
+                anchors.left:  role_type == MattermostQt.MessageMine ? undefined : parent.left
+                anchors.right: role_type == MattermostQt.MessageOther ? undefined : parent.right
                 anchors.leftMargin : Theme.paddingMedium
                 anchors.rightMargin: Theme.paddingMedium
-                text: "<style>a:link { color: " + Theme.highlightColor + "; }</style>" +  messageItem.formated_text
+                width: Math.min(implicitWidth, parent.width - Theme.paddingMedium * 2)
+                height: visible ? contentHeight : 0
+                text: "<style>a:link { color: " + Theme.highlightColor + "; } </style>" +  messageItem.formated_text
                 wrapMode: Text.Wrap
                 textFormat: Text.RichText
                 onLinkActivated: {
                     Qt.openUrlExternally(link);
                 }
-                verticalAlignment: role_type == MattermostQt.MessageMine ? Text.AlignRight : Text.AlignLeft
-                height: visible ? contentHeight : 0
+                horizontalAlignment:
+                    switch( role_type ) {
+                    case MattermostQt.MessageMine:
+                        return Text.AlignRight
+                    case MattermostQt.MessageOther:
+                        return Text.AlignLeft
+                    case MattermostQt.MessageSystem:
+                    default:
+                        return Text.AlignHCenter
+                    }
                 visible: messageItem.formated_text.length > 0
             }// formatted text
 
@@ -150,7 +160,7 @@ Item {
                                 serverIndex: messageItem.server_index
                                 teamIndex: messageItem.team_index
                                 channelType: messageItem.channel_type
-                                maxWidth: parent.width
+                                maxWidth: /*parent != undefined ? parent.width : */200
                             }
 
                             anchors.left: parent.left
@@ -176,7 +186,7 @@ Item {
                                         anchors.top : parent.top
                                         fileName: role_file_name
                                         isAnimated: role_file_type == MattermostQt.FileAnimatedImage
-                                        maxWidth: minWidth
+//                                        maxWidth: minWidth
                                     }
                                 }
 
