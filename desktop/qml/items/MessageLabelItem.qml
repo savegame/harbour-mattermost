@@ -13,7 +13,7 @@ Item {
     anchors.right: parent.right
     anchors.topMargin: Theme.paddingSmall
     anchors.bottomMargin: Theme.paddingSmall
-    height: Math.max(avatarIcon.height,  Math.max(Theme.iconSizeSmall, contentColumn.height + Theme.paddingSmall * 2) )
+    height: Math.max(avatarIcon.height,  Math.max(Theme.iconSizeSmall, contentColumn.height + Theme.paddingMedium) )
 
     property int    server_index  : -1
     property int    team_index    : -1

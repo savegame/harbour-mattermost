@@ -11,6 +11,8 @@
 
 #ifndef DESKTOP_APP
 #include <libsailfishsilica/silicatheme.h>
+#else
+#include <desktop/theme.h>
 #endif
 
 class CppHashPrivate
@@ -34,7 +36,7 @@ CppHashPrivate::CppHashPrivate() {
 	if(!parse_emoji_json_new( QStringLiteral("%0/emoji.json").arg(EMOJI_PATH) ))
 		qCritical() << "Cant read emoji.json file! Path:" << QStringLiteral("%0/emoji.json").arg(EMOJI_PATH);
 #ifdef DESKTOP_APP
-	h0 = 14;
+	h0 = Theme::getInstance()->fontSizeMedium() + 2;
 #else
 	h0 = Silica::Theme::instance()->fontSizeSmall() + 2;
 #endif
