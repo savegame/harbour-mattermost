@@ -15,5 +15,8 @@
         <file>qml/items/AvatarItem.qml</file>
         <file>qml/items/ImageFileItem.qml</file>
         <file>qml/items/MessageLabelItem.qml</file>
+        <file>qml/items/MessageEditorItem.qml</file>
+        <file>qml/components/IconButton.qml</file>
+        <file>qml/components/BaseButton.qml</file>
     </qresource>
 </RCC>

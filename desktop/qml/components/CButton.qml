@@ -4,7 +4,6 @@ import ru.sashikknox    1.0
 
 Rectangle {
     id: button
-    anchors.horizontalCenter: parent.horizontalCenter
     radius: Theme.paddingMedium
 
     border.color: "black"
@@ -13,39 +12,14 @@ Rectangle {
     width: Theme.paddingLarge * 10
 
     property alias text: buttonLabel.text
-    property alias pressed: mouseArea.pressed
+    property alias pressed: baseButton.pressed
 
     signal clicked
 
-//    ColorAnimation {
-//        id: colorBehavior
-//        from: "red" //Qt.rgba(Theme.primaryColor.r * 0.1,Theme.primaryColor.g * 0.1,Theme.primaryColor.b * 0.1, 0.1)
-//        to:  Theme.overlayBackgroundColor
-//        duration: 10000
-//        target: button
-//    }
-
-//    Component.onCompleted: {
-//        colorBehavior.start()
-//    }
-
-    MouseArea {
-        id: mouseArea
+    BaseButton {
+        id: baseButton
         anchors.fill: parent
-
-        onPressed: {
-//            colorBehavior.stop()
-            button.color = Qt.rgba(Theme.primaryColor.r * 0.1,Theme.primaryColor.g * 0.1,Theme.primaryColor.b * 0.1,0.1)
-//            colorBehavior.enabled = true
-        }
-
-        onReleased: {
-            button.color =Theme.overlayBackgroundColor
-        }
-
-        onClicked: {
-            button.clicked()
-        }
+        onClicked: button.clicked()
     }
 
     CLabel {

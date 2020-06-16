@@ -52,7 +52,7 @@ Item {
         //            anchors.fill: parent
 
         footer: Item {
-            height: Theme.iconSizeLarge
+            height: messageEditorBar.height
             anchors.left: parent.left
             anchors.right: parent.right
         }
@@ -116,5 +116,17 @@ Item {
                 messagesList.positionViewAtEnd()
             }
         }
+    }
+
+    MessageEditorItem {
+        id: messageEditorBar
+        anchors {
+            bottom: parent.bottom
+            left: parent.left
+            right: scrollToBottom.left
+            margins: Theme.paddingLarge
+        }
+
+        height: Math.max(Theme.iconSizeLarge * 1.5,0)
     }
 }
