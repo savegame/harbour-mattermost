@@ -2418,8 +2418,10 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 		if( json.isObject() )
 		{
 			QJsonObject object = json.object();
-			//qDebug() << object;
+//			qDebug() << object;
 			server->m_user_id = object["id"].toString();
+			server->m_auth_data = object["auth_data"].toString();
+			server->m_auth_service = object["auth_service"].toString();
 			get_user_info(server_id, server->m_user_id, GET_USER_INFO_current_user);
 		}
 		QString server_dir = QString("%0_%1").arg(server->m_self_index).arg(server->m_user_id);
@@ -2463,6 +2465,8 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 				QJsonObject object = json.object();
 				//qDebug() << object;
 				server->m_user_id = object["id"].toString();
+				server->m_auth_data = object["auth_data"].toString();
+				server->m_auth_service = object["auth_service"].toString();
 			}
 
 			// fisrt check if server with used_id and url exists

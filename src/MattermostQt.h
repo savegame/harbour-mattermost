@@ -492,6 +492,9 @@ public:
 
 		QTimer                      m_ping_timer;
 		QVector<QString>            m_requested_users; /** requested users id's */
+
+		QString                     m_auth_data;
+		QString                     m_auth_service;
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 

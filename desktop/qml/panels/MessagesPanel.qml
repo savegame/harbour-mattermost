@@ -127,6 +127,6 @@ Item {
             margins: Theme.paddingLarge
         }
 
-        height: Math.max(Theme.iconSizeLarge * 1.5,0)
+        height: Math.max(Theme.iconSizeLarge * 1.1,0)
     }
 }
