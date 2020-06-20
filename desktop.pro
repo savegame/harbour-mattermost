@@ -2,7 +2,7 @@ TEMPLATE = app
 VERSION = 0.2.2
 
 CONFIG += qt
-QT += core gui widgets network websockets quick quickwidgets network
+QT += core gui widgets network websockets network quick
 
 TARGET = mostqute
 
@@ -14,12 +14,12 @@ DEFINES += EMOJI_PATH=\\\"$$PWD/resources/emoji\\\"
 debug: DEFINES += _DEBUG
 
 INCLUDEPATH += $$PWD/src
+INCLUDEPATH += $$PWD/desktop
 #add discout parser
 include(libs/discount.pri)
+include(desktop/desktop.pri)
 
 HEADERS += \
-    desktop/AppWindow.h \
-    desktop/theme.h \
     src/AccountsModel.h \
     src/AttachedFilesModel.h \
     src/ChannelsModel.h \
@@ -36,9 +36,6 @@ HEADERS += \
     src/cpphash.h
 
 SOURCES += \
-    desktop/AppWindow.cpp \
-    desktop/main.cpp \
-    desktop/theme.cpp \
     src/AccountsModel.cpp \
     src/AttachedFilesModel.cpp \
     src/ChannelsModel.cpp \
@@ -53,13 +50,5 @@ SOURCES += \
     src/cpphash.cpp \
 #    src/harbour-mattermost.cpp
 
-FORMS += \
-    desktop/AppWindow.ui
-
-DISTFILES += \
-    desktop/qml.*
-
-RESOURCES += \
-    desktop/desktop.qrc
 
 

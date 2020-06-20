@@ -9,10 +9,11 @@
 #include <QHash>
 #include <QFile>
 
-#ifndef DESKTOP_APP
-#include <libsailfishsilica/silicatheme.h>
-#else
+#ifdef DESKTOP_APP
+#elif DESKTOP_QML
 #include <desktop/theme.h>
+#else
+#include <libsailfishsilica/silicatheme.h>
 #endif
 
 class CppHashPrivate
@@ -35,8 +36,10 @@ public:
 CppHashPrivate::CppHashPrivate() {
 	if(!parse_emoji_json_new( QStringLiteral("%0/emoji.json").arg(EMOJI_PATH) ))
 		qCritical() << "Cant read emoji.json file! Path:" << QStringLiteral("%0/emoji.json").arg(EMOJI_PATH);
-#ifdef DESKTOP_APP
+#ifdef DESKTOP_QML
 	h0 = Theme::getInstance()->fontSizeMedium() + 2;
+#elif DESKTOP_APP
+	h0 = 14;
 #else
 	h0 = Silica::Theme::instance()->fontSizeSmall() + 2;
 #endif

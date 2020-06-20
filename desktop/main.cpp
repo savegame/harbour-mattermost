@@ -1,4 +1,5 @@
-#include <QtQuick>
+#include <QDebug>
+
 #include <QApplication>
 #include <QDebug>
 #include <TeamsModel.h>
@@ -9,9 +10,7 @@
 #include <AttachedFilesModel.h>
 #include <EmojiModel.h>
 #include <SettingsContainer.h>
-#include "AppWindow.h"
-#include "theme.h"
-//#include "SailNotify.h"
+#include <AppWidget.h>
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
@@ -51,22 +50,7 @@ int main(int argc, char** argv)
 
 	qInfo() << "App version: " << MATTERMOSTQT_VERSION;
 
-//	qmlRegisterType<MattermostQt>      ("ru.sashikknox", 1, 0, "MattermostQt");
-	qmlRegisterType<TeamsModel>        ("ru.sashikknox", 1, 0, "TeamsModel");
-	qmlRegisterType<ChannelsModel>     ("ru.sashikknox", 1, 0, "ChannelsModel");
-	qmlRegisterType<MessagesModel>     ("ru.sashikknox", 1, 0, "MessagesModel");
-	qmlRegisterType<ReverseProxyMessagesModel> ("ru.sashikknox", 1, 0, "ReverseProxyMessagesModel");
-	qmlRegisterType<AccountsModel>     ("ru.sashikknox", 1, 0, "AccountsModel");
-	qmlRegisterType<AttachedFilesModel>("ru.sashikknox", 1, 0, "AttachedFilesModel");
-	qmlRegisterType<EmojiModel>        ("ru.sashikknox", 1, 0, "EmojiModel");
-	qmlRegisterType<EmojiProxyCategory>("ru.sashikknox", 1, 0, "EmojiCategoryProxy");
-	qmlRegisterType<EmojiProxyList    >("ru.sashikknox", 1, 0, "EmojiProxyList");
-	qmlRegisterType<ChannelsFilterProxy>("ru.sashikknox", 1, 0, "ChannelsFilterProxy");
-	qmlRegisterSingletonType<SettingsContainer>("ru.sashikknox", 1, 0, "Settings",     SettingsContainer_singletontype_provider );
-	qmlRegisterSingletonType<MattermostQt>     ("ru.sashikknox", 1, 0, "MattermostQt", MattermostQt_singletontype_provider );
-	qmlRegisterSingletonType<Theme>            ("ru.sashikknox", 1, 0, "Theme",        Theme_singletontype_provider );
-
-	AppWindow mainWindow;
+	AppWidget mainWindow;
 	mainWindow.show();
 
 	return app.exec();
