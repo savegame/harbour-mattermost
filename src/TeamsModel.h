@@ -26,9 +26,9 @@ public:
 //		"allowed_domains": "string",
 //		"invite_id": "string",
 //		"allow_open_invite": true
-		DisplayName = Qt::UserRole + 1,
-		Description,
-		Email,
+		DisplayName = Qt::DisplayRole,
+		Description = Qt::ToolTipRole,
+		Email = Qt::UserRole + 1,
 		TeamId,
 		RoleUnreadMessageCount,
 		RoleUnreadMentionCount,

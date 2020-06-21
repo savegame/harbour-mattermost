@@ -1,6 +1,8 @@
 #include <QDebug>
 
 #include <QApplication>
+//#include <QtWebView>
+#include <QStyle>
 #include <QDebug>
 #include <TeamsModel.h>
 #include <MattermostQt.h>
@@ -37,11 +39,28 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 	}
 }
 
+void loadStyle() {
+	QFile f(":qdarkstyle/style.qss");
+
+	if (!f.exists())   {
+		qCritical() << QStringLiteral("Unable to set stylesheet, file not found");
+	}
+	else   {
+		f.open(QFile::ReadOnly | QFile::Text);
+		QTextStream ts(&f);
+		qApp->setStyleSheet(ts.readAll());
+		QStyle *s = qApp->style();
+
+	}
+	f.close();
+}
+
 int main(int argc, char** argv)
 {
 	qInstallMessageHandler( myMessageOutput );
 
 	QApplication app(argc, argv);
+//	QtWebView::initialize();
 
 	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
 	QCoreApplication::setOrganizationDomain("ru");
@@ -49,6 +68,8 @@ int main(int argc, char** argv)
 	QCoreApplication::setApplicationName   ("MostQute");
 
 	qInfo() << "App version: " << MATTERMOSTQT_VERSION;
+
+	loadStyle();
 
 	AppWidget mainWindow;
 	mainWindow.show();

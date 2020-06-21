@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="attach_file.svg">resources/emoji/svg/1f4ce.svg</file>
+        <file>resources/icons/emoji_picker.svg</file>
+    </qresource>
+</RCC>

@@ -17,9 +17,9 @@ class ChannelsModel : public QAbstractListModel
 	Q_PROPERTY(QString teamIcon READ teamIcon NOTIFY teamIconChanged)
 public:
 	enum DataRoles {
-		DisplayName = Qt::UserRole + 1,
-		Purpose,
-		Email,
+		DisplayName = Qt::DisplayRole,
+		Purpose = Qt::ToolTipRole,
+		Email = Qt::UserRole + 1,
 		Header,
 		Type,
 		Index,
