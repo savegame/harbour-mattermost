@@ -63,6 +63,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			return QVariant(message->m_message);
 		}
 		break;
+	case Qt::DisplayRole:
 	case MessagesModel::FormatedText:
 		{
 			bool have_unread = (m_channel->m_mention_count + m_channel->m_msg_unread > 0) && index.row() == 0;
@@ -108,6 +109,17 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			return QVariant( row );
 		}
 		break;
+	case Qt::DecorationRole:
+		if( message->m_user_index >= 0
+		         &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
+		{
+			MattermostQt::UserPtr user =
+			        m_mattermost->
+			        m_server[message->m_server_index]->
+			        m_user[message->m_user_index];
+			return QImage(user->m_image_path);
+		}
+		return QIcon(":/icons/resources/logo_rect_white.png");
 	case MessagesModel::SenderImagePath:
 		{
 			if( message->m_user_index >= 0
@@ -261,6 +273,47 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		return message->m_channel_index;
 	case MessagesModel::RoleChannelType:
 		return message->m_channel_type;
+	case MessagesModel::RoleFileInfo:
+		// for desktop, that should make request for file infos
+		if( message->m_file_ids.size() != message->m_file.size() )
+		{
+			int count = message->m_file_ids.size();
+			message->m_is_files_info_requested = true;
+			for( int i = 0; i < count; i++ )
+			{
+				QString file_id = message->m_file_ids.at(i);
+				m_mattermost->get_file_info(
+				            message->m_server_index,
+				            message->m_team_index,
+				            message->m_channel_type,
+				            message->m_channel_index,
+				            message->m_self_index, file_id);
+			}
+			return 0;
+		}
+		else
+		{
+			int count = message->m_file.size();
+			return QVariant( count );
+		}
+	case MessagesModel::FilePreview :
+		if(! message->m_file.empty() ) {
+			QStringList previews;
+			for( int i = 0; i < message->m_file.size(); i++ )
+			{
+				MattermostQt::FilePtr file = message->m_file[i];
+				if ( file->m_file_type == MattermostQt::FileImage ||  file->m_file_type == MattermostQt::FileAnimatedImage ) {
+					if(!file->m_preview_path.isEmpty() )
+						previews << file->m_preview_path;
+					else {
+						m_mattermost->get_file_preview(file->m_server_index, file->m_self_sc_index);
+						previews << file->m_thumb_path;
+					}
+				}
+			}
+			return previews;
+		}
+		return QStringList();
 	default:
 		break;
 	}
@@ -628,9 +681,7 @@ void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 //		m_channel->m_message = channel->m_message;
 //		endResetModel();
 //	}
-#ifdef DESKTOP_APP
-	m_channel = channel;
-#else
+#ifndef DESKTOP_APP
 	if( !m_channel )
 		m_channel = channel;
 	else if ( m_channel != channel) {
@@ -642,7 +693,11 @@ void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 //	endInsertRows();
 	beginResetModel();
 	endResetModel();
-
+#ifdef DESKTOP_APP
+	if(m_channel != channel)
+		emit channelChanged();
+	m_channel = channel;
+#endif
 	emit messagesInitialized();
 	emit atEndChanged();
 	emit messageCountChanged();
@@ -858,7 +913,7 @@ void MessagesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr message, 
 		return;
 
 	roles.clear();
-	roles << RootMessage << RootMessageUserName;
+	roles << RootMessage << RootMessageUserName << FilePreview << RoleFileInfo << FilesCount << FileStatus << Qt::DecorationRole;
 
 	for(QList<MattermostQt::MessagePtr>::iterator
 	    it = message->m_thread_messages.begin(), end = message->m_thread_messages.end();

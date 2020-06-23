@@ -39,7 +39,7 @@ CppHashPrivate::CppHashPrivate() {
 #ifdef DESKTOP_QML
 	h0 = Theme::getInstance()->fontSizeMedium() + 2;
 #elif DESKTOP_APP
-	h0 = 14;
+	h0 = 16;
 #else
 	h0 = Silica::Theme::instance()->fontSizeSmall() + 2;
 #endif

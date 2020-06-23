@@ -32,7 +32,7 @@ class AttachedFilesModel : public QAbstractListModel
 	Q_SIGNAL void AF_INDEX_SIGNAL ();
 public:
 	enum DataRoles {
-		FileType = 0,
+		FileType = Qt::UserRole + 100,
 		FileName,
 		FileThumbnailPath,
 		FilePreviewPath,

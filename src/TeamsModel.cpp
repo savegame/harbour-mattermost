@@ -60,8 +60,14 @@ QVariant TeamsModel::data(const QModelIndex &index, int role) const
 	else if(role == DataRoles::ServerCustomName) {
 		return QVariant( m_mattermost->get_server_name(m_server_index) );
 	}
-	else if(role == DataRoles::TeamIcon ) {
+	else if(role == DataRoles::TeamIcon) {
 		return team->m_image_path;
+	}
+	else if(role == Qt::DecorationRole) {
+		if( team->m_image_path.isEmpty() )
+			return QIcon("team->m_image_path");
+		else
+			return QIcon(team->m_image_path);
 	}
 	return QVariant();
 }
@@ -152,7 +158,7 @@ QString TeamsModel::getTeamId(int index) const
 {
 	if(index >= 0 && index < m_team.size())
 		return m_team[index]->m_id;
-	return QString::null;
+	return QString::Null();
 }
 
 int TeamsModel::getTeamIndex(int index) const

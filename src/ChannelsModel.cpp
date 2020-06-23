@@ -53,6 +53,29 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 	MattermostQt::ChannelPtr channel = m_channel[index.row()];
 
 	switch(role) {
+	case Qt::DecorationRole:
+		if(channel.isNull() || channel->m_display_name.isEmpty())
+			return QVariant("");
+		else {
+			if( channel->m_type == MattermostQt::ChannelPublic )
+				return QVariant::fromValue<QIcon>(QIcon(":/icons/public_channel.svg"));
+			else if ( channel->m_type == MattermostQt::ChannelPrivate )
+				return QVariant::fromValue<QIcon>(QIcon(":/icons/private_channel.svg"));
+			else if ( channel->m_type == MattermostQt::ChannelDirect )
+			{
+				if( channel->m_dc_user_index < 0 )
+					return QVariant("");
+				MattermostQt::ServerPtr server = m_mattermost->m_server[channel->m_server_index];
+				MattermostQt::UserPtr user = server->m_user[channel->m_dc_user_index];
+				return QVariant::fromValue<QIcon>(QIcon(user->m_image_path));
+			}
+			return QVariant();
+		}
+	case RoleChannelDescription:
+		if( channel ) {
+			return channel->m_purpose;
+		}
+		return QVariant("");
 	case DisplayName:
 		if(channel.isNull() || channel->m_display_name.isEmpty()) {
 			if( m_header_index[ItemType::HeaderPublic] == index.row() )
@@ -84,7 +107,7 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 	case Type:
 		return m_type[index.row()];
 		break;
-	case Index:
+	case ChannelIndex:
 		if( channel.isNull() )
 			return QVariant(-1);
 		return QVariant(channel->m_self_index);
@@ -105,8 +128,8 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 		break;
 	case AvatarPath:
 		// show mattermost icon if no Avatar loaded
-		{
-			if(channel.isNull())
+	    {
+		    if(channel.isNull())
 				return QVariant("");
 			if( channel->m_dc_user_index < 0 )
 				return QVariant("");
@@ -116,7 +139,7 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 			MattermostQt::UserPtr user = server->m_user[channel->m_dc_user_index];
 			QString path = user->m_image_path;
 			return path;
-		}
+	    }
 		break;
 	case UserStatus:
 		{
@@ -131,7 +154,30 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 			int current_status = user->m_status;
 			return QVariant((int)user->m_status);
 		}
-		break;
+	case RoleUserFullName:
+	    {
+		    if(channel.isNull())
+				return QString();
+			if ( channel->m_type != MattermostQt::ChannelDirect )
+				return QString();
+			if( channel->m_dc_user_index < 0 )
+				return QString();
+			MattermostQt::ServerPtr server = m_mattermost->m_server[channel->m_server_index];
+			MattermostQt::UserPtr user = server->m_user[channel->m_dc_user_index];
+			return QStringLiteral("%0 %1").arg(user->m_first_name).arg(user->m_last_name);
+	    }
+	case RoleUserNickname:
+	    {
+		    if(channel.isNull())
+				return QString();
+			if ( channel->m_type != MattermostQt::ChannelDirect )
+				return QString();
+			if( channel->m_dc_user_index < 0 )
+				return QString();
+			MattermostQt::ServerPtr server = m_mattermost->m_server[channel->m_server_index];
+			MattermostQt::UserPtr user = server->m_user[channel->m_dc_user_index];
+			return user->m_nickname;
+	    }
 	case MessageUnread :
 		{
 			if(channel.isNull())
@@ -209,7 +255,7 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	{ DataRoles::Purpose,         "m_purpose" },
 	{ DataRoles::Header,          "m_header" },
 	{ DataRoles::Email,           "m_email" },
-	{ DataRoles::Index,           "m_index" },
+	{ DataRoles::ChannelIndex,           "m_index" },
 	{ DataRoles::Type,            "m_type" },
 	{ DataRoles::ServerIndex,     "server_index" },
 	{ DataRoles::TeamIndex,       "team_index" },

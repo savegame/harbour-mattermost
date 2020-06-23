@@ -22,7 +22,7 @@ public:
 		Email = Qt::UserRole + 1,
 		Header,
 		Type,
-		Index,
+		ChannelIndex,
 		ServerIndex,
 		TeamIndex,
 		ChannelType,
@@ -36,6 +36,11 @@ public:
 		RoleChannelId,
 		RoleServerIndex,
 		RoleChannelIndex,
+		RoleChannelDescription,
+		// -------
+		RoleUserFullName, // for direct channels only
+		RoleUserNickname, // for direct cahnnels only
+//		Role
 	};
 
 	enum ItemType {

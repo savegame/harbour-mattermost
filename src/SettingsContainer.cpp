@@ -10,21 +10,22 @@
 
 #define SET_SETTINGS_PROPERTY(_t, _n) MT_SET_PROPERTY_2(SettingsContainer, _t, _n, settingsChanged)
 // TODO make two difenes for RW properties and R only properties
-SET_SETTINGS_PROPERTY(int,   autoDownloadImageSize)
-SET_SETTINGS_PROPERTY(bool,  showBlobs)
-SET_SETTINGS_PROPERTY(float, blobOpacity)
-SET_SETTINGS_PROPERTY(float, pageMargin)
-SET_SETTINGS_PROPERTY(int,   pageMarginEnum)
-SET_SETTINGS_PROPERTY(bool,  formatedText)
-SET_SETTINGS_PROPERTY(bool,  debug)
-SET_SETTINGS_PROPERTY(bool,  sendIcon)
-SET_SETTINGS_PROPERTY(ReactionSize, reactionSize)
-SET_SETTINGS_PROPERTY(QStringList, usedReactions)
-SET_SETTINGS_PROPERTY(int,         usedReactionsCount)
-SET_SETTINGS_PROPERTY(bool,  searchInChannels)
-SET_SETTINGS_PROPERTY(bool,  useCameraPicker)
-SET_SETTINGS_PROPERTY(LogLevel,   logLevel)
-SET_SETTINGS_PROPERTY(bool,   useLog)
+SET_SETTINGS_PROPERTY(int,               autoDownloadImageSize)
+SET_SETTINGS_PROPERTY(bool,              showBlobs)
+SET_SETTINGS_PROPERTY(float,             blobOpacity)
+SET_SETTINGS_PROPERTY(float,             pageMargin)
+SET_SETTINGS_PROPERTY(int,               pageMarginEnum)
+SET_SETTINGS_PROPERTY(bool,              formatedText)
+SET_SETTINGS_PROPERTY(bool,              debug)
+SET_SETTINGS_PROPERTY(bool,              sendIcon)
+SET_SETTINGS_PROPERTY(QStringList,       usedReactions)
+SET_SETTINGS_PROPERTY(int,               usedReactionsCount)
+SET_SETTINGS_PROPERTY(bool,              searchInChannels)
+SET_SETTINGS_PROPERTY(bool,              useCameraPicker)
+SET_SETTINGS_PROPERTY(bool,              useLog)
+SET_SETTINGS_PROPERTY(LogLevel,          logLevel)
+SET_SETTINGS_PROPERTY(ReactionSize,      reactionSize)
+SET_SETTINGS_PROPERTY(UserNameDisplay,   userNameDisplay)
 
 SettingsContainer::SettingsContainer(QObject *parent) : QObject(parent)
 {
@@ -64,6 +65,7 @@ void SettingsContainer::resetToDefault()
 	m_useCameraPicker       = true;
 	m_useLog                = true;
 	m_logLevel              = LogLevelDefault;
+	m_userNameDisplay       = UserNameDisplayDefault;
 }
 
 #define ADD_VALUE(x) settings[#x] = x
@@ -103,6 +105,7 @@ QJsonObject SettingsContainer::asJsonObject() const
 //	ADD_VALUE(m_debug);
 	ADD_ENUM(m_logLevel, LogLevel);
 	ADD_VALUE(m_useLog);
+	ADD_ENUM(m_userNameDisplay, UserNameDisplay);
 	return settings;
 }
 
@@ -122,6 +125,7 @@ void SettingsContainer::fromJsonObject(const QJsonObject &settings)
 //	FROM_VALUE(m_debug, toBool());
 	FROM_ENUM(m_logLevel, LogLevel);
 	FROM_VALUE(m_useLog, toBool());
+	FROM_ENUM(m_userNameDisplay, UserNameDisplay);
 
 	if( m_usedReactionsCount == 0 )
 		m_usedReactionsCount = 21;

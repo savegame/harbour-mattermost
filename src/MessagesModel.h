@@ -28,6 +28,7 @@ public:
 		ValidPaths,
 		FileNames,
 		FileStatus,
+		FilePreview,
 		Thumbinal,
 		FileIcon,
 		RowIndex,
@@ -57,6 +58,7 @@ public:
 		RoleTeamIndex,
 		RoleChannelIndex,
 		RoleChannelType,
+		RoleFileInfo,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 	Q_ENUM(DataRoles)
@@ -108,6 +110,7 @@ Q_SIGNALS:
 	void messagesEnded();
 	void messageCountChanged();
 	void pageStatusChanged();
+	void channelChanged();
 protected slots:
 	void slot_messagesAdded(MattermostQt::ChannelPtr channel);
 	void slot_messagesIsEnd(MattermostQt::ChannelPtr channel);

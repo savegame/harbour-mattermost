@@ -6,6 +6,8 @@
 #include <ChannelsModel.h>
 #include <MessagesModel.h>
 #include <SettingsContainer.h>
+#include <views/MessageItemDelegate.h>
+#include <views/TeamItemDelegate.h>
 //#include <QtWebView>
 
 AppWidget::AppWidget(QWidget *parent) :
@@ -21,12 +23,18 @@ AppWidget::AppWidget(QWidget *parent) :
 
 	TeamsModel *teamsModel = new TeamsModel();
 	ChannelsModel *channelsModel = new ChannelsModel();
-	teamsModel->setMattermostQt(MattermostQt::getInstance());
-	channelsModel->setMattermost( MattermostQt::getInstance());
+	m_channelsFilterProxy = new ChannelsFilterProxy(channelsModel);
+	m_channelsFilterProxy->setSourceModel(channelsModel);
+	teamsModel->setMattermostQt(MattermostQt::getInstance() );
+	channelsModel->setMattermost( MattermostQt::getInstance() );
 	ui->teamsView->setModel( teamsModel );
-	ui->channelsView->setModel(channelsModel);
 	ui->teamsView->setViewMode(QListView::IconMode);
+	ui->teamsView->setItemDelegate( new TeamItemDelegate(teamsModel) );
+	ui->channelsView->setModel(m_channelsFilterProxy);
+	ui->splitter->setStretchFactor(1,0);
+	ui->splitter->setStretchFactor(3,1);
 	connect(MattermostQt::getInstance(), &MattermostQt::serverStateChanged, this, &AppWidget::on_serverStateChanged );
+	connect(ui->messageEdit, &MessageEditArea::sendMessage, this, &AppWidget::on_sendMesage );
 }
 
 AppWidget::~AppWidget()
@@ -86,9 +94,53 @@ void AppWidget::on_serverStateChanged(int server_index, int state)
 	}
 }
 
-void AppWidget::on_teamsView_activated(const QModelIndex &index)
+void AppWidget::on_teamsView_clicked(const QModelIndex &index)
 {
+	if( !index.isValid() )
+		return;
 	int server_index = 0;
-	int team_index = index.row();
-	MattermostQt::getInstance()->get_team(server_index, team_index);
+//	int team_index = index.row();
+//	QString team_id = MattermostQt::getInstance()->server()[server_index]->m_teams[team_index]->m_id;
+	QString team_id = index.data(TeamsModel::TeamId).toString();
+	current_team_index = index.row();
+	MattermostQt::getInstance()->get_public_channels(server_index, team_id);
+}
+
+void AppWidget::on_channelsView_clicked(const QModelIndex &index)
+{
+	if(!index.isValid())
+		return;
+
+	int si = 0;
+	int ti = index.data(ChannelsModel::TeamIndex).toInt();
+	int ct = index.data(ChannelsModel::ChannelType).toInt();
+	int ci = index.data(ChannelsModel::ChannelIndex).toInt();
+
+	current_team_index = ti;
+	current_channel_type = ct;
+	current_channel_index = ci;
+	m_channelsFilterProxy->setFilterRegExp("");
+
+	//index.data(Qt::DecorationRole).value<QIcon>()
+	if( ci >= 0 ) {
+		ui->channelNameLabel->setText( index.data(ChannelsModel::DisplayName).toString() );
+		ui->channelDescriptionLabel->setText( index.data(ChannelsModel::Header).toString() );
+		ui->channelDescriptionLabel->setToolTip( index.data(ChannelsModel::RoleChannelDescription).toString() );
+		ui->channelImageLabel->setPixmap( index.data(Qt::DecorationRole).value<QIcon>().pixmap( ui->channelImageLabel->maximumSize() ) );
+		MattermostQt::getInstance()->get_posts(si,ti,ct,ci);
+	}
+}
+
+void AppWidget::on_sendMesage(const QString &text)
+{
+	int si = 0;
+	QString root_id = "";
+//	ui->messagesView->model()->data( ui->messagesView->model()->index(0,0),  )
+	MattermostQt::getInstance()->post_send_message(text, si, current_team_index, current_channel_type, current_channel_index, root_id);
+	ui->messageEdit->clear();
+}
+
+void AppWidget::on_channelFilter_textChanged(const QString &text)
+{
+	m_channelsFilterProxy->setFilterRegExp(text);
 }

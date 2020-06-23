@@ -45,6 +45,14 @@ public:
 	};
 	Q_ENUM(LogLevel)
 
+	enum UserNameDisplay {
+		UserNameLogin,      // just login name of user
+		UserNameFull,       // try full user name (first and last name) or login, if it empty
+		UserNameNickname,   // try use nickname or login, if it empty
+		UserNameDisplayDefault = UserNameFull,
+	};
+	Q_ENUM(UserNameDisplay)
+
 private:
 	/** download image automaticly, when its size lower than autoDownloadImageSize */
 	MT_PROPERTY(int,     autoDownloadImageSize);
@@ -62,6 +70,7 @@ private:
 	MT_PROPERTY(bool,    useCameraPicker);
 	MT_PROPERTY_DEF(LogLevel, logLevel, LogLevelDefault);
 	MT_PROPERTY_DEF(bool,     useLog, true);
+	MT_PROPERTY_DEF(UserNameDisplay,  userNameDisplay, UserNameDisplayDefault);
 public:
 	explicit SettingsContainer(QObject *parent = nullptr);
 

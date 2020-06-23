@@ -900,7 +900,7 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 				qInfo() << "File info.json - exists! Try search file data in local storage.";
 			if( f->m_file_status == FileStatus::FileDownloaded )
 			{
-				emit attachedFilesChanged(m, QVector<QString>(),  QVectorInt());
+				emit attachedFilesChanged(m, QVector<QString>(),  QVectorInt() << MessagesModel::RoleFileInfo);
 				return;
 			}
 		}
@@ -2134,15 +2134,31 @@ void MattermostQt::prepare_direct_channel(int server_index, int channel_index)
 	{
 		if( sc->m_user[i]->m_id.compare(user_id) == 0 )
 		{
+			UserPtr user = sc->m_user[i];
+			QString displayname = user->m_username;
+			if( SettingsContainer::getInstance()->userNameDisplay() == SettingsContainer::UserNameFull )
+			{
+				if( !user->m_first_name.isEmpty() || !user->m_last_name.isEmpty() )
+				{
+					displayname = QStringLiteral("%0 %1").arg(user->m_first_name).arg(user->m_last_name);
+				}
+			}
+			else if( SettingsContainer::getInstance()->userNameDisplay() == SettingsContainer::UserNameNickname ) {
+				if( !user->m_nickname.isEmpty() )
+					displayname = user->m_nickname;
+			}
 			if(self_chat)
-				sc->m_direct_channels[channel_index]->m_display_name = sc->m_user[i]->m_username
+				sc->m_direct_channels[channel_index]->m_display_name = displayname
 				        + QLatin1String(" ") // for right translation, if someone forgot about space before '(you)'
-				        + QObject::trUtf8("(you)");
+				        + QObject::tr("(you)");
 			else
-				sc->m_direct_channels[channel_index]->m_display_name = sc->m_user[i]->m_username;
-			sc->m_direct_channels[channel_index]->m_dc_user_index = sc->m_user[i]->m_self_index;
+				sc->m_direct_channels[channel_index]->m_display_name = displayname;
+			sc->m_direct_channels[channel_index]->m_dc_user_index = user->m_self_index;
 			QVectorInt roles;
-			roles << ChannelsModel::DisplayName << ChannelsModel::AvatarPath;
+			roles << ChannelsModel::DisplayName
+			      << ChannelsModel::AvatarPath
+			      << ChannelsModel::RoleUserFullName
+			      << ChannelsModel::RoleUserNickname;
 			emit updateChannel(ct, roles);
 			return;
 		}
@@ -3301,10 +3317,28 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 			}
 			else if( ch_name == user->m_id  )
 			{
-				channel->m_display_name = user->m_username;
-				channel->m_dc_user_index = user->m_self_index;
+				QString displayname = user->m_username;
+				if( SettingsContainer::getInstance()->userNameDisplay() == SettingsContainer::UserNameFull )
+				{
+					if( !user->m_first_name.isEmpty() || !user->m_last_name.isEmpty() )
+					{
+						displayname = QStringLiteral("%0 %1").arg(user->m_first_name).arg(user->m_last_name);
+					}
+				}
+				else if( SettingsContainer::getInstance()->userNameDisplay() == SettingsContainer::UserNameNickname ) {
+					if( !user->m_nickname.isEmpty() )
+						displayname = user->m_nickname;
+				}
+
 				QVectorInt roles;
-				roles << ChannelsModel::DisplayName << ChannelsModel::AvatarPath;
+				roles << ChannelsModel::DisplayName
+				      << ChannelsModel::AvatarPath
+				      << ChannelsModel::RoleUserFullName
+				      << ChannelsModel::RoleUserNickname;
+
+				channel->m_display_name = displayname;
+				channel->m_dc_user_index = user->m_self_index;
+
 				emit updateChannel(channel, roles);
 //				qDebug() << QString("direct_channel \"%0\" id: '%1'").arg(channel->m_display_name).arg(channel->m_id) ;
 				break;
@@ -3589,7 +3623,7 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 		//		messages << mc;
 		//		emit messageUpdated(messages);
 		QVectorInt file_update_roles;
-		file_update_roles << AttachedFilesModel::FilePreviewPath;
+		file_update_roles << AttachedFilesModel::FilePreviewPath << MessagesModel::FilePreview;
 		emit attachedFilesChanged(mc, QVector<QString>(), file_update_roles);
 	}
 	return;
@@ -3648,6 +3682,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	file_update_roles << AttachedFilesModel::FileName;
 	file_update_roles << AttachedFilesModel::FileSize;
 	file_update_roles << AttachedFilesModel::FileMimeType;
+	file_update_roles << MessagesModel::RoleFileInfo;
 	//	file_update_roles << AttachedFilesModel::FileCount;
 	//messages << mc;
 	bool isUpdateMessage = false;
@@ -5586,6 +5621,7 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	//"auth_service": "string",
 	//"roles": "string",
 	memset(m_roles, false, UserSystemRolesCount * sizeof(bool) );
+
 	// grab roles for user
 	QJsonValue roles_obj = object["roles"];
 	if( roles_obj.isString() )

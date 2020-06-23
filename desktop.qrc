@@ -2,5 +2,13 @@
     <qresource prefix="/icons">
         <file alias="attach_file.svg">resources/emoji/svg/1f4ce.svg</file>
         <file>resources/icons/emoji_picker.svg</file>
+        <file alias="public_channel.svg">resources/emoji/svg/1f4ac.svg</file>
+        <file alias="private_channel.svg">resources/emoji/svg/1f512.svg</file>
+        <file>resources/logo_rect_white.png</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>resources/mattermost_icon.svg</file>
+        <file>resources/avatar_mask.png</file>
+        <file>resources/avatar_shadow.png</file>
     </qresource>
 </RCC>
