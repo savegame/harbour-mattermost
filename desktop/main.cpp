@@ -43,7 +43,7 @@ void loadStyle() {
 	QFile f(":qdarkstyle/style.qss");
 
 	if (!f.exists())   {
-		qCritical() << QStringLiteral("Unable to set stylesheet, file not found");
+		qCritical() << QStringLiteral("Unable to set dark stylesheet, file not found");
 	}
 	else   {
 		f.open(QFile::ReadOnly | QFile::Text);
@@ -55,13 +55,26 @@ void loadStyle() {
 	f.close();
 }
 
+//#include <o2.h>
+
+//class TestGitLabO2 : O2 {
+//public:
+//	TestGitLabO2(QObject *parent = 0, QNetworkAccessManager *manager = 0, O0AbstractStore *store = 0)
+//	    : O2(parent, manager, store)
+//	{
+//		// http://192.168.54.22/oauth/gitlab/login
+//		setRequestUrl("http://192.168.54.22/oauth/gitlab/login");
+//		setTokenUrl("http://192.168.54.22/oauth/gitlab/token");
+//	}
+//};
+
 int main(int argc, char** argv)
 {
 	qInstallMessageHandler( myMessageOutput );
 
 	QApplication app(argc, argv);
 //	QtWebView::initialize();
-
+	qApp->setAttribute(Qt::AA_UseSoftwareOpenGL, true);
 	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
 	QCoreApplication::setOrganizationDomain("ru");
 	QCoreApplication::setOrganizationName  ("sashikknox");
@@ -70,7 +83,11 @@ int main(int argc, char** argv)
 	qInfo() << "App version: " << MATTERMOSTQT_VERSION;
 
 	loadStyle();
+	
+//	QNetworkAccessManager *nm = new QNetworkAccessManager();
+//	TestGitLabO2 *oauth = new TestGitLabO2(nullptr, nm);
 
+//	qDebug() << oauth->token();
 	AppWidget mainWindow;
 	mainWindow.show();
 

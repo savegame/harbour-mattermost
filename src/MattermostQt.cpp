@@ -4763,7 +4763,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 	QVariant replyType;
 	replyType = reply->property(P_REPLY_TYPE);
 #ifdef MQT_TRACE
-	qInfo() << "MattermostQt::replyFinished() " << replyType.toInt();
+	qDebug() << "MattermostQt::replyFinished() " << replyType.toInt();
 #endif
 	if (reply->error() == QNetworkReply::NoError) {
 		//success

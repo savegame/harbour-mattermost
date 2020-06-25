@@ -17,5 +17,5 @@ HEADERS += \
     $$PWD/views/TeamItemDelegate.h
 
 RESOURCES += \
-    $$PWD/qdarkstyle/style.qrc \
+#    $$PWD/qdarkstyle/style.qrc \s
     $$PWD/../desktop.qrc

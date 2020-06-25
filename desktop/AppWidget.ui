@@ -36,7 +36,7 @@
    <item>
     <widget class="QStackedWidget" name="pageStack">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="mainPage">
       <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -466,7 +466,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="mainLabel">
          <property name="styleSheet">
           <string notr="true">font: 24pt &quot;Sans Serif&quot;;</string>
          </property>
@@ -484,7 +484,7 @@
        <item>
         <widget class="QStackedWidget" name="authenticationStack">
          <property name="currentIndex">
-          <number>0</number>
+          <number>3</number>
          </property>
          <widget class="QWidget" name="serverUrlPage">
           <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -732,7 +732,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>98</width>
-                <height>37</height>
+                <height>33</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_2">

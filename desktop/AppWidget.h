@@ -2,6 +2,7 @@
 #define APPWIDGET_H
 
 #include <QWidget>
+#include <QNetworkCookie>
 
 namespace Ui {
 class AppWidget;
@@ -18,6 +19,7 @@ public:
 	~AppWidget();
 
 
+	void setToken(QString tkn);
 private slots:
 	void on_leServerUrl_textChanged(const QString &arg1);
 
@@ -41,6 +43,18 @@ private slots:
 
 	void on_channelFilter_textChanged(const QString &text);
 
+	void on_pbServerGitLab_clicked(bool checked);
+	
+	void on_authenticationStack_currentChanged(int index);
+	
+	void on_tokenChanged(QString token);
+	
+	void connectionError(int code, QString message, int server_index);
+	
+	void on_cookieAdded(const QNetworkCookie &cookie);
+Q_SIGNALS:
+	void tokenChanged(QString token);
+	
 private:
 	Ui::AppWidget *ui;
 
@@ -48,6 +62,8 @@ private:
 	int current_team_index = 0;
 	int current_channel_type = 0;
 	int current_channel_index = 0;
+	
+	QString token;
 
 	/** filtering list of channels  */
 	ChannelsFilterProxy *m_channelsFilterProxy = nullptr;

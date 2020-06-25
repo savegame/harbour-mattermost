@@ -1,6 +1,9 @@
 #include "AppWidget.h"
 #include "ui_AppWidget.h"
 
+#include <QtWebEngineWidgets>
+#include <QWebEngineUrlRequestInterceptor>
+
 #include <MattermostQt.h>
 #include <TeamsModel.h>
 #include <ChannelsModel.h>
@@ -10,6 +13,41 @@
 #include <views/TeamItemDelegate.h>
 //#include <QtWebView>
 
+class UrlCatcher : public QWebEngineUrlRequestInterceptor 
+{
+public:
+	UrlCatcher(QObject *parent = nullptr) : QWebEngineUrlRequestInterceptor(parent)
+	{
+		
+	}
+	
+	virtual void interceptRequest(QWebEngineUrlRequestInfo &info) 
+	{	
+		QString fullUrl = info.requestUrl().toString(QUrl::FullyEncoded);
+		qWarning() << QStringLiteral("Itercept request: url(%0)").arg( fullUrl );
+		if( fullUrl.contains("signup/gitlab/complete?") ) 
+		{
+			QRegExp re("(code|state)=([a-zA-Z0-9]+)&?");
+			QString code;
+			QString state;
+			int lastPos = re.indexIn(fullUrl,0);
+			while( lastPos != -1 )
+			{
+				if( re.cap(1) == QStringLiteral("code") ) {
+					code = re.cap(2);
+					lastPos += code.length();
+				}
+				else if( re.cap(1) == QStringLiteral("state") ) {
+					state = re.cap(2);
+					lastPos += state.length();
+				}
+				lastPos = re.indexIn(fullUrl,lastPos);
+			}
+			qWarning() << QStringLiteral("We authorized: code = %0; state %1;").arg(code).arg(state);
+		}
+	}
+};
+
 AppWidget::AppWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::AppWidget)
@@ -17,7 +55,7 @@ AppWidget::AppWidget(QWidget *parent) :
 	ui->setupUi(this);
 
 //	ui->gitLabWebView
-	ui->pbServerGitLab->setVisible(false);
+	//ui->pbServerGitLab->setVisible(false);
 	ui->authenticationStack->setCurrentIndex(0);
 	ui->pageStack->setCurrentIndex(1);
 
@@ -34,12 +72,51 @@ AppWidget::AppWidget(QWidget *parent) :
 	ui->splitter->setStretchFactor(1,0);
 	ui->splitter->setStretchFactor(3,1);
 	connect(MattermostQt::getInstance(), &MattermostQt::serverStateChanged, this, &AppWidget::on_serverStateChanged );
+	connect(MattermostQt::getInstance(), &MattermostQt::onConnectionError, this, &AppWidget::connectionError);
 	connect(ui->messageEdit, &MessageEditArea::sendMessage, this, &AppWidget::on_sendMesage );
+	connect(this, &AppWidget::tokenChanged, this, &AppWidget::on_tokenChanged, Qt::QueuedConnection );
+	// debuug 
+//	ui->authenticationStack->setCurrentIndex(3);
 }
 
 AppWidget::~AppWidget()
 {
 	delete ui;
+}
+
+void AppWidget::setToken(QString tkn)
+{
+	emit tokenChanged(tkn);
+}
+
+void AppWidget::on_tokenChanged(QString token)
+{
+	this->token = token;
+	MattermostQt::getInstance()->post_login_by_token(this->ui->leServerUrl->text(), token);
+}
+
+void AppWidget::connectionError(int code, QString message, int server_index)
+{
+	qCritical() << QStringLiteral("[%0] %1").arg(code).arg(message);
+}
+
+void AppWidget::on_cookieAdded(const QNetworkCookie &cookie)
+{// Qt::QeuedConnection
+	qWarning() << QStringLiteral("cookie: %0=%1;").arg(cookie.name().data()).arg(cookie.value().data());
+	QString allCookie(cookie.toRawForm().data());
+	if( allCookie.indexOf("MMAUTHTOKEN") != -1 ) {
+		QRegExp authToken("MMAUTHTOKEN=([a-z0-9]+);");
+		if( authToken.indexIn(allCookie) != -1 ) {
+			this->setToken(authToken.cap(1));
+			qCritical() << "Token is: " << token;
+			QWidget *w = this->ui->authenticationStack->widget(3);
+			for( auto c : w->children() ) {
+				if( QWebEngineView* view = qobject_cast<QWebEngineView*>(c) ){
+					view->deleteLater();
+				}
+			}
+		}
+	}
 }
 
 void AppWidget::on_leServerUrl_textChanged(const QString &text)
@@ -143,4 +220,57 @@ void AppWidget::on_sendMesage(const QString &text)
 void AppWidget::on_channelFilter_textChanged(const QString &text)
 {
 	m_channelsFilterProxy->setFilterRegExp(text);
+}
+
+void AppWidget::on_pbServerGitLab_clicked(bool checked)
+{
+	
+}
+
+void AppWidget::on_authenticationStack_currentChanged(int index)
+{
+	if( index == 3 ) // webview
+	{
+		QWidget *w = ui->authenticationStack->widget(3);
+		if( w ) {
+			QWebEngineView *webView = new QWebEngineView(w);
+			QVBoxLayout *layout = new QVBoxLayout(w);
+			layout->addWidget(webView);
+			
+			QWebEngineCookieStore *s = QWebEngineProfile::defaultProfile()->cookieStore();
+			s->deleteAllCookies();
+			connect(s, &QWebEngineCookieStore::cookieAdded, this, &AppWidget::on_cookieAdded, Qt::QueuedConnection);
+	//		DEBUG_URL
+	//		w->setLayout(layout);
+			
+	//		connect(webView, &QWebEngineView::titleChanged, [this, webView](const QString &title) {
+	//			int index = indexOf(webView);
+	//			if (index != -1) {
+	//				setTabText(index, title);
+	//				setTabToolTip(index, title);
+	//			}
+	//			if (currentIndex() == index)
+	//				emit titleChanged(title);
+	//		});
+			connect(webView, &QWebEngineView::loadProgress, [this, webView](int progress) {
+				this->ui->mainLabel->setText(QStringLiteral("%0\%").arg(progress) );
+			});
+			//QWebEngineView::urlChanged(const QUrl &url)
+			connect(webView, &QWebEngineView::urlChanged, [this, webView](const QUrl &url) {
+				qWarning() << QStringLiteral("Url changed: %0").arg(url.toString());
+			});
+			
+			QWebEnginePage *page = new QWebEnginePage(webView);
+			page->setUrlRequestInterceptor( new UrlCatcher(page) );
+			connect(page, &QWebEnginePage::urlChanged, [this, page](const QUrl &url) {
+//				page->
+				qWarning() << QStringLiteral("Pages: Url changed: %0").arg(url.toString());
+			});
+//			page->setUrl(QUrl(DEBUG_URL));
+			QUrl url(this->ui->leServerUrl->text());
+			url.setPath( url.path() + QStringLiteral("/oauth/gitlab/login") );
+			page->setUrl(url);
+			webView->setPage(page);
+		}
+	}
 }

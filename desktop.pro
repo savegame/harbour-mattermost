@@ -2,7 +2,7 @@ TEMPLATE = app
 VERSION = 0.2.2
 
 CONFIG += qt
-QT += core gui widgets network websockets network quick # webview
+QT += core gui widgets network websockets network quick webengine webenginewidgets
 
 TARGET = mostqute
 
