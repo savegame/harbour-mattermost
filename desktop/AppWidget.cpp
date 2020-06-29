@@ -236,9 +236,11 @@ void AppWidget::on_authenticationStack_currentChanged(int index)
 			QWebEngineView *webView = new QWebEngineView(w);
 			QVBoxLayout *layout = new QVBoxLayout(w);
 			layout->addWidget(webView);
-			
+			QWebEngineProfile::defaultProfile()->clearAllVisitedLinks();
+			QWebEngineProfile::defaultProfile()->clearHttpCache();
 			QWebEngineCookieStore *s = QWebEngineProfile::defaultProfile()->cookieStore();
 			s->deleteAllCookies();
+			s->deleteSessionCookies();
 			connect(s, &QWebEngineCookieStore::cookieAdded, this, &AppWidget::on_cookieAdded, Qt::QueuedConnection);
 	//		DEBUG_URL
 	//		w->setLayout(layout);
