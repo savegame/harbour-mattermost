@@ -213,7 +213,7 @@ void AppWidget::on_channelsView_clicked(const QModelIndex &index)
 
 	//index.data(Qt::DecorationRole).value<QIcon>()
 	if( ci >= 0 ) {
-//		ui->channelsView->setSe
+		ui->channelsView->selectionModel()->select(index, QItemSelectionModel::Select | QItemSelectionModel::Clear );
 		ui->channelNameLabel->setText( index.data(ChannelsModel::DisplayName).toString() );
 		ui->channelDescriptionLabel->setText( index.data(ChannelsModel::Header).toString() );
 		ui->channelDescriptionLabel->setToolTip( index.data(ChannelsModel::RoleChannelDescription).toString() );

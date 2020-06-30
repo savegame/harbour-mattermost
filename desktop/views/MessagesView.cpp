@@ -12,6 +12,7 @@ MessagesView::MessagesView(QWidget *parent)
 	ReverseProxyMessagesModel *reverseMessages = new ReverseProxyMessagesModel(messagesModel);
 	reverseMessages->setSourceModel(messagesModel);
 	setModel(reverseMessages);
+	setMouseTracking(true);
 	setItemDelegate( new MessageItemDelegate(messagesModel) );
 	verticalScrollBar()->setSingleStep(1);
 	connect(messagesModel, &MessagesModel::channelChanged, this, &MessagesView::channelChanged );
@@ -64,6 +65,19 @@ void MessagesView::wheelEvent(QWheelEvent *e)
 		verticalScrollBar()->setValue(verticalScrollBar()->value() - numDegrees.y());
 	}
 	update();
+}
+
+void MessagesView::mouseMoveEvent(QMouseEvent *e)
+{
+	QListView::mouseMoveEvent(e);
+	QModelIndex index = indexAt(e->pos());
+	setCurrentIndex(index);
+//	selectionModel()->select(index, QItemSelectionModel::Clear | QItemSelectionModel::Select);
+}
+
+void MessagesView::mousePressEvent(QMouseEvent *e)
+{
+	QListView::mousePressEvent(e);
 }
 
 void MessagesView::channelChanged()

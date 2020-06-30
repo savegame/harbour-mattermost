@@ -26,6 +26,17 @@ void MessageItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
 	painter->save();
 	painter->setRenderHint(QPainter::Antialiasing, true);// TextAntialiasing, SmoothPixmapTransform)
+
+	//------------ selection background
+	if( opt.state & QStyle::State_HasFocus )
+	{
+		QBrush brush = opt.palette.brush(QPalette::Highlight);
+		brush.setColor( QColor( brush.color().red(), brush.color().green(), brush.color().blue(), 30 ) );
+		// FILL BACKGROUND
+		painter->fillRect( opt.rect, brush );
+	}
+//	index.data(Qt::ItemDataRole
+//	if( index == index.model()->)
 	//------------ avatar
 	QImage image(index.data(MessagesModel::SenderImagePath).toString());
 	QImage mask_img(":/resources/avatar_mask.png");

@@ -17,6 +17,10 @@ protected:
 	virtual void rowsInserted(const QModelIndex &parent, int start, int end) override;
 
 	virtual void wheelEvent(QWheelEvent *e) override;
+
+	virtual void mouseMoveEvent(QMouseEvent *e) override;
+
+	virtual void mousePressEvent(QMouseEvent *e) override;
 signals:
 
 protected slots:
