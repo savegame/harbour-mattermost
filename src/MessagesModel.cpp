@@ -159,6 +159,30 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			}
 		}
 		break;
+	case MessagesModel::RoleSenderFullName:
+	    {
+		    if( message->m_user_index >= 0
+			        &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
+			{
+				MattermostQt::UserPtr user =
+				        m_mattermost->
+				        m_server[message->m_server_index]->
+				        m_user[message->m_user_index];
+				return QStringLiteral("%0 %1").arg(user->m_first_name).arg(user->m_last_name);
+			}
+			else
+			{
+				if(m_mattermost->settings()->debug())
+				{
+					qWarning() << QString("Cant find USER name  message->m_user_index(%0) < size(%1) uid(%3)")
+					              .arg( message->m_user_index)
+					              .arg(m_mattermost->m_server[message->m_server_index]->m_user.size())
+					        .arg( message->m_user_id);
+				}
+				return QStringLiteral("RoleSenderFullName: error!");
+			}
+	    }
+		break;
 	case MessagesModel::UserStatus:
 		{
 			if( message->m_user_index >= 0
@@ -531,6 +555,9 @@ QSizeF MessagesModel::getItemSize(int row, int i, qreal contentWidth) const
 	if(!m_channel || row < 0 || i < 0 || row >= m_channel->m_message.size() || i >= m_channel->m_message[row]->m_file.size() )
 		return QSizeF(32,32);
 	MattermostQt::FilePtr file = m_channel->m_message[row]->m_file[i];
+	if( file->m_file_type != MattermostQt::FileImage ) {
+		return QSizeF();
+	}
 	QSize sourceSize = file->m_image_size;
 	if( !file->m_item_size.isEmpty() && file->m_contentwidth == (int)contentWidth )
 		return file->m_item_size;

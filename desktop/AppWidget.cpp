@@ -73,6 +73,7 @@ AppWidget::AppWidget(QWidget *parent) :
 	ui->splitter->setStretchFactor(3,1);
 	connect(MattermostQt::getInstance(), &MattermostQt::serverStateChanged, this, &AppWidget::on_serverStateChanged );
 	connect(MattermostQt::getInstance(), &MattermostQt::onConnectionError, this, &AppWidget::connectionError);
+	connect(MattermostQt::getInstance(), &MattermostQt::teamAdded, this, &AppWidget::on_teamAdded);
 	connect(ui->messageEdit, &MessageEditArea::sendMessage, this, &AppWidget::on_sendMesage );
 	connect(this, &AppWidget::tokenChanged, this, &AppWidget::on_tokenChanged, Qt::QueuedConnection );
 	// debuug 
@@ -116,6 +117,15 @@ void AppWidget::on_cookieAdded(const QNetworkCookie &cookie)
 				}
 			}
 		}
+	}
+}
+
+void AppWidget::on_teamAdded(MattermostQt::TeamPtr team)
+{
+	if( team->m_self_index == 0 )
+	{
+		ui->teamsView->setCurrentIndex(ui->teamsView->model()->index(0,0));
+		on_teamsView_clicked(ui->teamsView->currentIndex());
 	}
 }
 
@@ -196,7 +206,8 @@ void AppWidget::on_channelsView_clicked(const QModelIndex &index)
 	current_team_index = ti;
 	current_channel_type = ct;
 	current_channel_index = ci;
-	m_channelsFilterProxy->setFilterRegExp("");
+	ui->channelFilter->setText("");
+//	m_channelsFilterProxy->setFilterRegExp("");
 
 	//index.data(Qt::DecorationRole).value<QIcon>()
 	if( ci >= 0 ) {

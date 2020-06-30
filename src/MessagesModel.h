@@ -59,6 +59,7 @@ public:
 		RoleChannelIndex,
 		RoleChannelType,
 		RoleFileInfo,
+		RoleSenderFullName,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 	Q_ENUM(DataRoles)

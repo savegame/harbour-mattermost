@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QNetworkCookie>
+#include <MattermostQt.h>
 
 namespace Ui {
 class AppWidget;
@@ -52,6 +53,8 @@ private slots:
 	void connectionError(int code, QString message, int server_index);
 	
 	void on_cookieAdded(const QNetworkCookie &cookie);
+
+	void on_teamAdded(MattermostQt::TeamPtr team);
 Q_SIGNALS:
 	void tokenChanged(QString token);
 	

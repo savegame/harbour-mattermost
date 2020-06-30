@@ -45,7 +45,10 @@ void MessagesView::rowsInserted(const QModelIndex &parent, int start, int end)
 	}
 	QListView::rowsInserted(parent, start, end);
 	if(scroll)
+	{
 		scrollToBottom();
+
+	}
 }
 
 void MessagesView::wheelEvent(QWheelEvent *e)
