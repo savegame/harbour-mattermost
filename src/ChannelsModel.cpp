@@ -16,6 +16,7 @@ ChannelsModel::ChannelsModel(QObject *parent)
 	m_header_index[ItemType::HeaderPublic] = 0;
 	m_header_index[ItemType::HeaderPrivate] = 1;
 	m_header_index[ItemType::HeaderDirect] = 2;
+	m_header_index[ItemType::HeaderFavourites] = -1;
 	endInsertRows();
 }
 
@@ -310,6 +311,7 @@ void ChannelsModel::clear()
 	m_header.resize(3);
 //	m_display_name.resize(3);
 	m_puprose.resize(3);
+	m_channel.clear();
 	m_channel.resize(3);
 	m_type.resize(3);
 	m_type[0] = ItemType::HeaderPublic;

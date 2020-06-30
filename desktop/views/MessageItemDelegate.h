@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QStyledItemDelegate>
 
+class MessagesModel;
+
 class MessageItemDelegate : public QStyledItemDelegate
 {
 	Q_OBJECT
@@ -19,8 +21,8 @@ signals:
 
 public slots:
 
-private:
-
+protected:
+	int getFileImageHeight(const MessagesModel *m, const QStyleOptionViewItem &option, int message_index, int file_index, int textWidth) const;
 };
 
 #endif // MESSAGEITEMDELEGATE_H

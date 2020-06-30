@@ -38,7 +38,8 @@ void MessageItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 	//test
 	QTextDocument textDocument;
 	textDocument.setDefaultFont(opt.font);
-	textDocument.setHtml( index.data(MessagesModel::FormatedText).toString() );
+	textDocument.setDefaultStyleSheet(QStringLiteral("body{color:%0;}").arg(opt.palette.color(QPalette::Text).name()) );
+	textDocument.setHtml( QStringLiteral("<body>") + index.data(MessagesModel::FormatedText).toString() + QStringLiteral("</body>") );
 	textDocument.setTextWidth( textWidth );
 	QRect clip(0,0, textDocument.size().width(), textDocument.size().height());
 	painter->translate(textLeft, 0);
@@ -105,12 +106,7 @@ QSize MessageItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QM
 			if( m->getFileType(messageIndex,f) == MattermostQt::FileDocument )
 				resultHeight += 32 + spacing;
 			else {
-				int geomH = option.widget->geometry().height() - imageMargin;
-				int minSize = ( geomH > textWidth)? textWidth : geomH;
-				minSize = ( minSize > maxImageSize ) ? maxImageSize : minSize;
-//				minSize -= 64;
-				resultHeight += option.fontMetrics.height();
-				resultHeight +=int(m->getItemSize(messageIndex, f, minSize).height()) + spacing;
+				resultHeight += getFileImageHeight(m, option, messageIndex, f, textWidth);
 			}
 		}
 		resultHeight += 3;
@@ -119,4 +115,14 @@ QSize MessageItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QM
 //	qWarning() << "Height :" << textDocument.size().height();
 	resultHeight = avatarSize > resultHeight ? avatarSize : resultHeight;
 	return QSize( option.rect.width(), resultHeight + spacing);
+}
+
+int MessageItemDelegate::getFileImageHeight(const MessagesModel *m, const QStyleOptionViewItem &option, int message_index, int file_index, int textWidth) const
+{
+	int height = option.fontMetrics.height();
+	int geomH = option.widget->geometry().height() - imageMargin;
+	int minSize = ( geomH > textWidth)? textWidth : geomH;
+	minSize = ( minSize > maxImageSize ) ? maxImageSize : minSize;
+	height +=int(m->getItemSize(message_index, file_index, minSize).height()) + spacing;
+	return height;
 }

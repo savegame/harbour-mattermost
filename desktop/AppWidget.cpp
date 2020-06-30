@@ -263,7 +263,9 @@ void AppWidget::on_authenticationStack_currentChanged(int index)
 			});
 			
 			QWebEnginePage *page = new QWebEnginePage(webView);
+#if QT_VERSION_MAJOR >= 5 && QT_VERSION_MINOR >= 13
 			page->setUrlRequestInterceptor( new UrlCatcher(page) );
+#endif
 			connect(page, &QWebEnginePage::urlChanged, [this, page](const QUrl &url) {
 //				page->
 				qWarning() << QStringLiteral("Pages: Url changed: %0").arg(url.toString());

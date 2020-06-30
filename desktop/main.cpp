@@ -74,6 +74,7 @@ int main(int argc, char** argv)
 
 	QApplication app(argc, argv);
 //	QtWebView::initialize();
+	qApp->setAttribute(Qt::AA_EnableHighDpiScaling, true);
 	qApp->setAttribute(Qt::AA_UseSoftwareOpenGL, true);
 	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
 	QCoreApplication::setOrganizationDomain("ru");
