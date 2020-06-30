@@ -555,7 +555,8 @@ QSizeF MessagesModel::getItemSize(int row, int i, qreal contentWidth) const
 	if(!m_channel || row < 0 || i < 0 || row >= m_channel->m_message.size() || i >= m_channel->m_message[row]->m_file.size() )
 		return QSizeF(32,32);
 	MattermostQt::FilePtr file = m_channel->m_message[row]->m_file[i];
-	if( file->m_file_type != MattermostQt::FileImage ) {
+	if( file->m_file_type != MattermostQt::FileImage && file->m_file_type != MattermostQt::FileAnimatedImage )
+	{
 		return QSizeF();
 	}
 	QSize sourceSize = file->m_image_size;

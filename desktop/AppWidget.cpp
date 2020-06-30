@@ -69,6 +69,7 @@ AppWidget::AppWidget(QWidget *parent) :
 	ui->teamsView->setViewMode(QListView::IconMode);
 	ui->teamsView->setItemDelegate( new TeamItemDelegate(teamsModel) );
 	ui->channelsView->setModel(m_channelsFilterProxy);
+	ui->channelsView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	ui->splitter->setStretchFactor(1,0);
 	ui->splitter->setStretchFactor(3,1);
 	connect(MattermostQt::getInstance(), &MattermostQt::serverStateChanged, this, &AppWidget::on_serverStateChanged );
@@ -126,6 +127,7 @@ void AppWidget::on_teamAdded(MattermostQt::TeamPtr team)
 	{
 		ui->teamsView->setCurrentIndex(ui->teamsView->model()->index(0,0));
 		on_teamsView_clicked(ui->teamsView->currentIndex());
+		ui->teamsView->hide();
 	}
 }
 
@@ -211,6 +213,7 @@ void AppWidget::on_channelsView_clicked(const QModelIndex &index)
 
 	//index.data(Qt::DecorationRole).value<QIcon>()
 	if( ci >= 0 ) {
+//		ui->channelsView->setSe
 		ui->channelNameLabel->setText( index.data(ChannelsModel::DisplayName).toString() );
 		ui->channelDescriptionLabel->setText( index.data(ChannelsModel::Header).toString() );
 		ui->channelDescriptionLabel->setToolTip( index.data(ChannelsModel::RoleChannelDescription).toString() );
