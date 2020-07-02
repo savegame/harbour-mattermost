@@ -1052,7 +1052,7 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
 	if(!channel)
 	{
-		qWarning() << "Cannot find channel!!!";
+		qCritical() << "Cannot find channel!!!";
 		return;
 	}
 	ServerPtr sc = m_server[server_index];
@@ -4968,9 +4968,13 @@ void MattermostQt::replyUploadProgress(qint64 bytesReceived, qint64 bytesTotal)
 	if(!reply)
 		return;
 	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+	QString file_path = reply->property(P_FILE_PATH).toString();
 	QString data;
 	if(channel)
 		data = channel->m_id;
+#ifdef DESKTOP_APP
+	data += QStringLiteral("; ") + file_path;
+#endif
 	int progress = int((qreal)bytesReceived/(qreal)bytesTotal*100.0);
 	emit fileUploadProgress(data,progress);
 }

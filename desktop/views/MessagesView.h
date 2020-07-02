@@ -21,11 +21,15 @@ protected:
 	virtual void mouseMoveEvent(QMouseEvent *e) override;
 
 	virtual void mousePressEvent(QMouseEvent *e) override;
+
+	virtual void mouseReleaseEvent(QMouseEvent *e) override;
 signals:
 
 protected slots:
 
 	void channelChanged();
+
+	void on_customContextMenuRequested(const QPoint &pos);
 };
 
 #endif // MESSAGESVIEW_H

@@ -13,9 +13,12 @@ MessagesView::MessagesView(QWidget *parent)
 	reverseMessages->setSourceModel(messagesModel);
 	setModel(reverseMessages);
 	setMouseTracking(true);
+	setContextMenuPolicy(Qt::CustomContextMenu);
 	setItemDelegate( new MessageItemDelegate(messagesModel) );
 	verticalScrollBar()->setSingleStep(1);
 	connect(messagesModel, &MessagesModel::channelChanged, this, &MessagesView::channelChanged );
+	connect(this, &MessagesView::customContextMenuRequested, this, &MessagesView::on_customContextMenuRequested);
+
 }
 
 void MessagesView::currentChanged(const QModelIndex &current, const QModelIndex &previous)
@@ -78,9 +81,24 @@ void MessagesView::mouseMoveEvent(QMouseEvent *e)
 void MessagesView::mousePressEvent(QMouseEvent *e)
 {
 	QListView::mousePressEvent(e);
+	QModelIndex index = indexAt(e->pos());
+	setCurrentIndex(index);
+}
+
+void MessagesView::mouseReleaseEvent(QMouseEvent *e)
+{
+	QListView::mouseReleaseEvent(e);
 }
 
 void MessagesView::channelChanged()
 {
 	scrollToBottom();
+}
+
+void MessagesView::on_customContextMenuRequested(const QPoint &pos)
+{
+	QModelIndex index = indexAt(pos);
+	setCurrentIndex(index);
+
+	index.data();
 }

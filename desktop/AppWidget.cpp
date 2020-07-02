@@ -72,9 +72,12 @@ AppWidget::AppWidget(QWidget *parent) :
 	ui->channelsView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	ui->splitter->setStretchFactor(1,0);
 	ui->splitter->setStretchFactor(3,1);
+	ui->attachmentsArea->hide();
 	connect(MattermostQt::getInstance(), &MattermostQt::serverStateChanged, this, &AppWidget::on_serverStateChanged );
 	connect(MattermostQt::getInstance(), &MattermostQt::onConnectionError, this, &AppWidget::connectionError);
 	connect(MattermostQt::getInstance(), &MattermostQt::teamAdded, this, &AppWidget::on_teamAdded);
+	connect(MattermostQt::getInstance(), &MattermostQt::fileUploadProgress, this, &AppWidget::on_fileUploadProgress);
+	connect(MattermostQt::getInstance(), &MattermostQt::fileUploaded, this, &AppWidget::on_fileUploaded);
 	connect(ui->messageEdit, &MessageEditArea::sendMessage, this, &AppWidget::on_sendMesage );
 	connect(this, &AppWidget::tokenChanged, this, &AppWidget::on_tokenChanged, Qt::QueuedConnection );
 	// debuug 
@@ -89,6 +92,11 @@ AppWidget::~AppWidget()
 void AppWidget::setToken(QString tkn)
 {
 	emit tokenChanged(tkn);
+}
+
+void AppWidget::mouseMoveEvent(QMouseEvent *e)
+{
+	QWidget::mouseMoveEvent(e);
 }
 
 void AppWidget::on_tokenChanged(QString token)
@@ -227,7 +235,16 @@ void AppWidget::on_sendMesage(const QString &text)
 	int si = 0;
 	QString root_id = "";
 //	ui->messagesView->model()->data( ui->messagesView->model()->index(0,0),  )
-	MattermostQt::getInstance()->post_send_message(text, si, current_team_index, current_channel_type, current_channel_index, root_id);
+	if( !text.isEmpty() || !m_attaches.empty() ) {
+		MattermostQt::getInstance()->post_send_message(text, si, current_team_index, current_channel_type, current_channel_index, root_id);
+		m_attaches.clear();
+		for(int i = 0; i < ui->attachmentsArea->layout()->count(); i++) {
+			if( QProgressBar *pb = qobject_cast<QProgressBar*>(ui->attachmentsArea->layout()->itemAt(i)->widget()) ) {
+				pb->deleteLater();
+			}
+		}
+		ui->attachmentsArea->hide();
+	}
 	ui->messageEdit->clear();
 }
 
@@ -243,8 +260,7 @@ void AppWidget::on_pbServerGitLab_clicked(bool checked)
 
 void AppWidget::on_authenticationStack_currentChanged(int index)
 {
-	if( index == 3 ) // webview
-	{
+	if( index == 3 ) {// webview
 		QWidget *w = ui->authenticationStack->widget(3);
 		if( w ) {
 			QWebEngineView *webView = new QWebEngineView(w);
@@ -290,5 +306,64 @@ void AppWidget::on_authenticationStack_currentChanged(int index)
 			page->setUrl(url);
 			webView->setPage(page);
 		}
+	}
+}
+
+void AppWidget::on_fileUploadProgress(QString data, int progress)
+{
+	QStringList params = data.split("; ");
+	QString channel_id = params.front();
+	QString file_path = params.back();
+	QList<AttachmentPtr>::iterator search = std::find_if( m_attaches.begin(), m_attaches.end(), [file_path](const AttachmentPtr &a) -> bool {
+		if( a->path == file_path )
+			return true;
+		return false;
+	});
+	if( search != m_attaches.end() ) {
+		(*search)->progress = progress;
+		for(int i = 0; i < ui->attachmentsArea->layout()->count(); i++) {
+			if( QProgressBar *pb = qobject_cast<QProgressBar*>(ui->attachmentsArea->layout()->itemAt(i)->widget()) ) {
+				if( pb->property("P_FILE_PATH").toString() == file_path ) {
+					pb->setValue( int(progress * 100) );
+					break;
+				}
+			}
+		}
+	}
+	ui->attachmentsArea->show();
+}
+
+void AppWidget::on_fileUploaded(int server_index, int file_sc_index)
+{
+	MattermostQt::FilePtr file = MattermostQt::getInstance()->server()[server_index]->m_file[file_sc_index];
+	for(int i = 0; i < ui->attachmentsArea->layout()->count(); i++) {
+		if( QProgressBar *pb = qobject_cast<QProgressBar*>(ui->attachmentsArea->layout()->itemAt(i)->widget()) ) {
+			if( pb->property("P_FILE_PATH").toString() == file->m_file_path ) {
+				pb->setValue( 100 );
+				break;
+			}
+		}
+	}
+}
+
+void AppWidget::on_attachButton_clicked()
+{
+	QStringList files = QFileDialog::getOpenFileNames(this, tr("Caption"), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation)/*SettingsContainer::getInstance()->lastOpenFolder()*/);
+	ui->attachmentsArea->show();
+	ui->attachmentsArea->setMinimumHeight(73);
+	for( auto file : files ) {
+		MattermostQt::getInstance()->post_file_upload(current_server_index, current_team_index, current_channel_type, current_channel_index, file);
+		m_attaches.append( AttachmentPtr( new Attachment(file,MattermostQt::FileUnknown)) );
+		QProgressBar *pb = new QProgressBar(ui->attachmentsArea);
+		pb->setMaximumSize( QSize(96,96) );
+		pb->setMinimum(0);
+		pb->setMaximum(100);
+		pb->setProperty("P_FILE_PATH", file);
+		if( !ui->attachmentsArea->layout() )
+		{
+			QHBoxLayout *l = new QHBoxLayout(ui->attachmentsArea);
+			ui->attachmentsArea->setLayout(l);
+		}
+		ui->attachmentsArea->layout()->addWidget(pb);
 	}
 }

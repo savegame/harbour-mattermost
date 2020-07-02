@@ -14,13 +14,31 @@ class ChannelsFilterProxy;
 class AppWidget : public QWidget
 {
 	Q_OBJECT
+public:
+	struct Attachment {
+		float   progress = 0;
+		QString path;
+		QString	id;
+		MattermostQt::FileType type;
 
+		Attachment(QString path, MattermostQt::FileType type)
+		{
+			this->path = path;
+			this->type = type;
+		}
+	};
+	typedef QSharedPointer<Attachment> AttachmentPtr;
 public:
 	explicit AppWidget(QWidget *parent = nullptr);
 	~AppWidget();
 
 
 	void setToken(QString tkn);
+
+
+protected:
+	virtual void mouseMoveEvent(QMouseEvent *e) override;
+
 private slots:
 	void on_leServerUrl_textChanged(const QString &arg1);
 
@@ -55,6 +73,13 @@ private slots:
 	void on_cookieAdded(const QNetworkCookie &cookie);
 
 	void on_teamAdded(MattermostQt::TeamPtr team);
+
+	void on_fileUploadProgress(QString data, int progress);
+
+	void on_fileUploaded(int server_index, int file_sc_index);
+
+	void on_attachButton_clicked();
+
 Q_SIGNALS:
 	void tokenChanged(QString token);
 	
@@ -70,6 +95,10 @@ private:
 
 	/** filtering list of channels  */
 	ChannelsFilterProxy *m_channelsFilterProxy = nullptr;
+
+	QList<AttachmentPtr> m_attaches;
+	/** if we somthing not send, it shoulb stored in draft */
+	QHash<QString, QString> m_drafts;
 };
 
 #endif // APPWIDGET_H
