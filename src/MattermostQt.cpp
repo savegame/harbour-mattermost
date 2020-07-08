@@ -132,7 +132,7 @@ void MattermostQt::bind_reply_functions()
 	BIND_REPLY_FUNCTION(post_file_upload);
 	BIND_REPLY_FUNCTION(post_send_message);
 	BIND_REPLY_FUNCTION(delete_message);
-	BIND_REPLY_FUNCTION(post_message_edit);
+	BIND_REPLY_FUNCTION(put_message_edit);
 	BIND_REPLY_FUNCTION(get_channel_unread);
 	BIND_REPLY_FUNCTION(post_create_reaction);
 	BIND_REPLY_FUNCTION(delete_reaction);
@@ -1195,7 +1195,7 @@ void MattermostQt::put_message_edit(QString text, int server_index, int team_ind
 
 	QNetworkReply *reply = m_networkManager->put(request, json.toJson());
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
-	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_message_edit) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_put_message_edit) );
 	reply->setProperty(P_MESSAGE_PTR, QVariant::fromValue<MessagePtr>(message) );
 }
 
@@ -3493,6 +3493,13 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 							qWarning() << QStringLiteral("Team has no icon.");
 					}
 				}
+				else if( error_id.indexOf("file.") == 0) {
+					error_id = error_id.mid(5);
+					if( error_id.indexOf("get_file_preview.no_preview") == 0 ) {
+						// file has no preview, it may by SVG =)
+						// TODO do somethig with this ERROR!
+					}
+				}
 			}
 			else {
 				int server_index  = reply->property(P_SERVER_INDEX).toInt();
@@ -3997,7 +4004,7 @@ void MattermostQt::reply_delete_message(QNetworkReply *reply)
 	qDebug() << reply->readAll();
 }
 
-void MattermostQt::reply_post_message_edit(QNetworkReply *reply)
+void MattermostQt::reply_put_message_edit(QNetworkReply *reply)
 {
 	qDebug() << reply->readAll();
 }

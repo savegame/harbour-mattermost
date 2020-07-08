@@ -484,6 +484,13 @@ int MessagesModel::getFileType(int row,int i) const
 	return (int)m_channel->m_message[row]->m_file[i]->m_file_type;
 }
 
+MattermostQt::FilePtr MessagesModel::getFile(int row, int i) const
+{
+	if(!m_channel || row < 0 || i < 0 || row >= m_channel->m_message.size() || i >= m_channel->m_message[row]->m_file.size() )
+		return MattermostQt::FilePtr();
+	return m_channel->m_message[row]->m_file[i];
+}
+
 int MessagesModel::getFileStatus(int row, int i) const
 {
 	if(!m_channel || row < 0 || i < 0 || row >= m_channel->m_message.size() || i >= m_channel->m_message[row]->m_file.size() )

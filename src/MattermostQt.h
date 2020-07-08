@@ -52,7 +52,7 @@ public:
 		rt_get_file_info,
 		rt_post_send_message,
 		rt_delete_message,
-		rt_post_message_edit,
+		rt_put_message_edit,
 		rt_get_channel_unread,
 		rt_get_team_icon,
 		rt_post_create_reaction,
@@ -715,7 +715,7 @@ Q_SIGNALS:
 	/**
 	 * @brief fileUploadProgress
 	 * @param data      some string
-	 * @param progress  from 0.0 to 1.0
+	 * @param progress  from 0 to 100
 	 */
 	void fileUploadProgress(QString data, int progress);
 
@@ -787,7 +787,7 @@ protected:
 	void reply_get_user_image(QNetworkReply *reply);
 	void reply_post_send_message(QNetworkReply *reply);
 	void reply_delete_message(QNetworkReply *reply);
-	void reply_post_message_edit(QNetworkReply *reply);
+	void reply_put_message_edit(QNetworkReply *reply);
 	void reply_post_create_reaction(QNetworkReply *reply);
 	void reply_delete_reaction(QNetworkReply *reply);
 	// failed replies

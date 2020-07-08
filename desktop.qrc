@@ -10,5 +10,7 @@
         <file>resources/mattermost_icon.svg</file>
         <file>resources/avatar_mask.png</file>
         <file>resources/avatar_shadow.png</file>
+        <file>mostqute_ru.qm</file>
+        <file>resources/attachment.png</file>
     </qresource>
 </RCC>

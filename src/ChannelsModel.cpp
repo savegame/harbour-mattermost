@@ -256,7 +256,7 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	{ DataRoles::Purpose,         "m_purpose" },
 	{ DataRoles::Header,          "m_header" },
 	{ DataRoles::Email,           "m_email" },
-	{ DataRoles::ChannelIndex,           "m_index" },
+	{ DataRoles::ChannelIndex,    "m_index" },
 	{ DataRoles::Type,            "m_type" },
 	{ DataRoles::ServerIndex,     "server_index" },
 	{ DataRoles::TeamIndex,       "team_index" },

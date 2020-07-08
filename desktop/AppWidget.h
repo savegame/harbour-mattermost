@@ -16,9 +16,10 @@ class AppWidget : public QWidget
 	Q_OBJECT
 public:
 	struct Attachment {
-		float   progress = 0;
+		int   progress = 0;
 		QString path;
 		QString	id;
+		bool finished = false;
 		MattermostQt::FileType type;
 
 		Attachment(QString path, MattermostQt::FileType type)
@@ -37,6 +38,7 @@ public:
 
 
 protected:
+	// *--- reimplemented functions
 	virtual void mouseMoveEvent(QMouseEvent *e) override;
 
 private slots:
@@ -61,8 +63,6 @@ private slots:
 	void on_sendMesage(const QString &text);
 
 	void on_channelFilter_textChanged(const QString &text);
-
-	void on_pbServerGitLab_clicked(bool checked);
 	
 	void on_authenticationStack_currentChanged(int index);
 	
@@ -79,6 +79,8 @@ private slots:
 	void on_fileUploaded(int server_index, int file_sc_index);
 
 	void on_attachButton_clicked();
+
+	void on_timeUpdate();
 
 Q_SIGNALS:
 	void tokenChanged(QString token);

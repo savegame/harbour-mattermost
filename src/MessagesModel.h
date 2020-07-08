@@ -85,6 +85,7 @@ public:
 	int messageCount() const;
 
 	Q_INVOKABLE int getFileType(int row, int i) const;
+	Q_INVOKABLE MattermostQt::FilePtr getFile(int row, int i) const;
 	Q_INVOKABLE int getFileStatus(int row, int i) const;
 	Q_INVOKABLE QString getFileMimeType(int row, int i) const;
 	Q_INVOKABLE QString getThumbPath(int row, int i) const;

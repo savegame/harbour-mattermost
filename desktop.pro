@@ -19,6 +19,10 @@ INCLUDEPATH += $$PWD/desktop
 include(libs/discount.pri)
 include(desktop/desktop.pri)
 
+TRANSLATIONS += \
+    mostqute.ts \
+    mostqute_ru.ts
+
 HEADERS += \
     src/AccountsModel.h \
     src/AttachedFilesModel.h \
