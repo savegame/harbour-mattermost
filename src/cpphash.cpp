@@ -10,6 +10,7 @@
 #include <QFile>
 
 #ifdef DESKTOP_APP
+#include <MattermostQt.h>
 #elif DESKTOP_QML
 #include <desktop/theme.h>
 #else

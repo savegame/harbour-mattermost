@@ -304,7 +304,11 @@ QString MattermostQt::getVersion() const
 
 QString MattermostQt::emojiPath() const
 {
+#ifdef EMOJI_PATH
 	return QStringLiteral(EMOJI_PATH);
+#else
+	return QStringLiteral("%0/emoji").arg(qApp->applicationDirPath());
+#endif
 }
 
 int MattermostQt::get_server_state(int server_index)

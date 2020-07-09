@@ -136,8 +136,8 @@ void EmojiModel::loadEmoji()
 	m_categories.clear();
 
 	qDebug() << "Start parse emoji.json file";
-	QString emji_path = QStringLiteral("%0/").arg(EMOJI_PATH);
-	QFile file(QStringLiteral("%0/emoji.json").arg(EMOJI_PATH));
+	QString emji_path = QStringLiteral("%0/").arg(MattermostQt::getInstance()->emojiPath());
+	QFile file(QStringLiteral("%0/emoji.json").arg(MattermostQt::getInstance()->emojiPath()));
 	file.open(QFile::ReadOnly);
 	QJsonParseError error;
 	QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
@@ -307,7 +307,7 @@ void EmojiModel::onUsedReactionsChanged()
 			ItemPtr categoryItem(new Item);
 			categoryItem->category = lastUsed;
 			categoryItem->category_index = 0;
-			categoryItem->image =  QStringLiteral("%0/svg/1f553.svg").arg(EMOJI_PATH);
+			categoryItem->image =  QStringLiteral("%0/svg/1f553.svg").arg(MattermostQt::getInstance()->emojiPath());
 			categoryItem->name = lastUsed;
 			categoryItem->type = ItemTypeCategory;
 			m_usedItems.push_back( categoryItem );
