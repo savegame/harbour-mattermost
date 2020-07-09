@@ -10,7 +10,10 @@
 #include <QFile>
 
 #ifdef DESKTOP_APP
-#include <MattermostQt.h>
+#	ifndef EMOJI_PATH
+#		include <MattermostQt.h>
+#		define EMOJI_PATH MattermostQt::getInstance()->emojiPath()
+#	endif
 #elif DESKTOP_QML
 #include <desktop/theme.h>
 #else
