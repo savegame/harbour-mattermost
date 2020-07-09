@@ -17,7 +17,7 @@
 #include <QMimeDatabase>
 #include <QMimeType>
 #include <QCoreApplication>
-#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
+//#include "libs/qtwebsockets/include/QtWebSockets/qwebsocket.h"
 //#include <QWebSocket>
 
 #include "MessagesModel.h"
