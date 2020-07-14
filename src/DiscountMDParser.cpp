@@ -16,9 +16,14 @@ DiscountMDParser::DiscountMDParser()
 QString DiscountMDParser::parse(const QString &input)
 {
 	QString result = QString::Null();
+#ifdef _MSC_VER
+	QByteArray utf8 = input.toUtf8();
+//	Document *doc = gfm_string(utf8.data(), utf8.size(), m_flags);
+	Document *doc = gfm_string((char*)input.utf16(), input.size(), m_flags);
+#else
 	QByteArray utf8 = input.toUtf8();
 	Document *doc = gfm_string(utf8.data(), utf8.size(), m_flags);
-
+#endif
 	if (!doc)
 	{
 		qWarning() << "Error: cant parse message.";

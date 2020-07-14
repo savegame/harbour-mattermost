@@ -168,7 +168,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				        m_mattermost->
 				        m_server[message->m_server_index]->
 				        m_user[message->m_user_index];
-				return QStringLiteral("%0 %1").arg(user->m_first_name).arg(user->m_last_name);
+				if ( !user->m_first_name.isEmpty() || !user->m_last_name.isEmpty() )
+					return QStringLiteral("%0 %1").arg(user->m_first_name).arg(user->m_last_name);
+				else
+					return user->m_username;
 			}
 			else
 			{
