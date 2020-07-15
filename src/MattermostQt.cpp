@@ -283,6 +283,13 @@ MattermostQt::~MattermostQt()
 	delete m_mdParser;
 }
 
+void MattermostQt::replaceMdParser(MarkdownParser *parser)
+{
+	if( m_mdParser )
+		delete m_mdParser;
+	m_mdParser = parser;
+}
+
 MattermostQt::ApplicationStatus MattermostQt::getApplicationStatus() const
 {
 	return m_appStatus;

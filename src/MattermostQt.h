@@ -511,6 +511,12 @@ public:
 	MattermostQt(QObject *parent = nullptr);
 
 	~MattermostQt();
+	
+	/**
+	 * @brief replaceMdParser 
+	 * @param parser
+	 */
+	void replaceMdParser(MarkdownParser *parser);
 
 	ApplicationStatus getApplicationStatus() const;
 	void setApplicationStatus(ApplicationStatus status);

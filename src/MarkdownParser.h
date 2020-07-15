@@ -11,6 +11,8 @@ public:
 
 public:
 	MarkdownParser();
+	
+	virtual ~MarkdownParser() {};
 
 	virtual QString parse(const QString &input) = 0;
 };
