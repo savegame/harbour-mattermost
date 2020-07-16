@@ -480,6 +480,17 @@ int MessagesModel::messageCount() const
 	return 0;
 }
 
+QModelIndex MessagesModel::indexFromMessage(MattermostQt::MessagePtr m) const
+{
+	if(!m_channel)
+		return QModelIndex();
+	int row = rowCount() - 1 - m->m_self_index;
+	if ( row < 0 || row >= rowCount() )
+		return QModelIndex();
+
+	return index(row, 0);
+}
+
 int MessagesModel::getFileType(int row,int i) const
 {
 	if(!m_channel || row < 0 || i < 0 || row >= m_channel->m_message.size() || i >= m_channel->m_message[row]->m_file.size() )

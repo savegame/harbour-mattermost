@@ -82,6 +82,7 @@
 #define request_json(requset) \
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json")
 
+Q_GLOBAL_STATIC(MattermostQt,mattermostQtGlobalInstance);
 
 Q_DECLARE_METATYPE(MattermostQt::FilePtr)
 Q_DECLARE_METATYPE(MattermostQt::ChannelPtr)
@@ -98,13 +99,13 @@ Q_DECLARE_METATYPE(MattermostQt::MessagePtr)
 
 MattermostQt *MattermostQt::getInstance()
 {
-	static MattermostQt *mattermost = new MattermostQt();
-	static bool first_call = true;
-	if( first_call ) {
-		first_call = false;
-		qInfo() << QStringLiteral("MattermostQt::getInstance() first call: MattermostQt static object alloicated.");
-	}
-	return mattermost;
+//	static MattermostQt *mattermost = new MattermostQt();
+//	static bool first_call = true;
+//	if( first_call ) {
+//		first_call = false;
+//		qInfo() << QStringLiteral("MattermostQt::getInstance() first call: MattermostQt static object alloicated.");
+//	}
+	return mattermostQtGlobalInstance;
 }
 
 void MattermostQt::bind_reply_functions()
@@ -1325,8 +1326,18 @@ void MattermostQt::get_user_image(int server_index, int user_index)
 	QFile user_image(path);
 
 	if( user_image.exists() ) {
-		user->m_image_path = path;
-		return;
+		QFileInfo info(user_image);
+		qlonglong time = info.created().toMSecsSinceEpoch();
+		if( info.created().toMSecsSinceEpoch() >= user->m_last_picture_update )
+		{
+			user->m_image_path = path;
+			return;
+		}
+		else 
+		{ // remove old image
+			if( user_image.remove() )
+				qDebug() << QStringLiteral("Old user (id %0) image is removed.").arg(user->m_id);
+		}
 	}
 
 	QString urlString = QLatin1String("/api/v")
@@ -5674,6 +5685,8 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	//"props": { },
 	m_last_password_update = (qlonglong)object["last_password_update"].toDouble();
 	m_last_picture_update = (qlonglong)object["last_picture_update"].toDouble();
+	if( m_last_picture_update == 0 )
+		m_last_picture_update = m_update_at;
 	m_last_activity_at = 0;
 	//"failed_attempts": 0,
 	//"mfa_active": true

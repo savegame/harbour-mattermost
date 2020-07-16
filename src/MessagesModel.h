@@ -83,6 +83,8 @@ public:
 	QString getChannelId() const;
 
 	int messageCount() const;
+	
+	QModelIndex indexFromMessage(MattermostQt::MessagePtr m) const;
 
 	Q_INVOKABLE int getFileType(int row, int i) const;
 	Q_INVOKABLE MattermostQt::FilePtr getFile(int row, int i) const;
