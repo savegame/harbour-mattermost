@@ -20,6 +20,15 @@ ChannelsModel::ChannelsModel(QObject *parent)
 	endInsertRows();
 }
 
+QModelIndex ChannelsModel::indexFromChannel(MattermostQt::ChannelPtr channel) const
+{
+	for( int i = 0; i <  m_channel.size(); i++ ) {
+		if( m_channel[i] == channel )
+			return index(i,0);
+	}
+	return QModelIndex();
+}
+
 //QVariant ChannelsModel::headerData(int section, Qt::Orientation orientation, int role) const
 //{
 //	// FIXME: Implement me!
