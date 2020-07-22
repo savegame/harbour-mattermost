@@ -3262,6 +3262,7 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 	// first check if user is current account
 	if( sc->m_user_id == user->m_id && team_index == GET_USER_INFO_current_user ) {
 		sc->m_current_user = user;
+		emit currentUserChanged(user);
 	}
 	//	for(int)
 	bool user_exists = false;
