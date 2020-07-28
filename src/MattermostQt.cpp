@@ -4228,6 +4228,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject object)
 					              message->m_self_index, message->m_file_ids[k]);
 #endif
 				}
+			
 			QList<MessagePtr> new_messages;
 			new_messages << message;
 			emit messageAdded(new_messages);// add messages to model
@@ -5814,6 +5815,18 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 						new_reaction.m_path = emoji_path;
 						new_reaction.m_mine_emoji = user_id == reaction_user_id;
 						m_reactions.append( new_reaction );
+					}
+				}
+				QJsonValue v_files = metadata["files"];
+				if( v_files.isArray() ) 
+				{
+					QJsonArray files = v_files.toArray();
+					for(int f = 0; f < files.size(); f++ )
+					{
+						QJsonObject fileObject = files[f].toObject();
+						FilePtr file(new FileContainer(fileObject));
+						file->m_file_status = FileStatus::FileRemote;
+						m_file.push_back(file);
 					}
 				}
 			}
