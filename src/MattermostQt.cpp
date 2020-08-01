@@ -2798,6 +2798,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 		message->m_channel_index = channel->m_self_index;
 		message->m_self_index = channel->m_message.size();
 		channel->m_message.append(message);
+		message->updateFiles(this);
 		if(message->m_type == MessageOwner::MessageTypeCount)
 		{
 			if(message->m_user_id.compare(sc->m_user_id) == 0 )
@@ -2927,6 +2928,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 		message->m_channel_id = channel->m_id;
 		message->m_channel_type = channel->m_type;
 		message->m_channel_index = channel->m_self_index;
+		message->updateFiles(this);
 		messages.append(message);
 		if(message->m_type == MessageOwner::MessageTypeCount)
 		{
@@ -3555,17 +3557,25 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 	int message_index = file->m_message_index;
 
 	ServerPtr sc = m_server[server_index];
-	ChannelPtr channel;
-	if(channel_type != ChannelDirect)
-	{
-		TeamPtr tc = sc->m_teams[team_index];
-		if( channel_type == ChannelType::ChannelPublic )
-			channel = tc->m_public_channels[channel_index];
-		else// if( channel_type == ChannelType::ChannelPublic )
-			channel = tc->m_private_channels[channel_index];
+	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
+	if(!channel) {
+		// try fix file 
+		qCritical() << QStringLiteral("Try use FilePtr (%0) with incorrect indexes.").arg(file->m_id);
+//		file->m_post_id;
+		
+//		channel = id2message(ChannelPtr(), file->m_post_id);
+		return;
 	}
-	else
-		channel = sc->m_direct_channels[channel_index];
+//	if(channel_type != ChannelDirect)
+//	{
+//		TeamPtr tc = sc->m_teams[team_index];
+//		if( channel_type == ChannelType::ChannelPublic )
+//			channel = tc->m_public_channels[channel_index];
+//		else// if( channel_type == ChannelType::ChannelPublic )
+//			channel = tc->m_private_channels[channel_index];
+//	}
+//	else
+//		channel = sc->m_direct_channels[channel_index];
 
 	MessagePtr mc = channel->m_message[message_index];
 
@@ -4127,6 +4137,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject object)
 			emit messageAdded(new_messages); // add messages to model
 			// chek if messed sended from another user, then
 			if( message->m_type != MessageMine ) {
+				message->updateFiles(this);
 				// that for notifications
 				emit newMessage(message);
 				channel->m_msg_unread++;
@@ -4189,6 +4200,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject object)
 				}
 			}
 			message->m_team_index = team_index;
+			message->updateFiles(this);
 			teamChanged(team, QVectorInt() << TeamsModel::RoleUnreadMessageCount << TeamsModel::RoleUnreadMentionCount );
 			emit messageUnreadChanged();
 		}
@@ -4198,6 +4210,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject object)
 			message->m_channel_type  = channel->m_type;
 			message->m_channel_index = channel_index;
 			message->m_self_index    = channel->m_message.size();
+			message->updateFiles(this);
 			channel->m_message.append(message);
 			if(false)
 				for(int k = 0; k < message->m_file_ids.size(); k++ )
@@ -4712,6 +4725,8 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject ob
 		}
 		if(deleted && index >= 0)
 		{
+			// TODO need delete all files attached to this message 
+			
 			// here we update all messages, with link to this message
 			if(!deleted->m_thread_messages.isEmpty())
 			{
@@ -5835,6 +5850,47 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 			qDebug() << v;
 		}
 	}
+}
+
+bool MattermostQt::MessageContainer::updateFiles(MattermostQt *mattermost)
+{
+	if(!mattermost)
+		return false;
+
+	ChannelPtr channel = mattermost->channelAt(m_server_index,m_team_index,m_channel_type,m_channel_index);
+	/** here we can just set all indexes from message, but with function cahnnelAt we check 
+	*   if indexes are incorrect */
+	if(!channel)
+		/** looks like indexes are incorrect, just leave function */
+		return false;
+	
+	ServerPtr server = mattermost->server()[m_server_index];
+	QString   error;
+	
+	for( int f = 0; f < m_file.size(); f++ )
+	{
+		FilePtr file = m_file[f];
+		if( file->m_server_index >= 0 ) 
+		{
+			/** looks like file already have correct indexes */
+			error.push_back( QStringLiteral("%0, ").arg(file->m_id) );
+			continue;
+		}
+		
+		file->m_server_index = m_server_index;
+		file->m_self_sc_index = server->m_file.size();
+		/** */
+		server->m_file.push_back(file);
+//		file->m_file_path = file_path;
+//		file->m_file_status = FileDownloaded;
+		file->m_channel_type = channel->m_type;
+		file->m_team_index = channel->m_team_index;
+		file->m_channel_index = channel->m_self_index;
+		file->m_message_index = m_self_index;
+	}
+	if( !error.isEmpty() )
+		qDebug() << QStringLiteral("Files (%0) allready has right indexes.").arg(error.left(error.length() - 2));
+	return true;
 }
 
 bool MattermostQt::MessageContainer::addReaction(ReactionContainer &reaction)

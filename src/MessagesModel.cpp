@@ -808,7 +808,7 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 		MattermostQt::MessagePtr m = *it;
 		int row = m_channel->m_message.size() - 1 - m->m_self_index;
 		QModelIndex i = index(row);
-		dataChanged(i, i, roles);
+		dataChanged(i, i, roles << Qt::SizeHintRole );
 
 		for(QList<MattermostQt::MessagePtr>::iterator
 		    it_a = m->m_thread_messages.begin(), end_a = m->m_thread_messages.end();
@@ -956,9 +956,11 @@ void MessagesModel::slot_userUpdated(MattermostQt::UserPtr user,  QVectorInt rol
 
 void MessagesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr message, QVector<QString> file_ids,  QVectorInt roles)
 {
+	if( !m_channel )
+		return;
 	if(!message || m_channel->m_message.empty() )
 		return;
-	if( message->m_channel_id != m_channel->m_message.front()->m_channel_id )
+	if( message->m_channel_id != m_channel->m_id )
 		return;
 
 	roles.clear();
@@ -974,6 +976,8 @@ void MessagesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr message, 
 		QModelIndex i = index(ans_row);
 		dataChanged(i, i, roles);
 	}
+	QModelIndex index = indexFromMessage(message);
+	dataChanged(index,index, QVector<int>() << FilePreview << RoleFileInfo << FilesCount << FileStatus);
 }
 
 

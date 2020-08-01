@@ -238,6 +238,8 @@ public:
 
 		MessageContainer(QJsonObject object, const QString &user_id);
 
+		/** update files states (indexes in MAttermostQt structure) */
+		bool updateFiles(MattermostQt *mattermost = nullptr);
 		bool updateRootMessage(MattermostQt *mattermost);
 		bool addReaction(ReactionContainer &reaction);
 		bool removeReaction(const ReactionContainer &reaction);
