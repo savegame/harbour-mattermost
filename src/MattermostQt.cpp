@@ -29,6 +29,26 @@
 #include "AccountsModel.h"
 #include "cpphash.h"
 
+// some inline tests (for debug)
+#define check_file_indexes(message, channel) \
+	if( message->m_self_index >= 0 && channel->m_message[message->m_self_index] == message ) \
+	{/* check all files for right indexes*/\
+		if( message->m_file.size() > 0 )\
+		for(int f = 0; f < message->m_file.size(); f++ )\
+		{\
+			if( message->m_file[f]->m_message_index != message->m_self_index )\
+			{/* really bad error !!!!*/ \
+				qCritical() << QStringLiteral("File has wrong message index. It can be fixed now.");\
+				qWarning() << QStringLiteral("Fix message index in file");\
+				message->m_file[f]->m_message_index = message->m_self_index;\
+			}\
+			else if( message->m_file[f]->m_post_id != message->m_id )\
+				qCritical() << QStringLiteral("Message (%0) has wrong attached files list;").arg(message->m_id);\
+		}\
+	}\
+	else\
+		qCritical() << QStringLiteral("Wrong message self index")
+
 // all properties names
 #define P_REPLY_TYPE         "reply_type"
 #define P_API                "api"
@@ -2857,6 +2877,11 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 						if( it == answers.end() )
 							break;
 					}
+					// fix indexes in files
+					for(auto file : temp->m_file )
+					{
+						file->m_message_index = temp->m_self_index;
+					}
 #ifdef PRELOAD_FILE_INFOS
 					// TODO remove get_file_info, becuse it need only when we start view message
 					for(int k = 0; k < temp->m_file_ids.size(); k++ )
@@ -3604,12 +3629,9 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 	}
 	if(!file->m_thumb_path.isEmpty())
 	{
-		//		QList<MessagePtr> messages;
-		//		messages << mc;
-		//		emit messageUpdated(messages);
 		QVectorInt file_update_roles;
 		file_update_roles << AttachedFilesModel::FileThumbnailPath;
-		emit attachedFilesChanged(mc, QVector<QString>(),file_update_roles);
+		emit attachedFilesChanged(mc, QVector<QString>() << file->m_id, file_update_roles);
 	}
 	return;
 }
@@ -4124,6 +4146,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject object)
 			message->m_channel_index = channel_index;
 			message->m_self_index    = channel->m_message.size();
 			channel->m_message.append(message);
+			message->updateFiles(this);
 			channel->m_total_msg_count++;
 #ifdef PRELOAD_FILE_INFOS
 			for(int k = 0; k < message->m_file_ids.size(); k++ )
@@ -4210,37 +4233,8 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject object)
 			message->m_channel_type  = channel->m_type;
 			message->m_channel_index = channel_index;
 			message->m_self_index    = channel->m_message.size();
-			message->updateFiles(this);
 			channel->m_message.append(message);
-			if(false)
-				for(int k = 0; k < message->m_file_ids.size(); k++ )
-				{
-					if(message->m_type == MessageMine)
-					{// search if we already has files
-						bool fileDownloaded = false;
-						QList<FilePtr>::iterator
-						        it = sc->m_sended_files.begin(),
-						        end = sc->m_sended_files.end();
-						while(it != end)
-						{
-							FilePtr f = *it;
-							if(f->m_id == message->m_file_ids[k] )
-							{
-								it = sc->m_sended_files.erase(it);
-								fileDownloaded = true;
-								f->m_self_index = message->m_file.size();
-								message->m_file.append(f);
-								break;
-							}
-						}
-						if(fileDownloaded)
-							continue;
-					}
-#ifdef PRELOAD_FILE_INFOS
-					get_file_info(sc->m_self_index,team_index,type,channel_index,
-					              message->m_self_index, message->m_file_ids[k]);
-#endif
-				}
+			message->updateFiles(this);
 			
 			QList<MessagePtr> new_messages;
 			new_messages << message;
@@ -5841,6 +5835,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 						QJsonObject fileObject = files[f].toObject();
 						FilePtr file(new FileContainer(fileObject));
 						file->m_file_status = FileStatus::FileRemote;
+						file->m_self_index = m_file.size();
 						m_file.push_back(file);
 					}
 				}
@@ -5880,7 +5875,7 @@ bool MattermostQt::MessageContainer::updateFiles(MattermostQt *mattermost)
 		file->m_server_index = m_server_index;
 		file->m_self_sc_index = server->m_file.size();
 		/** */
-		server->m_file.push_back(file);
+		server->m_file.append(file);
 //		file->m_file_path = file_path;
 //		file->m_file_status = FileDownloaded;
 		file->m_channel_type = channel->m_type;
