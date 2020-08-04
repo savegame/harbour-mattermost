@@ -3330,16 +3330,15 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 				}
 				// check if user has image
 				if( user_image_exists ) {
+					user->m_image_path = path;
 					emit updateMessage(m,MessagesModel::SenderImagePath);
 					it = sc->m_nouser_messages.erase(it);
-					user->m_image_path = path;
 					continue;
 				}
 			}
 			it++;
 		}
 
-		//		if( !user_image_exists )
 		get_user_image(server_index,user->m_self_index);
 	}
 
