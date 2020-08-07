@@ -1014,6 +1014,12 @@ void MattermostQt::get_file(int server_index, int team_index,
 	connect(reply, SIGNAL(downloadProgress(qint64,qint64)), SLOT(replyDownloadProgress(qint64,qint64)));
 }
 
+void MattermostQt::get_file(MattermostQt::FilePtr file)
+{
+	if(file)
+		get_file(file->m_server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index, file->m_self_index);
+}
+
 void MattermostQt::post_file_upload(int server_index, int team_index, int channel_type,
                                     int channel_index, QString file_path)
 {
@@ -4999,6 +5005,10 @@ void MattermostQt::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal
 		bytesTotal = file->m_file_size;
 	}
 	emit fileDownloadingProgress(file->m_id, (qreal)bytesReceived/(qreal)bytesTotal);
+//	MessagePtr message = messageAt(file->m_server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index);
+//	if(message) {
+//		emit updateMessage(message, MessagesModel::RoleFileProgress);
+//	}
 }
 
 void MattermostQt::replyUploadProgress(qint64 bytesReceived, qint64 bytesTotal)
@@ -5870,6 +5880,7 @@ bool MattermostQt::MessageContainer::updateFiles(MattermostQt *mattermost)
 			error.push_back( QStringLiteral("%0, ").arg(file->m_id) );
 			continue;
 		}
+		file->load_json( server->m_data_path );
 		
 		file->m_server_index = m_server_index;
 		file->m_self_sc_index = server->m_file.size();

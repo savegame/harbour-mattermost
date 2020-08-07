@@ -60,6 +60,7 @@ public:
 		RoleChannelType,
 		RoleFileInfo,
 		RoleSenderFullName,
+		RoleFileProgress,
 		UserStatus = MattermostQt::UserStatusRole,
 	};
 	Q_ENUM(DataRoles)
