@@ -92,6 +92,7 @@ protected:
 
 protected Q_SLOTS:
 	void slot_channelAdded(MattermostQt::ChannelPtr channel);
+	void slot_channelRemoved(MattermostQt::ChannelPtr channel);
 	void slot_channelsList(QList<MattermostQt::ChannelPtr> list);
 	void slot_updateChannel(MattermostQt::ChannelPtr channel,  QVectorInt roles);
 	void slot_usersUpdated(QVector<MattermostQt::UserPtr> users,  QVectorInt roles);
@@ -99,10 +100,10 @@ protected Q_SLOTS:
 	void slot_teamChanged(MattermostQt::TeamPtr team, QVectorInt roles);
 private:
 //	QVector<QString> m_display_name;
-	QVector<QString> m_header;
-	QVector<QString> m_puprose;
+//	QVector<QString> m_header;
+//	QVector<QString> m_puprose;
 	QVector<MattermostQt::ChannelPtr> m_channel;
-	 QVectorInt     m_type;
+//	 QVectorInt     m_type;
 //	QVector<QString> m
 	// indexes of headers
 	 MattermostQt::TeamPtr m_team;

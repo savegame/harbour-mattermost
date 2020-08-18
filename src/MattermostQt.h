@@ -72,6 +72,9 @@ public:
 		et_channel_viewed,
 		et_reaction_added,
 		et_reaction_removed,
+		et_channel_created,
+		et_user_added,
+		et_user_removed,
 		//=======================
 		EventTypeCount
 	};
@@ -681,6 +684,7 @@ Q_SIGNALS:
 	void onConnectionError(int code, QString message, int server_index);
 	void channelsList(QList<ChannelPtr> list);
 	void channelAdded(ChannelPtr channel);
+	void channelRemoved(ChannelPtr channel);
 	void updateChannel(ChannelPtr channel,  QVectorInt roles);
 	void updateChannelInfo(QString channel_id, int team_index, int self_index );
 //	void updateChannel()
@@ -813,10 +817,14 @@ protected:
 	void event_channel_viewed(ServerPtr sc, QJsonObject object);
 	void event_reaction_added(ServerPtr sc, QJsonObject object);
 	void event_reaction_removed(ServerPtr sc, QJsonObject object);
+	void event_channel_created(ServerPtr sc, QJsonObject object);
+	void event_user_added(ServerPtr sc, QJsonObject object);
+	void event_user_removed(ServerPtr sc, QJsonObject object);
 
 	// helper functions
 	inline UserStatus str2status(const QString &s) const;
 	inline UserPtr    id2user(ServerPtr sc, const QString &id) const;
+	inline TeamPtr    id2team(ServerPtr sc, const QString &id) const;
 	inline ChannelPtr id2channel(ServerPtr sc, const QString &id) const;
 	inline MessagePtr id2message(ChannelPtr channel, const QString &id) const;
 //	void  message_format(MessagePtr message);

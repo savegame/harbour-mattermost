@@ -25,7 +25,7 @@
 #include "TeamsModel.h"
 #include "SettingsContainer.h"
 #include "AttachedFilesModel.h"
-#include "DiscountMDParser.h"
+//#include "DiscountMDParser.h"
 #include "AccountsModel.h"
 #include "cpphash.h"
 
@@ -188,12 +188,15 @@ void MattermostQt::bind_event_functions()
 	BIND_EVENT_FUNCTION(channel_viewed);
 	BIND_EVENT_FUNCTION(reaction_added);
 	BIND_EVENT_FUNCTION(reaction_removed);
+	BIND_EVENT_FUNCTION(channel_created);
+	BIND_EVENT_FUNCTION(user_added);
+	BIND_EVENT_FUNCTION(user_removed);
 }
 
 MattermostQt::MattermostQt(QObject *parent )
     : QObject(parent)
-    , m_mdParser(nullptr)
     , m_settings(nullptr)
+    , m_mdParser(nullptr)
 {
 	bind_reply_functions();
 	bind_event_functions();
@@ -290,7 +293,7 @@ MattermostQt::MattermostQt(QObject *parent )
 	connect(m_settings, &SettingsContainer::settingsChanged, this, &MattermostQt::slot_settingsChanged);
 	connect(this, &MattermostQt::channelAdded, this, &MattermostQt::slot_channelAdded);
 
-	m_mdParser = new DiscountMDParser();
+	m_mdParser = nullptr;//new DiscountMDParser();
 
 	load_settings();
 
@@ -300,8 +303,8 @@ MattermostQt::MattermostQt(QObject *parent )
 MattermostQt::~MattermostQt()
 {
 	m_server.clear();
-
-	delete m_mdParser;
+	if( m_mdParser )
+		delete m_mdParser;
 }
 
 void MattermostQt::replaceMdParser(MarkdownParser *parser)
@@ -4542,13 +4545,13 @@ void MattermostQt::event_reaction_removed(MattermostQt::ServerPtr sc, QJsonObjec
 	 *       \\"post_id\\":\\"g8e5gpxiaby9jq661o1mq5njgh\\",
 	 *       \\"emoji_name\\":\\"rage\\",
 	 *       \\"create_at\\":0}"
-	 *    },
-	 *    "broadcast": {
-	 *       "omit_users":null,
-	 *       "user_id":"",
-	 *       "channel_id":"rw7wbmf7638mtgqpnh5p5aih3y",
-	 *       "team_id":""
-	 *    },
+	 *  },
+	 *  "broadcast": {
+	 *     "omit_users":null,
+	 *     "user_id":"",
+	 *     "channel_id":"rw7wbmf7638mtgqpnh5p5aih3y",
+	 *     "team_id":""
+	 *  },
 	 *  "seq": 7
 	 *}
 	 * */
@@ -4584,6 +4587,134 @@ void MattermostQt::event_reaction_removed(MattermostQt::ServerPtr sc, QJsonObjec
 	updateMessage(message, MessagesModel::RoleReactionsCount);
 }
 
+void MattermostQt::event_channel_created(MattermostQt::ServerPtr sc, QJsonObject object)
+{
+	Q_UNUSED(sc);
+	// catch event
+	qWarning() << QStringLiteral("Channel Added");
+	qWarning() << object;
+}
+
+void MattermostQt::event_user_added(MattermostQt::ServerPtr sc, QJsonObject object)
+{
+	/*"{
+	 *   "event": "user_added", 
+	 *   "data": {
+	 *      "team_id":"dx78dyd9kjn1bmrtyetgrxir5y",
+	 *      "user_id":"ntdoubyr47naxdg338wz5gb46e"
+	 *   }, 
+	 *   "broadcast": {
+	 *      "omit_users":null,
+	 *      "user_id":"",
+	 *      "channel_id":"dmbsjg6ea3g13fd5b9bfia56mh",
+	 *      "team_id":""
+	 *   }, 
+	 *   "seq": 2
+	 * }"
+	*/
+	QJsonObject data = object["data"].toObject();
+	QJsonObject broadcast = object["broadcast"].toObject();
+	if( data.isEmpty() || broadcast.isEmpty() )
+	{
+		qWarning() << QStringLiteral("Empty data or bradcast");
+		return;
+	}
+	QString team_id = data["team_id"].toString();
+	QString user_id = data["user_id"].toString();
+	TeamPtr team = id2team(sc, team_id);
+	UserPtr user = id2user(sc, user_id);
+	if(!team || !user)
+	{
+		qWarning() << QStringLiteral("Cant find team (%0) or user (%1)").arg(team_id).arg(user_id);
+		return;
+	}
+	QString channel_id = broadcast["channel_id"].toString();
+	if( channel_id.isEmpty() ) {
+		qWarning() << QStringLiteral("Empty channel_id in  broadcast:")<< broadcast;
+		return;
+	}
+	ChannelPtr channel = id2channel(sc, channel_id);
+	if(!channel) {
+		// need request channel info from server
+		get_channel(sc->m_self_index, channel_id);
+	}
+}
+
+void MattermostQt::event_user_removed(MattermostQt::ServerPtr sc, QJsonObject object)
+{
+	/*
+	 * {
+	 *   "event": "user_removed", 
+	 *   "data": {
+	 *     "channel_id":"dmbsjg6ea3g13fd5b9bfia56mh",
+	 *     "remover_id":"zxcgpfpyi7n58fn4qc1sp8jaqw"
+	 *   }, 
+	 *   "broadcast": {
+	 *     "omit_users":null,
+	 *     "user_id":"ntdoubyr47naxdg338wz5gb46e",
+	 *     "channel_id":"",
+	 *     "team_id":""
+	 *   }, 
+	 *   "seq": 10
+	 * }
+	 * */
+	qDebug() << object;
+	QJsonObject data = object["data"].toObject();
+	QJsonObject broadcast = object["broadcast"].toObject();
+	if( data.isEmpty() || broadcast.isEmpty() )
+	{
+		qWarning() << QStringLiteral("Empty data or bradcast");
+		return;
+	}
+	QString channel_id = data["channel_id"].toString();
+	QString user_id = broadcast["user_id"].toString();
+	if( channel_id.isEmpty() ) {
+		qWarning() << QStringLiteral("Empty channel_id in  data:")<< data;
+	}
+//	if( user_id.isEmpty() ) {
+//		qWarning() << QStringLiteral("Empty channel_id in broadcast:")<< broadcast;
+//	}
+	// check user_id
+	if( user_id != sc->m_user_id ) {
+		qWarning() << QStringLiteral("Current user_id (%0) not equal broadcast.user_id (%1)").arg(sc->m_user_id).arg(user_id);
+		return ;
+	}
+	ChannelPtr channel = id2channel(sc, channel_id);
+	QVector<ChannelPtr> *channels = nullptr;
+	if(!channel) {
+		qCritical() << QStringLiteral("Cant remove channel, channel (%0) not found.").arg(channel_id);
+	}
+		
+	if( channel->m_type != ChannelType::ChannelDirect ) {
+		TeamPtr team = teamAt(sc->m_self_index, channel->m_team_index);
+		if(!team) {
+			qCritical() << QStringLiteral("Wrong team index");
+			//return;
+		}
+		else if( channel->m_type == ChannelType::ChannelPublic ) 
+			channels = &team->m_public_channels;
+		else if( channel->m_type == ChannelType::ChannelPrivate ) 
+			channels = &team->m_private_channels;
+	}
+	else {
+		channels = &sc->m_direct_channels;
+	}
+	
+	if( sc->m_channels_hash.remove(channel_id) == 0 ) {
+		qWarning() << QStringLiteral("Channel id(%0) not found in hash").arg(channel_id);
+	} 
+	if(!channels) {
+		qCritical() << QStringLiteral("Wrong channel type: %0").arg( QVariant::fromValue<ChannelType>(channel->m_type).toString() );
+		return;
+	}
+	channels->remove( channel->m_self_index );
+	for(int c = channel->m_self_index; c < channels->size(); c++ ) 
+	{
+		channels->at(c)->m_self_index = c;
+	}
+	emit channelRemoved(channel);
+}
+
 MattermostQt::UserStatus MattermostQt::str2status(const QString &s) const
 {
 	if( s.compare("online") == 0 )
@@ -4606,6 +4737,17 @@ MattermostQt::UserPtr MattermostQt::id2user(ServerPtr sc, const QString &id) con
 			return sc->m_user[i];
 	}
 	return UserPtr();
+}
+
+MattermostQt::TeamPtr MattermostQt::id2team(MattermostQt::ServerPtr sc, const QString &id) const
+{
+	// is not fast algorith. but now use it
+	for(int i = 0, count = sc->m_teams.size(); i < count ; i++)
+	{
+		if( sc->m_teams[i]->m_id == id )
+			return sc->m_teams[i];
+	}
+	return TeamPtr();
 }
 
 MattermostQt::ChannelPtr MattermostQt::id2channel(MattermostQt::ServerPtr sc, const QString &channel_id) const
@@ -5318,11 +5460,13 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 
 	/** that need release first */
 	//response
-	//channel_created
+	// -- channel_created
 	//channel_deleted
-	//channel_updated
 	//direct_added
+	//channel_updated
 	//group_added
+	//-- user_added
+	//-- user_removed
 
 	//leave_team
 	//update_team
@@ -5335,11 +5479,9 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	//events
 	//added_to_team
 	//new_user
-	//user_added
 	//user_updated
 	//user_role_updated
 	//memberrole_updated
-	//user_removed
 	//preference_changed
 	//preferences_changed
 	//preferences_deleted

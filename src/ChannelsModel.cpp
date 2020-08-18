@@ -5,14 +5,14 @@ ChannelsModel::ChannelsModel(QObject *parent)
     : QAbstractListModel(parent)
 {
 	beginInsertRows(QModelIndex(), 0, 2);
-	m_header.resize(3);
+//	m_header.resize(3);
 //	m_display_name.resize(3);
-	m_puprose.resize(3);
+//	m_puprose.resize(3);
 	m_channel.resize(3);
-	m_type.resize(3);
-	m_type[0] = ItemType::HeaderPublic;
-	m_type[1] = ItemType::HeaderPrivate;
-	m_type[2] = ItemType::HeaderDirect;
+//	m_type.resize(3);
+//	m_type[0] = ItemType::HeaderPublic;
+//	m_type[1] = ItemType::HeaderPrivate;
+//	m_type[2] = ItemType::HeaderDirect;
 	m_header_index[ItemType::HeaderPublic] = 0;
 	m_header_index[ItemType::HeaderPrivate] = 1;
 	m_header_index[ItemType::HeaderDirect] = 2;
@@ -52,7 +52,7 @@ int ChannelsModel::rowCount(const QModelIndex &parent) const
 //	if (!parent.isValid())
 //		return 0;
 
-	return m_header.size();
+	return m_channel.size();
 }
 
 QVariant ChannelsModel::data(const QModelIndex &index, int role) const
@@ -115,7 +115,15 @@ QVariant ChannelsModel::data(const QModelIndex &index, int role) const
 		return channel->m_header;
 		break;
 	case Type:
-		return m_type[index.row()];
+		if( channel.isNull() ) {
+			if( index.row() == m_header_index[ItemType::HeaderPublic] )
+				return ItemType::HeaderPublic;
+			else if( index.row() == m_header_index[ItemType::HeaderPrivate] )
+				return ItemType::HeaderPrivate;
+			else if( index.row() == m_header_index[ItemType::HeaderDirect] )
+				return ItemType::HeaderDirect;
+		}
+		return ItemType::Channel;
 		break;
 	case ChannelIndex:
 		if( channel.isNull() )
@@ -237,7 +245,7 @@ Qt::ItemFlags ChannelsModel::flags(const QModelIndex &index) const
 	if (!index.isValid())
 		return Qt::NoItemFlags;
 
-	if( m_type[index.row()] <= ItemType::HeadersCount )
+	if( ! m_channel[index.row()] )
 		return Qt::NoItemFlags;
 	else
 		return Qt::ItemIsEnabled; // FIXME: Implement me!
@@ -291,6 +299,7 @@ void ChannelsModel::setMattermost(MattermostQt *mattermost)
 	m_mattermost = mattermost;
 
 	connect( m_mattermost.data(), &MattermostQt::channelAdded, this, &ChannelsModel::slot_channelAdded );
+	connect( m_mattermost.data(), &MattermostQt::channelRemoved, this, &ChannelsModel::slot_channelRemoved );
 	connect( m_mattermost.data(), &MattermostQt::channelsList, this, &ChannelsModel::slot_channelsList );
 	connect( m_mattermost.data(), &MattermostQt::updateChannel, this, &ChannelsModel::slot_updateChannel );
 	connect( m_mattermost.data(), &MattermostQt::usersUpdated, this, &ChannelsModel::slot_usersUpdated );
@@ -306,26 +315,22 @@ QString ChannelsModel::teamIcon() const
 
 void ChannelsModel::clear()
 {
-	if( m_header.size() == 3 )
+	if( m_channel.size() == 3 )
 		return;
 	beginResetModel();
-	m_header.clear();
-//	m_display_name.clear();
-	m_puprose.clear();
-	m_type.clear();
-//	m_index.resize(3);
+
 	endResetModel();
 
 	beginInsertRows(QModelIndex(), 0, 2);
-	m_header.resize(3);
-//	m_display_name.resize(3);
-	m_puprose.resize(3);
+//	m_header.resize(3);
+////	m_display_name.resize(3);
+//	m_puprose.resize(3);
 	m_channel.clear();
 	m_channel.resize(3);
-	m_type.resize(3);
-	m_type[0] = ItemType::HeaderPublic;
-	m_type[1] = ItemType::HeaderPrivate;
-	m_type[2] = ItemType::HeaderDirect;
+//	m_type.resize(3);
+//	m_type[0] = ItemType::HeaderPublic;
+//	m_type[1] = ItemType::HeaderPrivate;
+//	m_type[2] = ItemType::HeaderDirect;
 	m_header_index[ItemType::HeaderPublic] = 0;
 	m_header_index[ItemType::HeaderPrivate] = 1;
 	m_header_index[ItemType::HeaderDirect] = 2;
@@ -334,7 +339,7 @@ void ChannelsModel::clear()
 
 void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 {
-	int insertIndex = m_header.size();
+	int insertIndex = m_channel.size();
 
 	switch( channel->m_type )
 	{
@@ -350,7 +355,7 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 		insertIndex = m_header_index[ItemType::HeaderDirect]++;
 		break;
 	case MattermostQt::ChannelDirect:
-		insertIndex = m_header.size();
+		insertIndex = m_channel.size();
 		break;
 //	case MattermostQt::ChannelTypeCount:
 	default:
@@ -358,23 +363,87 @@ void ChannelsModel::slot_channelAdded(MattermostQt::ChannelPtr channel)
 	}
 
 	beginInsertRows(QModelIndex(), insertIndex, insertIndex);
-	if(insertIndex == m_header.size())
+	if(insertIndex == m_channel.size())
 	{
-		m_header.append(channel->m_header);
+//		m_header.append(channel->m_header);
 //		m_display_name.append(channel->m_display_name);
-		m_puprose.append(channel->m_purpose);
-		m_type.append(ItemType::Channel);
+//		m_puprose.append(channel->m_purpose);
+//		m_type.append(ItemType::Channel);
 		m_channel.append( channel);
 	}
 	else
 	{
-		m_header.insert(insertIndex,channel->m_header);
+//		m_header.insert(insertIndex,channel->m_header);
 //		m_display_name.insert(insertIndex,channel->m_display_name);
-		m_puprose.insert(insertIndex,channel->m_purpose);
-		m_type.insert(insertIndex,ItemType::Channel);
+//		m_puprose.insert(insertIndex,channel->m_purpose);
+//		m_type.insert(insertIndex,ItemType::Channel);
 		m_channel.insert(insertIndex, channel);
 	}
 	endInsertRows();
+}
+
+void ChannelsModel::slot_channelRemoved(MattermostQt::ChannelPtr channel)
+{
+	int headerIndex = 0;
+	int removeIndex = -1;
+	int endIndex = m_channel.size();
+
+	switch( channel->m_type )
+	{
+	case MattermostQt::ChannelPublic:
+		headerIndex = m_header_index[ItemType::HeaderPublic] + 1;
+		endIndex == m_header_index[ItemType::HeaderPrivate];
+		break;
+	case MattermostQt::ChannelPrivate:
+		headerIndex = m_header_index[ItemType::HeaderPrivate] + 1;
+		endIndex == m_header_index[ItemType::HeaderDirect];
+		break;
+	case MattermostQt::ChannelDirect:
+		headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
+		endIndex = m_channel.size();
+		break;
+	// case MattermostQt::ChannelTypeCount:
+	default:
+		headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
+		endIndex = m_channel.size();
+		break;
+	}
+	// Q_ASSERT( endIndex < 0 || endIndex > m_channel.size() );
+	if( endIndex < 0 || endIndex > m_channel.size() ) {
+		qCritical() << QStringLiteral("Somethig went worng! Reset whole model");
+		beginResetModel();
+		endResetModel();
+		return;
+	}
+	for( int c = headerIndex; c < endIndex; c++ ) {
+		if( m_channel[c] == channel ) {
+			removeIndex = c;
+			break;
+		}
+	}
+	if( removeIndex == -1 ) {
+		for( int c = 0; c < m_channel.size(); c++ ) {
+			if( m_channel[c] == channel ) {
+				removeIndex = c;
+				break;
+			}
+		}
+		if( removeIndex == -1 )
+		{
+			qCritical() << QStringLiteral("Not found channel in this model");
+			return;
+		}
+	}
+	beginRemoveRows(QModelIndex(),removeIndex,removeIndex);
+	m_channel.remove(removeIndex);
+	if( channel->m_type == MattermostQt::ChannelPublic ) {
+		m_header_index[ItemType::HeaderPrivate]--;
+		m_header_index[ItemType::HeaderDirect]--;
+	}
+	else if( channel->m_type == MattermostQt::ChannelPrivate ) {
+		m_header_index[ItemType::HeaderDirect]--;
+	}
+	endRemoveRows();
 }
 
 void ChannelsModel::slot_channelsList(QList<MattermostQt::ChannelPtr> list)
@@ -434,7 +503,7 @@ void ChannelsModel::slot_updateChannel(MattermostQt::ChannelPtr channel,  QVecto
 void ChannelsModel::slot_usersUpdated(QVector<MattermostQt::UserPtr> users,  QVectorInt roles)
 {
 	int headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
-	int endIndex = m_header.size() - 1;
+	int endIndex = m_channel.size() - 1;
 
 	QModelIndex ibegin = index(headerIndex);
 	QModelIndex iend = index(endIndex);
@@ -444,7 +513,7 @@ void ChannelsModel::slot_usersUpdated(QVector<MattermostQt::UserPtr> users,  QVe
 void ChannelsModel::slot_userUpdated(MattermostQt::UserPtr user,  QVectorInt roles)
 {
 	int headerIndex = m_header_index[ItemType::HeaderDirect] + 1;
-	int endIndex = m_header.size();
+	int endIndex = m_channel.size();
 
 	for(int i = headerIndex; i < endIndex; i++)
 	{
