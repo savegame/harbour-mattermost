@@ -33,8 +33,11 @@ public:
 		rt_login = 0,
 		rt_get_teams,
 		rt_get_public_channels,
+		rt_get_team_public_channels,
 		rt_get_channel,
 		rt_post_channel_view,
+		rt_post_add_user_to_channel,
+		rt_delete_user_from_channel,
 		rt_get_user_info,
 		rt_get_user_image,
 		rt_post_users_status,
@@ -550,6 +553,7 @@ public:
 	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_team_icon(int server_index, int team_index);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
+	Q_INVOKABLE void get_team_public_channels(int server_index, QString team_id);
 	Q_INVOKABLE void get_channel(int server_index, QString channel_id);
 	Q_INVOKABLE void get_channel(int server_index, int team_index, int channel_type, int channel_index);
 //	void get_team(int server_index, QString team_id);
@@ -576,7 +580,26 @@ public:
 	                                     int channel_index, int message_index);
 
 	Q_INVOKABLE void post_channel_view(int server_index, int team_index,
-	                                     int channel_type, int channel_index);
+	                                   int channel_type, int channel_index);
+	/**
+	 * @brief post_add_user_to_channel add/join user to channel
+	 * @param server_index   as is
+	 * @param team_index     as is (really not need)
+	 * @param channel_id     as is
+	 * @param user_id        if empty - thet mean current user (sever_ptr->m_user_id)
+	 */
+	Q_INVOKABLE void post_add_user_to_channel(int server_index, int team_index, QString channel_id, 
+	                                          QString user_id = QString());
+	/**
+	 * @brief delete_user_from_channel  delete user from channel (leave channel
+	 * if user_id is empty) 
+	 * @param server_index  as is
+	 * @param channel_id    as is
+	 * @param user_id       if empty, than current user 
+	 */
+	Q_INVOKABLE void delete_user_from_channel(int server_index, QString channel_id, 
+	                                          QString user_id = QString());
+	
 	void get_channel_unread(ChannelPtr channel);
 	Q_INVOKABLE void get_channel_unread(int server_index, int team_index,
 	                                    int channel_type, int channel_index);
@@ -687,6 +710,7 @@ Q_SIGNALS:
 	void channelRemoved(ChannelPtr channel);
 	void updateChannel(ChannelPtr channel,  QVectorInt roles);
 	void updateChannelInfo(QString channel_id, int team_index, int self_index );
+	void showTeamPublicChannels(QList<ChannelPtr> channels);
 //	void updateChannel()
 	void messagesAdded(ChannelPtr channel);
 	void messagesIsEnd(ChannelPtr channel); // its mean no more messages in channel
@@ -788,8 +812,11 @@ protected:
 	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_posts_before(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
+	void reply_get_team_public_channels(QNetworkReply *reply);
 	void reply_get_channel(QNetworkReply *reply);
 	void reply_post_channel_view(QNetworkReply *reply);
+	void reply_post_add_user_to_channel(QNetworkReply *reply);
+	void reply_delete_user_from_channel(QNetworkReply *reply);
 	void reply_get_channel_unread(QNetworkReply *reply);
 	void reply_get_user_info(QNetworkReply *reply);
 	void error_get_user_info(QNetworkReply *reply);
