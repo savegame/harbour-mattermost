@@ -38,6 +38,7 @@ public:
 		rt_post_channel_view,
 		rt_post_add_user_to_channel,
 		rt_delete_user_from_channel,
+		rt_post_create_channel,
 		rt_get_user_info,
 		rt_get_user_image,
 		rt_post_users_status,
@@ -600,6 +601,21 @@ public:
 	Q_INVOKABLE void delete_user_from_channel(int server_index, QString channel_id, 
 	                                          QString user_id = QString());
 	
+	/**
+	 * @brief post_create_channel
+	 * @param server_index   as is
+	 * @param team_index     as is 
+	 * @param is_private     if true create private chanel, else create public channel
+	 * @param name           name for new channel
+	 * @param header         channels header ( not required )
+	 * @param description    channels description/puprose ( not required ) 
+	 * @param url_string     if we want set specific url for channel (not released now)
+	 */
+	Q_INVOKABLE void post_create_channel(int server_index, int team_index, bool is_private, QString name, 
+	                                     QString header = QString(), 
+	                                     QString purpose = QString(), 
+	                                     QString url_name = QString());
+	
 	void get_channel_unread(ChannelPtr channel);
 	Q_INVOKABLE void get_channel_unread(int server_index, int team_index,
 	                                    int channel_type, int channel_index);
@@ -817,6 +833,7 @@ protected:
 	void reply_post_channel_view(QNetworkReply *reply);
 	void reply_post_add_user_to_channel(QNetworkReply *reply);
 	void reply_delete_user_from_channel(QNetworkReply *reply);
+	void reply_post_create_channel(QNetworkReply *reply);
 	void reply_get_channel_unread(QNetworkReply *reply);
 	void reply_get_user_info(QNetworkReply *reply);
 	void error_get_user_info(QNetworkReply *reply);

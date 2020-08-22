@@ -160,6 +160,7 @@ void MattermostQt::bind_reply_functions()
 	BIND_REPLY_FUNCTION(delete_reaction);
 	BIND_REPLY_FUNCTION(post_add_user_to_channel);
 	BIND_REPLY_FUNCTION(delete_user_from_channel);
+	BIND_REPLY_FUNCTION(post_create_channel);
 }
 
 void MattermostQt::bind_event_functions()
@@ -1390,6 +1391,58 @@ void MattermostQt::delete_user_from_channel(int server_index, QString channel_id
 	reply->setProperty(P_SERVER_INDEX, server_index);
 	reply->setProperty(P_CHANNEL_ID, channel_id );
 	reply->setProperty(P_USER_ID, user_id);
+}
+
+void MattermostQt::post_create_channel(int server_index, int team_index, 
+                                       bool is_private, QString name, 
+                                       QString header, QString purpose, QString url_name)
+{
+	// TODO
+	///channels/{channel_id}/members
+	ServerPtr sc = get_server(server_index);
+	TeamPtr team = teamAt(server_index, team_index);
+	if(!sc || !team) {
+		qCritical() << QStringLiteral("Wrong server index: %0").arg(server_index);
+		return;
+	}
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/channels");
+
+	QUrl url(sc->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,sc);
+	request_json(request);
+
+//	{
+//	  "team_id": "string",
+//	  "name": "string",
+//	  "display_name": "string",
+//	  "purpose": "string",
+//	  "header": "string",
+//	  "type": "string"
+//	}
+	if( url_name.isEmpty() ) {
+		url_name=name;
+	}
+	QJsonDocument json;
+	QJsonObject root;
+	root["team_id"] = team->m_id;
+	root["name"] = url_name;
+	root["display_name"] = name;
+	root["header"] = header;
+	root["purpose"] = purpose;
+	root["type"] = is_private ? QLatin1String("P") : QLatin1String("O");
+	json.setObject(root);
+
+	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_create_channel) );
+	reply->setProperty(P_SERVER_INDEX, server_index);
+	reply->setProperty(P_TEAM_INDEX, team_index );
 }
 
 void MattermostQt::get_channel_unread(int server_index, int team_index, int channel_type, int channel_index)
@@ -3441,6 +3494,40 @@ void MattermostQt::reply_delete_user_from_channel(QNetworkReply *reply)
 	QString user_id = reply->property(P_USER_ID).toString();
 	QString channel_id = reply->property(P_CHANNEL_ID).toString();
 	qDebug() << QStringLiteral("User \"%0\" leaving channel \"%1\", status : %2").arg(user_id).arg(channel_id).arg(object["status"].toString());
+}
+
+void MattermostQt::reply_post_create_channel(QNetworkReply *reply)
+{
+	ASSERT_REPLY(reply_post_create_channel);
+	
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	QJsonObject object = json.object();
+	
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int team_index = reply->property(P_TEAM_INDEX).toInt();
+	
+	qDebug() << object;
+	/*
+	 * {
+	  "id": "string",
+	  "create_at": 0,
+	  "update_at": 0,
+	  "delete_at": 0,
+	  "team_id": "string",
+	  "type": "string",
+	  "display_name": "string",
+	  "name": "string",
+	  "header": "string",
+	  "purpose": "string",
+	  "last_post_at": 0,
+	  "total_msg_count": 0,
+	  "extra_update_at": 0,
+	  "creator_id": "string"
+	}
+	*/
+	ChannelPtr channel(new ChannelContainer(object));
+	channel->m_server_index = server_index;
+	channel->m_team_index = team_index;
 }
 
 void MattermostQt::reply_get_channel_unread(QNetworkReply *reply)
