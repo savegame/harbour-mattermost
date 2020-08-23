@@ -2449,7 +2449,7 @@ MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_inde
 	}
 	if(channel_index < 0)
 	{
-		qCritical() << "Wrong cahnnel index";
+		qCritical() << QStringLiteral("Wrong cahnnel index %0").arg(channel_index);
 		return channel;
 	}
 	ServerPtr sc = m_server[server_index];
@@ -2457,7 +2457,7 @@ MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_inde
 	{
 		if(channel_index >= sc->m_direct_channels.size() )
 		{
-			qCritical() << "Channel index more than channels size " <<  sc->m_direct_channels.size();
+			qCritical() << QStringLiteral("Direct channel index %0 more than channels size %1").arg(channel_index).arg(sc->m_direct_channels.size());
 			return channel;
 		}
 		channel = sc->m_direct_channels[channel_index];
@@ -2474,7 +2474,7 @@ MattermostQt::ChannelPtr MattermostQt::channelAt(int server_index, int team_inde
 
 		if(!channels || channel_index >= channels->size())
 		{
-			qCritical() << "Channel index more than channels size " <<  channels->size();
+			qCritical() << QStringLiteral("Channel index %0 more than channels size %1").arg(channel_index).arg(channels->size());
 			return channel;
 		}
 
@@ -2487,7 +2487,7 @@ MattermostQt::MessagePtr MattermostQt::messageAt(int server_index, int team_inde
 {
 	if( message_index < 0 )
 	{
-		qDebug() << "Message index wrong!";
+		qCritical() << QStringLiteral("Message index %0 wrong!").arg(message_index);
 		return MessagePtr();
 	}
 	ChannelPtr c = channelAt(server_index,team_index,channel_type,channel_index);
@@ -3525,6 +3525,7 @@ void MattermostQt::reply_post_create_channel(QNetworkReply *reply)
 	  "creator_id": "string"
 	}
 	*/
+	// TODO create channel here, not in event_channel_created
 	ChannelPtr channel(new ChannelContainer(object));
 	channel->m_server_index = server_index;
 	channel->m_team_index = team_index;
@@ -4883,6 +4884,8 @@ void MattermostQt::event_channel_created(MattermostQt::ServerPtr sc, QJsonObject
 	// catch event
 	qWarning() << QStringLiteral("Channel Added");
 	qWarning() << object;
+	QJsonObject data = object["data"].toObject();
+	get_channel(sc->m_self_index, data["channel_id"].toString());
 }
 
 void MattermostQt::event_user_added(MattermostQt::ServerPtr sc, QJsonObject object)
