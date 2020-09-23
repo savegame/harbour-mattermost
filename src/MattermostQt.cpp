@@ -518,6 +518,8 @@ void MattermostQt::post_login_by_token(QString url, QString token, int api, QStr
 
 void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 {
+	if(!sc)
+		return;
 	if( sc->m_state == ServerLogin )
 		return;
 	sc->m_state = ServerLogin;
@@ -1397,7 +1399,7 @@ void MattermostQt::post_create_channel(int server_index, int team_index,
                                        bool is_private, QString name, 
                                        QString header, QString purpose, QString url_name)
 {
-	// TODO
+	// 
 	///channels/{channel_id}/members
 	ServerPtr sc = get_server(server_index);
 	TeamPtr team = teamAt(server_index, team_index);
@@ -3237,7 +3239,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 
 				// TODO not much safe, need test all parameters
 				ct->m_server_index = server_index;
-				QString channel_type;
+				QString channel_type("uninitialized");
 
 				switch( ct->m_type )
 				{
@@ -3402,8 +3404,8 @@ void MattermostQt::reply_get_channel(QNetworkReply *reply)
 		}
 		else
 		{
-			channel->m_self_index = team->m_public_channels.size();
-			team->m_public_channels.append(channel);
+			channel->m_self_index = team->m_private_channels.size();
+			team->m_private_channels.append(channel);
 		}
 		channel->m_team_index = team->m_self_index;
 		channelAdded(channel);
@@ -3780,7 +3782,10 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 			QJsonObject object = json.object();
 			QString error_id = object["id"].toString();
 			QString message = object["message"].toString();
-			qDebug() << object;
+			
+			ReplyType reply_type = (ReplyType)reply->property(P_REPLY_TYPE).toInt();
+			emit replyError(reply_type, object);
+			
 			if( error_id.indexOf("api.") == 0 ) {
 				error_id = error_id.mid(4);
 				if( error_id.compare("user.check_user_password.invalid.app_error") == 0 )
@@ -3848,6 +3853,12 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 						// file has no preview, it may by SVG =)
 						// TODO do somethig with this ERROR!
 					}
+				}
+			}
+			else if ( error_id.indexOf("store.") == 0 ) {
+				error_id = error_id.mid(6);
+				if( error_id.compare("sql_channel.save_channel.exists.app_error") == 0 ) {
+					qCritical() << QStringLiteral("Channtl with that name (%0) already exists: %1").arg("name").arg(object["message"].toString());
 				}
 			}
 			else {

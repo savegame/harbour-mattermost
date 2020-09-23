@@ -787,6 +787,13 @@ Q_SIGNALS:
 	 * @param request - type of request
 	 */
 	void requestFinished(ReplyType request);
+	
+	/**
+	 * @brief replyError
+	 * @param request
+	 * @param error
+	 */
+	void replyError(ReplyType request, QJsonObject error);
 protected:
 	/**
 	 * @brief prepare_direct_channel

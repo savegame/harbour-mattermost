@@ -9,6 +9,7 @@
 #include <QImage>
 #include "MattermostQt.h"
 #include "MattermostQt_gobal.h"
+#include "MessagesModel.h"
 
 #define AF_INDEX_SIGNAL indexChanged
 #define AF_PROPERTY(_type,_name) \
@@ -32,11 +33,11 @@ class AttachedFilesModel : public QAbstractListModel
 	Q_SIGNAL void AF_INDEX_SIGNAL ();
 public:
 	enum DataRoles {
+		FilePath = MessagesModel::FilePaths,
 		FileType = Qt::UserRole + 100,
 		FileName,
 		FileThumbnailPath,
 		FilePreviewPath,
-		FilePath,
 //		FileIsInCache,
 		FileStatus,
 		FileSize,
