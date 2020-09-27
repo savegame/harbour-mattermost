@@ -34,6 +34,7 @@ public:
 		rt_get_teams,
 		rt_get_public_channels,
 		rt_get_team_public_channels,
+		rt_get_team_members,
 		rt_get_channel,
 		rt_post_channel_view,
 		rt_post_add_user_to_channel,
@@ -58,6 +59,7 @@ public:
 		rt_delete_message,
 		rt_put_message_edit,
 		rt_get_channel_unread,
+		rt_get_channel_members,
 		rt_get_team_icon,
 		rt_post_create_reaction,
 		rt_delete_reaction,
@@ -559,6 +561,7 @@ public:
 	Q_INVOKABLE void get_channel(int server_index, int team_index, int channel_type, int channel_index);
 //	void get_team(int server_index, QString team_id);
 	void get_team(int server_index, int team_index);
+	void get_team_members(int server_index, int team_index);
 	void get_file_thumbnail(int server_index, int file_sc_index);
 	void get_file_preview(int server_index, int file_sc_index);
 //	void get_file_thumbnail(int server_index, int team_index, int channel_type,
@@ -618,6 +621,8 @@ public:
 	
 	void get_channel_unread(ChannelPtr channel);
 	Q_INVOKABLE void get_channel_unread(int server_index, int team_index,
+	                                    int channel_type, int channel_index);
+	Q_INVOKABLE void get_channel_members(int server_index, int team_index,
 	                                    int channel_type, int channel_index);
 	Q_INVOKABLE void get_user_image(int server_index, int user_index);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
@@ -726,6 +731,7 @@ Q_SIGNALS:
 	void channelRemoved(ChannelPtr channel);
 	void updateChannel(ChannelPtr channel,  QVectorInt roles);
 	void updateChannelInfo(QString channel_id, int team_index, int self_index );
+	void onReplyChannelMembers(QString channel_id, QVector<UserPtr> members);
 	void showTeamPublicChannels(QList<ChannelPtr> channels);
 //	void updateChannel()
 	void messagesAdded(ChannelPtr channel);
@@ -738,9 +744,12 @@ Q_SIGNALS:
 	void messageBeginDelete(QList<MessagePtr> messages);
 	void messageDeleted(QList<MessagePtr> messages);
 	void messageEndDelete();
+	
+	void userAdded(UserPtr user);
 	void userUpdated(UserPtr user,  QVectorInt roles);
 	void currentUserChanged(UserPtr user);
 	void usersUpdated(QVector<UserPtr> users,  QVectorInt roles);
+	
 	void fileStatusChanged(QString file_id, int status);
 	void fileUploaded(int server_index, int file_sc_index);
 	// teams changing signals
@@ -831,17 +840,19 @@ protected:
 	void reply_get_team(QNetworkReply *reply);
 	void reply_get_teams_unread(QNetworkReply *reply);
 	void reply_get_team_icon(QNetworkReply *reply);
+	void reply_get_team_members(QNetworkReply *reply);
 	void reply_get_post(QNetworkReply *reply);
 	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_posts_before(QNetworkReply *reply);
 	void reply_get_public_channels(QNetworkReply *reply);
 	void reply_get_team_public_channels(QNetworkReply *reply);
 	void reply_get_channel(QNetworkReply *reply);
+	void reply_get_channel_unread(QNetworkReply *reply);
+	void reply_get_channel_members(QNetworkReply *reply);
 	void reply_post_channel_view(QNetworkReply *reply);
 	void reply_post_add_user_to_channel(QNetworkReply *reply);
 	void reply_delete_user_from_channel(QNetworkReply *reply);
 	void reply_post_create_channel(QNetworkReply *reply);
-	void reply_get_channel_unread(QNetworkReply *reply);
 	void reply_get_user_info(QNetworkReply *reply);
 	void error_get_user_info(QNetworkReply *reply);
 	void reply_post_users_status(QNetworkReply *reply);

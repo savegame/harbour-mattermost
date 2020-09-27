@@ -83,8 +83,9 @@
 #define scmp(s1,s2) s1.compare(s2) == 0
 #define _compare(string) if( cmp(event,string) )
 // additioanl get_user_info flags
-#define GET_USER_INFO_direct_channel -1 // reques user info for direct channel
-#define GET_USER_INFO_current_user   -2 // request user info for current loggined user
+#define GET_USER_INFO_direct_channel    -1 // reques user info for direct channel
+#define GET_USER_INFO_current_user      -2 // request user info for current loggined user
+#define GET_USER_INFO_channel_members   -3 // request user info from channel members
 
 //#ifdef _RELEASE
 #define bearer_string(token) QString("Bearer %0").arg(token)
@@ -137,6 +138,7 @@ void MattermostQt::bind_reply_functions()
 	BIND_REPLY_FUNCTION(get_team_icon);
 	BIND_REPLY_FUNCTION(get_public_channels);
 	BIND_REPLY_FUNCTION(get_team_public_channels);
+	BIND_REPLY_FUNCTION(get_team_members);
 	BIND_REPLY_FUNCTION(get_channel);
 	BIND_REPLY_FUNCTION(post_channel_view);
 	BIND_REPLY_FUNCTION(get_user_info); //-
@@ -156,6 +158,7 @@ void MattermostQt::bind_reply_functions()
 	BIND_REPLY_FUNCTION(delete_message);
 	BIND_REPLY_FUNCTION(put_message_edit);
 	BIND_REPLY_FUNCTION(get_channel_unread);
+	BIND_REPLY_FUNCTION(get_channel_members);
 	BIND_REPLY_FUNCTION(post_create_reaction);
 	BIND_REPLY_FUNCTION(delete_reaction);
 	BIND_REPLY_FUNCTION(post_add_user_to_channel);
@@ -840,6 +843,36 @@ void MattermostQt::get_team(int server_index, int team_index)
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 }
 
+void MattermostQt::get_team_members(int server_index, int team_index)
+{
+	TeamPtr team = teamAt(server_index, team_index);
+	if( !team ) {
+		qWarning() << QStringLiteral("Cant find team with indexes: si=%0, ti=%1").arg(server_index).arg(team_index);
+		return;
+	}
+	
+	ServerPtr server = m_server[server_index];
+	
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(server->m_api)
+	        + QLatin1String("/teams/")
+	        + team->m_id
+	        + QLatin1String("/members");
+	
+	QUrl url(server->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,server);
+	request_urlencoded(request);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_team_members) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+}
+
 void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 {
 	if( server_index < 0 || server_index >= m_server.size() )
@@ -1451,6 +1484,45 @@ void MattermostQt::get_channel_unread(int server_index, int team_index, int chan
 {
 	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
 	get_channel_unread(channel);
+}
+
+void MattermostQt::get_channel_members(int server_index, int team_index, int channel_type, int channel_index)
+{
+	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
+	
+	if( !channel ) {
+		qCritical() << QStringLiteral("Wrong get_channel_members requset data") ;
+		return;
+	}
+
+	ServerPtr sc = m_server[channel->m_server_index];
+
+	qDebug() << QStringLiteral("Request: get_channel_members for %1 (%2)").arg(channel->m_display_name).arg(channel->m_id);
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/channels/")
+	        + channel->m_id
+	        + QLatin1String("/members");
+
+	QUrl url(sc->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,sc);
+	request_urlencoded(request);
+
+	if(sc->m_trust_cert && !sc->m_cert.isNull() )
+		request.setSslConfiguration(sc->m_cert);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_channel_members) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(channel->m_server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(channel->m_team_index) );
+	reply->setProperty(P_CHANNEL_TYPE, QVariant(channel->m_type) );
+	reply->setProperty(P_CHANNEL_INDEX, QVariant(channel->m_self_index) );
+	reply->setProperty(P_CHANNEL_PTR, QVariant::fromValue<ChannelPtr>(channel) );
 }
 
 void MattermostQt::get_channel_unread(MattermostQt::ChannelPtr channel)
@@ -2886,6 +2958,61 @@ void MattermostQt::reply_get_team_icon(QNetworkReply *reply)
 		qWarning() << QStringLiteral("Team id(%0) image not saved!").arg(team->m_id);
 }
 
+void MattermostQt::reply_get_team_members(QNetworkReply *reply)
+{
+	//TODO
+	bool is_ok;
+	int server_index = reply->property(P_SERVER_INDEX).toInt(&is_ok);
+	//	Q_UNUSED(server_index)
+	if(!is_ok) {
+		qWarning() << QStringLiteral("Wrong index in P_SERVER_INDEX property");
+		return;
+	}
+	int team_index = reply->property(P_TEAM_INDEX).toInt(&is_ok);
+	if(!is_ok) {
+		qWarning() << QStringLiteral("Wrong index in P_TEAM_INDEX property");
+		return;
+	}
+	
+	TeamPtr team = teamAt(server_index, team_index);
+	if( !team ) {
+		qWarning() << QStringLiteral("Cant find team with indexes: si=%0, ti=%1").arg(server_index).arg(team_index);
+		return;
+	}
+	ServerPtr server = m_server[server_index];
+	
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	QJsonArray array = json.array();
+
+	if( array.isEmpty() )
+	{
+		qWarning() << "Wrong Json" << json;
+		return;
+	}
+	/* 
+	 * {
+	"team_id": "string",
+	"user_id": "string",
+	"roles": "string",
+	"delete_at": 0,
+	"scheme_user": true,
+	"scheme_admin": true,
+	"explicit_roles": "string"
+	}*/
+	for (int i = 0; i < array.size(); i++) {
+		QJsonObject current = array[i].toObject();
+		QString user_id = current["user_id"].toString();
+		if( user_id.isEmpty() ) {
+			qWarning() << QStringLiteral("Wrong Json value:") << array[i];
+			continue;
+		}
+		UserPtr user = id2user(server, user_id);
+		if( user )
+			continue;
+		get_user_info(server_index, user_id, team_index);
+	}
+}
+
 void MattermostQt::reply_get_post(QNetworkReply *reply)
 {
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
@@ -3552,6 +3679,67 @@ void MattermostQt::reply_get_channel_unread(QNetworkReply *reply)
 	emit messageUnreadChanged();
 }
 
+void MattermostQt::reply_get_channel_members(QNetworkReply *reply)
+{
+	ASSERT_REPLY(reply_get_channel_members)
+	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+	if(!channel)
+		return;
+	ServerPtr server = m_server[channel->m_server_index];
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	QJsonArray array = json.array();
+	
+	if(!json.isArray()) 
+	{
+		qWarning() << json;
+		return;
+	}
+	
+	/**
+	{
+		"channel_id": "e1h686x66fnsuncu81ta3nffie",
+		"explicit_roles": "",
+		"last_update_at": 1596914013278,
+		"last_viewed_at": 1596914013278,
+		"mention_count": 0,
+		"msg_count": 33,
+		"notify_props": {
+			"desktop": "default",
+			"email": "default",
+			"ignore_channel_mentions": "default",
+			"mark_unread": "all",
+			"push": "default"
+		},
+		"roles": "channel_user",
+		"scheme_admin": false,
+		"scheme_guest": false,
+		"scheme_user": true,
+		"user_id": "kg7ksvpcf4ft9q49daxbaad6pw"
+	},
+	*/
+	QVector<UserPtr> members;
+	members.reserve(array.size());
+	for(int i = 0;  i < array.size(); i++ ) 
+	{
+		QJsonObject object = array[i].toObject();
+		QString user_id = object["user_id"].toString();
+		UserPtr user = id2user(server, user_id);
+		if( !user ) 
+		{ // generate empty user, for members list
+			user.reset(new UserContainer());
+			user->m_id = user_id;
+			user->m_self_index = -2;
+			get_user_info(server->m_self_index,user_id, channel->m_team_index);
+		}
+		members << user;
+	}
+	emit onReplyChannelMembers(channel->m_id, members);
+//	channel->m_msg_unread    = object["msg_count"].toInt();
+//	channel->m_mention_count = object["mention_count"].toInt();
+//	emit updateChannel( channel, QVectorInt() << ChannelsModel::MessageUnread << ChannelsModel::MentionCount );
+//	emit messageUnreadChanged();
+}
+
 void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 {
 	ASSERT_REPLY(reply_get_user_info)
@@ -3610,6 +3798,7 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 	{
 		user->m_self_index = sc->m_user.size();
 		sc->m_user.append(user);
+		emit userAdded(user);
 
 		QString path = sc->m_cache_path +
 		        QString("/users/") +
