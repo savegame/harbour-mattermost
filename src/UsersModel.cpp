@@ -8,10 +8,10 @@ public:
 	}
 	
 	enum State {
-		NoState,
-		ChannelMembers,
-		TeamMembers,
-		InviteChannelList
+		NoState           = UsersModel::NoState,
+		ChannelMembers    = UsersModel::ChannelMembers,
+		TeamMembers       = UsersModel::TeamMembers,
+		InviteChannelList = UsersModel::InviteChannelList
 	};
 	
 	struct Indexes {
@@ -31,11 +31,13 @@ public:
 		indexes.channel_type  = -1;
 		indexes.channel_index = -1;
 		users.clear();
+		checkState.clear();
 		temp_users.clear();
 	}
 	
 	MattermostQt *m_mattermost = nullptr;
 	QVector<MattermostQt::UserPtr> users;
+	QVector<Qt::CheckState>        checkState;
 	QVector<MattermostQt::UserPtr> temp_users;
 	State current = NoState;
 	State finish  = NoState;
@@ -89,6 +91,8 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 	}
 		
 	switch(role) {
+	case Qt::CheckStateRole:
+		return  d->checkState[index.row()];
 	case Qt::DisplayRole:
 		if(user->m_self_index >= 0)
 		{
@@ -121,6 +125,16 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 
 	// FIXME: Implement me!
 	return QVariant();
+}
+
+bool UsersModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+	if(role == Qt::CheckStateRole) {
+		if(index.row() >=0 && index.row() < d->checkState.size())
+			d->checkState[index.row()] = Qt::CheckState(value.toInt());
+		return  true;
+	}
+	return QAbstractListModel::setData(index,value,role);
 }
 
 bool UsersModel::insertRows(int row, int count, const QModelIndex &parent)
@@ -250,6 +264,27 @@ void UsersModel::clear()
 	d->clear();
 }
 
+UsersModel::State UsersModel::state() const
+{
+	return UsersModel::State(d->current);
+}
+
+Qt::CheckState UsersModel::checkState(int i) const
+{
+	if( i< 0 || i>= d->checkState.size() )
+		return Qt::Unchecked;
+	return d->checkState[i];
+}
+
+QStringList UsersModel::checkedIds() const
+{
+	QStringList result;
+	for(int i=0; i < d->checkState.size(); i++)
+		if(d->checkState[i] == Qt::Checked)
+			result << d->users[i]->m_id;
+	return result;
+}
+
 bool UsersModel::canFetchMore(const QModelIndex &parent) const
 {
 	if( /*parent.row() == d->users.size() - 1 && */d->member_count > d->users.size() ) {
@@ -305,7 +340,7 @@ void UsersModel::userUpdated(MattermostQt::UserPtr user, QVector<int> roles)
 	
 	if( current->m_self_index < 0 ) 
 	{
-		QModelIndex dataIndex = index(user_index);
+		QModelIndex dataIndex = index(user_index,0);
 		dataChanged(dataIndex,dataIndex,roles);
 		d->users[user_index] = user;
 	}
@@ -339,7 +374,7 @@ void UsersModel::userAdded(MattermostQt::UserPtr user)
 	}
 	if( users == nullptr )
 		return;
-	QModelIndex dataIndex = index(user_index);
+	QModelIndex dataIndex = index(user_index,0);
 	if( current->m_self_index < 0 ) 
 	{
 		users->operator[](user_index) = user;
@@ -368,19 +403,23 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 		if( member_count > users.size() ) 
 		{
 			parent->beginInsertRows(QModelIndex(), users.size(), users.size() + members.size() - 1 );
-			users.reserve(users.size() + members.size());
+//			users.reserve(users.size() + members.size());
 			for(int i = 0; i < members.size(); i++ )
-				if( members[i]->m_delete_at == 0 )
+				if( members[i]->m_delete_at == 0 ) {
 					users << members[i];
+					checkState << Qt::Unchecked;
+				}
 			parent->endInsertRows();
 		}
 		else {
 			parent->beginResetModel();
 			users.clear();
-			users.reserve(users.size() + members.size());
+//			users.reserve(users.size() + members.size());
 			for(int i = 0; i < members.size(); i++ )
-				if( members[i]->m_delete_at == 0 )
+				if( members[i]->m_delete_at == 0 ) {
 					users << members[i];
+					checkState << Qt::Unchecked;
+				}
 			parent->endResetModel();
 		}
 //		current = NoState;
@@ -392,7 +431,7 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 	case TeamMembers:
 		if( finish == InviteChannelList ) {
 			if( member_count > temp_users.size() + members.size() ) {
-				temp_users.reserve(temp_users.size() + members.size());
+//				temp_users.reserve(temp_users.size() + members.size());
 				for(int i = 0; i < members.size(); i++ )
 					if( members[i]->m_delete_at == 0 )
 						temp_users << members[i];
@@ -404,7 +443,7 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 			}
 			else {
 //				members << temp_users;
-				temp_users.reserve(temp_users.size() + members.size());
+//				temp_users.reserve(temp_users.size() + members.size());
 				for(int i = 0; i < members.size(); i++ )
 					if( members[i]->m_delete_at == 0 )
 						temp_users << members[i];
@@ -431,6 +470,7 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 					new_users << members[i];
 				}
 				users = new_users;
+				checkState.fill(Qt::Unchecked, users.size());
 				parent->endResetModel();
 				current = InviteChannelList;
 				finish = NoState;
@@ -439,10 +479,13 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 		break;
 	case ChannelMembers:
 		if( finish == InviteChannelList ) {
-			users.reserve(users.size() + members.size());
+//			users.reserve(users.size() + members.size());
 			for(int i = 0; i < members.size(); i++ )
 				if( members[i]->m_delete_at == 0 )
+				{
 					users << members[i];
+					checkState << Qt::Unchecked;
+				}
 			if ( member_count > users.size() ) {
 				parent->request_invite_list(indexes.server_index,
 				                             indexes.team_index,

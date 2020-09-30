@@ -14,6 +14,14 @@ class UsersModel : public QAbstractListModel
 	
 	friend class UsersModelPrivate;
 public:
+	enum State {
+		NoState,
+		ChannelMembers,
+		TeamMembers,
+		InviteChannelList
+	};
+	Q_ENUM(State);
+public:
 	explicit UsersModel(QObject *parent = nullptr);
 	virtual ~UsersModel();
 	
@@ -25,6 +33,8 @@ public:
 	int columnCount(const QModelIndex &parent) const override; 
 	
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+	
+	Q_INVOKABLE virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
 	
 	// Add data:
 	bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
@@ -55,6 +65,10 @@ public:
 	 */
 	Q_INVOKABLE void clear();
 	
+	Q_INVOKABLE State state() const;
+	Qt::CheckState  checkState(int i) const;
+	
+	Q_INVOKABLE QStringList checkedIds() const;
 protected:
 	bool canFetchMore(const QModelIndex &parent) const override;
 	void fetchMore(const QModelIndex &parent) override;
