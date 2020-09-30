@@ -37,6 +37,7 @@ public:
 		RoleServerIndex,
 		RoleChannelIndex,
 		RoleChannelDescription,
+		RoleMemberCount,
 		// -------
 		RoleUserFullName, // for direct channels only
 		RoleUserNickname, // for direct cahnnels only

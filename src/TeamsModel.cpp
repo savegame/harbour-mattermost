@@ -87,6 +87,8 @@ QHash<int, QByteArray> TeamsModel::roleNames() const
 	{ DataRoles::Index,                   "role_team_index" },
 	{ DataRoles::ServerIndex,             "role_server_index" },
 	{ DataRoles::ServerCustomName,        "role_server_display_name" },
+	{ DataRoles::TotalMemberCount,        "role_total_member_count" },
+	{ DataRoles::ActiveMemberCount,       "role_active_member_count" },
 	{ DataRoles::TeamIcon,                "role_team_icon" } };
 	return names;
 }

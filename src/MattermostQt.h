@@ -17,6 +17,8 @@
 
 // #define PRELOAD_FILE_INFOS //use old style of loading messages with 
 
+#define MM_DEFAULT_PER_PAGE 50
+
 class SettingsContainer;
 
 class MattermostQt : public QObject
@@ -35,6 +37,7 @@ public:
 		rt_get_public_channels,
 		rt_get_team_public_channels,
 		rt_get_team_members,
+		rt_get_team_statistics,
 		rt_get_channel,
 		rt_post_channel_view,
 		rt_post_add_user_to_channel,
@@ -60,6 +63,7 @@ public:
 		rt_put_message_edit,
 		rt_get_channel_unread,
 		rt_get_channel_members,
+		rt_get_channel_statistics,
 		rt_get_team_icon,
 		rt_post_create_reaction,
 		rt_delete_reaction,
@@ -326,7 +330,8 @@ public:
 
 		QString m_id;
 //		qlonglong m_create_at;
-		qlonglong m_update_at;
+		qlonglong m_update_at = 0;
+		qlonglong m_delete_at = 0;
 		//"delete_at": 0,
 		QString m_username;
 		QString m_first_name;
@@ -393,11 +398,12 @@ public:
 		qlonglong m_total_msg_count;
 		qlonglong m_extra_update_at;
 		QString m_creator_id;
-		int     m_team_index;   /**< team index in QVector */
-		int     m_server_index; /**< server index in QVector */
-		int     m_self_index;   /**< self index in vector */
-		int     m_msg_unread;   /**< count of unread messages **/
-		int     m_mention_count;/**< count of mention in channel **/
+		int     m_team_index    = -1; /**< team index in QVector */
+		int     m_server_index  = -1; /**< server index in QVector */
+		int     m_self_index    = -1; /**< self index in vector */
+		int     m_msg_unread    =  0; /**< count of unread messages **/
+		int     m_mention_count =  0; /**< count of mention in channel **/
+		int     m_member_count  = -1; /**< channel's members count */
 		QList<UserPtr> m_user_typing;  /**< when we have event user_typing */
 
 		// direct channel data
@@ -446,6 +452,9 @@ public:
 		int        m_server_index; /**< server index in QVector */
 		int        m_self_index;   /**< self index in vector */
 		QString    m_image_path;
+		
+		int        m_total_member_count = -1;
+		int        m_active_member_count = -1;
 
 		// unread data
 		int  m_unread_messages = 0;
@@ -555,13 +564,23 @@ public:
 	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_team_icon(int server_index, int team_index);
-	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
 	Q_INVOKABLE void get_team_public_channels(int server_index, QString team_id);
+	Q_INVOKABLE void get_team(int server_index, int team_index);
+    Q_INVOKABLE void get_team_members(int server_index, int team_index, int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
+	Q_INVOKABLE void get_team_statistics(int server_index, int team_index);
+	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
 	Q_INVOKABLE void get_channel(int server_index, QString channel_id);
 	Q_INVOKABLE void get_channel(int server_index, int team_index, int channel_type, int channel_index);
+	void get_channel_unread(ChannelPtr channel);
+	Q_INVOKABLE void get_channel_unread(int server_index, int team_index,
+	                                    int channel_type, int channel_index);
+	Q_INVOKABLE void get_channel_members(int server_index, int team_index,
+	                                    int channel_type, int channel_index, 
+	                                     int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
+	Q_INVOKABLE void get_channel_statistics(int server_index, int team_index,
+	                                        int channel_type, int channel_index);
+	
 //	void get_team(int server_index, QString team_id);
-	void get_team(int server_index, int team_index);
-	void get_team_members(int server_index, int team_index);
 	void get_file_thumbnail(int server_index, int file_sc_index);
 	void get_file_preview(int server_index, int file_sc_index);
 //	void get_file_thumbnail(int server_index, int team_index, int channel_type,
@@ -619,11 +638,6 @@ public:
 	                                     QString purpose = QString(), 
 	                                     QString url_name = QString());
 	
-	void get_channel_unread(ChannelPtr channel);
-	Q_INVOKABLE void get_channel_unread(int server_index, int team_index,
-	                                    int channel_type, int channel_index);
-	Q_INVOKABLE void get_channel_members(int server_index, int team_index,
-	                                    int channel_type, int channel_index);
 	Q_INVOKABLE void get_user_image(int server_index, int user_index);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
@@ -731,7 +745,7 @@ Q_SIGNALS:
 	void channelRemoved(ChannelPtr channel);
 	void updateChannel(ChannelPtr channel,  QVectorInt roles);
 	void updateChannelInfo(QString channel_id, int team_index, int self_index );
-	void onReplyChannelMembers(QString channel_id, QVector<UserPtr> members);
+	void onReplyChannelMembers(ChannelPtr channel, QVector<UserPtr> members);
 	void showTeamPublicChannels(QList<ChannelPtr> channels);
 //	void updateChannel()
 	void messagesAdded(ChannelPtr channel);
@@ -757,6 +771,7 @@ Q_SIGNALS:
 	void teamsExists(const QVector<MattermostQt::TeamPtr> &teams);
 	void teamUnread(QString team_id, int msg, int mention);
 	void teamChanged(TeamPtr team,  QVectorInt roles);
+	void onReplyTeamMembers(TeamPtr team, QVector<UserPtr> members);
 
 	/**
 	 * @brief onImageFileSavedToGallery
@@ -841,6 +856,7 @@ protected:
 	void reply_get_teams_unread(QNetworkReply *reply);
 	void reply_get_team_icon(QNetworkReply *reply);
 	void reply_get_team_members(QNetworkReply *reply);
+	void reply_get_team_statistics(QNetworkReply *reply);
 	void reply_get_post(QNetworkReply *reply);
 	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_posts_before(QNetworkReply *reply);
@@ -849,6 +865,7 @@ protected:
 	void reply_get_channel(QNetworkReply *reply);
 	void reply_get_channel_unread(QNetworkReply *reply);
 	void reply_get_channel_members(QNetworkReply *reply);
+	void reply_get_channel_statistics(QNetworkReply *reply);
 	void reply_post_channel_view(QNetworkReply *reply);
 	void reply_post_add_user_to_channel(QNetworkReply *reply);
 	void reply_delete_user_from_channel(QNetworkReply *reply);

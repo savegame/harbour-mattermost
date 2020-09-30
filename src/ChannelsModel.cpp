@@ -285,6 +285,7 @@ QHash<int, QByteArray> ChannelsModel::roleNames() const
 	{ DataRoles::RoleUsersTyping, "role_users_typing" },
 	{ DataRoles::RoleChannelId,   "role_channel_id" },
 	{ DataRoles::RoleServerIndex, "role_server_index" },
+	{ DataRoles::RoleMemberCount, "role_member_count" },
 	{ DataRoles::RoleChannelIndex,"role_channel_index" }};
 	return names;
 }
