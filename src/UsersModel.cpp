@@ -70,12 +70,23 @@ int UsersModel::rowCount(const QModelIndex &parent) const
 	return d->users.size();
 }
 
+int UsersModel::columnCount(const QModelIndex &parent) const
+{
+	return 2;
+}
+
 QVariant UsersModel::data(const QModelIndex &index, int role) const
 {
 	if (!index.isValid() || index.row() >= d->users.size() || index.row() < 0 )
 		return QVariant();
 	
 	MattermostQt::UserPtr user = d->users[index.row()];
+	
+	if( index.column() == 1 ) {
+		if( role == Qt::DisplayRole )
+			return tr("Remove user");
+		return QVariant();
+	}
 		
 	switch(role) {
 	case Qt::DisplayRole:
@@ -450,4 +461,40 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 		current = NoState;
 		break;
 	}
+}
+
+UsersFilterProxy::UsersFilterProxy(QObject *parent)
+	: QSortFilterProxyModel(parent)
+{
+	
+}
+
+bool UsersFilterProxy::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
+{
+	QModelIndex index0 = sourceModel()->index(source_row, 0, source_parent);
+	QRegExp regEx = filterRegExp();
+	if( regEx.pattern().isEmpty() )
+		return true;
+	QString pattern = regEx.pattern().toLower();
+	pattern.replace( QStringLiteral("\\"), QStringLiteral("\\\\") );
+	pattern.replace( QStringLiteral("+"), QStringLiteral("\\+") );
+	pattern.replace( QStringLiteral("."), QStringLiteral("\\.") );
+	pattern.replace( QStringLiteral("*"), QStringLiteral("\\*") );
+	pattern.replace( QStringLiteral("["), QStringLiteral("\\[") );
+	pattern.replace( QStringLiteral("]"), QStringLiteral("\\]") );
+	pattern.replace( QStringLiteral("("), QStringLiteral("\\(") );
+	pattern.replace( QStringLiteral(")"), QStringLiteral("\\)") );
+	pattern.replace( QStringLiteral("?"), QStringLiteral("\\?") );
+
+	regEx.setPattern( QStringLiteral(".*%0.*").arg(pattern) );
+	
+	QString data = index0.data(Qt::DisplayRole).toString().toLower();
+	return data.contains( regEx );
+	
+//	MattermostQt::UserPtr user = m_model->users()
+}
+
+void UsersFilterProxy::slot_sourceModelChanged()
+{
+	m_model = qobject_cast<UsersModel*>(sourceModel());
 }

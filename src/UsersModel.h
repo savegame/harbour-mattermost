@@ -22,6 +22,7 @@ public:
 	
 	// Basic functionality:
 	int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+	int columnCount(const QModelIndex &parent) const override; 
 	
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 	
@@ -71,5 +72,21 @@ private Q_SLOTS:
 private:
 	UsersModelPrivate *d;
 };
+
+class UsersFilterProxy : public QSortFilterProxyModel
+{
+	Q_OBJECT
+public:
+	UsersFilterProxy(QObject *parent = Q_NULLPTR);
+protected:
+	virtual bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const;
+//	virtual bool filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const;
+//	virtual bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const;
+private:
+	void slot_sourceModelChanged();
+private:
+	UsersModel *m_model = nullptr;
+};
+
 
 #endif // USERSMODEL_H
