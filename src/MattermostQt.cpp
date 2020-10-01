@@ -2664,6 +2664,13 @@ MattermostQt::UserPtr MattermostQt::userAt(int server_index, int user_index)
 	return m_server[server_index]->m_user[user_index];
 }
 
+MattermostQt::ServerPtr MattermostQt::serverAt(int server_index)
+{
+	if(server_index < 0 || server_index >= m_server.size() )
+		return ServerPtr();
+	return m_server[server_index];
+}
+
 
 
 void MattermostQt::setSettingsContainer(SettingsContainer *settings)

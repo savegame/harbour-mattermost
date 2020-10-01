@@ -93,6 +93,7 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 	switch(role) {
 	case Qt::CheckStateRole:
 		return  d->checkState[index.row()];
+	case MattermostQt::UserNameRole:
 	case Qt::DisplayRole:
 		if(user->m_self_index >= 0)
 		{
@@ -107,6 +108,8 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 		{
 			return tr("Unknown user");
 		}
+	case MattermostQt::UserImageRole:
+		return user->m_image_path;
 	case Qt::DecorationRole:
 		{
 			QImage avatar;
@@ -121,6 +124,13 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 				avatar = QImage(":/resources/empty_avatar.png");
 			return avatar;
 		}
+	case MattermostQt::UserIdRole:
+		return user->m_id;
+	case MattermostQt::UserIsCurrentRole:
+		{
+			MattermostQt::ServerPtr server = d->m_mattermost->serverAt(d->indexes.server_index);
+			return server && server->m_current_user && server->m_current_user->m_id == user->m_id;
+		}
 	}
 
 	// FIXME: Implement me!
@@ -130,8 +140,15 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 bool UsersModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
 	if(role == Qt::CheckStateRole) {
-		if(index.row() >=0 && index.row() < d->checkState.size())
+		if(index.row() >=0 && index.row() < d->checkState.size()) 
+		{
+			MattermostQt::UserPtr user = d->users[index.row()];
+			MattermostQt::ServerPtr server = d->m_mattermost->serverAt(d->indexes.server_index);
+			if(server && server->m_current_user && server->m_current_user->m_id == user->m_id ) {
+				return false;
+			}
 			d->checkState[index.row()] = Qt::CheckState(value.toInt());
+		}
 		return  true;
 	}
 	return QAbstractListModel::setData(index,value,role);

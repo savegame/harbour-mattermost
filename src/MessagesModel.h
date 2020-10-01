@@ -34,7 +34,6 @@ public:
 		RowIndex,
 		SenderImagePath, // user avatar
 		SenderUserName,
-		UserId,
 		CreateAt,
 		CreateDate,
 		IsEdited,
@@ -62,6 +61,7 @@ public:
 		RoleSenderFullName,
 		RoleFileProgress,
 		UserStatus = MattermostQt::UserStatusRole,
+		UserId = MattermostQt::UserIdRole,
 	};
 	Q_ENUM(DataRoles)
 

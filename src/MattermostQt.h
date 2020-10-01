@@ -154,7 +154,9 @@ public:
 		UserStatusRole = Qt::UserRole + 100,
 		UserImageRole,
 		UserNameRole,
-		UserLastActivityRole
+		UserLastActivityRole, 
+		UserIdRole,
+		UserIsCurrentRole,  // return true, if this user - current loggined user
 	};
 	Q_ENUM(UserDataRole)
 
@@ -362,6 +364,7 @@ public:
 		bool      m_typing = false;
 
 		int m_self_index;
+		int m_server_index = -1; // TODO make this parameter usable!
 		UserStatus  m_status;
 		QString m_image_path;
 	};
@@ -716,6 +719,8 @@ public:
 	                     int message_index);
 
 	UserPtr  userAt(int server_index, int user_index);
+	
+	ServerPtr serverAt(int server_index);
 
 	inline const QVector<ServerPtr> &server() const { return m_server; }
 
