@@ -139,6 +139,7 @@ bool UsersModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
 bool UsersModel::insertRows(int row, int count, const QModelIndex &parent)
 {
+	return false;
 	beginInsertRows(parent, row, row + count - 1);
 	// FIXME: Implement me!
 	endInsertRows();
@@ -146,6 +147,7 @@ bool UsersModel::insertRows(int row, int count, const QModelIndex &parent)
 
 bool UsersModel::removeRows(int row, int count, const QModelIndex &parent)
 {
+	return false;
 	beginRemoveRows(parent, row, row + count - 1);
 	// FIXME: Implement me!
 	endRemoveRows();
