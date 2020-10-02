@@ -257,6 +257,15 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			return result;
 		}
 		break;
+	case MessagesModel::CreateTime:
+		{
+			QDateTime time;
+			QString result;
+			time = QDateTime::fromMSecsSinceEpoch(message->m_create_at);
+			result = time.toString("hh:mm:ss");
+			return result;
+		}
+		break;
 	case MessagesModel::IsEdited:
 	    {
 			return QVariant(message->m_update_at  > 0);

@@ -26,10 +26,6 @@ public:
 		ServerIndex,
 		TeamIndex,
 		ChannelType,
-		AvatarPath = MattermostQt::UserImageRole,
-		UserStatus = MattermostQt::UserStatusRole,
-		UserActivity = MattermostQt::UserLastActivityRole,
-		UserName = MattermostQt::UserNameRole,
 		MessageUnread,  // count of unreaded messages
 		MentionCount,   // count of mention
 		RoleUsersTyping, // when we have event user_typing, here a count of users
@@ -37,10 +33,15 @@ public:
 		RoleServerIndex,
 		RoleChannelIndex,
 		RoleChannelDescription,
-		RoleMemberCount,
 		// -------
 		RoleUserFullName, // for direct channels only
 		RoleUserNickname, // for direct cahnnels only
+		// ---------------------------------
+		AvatarPath = MattermostQt::UserImageRole,
+		UserStatus = MattermostQt::UserStatusRole,
+		UserActivity = MattermostQt::UserLastActivityRole,
+		UserName = MattermostQt::UserNameRole,
+		RoleMemberCount = MattermostQt::ChannelMemberCountRole,
 //		Role
 	};
 

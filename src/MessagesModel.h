@@ -36,6 +36,7 @@ public:
 		SenderUserName,
 		CreateAt,
 		CreateDate,
+		CreateTime,
 		IsEdited,
 		MessageIndex,
 		FormatedText,

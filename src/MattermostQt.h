@@ -157,8 +157,17 @@ public:
 		UserLastActivityRole, 
 		UserIdRole,
 		UserIsCurrentRole,  // return true, if this user - current loggined user
+		// *-------------------
+		UserLastDataRole // do not use, its for next enum only
 	};
 	Q_ENUM(UserDataRole)
+	
+	enum ChannelDataRole {
+		ChannelMemberCountRole = UserLastDataRole,
+		// --------------------------------
+		ChannelLastDataRole
+	};
+	Q_ENUM(ChannelDataRole)
 
 	/**
 	 * @brief The UserSystemRole enum
@@ -721,6 +730,13 @@ public:
 	UserPtr  userAt(int server_index, int user_index);
 	
 	ServerPtr serverAt(int server_index);
+	
+	// helper functions
+	inline UserStatus str2status(const QString &s) const;
+	inline UserPtr    id2user(ServerPtr sc, const QString &id) const;
+	inline TeamPtr    id2team(ServerPtr sc, const QString &id) const;
+	inline ChannelPtr id2channel(ServerPtr sc, const QString &id) const;
+	inline MessagePtr id2message(ChannelPtr channel, const QString &id) const;
 
 	inline const QVector<ServerPtr> &server() const { return m_server; }
 
@@ -766,6 +782,8 @@ Q_SIGNALS:
 	
 	void userAdded(UserPtr user);
 	void userUpdated(UserPtr user,  QVectorInt roles);
+	void userRemovedFromChannel(QString user_id, ChannelPtr channel);
+	void userAddToChannel(QString user_id, ChannelPtr channel);
 	void currentUserChanged(UserPtr user);
 	void usersUpdated(QVector<UserPtr> users,  QVectorInt roles);
 	
@@ -905,12 +923,6 @@ protected:
 	void event_user_added(ServerPtr sc, QJsonObject object);
 	void event_user_removed(ServerPtr sc, QJsonObject object);
 
-	// helper functions
-	inline UserStatus str2status(const QString &s) const;
-	inline UserPtr    id2user(ServerPtr sc, const QString &id) const;
-	inline TeamPtr    id2team(ServerPtr sc, const QString &id) const;
-	inline ChannelPtr id2channel(ServerPtr sc, const QString &id) const;
-	inline MessagePtr id2message(ChannelPtr channel, const QString &id) const;
 //	void  message_format(MessagePtr message);
 	/**
 	 * @brief generateCachePath

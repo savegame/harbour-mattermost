@@ -1397,7 +1397,7 @@ void MattermostQt::post_channel_view(int server_index, int team_index, int chann
 void MattermostQt::post_add_user_to_channel(int server_index, int team_index, QString channel_id, QString user_id)
 {
 	///channels/{channel_id}/members
-	ServerPtr sc = get_server(server_index);
+	ServerPtr sc = serverAt(server_index);
 	if(!sc) {
 		qCritical() << QStringLiteral("Wrong server index: %0").arg(server_index);
 		return;
@@ -1427,12 +1427,15 @@ void MattermostQt::post_add_user_to_channel(int server_index, int team_index, QS
 	root["user_id"] = user_id;
 //	root["post_root_id"] = QString();
 	json.setObject(root);
+	
+	ChannelPtr channel = id2channel(sc, channel_id);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_add_user_to_channel) );
 	reply->setProperty(P_SERVER_INDEX, server_index);
 	reply->setProperty(P_TEAM_INDEX, team_index );
 	reply->setProperty(P_CHANNEL_ID, channel_id );
+	reply->setProperty(P_CHANNEL_PTR, QVariant::fromValue<ChannelPtr>(channel) );
 	reply->setProperty(P_USER_ID, user_id);
 }
 
@@ -1461,10 +1464,13 @@ void MattermostQt::delete_user_from_channel(int server_index, QString channel_id
 	request_set_headers(request,sc);
 	request_urlencoded(request);
 
+	ChannelPtr channel = id2channel(sc, channel_id);
+	
 	QNetworkReply *reply = m_networkManager->deleteResource(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_delete_user_from_channel) );
 	reply->setProperty(P_SERVER_INDEX, server_index);
 	reply->setProperty(P_CHANNEL_ID, channel_id );
+	reply->setProperty(P_CHANNEL_PTR, QVariant::fromValue<ChannelPtr>(channel) );
 	reply->setProperty(P_USER_ID, user_id);
 }
 
@@ -3739,33 +3745,19 @@ void MattermostQt::reply_post_add_user_to_channel(QNetworkReply *reply)
 		},
 		"last_update_at": 0
 	}*/
-//	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
-//	if(!channel)
-//		return;
-//	ServerPtr pc = m_server[channel->m_server_index];
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
 	QJsonObject object = json.object();
+//	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+//	if(channel) {
+//		channel->m_member_count++;
+//	}
 	qDebug() << QStringLiteral("User %0 added to channel %1").
 	         arg(object["user_id"].toString()).
 	         arg(object["channel_id"].toString());
-//	if( object["status"].toString() != QString("success") )
-//	{
-//		qWarning() << json;
-//	}
-//	if( channel->m_type != ChannelDirect )
-//	{
-//		TeamPtr team = teamAt(channel->m_server_index, channel->m_team_index);
-//		get_teams_unread(pc);
-//	}
-//	channel->m_mention_count = 0;
-//	channel->m_msg_unread = 0;
-//	emit updateChannel(channel, QVectorInt() << ChannelsModel::MentionCount << ChannelsModel::MessageUnread );
-	//	emit messageUnreadChanged();
 }
 
 void MattermostQt::reply_delete_user_from_channel(QNetworkReply *reply)
 {
-	// TODO
 	ASSERT_REPLY(reply_delete_user_from_channel);
 	
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
@@ -3773,6 +3765,10 @@ void MattermostQt::reply_delete_user_from_channel(QNetworkReply *reply)
 	
 	QString user_id = reply->property(P_USER_ID).toString();
 	QString channel_id = reply->property(P_CHANNEL_ID).toString();
+	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+//	if(channel) {
+//		channel->m_member_count--;
+//	}
 	qDebug() << QStringLiteral("User \"%0\" leaving channel \"%1\", status : %2").arg(user_id).arg(channel_id).arg(object["status"].toString());
 }
 
@@ -5297,22 +5293,39 @@ void MattermostQt::event_user_added(MattermostQt::ServerPtr sc, QJsonObject obje
 	}
 	QString team_id = data["team_id"].toString();
 	QString user_id = data["user_id"].toString();
-	TeamPtr team = id2team(sc, team_id);
-	UserPtr user = id2user(sc, user_id);
-	if(!team || !user)
+	QString channel_id = broadcast["channel_id"].toString();
+	
+	if(team_id.isEmpty() || user_id.isEmpty() )
 	{
-		qWarning() << QStringLiteral("Cant find team (%0) or user (%1)").arg(team_id).arg(user_id);
+		qWarning() << QStringLiteral("User id and team id is empty").arg(team_id).arg(user_id);
 		return;
 	}
-	QString channel_id = broadcast["channel_id"].toString();
+	
+	TeamPtr team = id2team(sc, team_id);
+	UserPtr user = id2user(sc, user_id);
+	ChannelPtr channel = id2channel(sc, channel_id);
+	
+	if(!team || !user)
+	{
+		if(!user)
+			qWarning() << QStringLiteral("Cant find team (%0) or user (%1)").arg(team_id).arg(user_id);
+		if(!user_id.isEmpty() && !channel.isNull() )
+			emit userAddToChannel(user_id,channel);
+		return;
+	}
 	if( channel_id.isEmpty() ) {
 		qWarning() << QStringLiteral("Empty channel_id in  broadcast:")<< broadcast;
 		return;
 	}
-	ChannelPtr channel = id2channel(sc, channel_id);
 	if(!channel) {
 		// need request channel info from server
 		get_channel(sc->m_self_index, channel_id);
+	}
+	else {
+		channel->m_member_count++;
+		emit updateChannel(channel, QVectorInt() << ChannelMemberCountRole );
+		if(!user_id.isEmpty())
+			emit userAddToChannel(user_id,channel);
 	}
 }
 
@@ -5344,8 +5357,10 @@ void MattermostQt::event_user_removed(MattermostQt::ServerPtr sc, QJsonObject ob
 	}
 	QString channel_id = data["channel_id"].toString();
 	QString user_id = broadcast["user_id"].toString();
-	if( channel_id.isEmpty() ) {
-		qWarning() << QStringLiteral("Empty channel_id in  data:")<< data;
+	if( channel_id.isEmpty() || user_id.isEmpty() ) {
+		qWarning() << QStringLiteral("Empty channel_id or user_id in  data:")<< data;
+		channel_id = broadcast["channel_id"].toString();
+		user_id = data["user_id"].toString();
 	}
 //	if( user_id.isEmpty() ) {
 //		qWarning() << QStringLiteral("Empty channel_id in broadcast:")<< broadcast;
@@ -5353,12 +5368,21 @@ void MattermostQt::event_user_removed(MattermostQt::ServerPtr sc, QJsonObject ob
 	// check user_id
 	if( user_id != sc->m_user_id ) {
 		qWarning() << QStringLiteral("Current user_id (%0) not equal broadcast.user_id (%1)").arg(sc->m_user_id).arg(user_id);
+		ChannelPtr channel = id2channel(sc, channel_id);
+		if(!channel) {
+			qCritical() << QStringLiteral("Cant remove channel, channel (%0) not found.").arg(channel_id);
+			return;
+		}
+		channel->m_member_count--;
+		emit updateChannel(channel, QVectorInt() << MattermostQt::ChannelMemberCountRole );
+		emit userRemovedFromChannel(user_id, channel);
 		return ;
 	}
 	ChannelPtr channel = id2channel(sc, channel_id);
 	QVector<ChannelPtr> *channels = nullptr;
 	if(!channel) {
 		qCritical() << QStringLiteral("Cant remove channel, channel (%0) not found.").arg(channel_id);
+		return;
 	}
 		
 	if( channel->m_type != ChannelType::ChannelDirect ) {

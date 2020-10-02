@@ -69,6 +69,8 @@ public:
 	Qt::CheckState  checkState(int i) const;
 	
 	Q_INVOKABLE QStringList checkedIds() const;
+	Q_INVOKABLE bool isHasChecked() const;
+
 protected:
 	bool canFetchMore(const QModelIndex &parent) const override;
 	void fetchMore(const QModelIndex &parent) override;
@@ -78,11 +80,14 @@ Q_SIGNALS:
 	void request(int type);
 	
 private Q_SLOTS:
-	void userUpdated(MattermostQt::UserPtr user,  QVector<int> roles);
-	void userAdded(MattermostQt::UserPtr user);
+	void updateChannel         (MattermostQt::ChannelPtr channel,  QVectorInt roles);
+	void userUpdated           (MattermostQt::UserPtr user,  QVector<int> roles);
+	void userAdded             (MattermostQt::UserPtr user);
+	void userRemovedFromChannel(QString user_id, MattermostQt::ChannelPtr channel);
+	void userAddToChannel      (QString user_id, MattermostQt::ChannelPtr channel);
 	
-	void onReplyChannelMembers(MattermostQt::ChannelPtr channel, QVector<MattermostQt::UserPtr> members);
-	void onReplyTeamMembers(MattermostQt::TeamPtr team, QVector<MattermostQt::UserPtr> members);
+	void onReplyChannelMembers (MattermostQt::ChannelPtr channel, QVector<MattermostQt::UserPtr> members);
+	void onReplyTeamMembers    (MattermostQt::TeamPtr team, QVector<MattermostQt::UserPtr> members);
 private:
 	UsersModelPrivate *d;
 };

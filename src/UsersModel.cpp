@@ -7,13 +7,6 @@ public:
 		this->parent = parent;
 	}
 	
-	enum State {
-		NoState           = UsersModel::NoState,
-		ChannelMembers    = UsersModel::ChannelMembers,
-		TeamMembers       = UsersModel::TeamMembers,
-		InviteChannelList = UsersModel::InviteChannelList
-	};
-	
 	struct Indexes {
 		int server_index  = -1;
 		int team_index    = -1;
@@ -24,8 +17,8 @@ public:
 	void checkRequestsStack(QVector<MattermostQt::UserPtr> &members);
 	
 	void clear() {
-		current = NoState;
-		finish  = NoState;
+		current = UsersModel::NoState;
+		finish  = UsersModel::NoState;
 		indexes.server_index  = -1;
 		indexes.team_index    = -1;
 		indexes.channel_type  = -1;
@@ -33,14 +26,15 @@ public:
 		users.clear();
 		checkState.clear();
 		temp_users.clear();
+		request_page = 0;
 	}
 	
 	MattermostQt *m_mattermost = nullptr;
 	QVector<MattermostQt::UserPtr> users;
 	QVector<Qt::CheckState>        checkState;
 	QVector<MattermostQt::UserPtr> temp_users;
-	State current = NoState;
-	State finish  = NoState;
+	UsersModel::State current = UsersModel::NoState;
+	UsersModel::State finish  = UsersModel::NoState;
 	UsersModel *parent = nullptr;
 	int member_count = -1;
 	int request_page = 0;
@@ -189,9 +183,9 @@ void UsersModel::request_channel_members(int server_index, int team_index, int c
 		qCritical() << QStringLiteral("You try request channel mebers without MattermostQt client. Try use singleton");
 		setMattermost(MattermostQt::getInstance());
 	}
-	if(d->finish == UsersModelPrivate::NoState) {
+	if(d->finish == UsersModel::NoState) {
 		d->clear();
-		d->finish = UsersModelPrivate::ChannelMembers;
+		d->finish = UsersModel::ChannelMembers;
 	}
 	if(server_index >= 0) {
 		d->indexes.server_index = server_index;
@@ -199,7 +193,7 @@ void UsersModel::request_channel_members(int server_index, int team_index, int c
 		d->indexes.channel_type = channel_type;
 		d->indexes.channel_index = channel_index;
 	}
-	d->current = UsersModelPrivate::ChannelMembers;
+	d->current = UsersModel::ChannelMembers;
 	int page = 0;
 	MattermostQt::ChannelPtr channel = mattermost()->channelAt(d->indexes.server_index, d->indexes.team_index, d->indexes.channel_type, d->indexes.channel_index);
 	if( channel && d->users.size() < channel->m_member_count ) {
@@ -208,6 +202,9 @@ void UsersModel::request_channel_members(int server_index, int team_index, int c
 	mattermost()->get_channel_members(d->indexes.server_index, d->indexes.team_index, d->indexes.channel_type, d->indexes.channel_index, page, d->request_per_page);
 	disconnect(mattermost(), &MattermostQt::onReplyTeamMembers, this, &UsersModel::onReplyTeamMembers);
 	connect(mattermost(), &MattermostQt::onReplyChannelMembers, this, &UsersModel::onReplyChannelMembers);
+	connect(mattermost(), &MattermostQt::updateChannel, this, &UsersModel::updateChannel);
+	connect(mattermost(), &MattermostQt::userRemovedFromChannel, this, &UsersModel::userRemovedFromChannel);
+	connect(mattermost(), &MattermostQt::userAddToChannel, this, &UsersModel::userAddToChannel);
 }
 
 void UsersModel::request_team_members(int server_index, int team_index)
@@ -216,15 +213,15 @@ void UsersModel::request_team_members(int server_index, int team_index)
 		qCritical() << QStringLiteral("You try request channel mebers without MattermostQt client. Try use singleton");
 		setMattermost(MattermostQt::getInstance());
 	}
-	if(d->finish == UsersModelPrivate::NoState) {
+	if(d->finish == UsersModel::NoState) {
 		d->clear();
-		d->finish = UsersModelPrivate::TeamMembers;
+		d->finish = UsersModel::TeamMembers;
 	}
 	if(server_index >= 0) {
 		d->indexes.server_index = server_index;
 		d->indexes.team_index = team_index;
 	}
-	d->current = UsersModelPrivate::TeamMembers;
+	d->current = UsersModel::TeamMembers;
 	int page = 0;
 	
 	MattermostQt::TeamPtr team = mattermost()->teamAt(server_index, team_index);
@@ -234,6 +231,8 @@ void UsersModel::request_team_members(int server_index, int team_index)
 	
 	mattermost()->get_team_members(d->indexes.server_index, d->indexes.team_index, page, d->request_per_page);
 	disconnect(mattermost(), &MattermostQt::onReplyChannelMembers, this, &UsersModel::onReplyChannelMembers);
+	disconnect(mattermost(), &MattermostQt::updateChannel, this, &UsersModel::updateChannel);
+	disconnect(mattermost(), &MattermostQt::userRemovedFromChannel, this, &UsersModel::userRemovedFromChannel);
 	connect(mattermost(), &MattermostQt::onReplyTeamMembers, this, &UsersModel::onReplyTeamMembers);
 }
 
@@ -244,8 +243,8 @@ void UsersModel::request_invite_list(int server_index, int team_index, int chann
 		setMattermost(MattermostQt::getInstance());
 	}
 	
-	d->finish = UsersModelPrivate::InviteChannelList;
-	if( d->current == UsersModelPrivate::ChannelMembers ) 
+	d->finish = UsersModel::InviteChannelList;
+	if( d->current == UsersModel::ChannelMembers ) 
 	{
 		if( canFetchMore(QModelIndex()) ) 
 		{
@@ -269,7 +268,7 @@ void UsersModel::request_invite_list(int server_index, int team_index, int chann
 //		return;
 //	}
 	d->clear();
-	d->finish = UsersModelPrivate::InviteChannelList;
+	d->finish = UsersModel::InviteChannelList;
 	request_channel_members(server_index, team_index, channel_type, channel_index);
 }
 
@@ -304,10 +303,19 @@ QStringList UsersModel::checkedIds() const
 	return result;
 }
 
+bool UsersModel::isHasChecked() const
+{
+	QStringList result;
+	for(int i=0; i < d->checkState.size(); i++)
+		if(d->checkState[i] == Qt::Checked)
+			return true;
+	return false;
+}
+
 bool UsersModel::canFetchMore(const QModelIndex &parent) const
 {
 	if( /*parent.row() == d->users.size() - 1 && */d->member_count > d->users.size() ) {
-		if( d->current == UsersModelPrivate::ChannelMembers ) 
+		if( d->current == UsersModel::ChannelMembers ) 
 		{
 			return true;
 		}
@@ -318,7 +326,7 @@ bool UsersModel::canFetchMore(const QModelIndex &parent) const
 void UsersModel::fetchMore(const QModelIndex &parent)
 {
 	if( /*parent.row() == d->users.size() - 1 && */d->member_count > d->users.size() ) {
-		if( d->current == UsersModelPrivate::ChannelMembers ) 
+		if( d->current == UsersModel::ChannelMembers ) 
 		{
 			int page = 0;
 			MattermostQt::ChannelPtr channel = 
@@ -330,7 +338,7 @@ void UsersModel::fetchMore(const QModelIndex &parent)
 				d->request_page++;
 				page = d->request_page; //d->users.size() / d->request_per_page;
 			}
-			d->finish = UsersModelPrivate::ChannelMembers;
+			d->finish = UsersModel::ChannelMembers;
 			mattermost()->get_channel_members(
 			            d->indexes.server_index, 
 			            d->indexes.team_index, 
@@ -401,6 +409,45 @@ void UsersModel::userAdded(MattermostQt::UserPtr user)
 	dataChanged(dataIndex,dataIndex,QVectorInt() << MattermostQt::UserImageRole << MattermostQt::UserNameRole);
 }
 
+void UsersModel::userRemovedFromChannel(QString user_id, MattermostQt::ChannelPtr channel)
+{
+	MattermostQt::ChannelPtr c =  mattermost()->channelAt(d->indexes.server_index, d->indexes.team_index, d->indexes.channel_type, d->indexes.channel_index);
+	if( channel != c  )
+		return;
+	if( d->current == ChannelMembers )
+	for(int user_index = 0; user_index < d->users.size(); user_index++) 
+	{
+		if( d->users[user_index]->m_id == user_id ) {
+			beginRemoveRows(QModelIndex(),user_index,user_index);
+			d->users.remove(user_index);
+			d->checkState.remove(user_index);
+			endRemoveRows();
+			break;
+		}
+	}
+}
+
+void UsersModel::userAddToChannel(QString user_id, MattermostQt::ChannelPtr channel)
+{
+	MattermostQt::ChannelPtr c =  mattermost()->channelAt(d->indexes.server_index, d->indexes.team_index, d->indexes.channel_type, d->indexes.channel_index);
+	if( channel != c  )
+		return;
+	MattermostQt::ServerPtr server = mattermost()->serverAt(d->indexes.server_index);
+	MattermostQt::UserPtr user = mattermost()->id2user(server, user_id);
+	if( !user ) {
+		user.reset(new MattermostQt::UserContainer());
+		user->m_id = user_id;
+		user->m_self_index = -2;
+		mattermost()->get_user_info(d->indexes.server_index,user_id);
+	}
+	if( d->current == ChannelMembers ) {
+		beginInsertRows(QModelIndex(), d->users.size(),d->users.size());
+		d->users.push_back(user);
+		d->checkState.push_back(Qt::Unchecked);
+		endInsertRows();
+	}
+}
+
 void UsersModel::onReplyChannelMembers(MattermostQt::ChannelPtr channel, QVector<MattermostQt::UserPtr> members)
 {
 	d->member_count = channel->m_member_count;
@@ -413,9 +460,25 @@ void UsersModel::onReplyTeamMembers(MattermostQt::TeamPtr team, QVector<Mattermo
 	d->checkRequestsStack(members);
 }
 
+void UsersModel::updateChannel(MattermostQt::ChannelPtr channel, QVectorInt roles)
+{
+	MattermostQt::ChannelPtr c =  mattermost()->channelAt(d->indexes.server_index, d->indexes.team_index, d->indexes.channel_type, d->indexes.channel_index);
+	if( channel != c || !roles.contains(MattermostQt::ChannelMemberCountRole) )
+		return;
+	if( d->current != UsersModel::ChannelMembers )
+		return;
+//	TODO dynamicaly update members list if some user deleted
+//	d->clear();
+//	d->finish = UsersModel::ChannelMembers;
+//	request_channel_members(d->indexes.server_index,
+//	                        d->indexes.team_index,
+//	                        d->indexes.channel_type,
+//	                        d->indexes.channel_index);
+}
+
 void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &members)
 {
-	if( current == NoState || finish == NoState )
+	if( current == UsersModel::NoState || finish == UsersModel::NoState )
 		return;
 	if( finish == current ) 
 	{
@@ -442,13 +505,13 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 			parent->endResetModel();
 		}
 //		current = NoState;
-		finish  = NoState;
+		finish  = UsersModel::NoState;
 		return;
 	}
 	
 	switch (current) {
-	case TeamMembers:
-		if( finish == InviteChannelList ) {
+	case UsersModel::TeamMembers:
+		if( finish == UsersModel::InviteChannelList ) {
 			if( member_count > temp_users.size() + members.size() ) {
 //				temp_users.reserve(temp_users.size() + members.size());
 				for(int i = 0; i < members.size(); i++ )
@@ -460,7 +523,8 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 				                             indexes.team_index);
 				users.swap(temp_users);
 			}
-			else {
+			else
+			{
 //				members << temp_users;
 //				temp_users.reserve(temp_users.size() + members.size());
 				for(int i = 0; i < members.size(); i++ )
@@ -491,13 +555,13 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 				users = new_users;
 				checkState.fill(Qt::Unchecked, users.size());
 				parent->endResetModel();
-				current = InviteChannelList;
-				finish = NoState;
+				current = UsersModel::InviteChannelList;
+				finish = UsersModel::NoState;
 			}
 		}
 		break;
-	case ChannelMembers:
-		if( finish == InviteChannelList ) {
+	case UsersModel::ChannelMembers:
+		if( finish == UsersModel::InviteChannelList ) {
 //			users.reserve(users.size() + members.size());
 			for(int i = 0; i < members.size(); i++ )
 				if( members[i]->m_delete_at == 0 )
@@ -505,13 +569,14 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 					users << members[i];
 					checkState << Qt::Unchecked;
 				}
+			// TODO неверная логика, по какой то 
 			if ( member_count > users.size() ) {
 				parent->request_invite_list(indexes.server_index,
-				                             indexes.team_index,
+				                            indexes.team_index,
 				                            indexes.channel_type,
 				                            indexes.channel_index);
 			}
-			else 
+			else
 			{
 				request_page = 0;
 				parent->request_team_members(indexes.server_index,indexes.team_index);
@@ -519,8 +584,8 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 		}
 		break;
 	default:
-		finish = NoState;
-		current = NoState;
+		finish = UsersModel::NoState;
+		current = UsersModel::NoState;
 		break;
 	}
 }
@@ -528,7 +593,7 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 UsersFilterProxy::UsersFilterProxy(QObject *parent)
 	: QSortFilterProxyModel(parent)
 {
-	
+	setSortCaseSensitivity(Qt::CaseInsensitive);
 }
 
 bool UsersFilterProxy::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
