@@ -34,6 +34,8 @@ public:
 	
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 	
+	QHash<int, QByteArray> roleNames() const override;
+	
 	Q_INVOKABLE virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
 	
 	// Add data:

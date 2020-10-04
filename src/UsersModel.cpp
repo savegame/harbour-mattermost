@@ -125,10 +125,22 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 			MattermostQt::ServerPtr server = d->m_mattermost->serverAt(d->indexes.server_index);
 			return server && server->m_current_user && server->m_current_user->m_id == user->m_id;
 		}
+	case MattermostQt::UserStatusRole:
+		return user->m_status;
 	}
 
 	// FIXME: Implement me!
 	return QVariant();
+}
+
+QHash<int, QByteArray> UsersModel::roleNames() const
+{
+	static const QHash<int, QByteArray> names = {
+	    { MattermostQt::UserNameRole,    "role_user_name"  },
+	    { MattermostQt::UserImageRole,   "role_image"      },
+	    { MattermostQt::UserIdRole,      "role_user_id"    },
+	    { MattermostQt::UserStatusRole,  "role_user_status"}};
+	return names;
 }
 
 bool UsersModel::setData(const QModelIndex &index, const QVariant &value, int role)
