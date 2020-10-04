@@ -168,6 +168,7 @@ void MattermostQt::bind_reply_functions()
 	BIND_REPLY_FUNCTION(post_add_user_to_channel);
 	BIND_REPLY_FUNCTION(delete_user_from_channel);
 	BIND_REPLY_FUNCTION(post_create_channel);
+	BIND_REPLY_FUNCTION(post_create_direct_channel);
 }
 
 void MattermostQt::bind_event_functions()
@@ -183,6 +184,7 @@ void MattermostQt::bind_event_functions()
 	BIND_EVENT_FUNCTION(reaction_added);
 	BIND_EVENT_FUNCTION(reaction_removed);
 	BIND_EVENT_FUNCTION(channel_created);
+	BIND_EVENT_FUNCTION(direct_added);
 	BIND_EVENT_FUNCTION(user_added);
 	BIND_EVENT_FUNCTION(user_removed);
 }
@@ -1524,6 +1526,44 @@ void MattermostQt::post_create_channel(int server_index, int team_index,
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_create_channel) );
 	reply->setProperty(P_SERVER_INDEX, server_index);
 	reply->setProperty(P_TEAM_INDEX, team_index );
+}
+
+void MattermostQt::post_create_direct_channel(int server_index, QString user_id)
+{
+	// TODO
+	ServerPtr sc = get_server(server_index);
+	if(!sc ) {
+		qCritical() << QStringLiteral("Wrong server index: %0").arg(server_index);
+		return;
+	}
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/channels/direct");
+
+	QUrl url(sc->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,sc);
+	request_json(request);
+
+//	[
+//	  "user_id_1",
+//	  "user_id_2",
+//	]
+
+	QJsonDocument json;
+	QJsonArray root;
+	root.push_back(sc->m_current_user->m_id);
+	root.push_back(user_id);
+	json.setArray(root);
+
+	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_create_direct_channel) );
+	reply->setProperty(P_SERVER_INDEX, server_index);
+	reply->setProperty(P_USER_ID, user_id );
 }
 
 void MattermostQt::get_channel_unread(int server_index, int team_index, int channel_type, int channel_index)
@@ -3807,6 +3847,15 @@ void MattermostQt::reply_post_create_channel(QNetworkReply *reply)
 	channel->m_team_index = team_index;
 }
 
+void MattermostQt::reply_post_create_direct_channel(QNetworkReply *reply)
+{
+	// TODO
+	ASSERT_REPLY(reply_post_create_direct_channel);
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	QJsonObject object = json.object();
+	qDebug() << json;
+}
+
 void MattermostQt::reply_get_channel_unread(QNetworkReply *reply)
 {
 	ASSERT_REPLY(reply_get_channel_unread)
@@ -5265,6 +5314,30 @@ void MattermostQt::event_channel_created(MattermostQt::ServerPtr sc, QJsonObject
 	qWarning() << object;
 	QJsonObject data = object["data"].toObject();
 	get_channel(sc->m_self_index, data["channel_id"].toString());
+}
+
+void MattermostQt::event_direct_added(MattermostQt::ServerPtr sc, QJsonObject object)
+{
+	// TODO
+	/*
+	{
+		"event": "direct_added",
+		"data": {
+			"teammate_id": "i48uzn46k3fy5fq9bkfknf65ra"
+		},
+		"broadcast": {
+			"omit_users": null,
+			"user_id": "",
+			"channel_id": "ht5cjjnswjndbxp7iit6td8msh",
+			"team_id": ""
+		},
+		"seq": 2
+	}
+	 */
+	//qWarning() << "Event not processed: deirect_added";
+	QJsonObject broadcast = object["broadcast"].toObject();
+	QString id = broadcast["channel_id"].toString();
+	get_channel(sc->m_self_index, id);
 }
 
 void MattermostQt::event_user_added(MattermostQt::ServerPtr sc, QJsonObject object)

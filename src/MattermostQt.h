@@ -43,6 +43,7 @@ public:
 		rt_post_add_user_to_channel,
 		rt_delete_user_from_channel,
 		rt_post_create_channel,
+		rt_post_create_direct_channel,
 		rt_get_user_info,
 		rt_get_user_image,
 		rt_post_users_status,
@@ -83,6 +84,7 @@ public:
 		et_reaction_added,
 		et_reaction_removed,
 		et_channel_created,
+		et_direct_added,
 		et_user_added,
 		et_user_removed,
 		//=======================
@@ -650,6 +652,13 @@ public:
 	                                     QString purpose = QString(), 
 	                                     QString url_name = QString());
 	
+	/**
+	 * @brief post_create_direct_channel
+	 * @param server_index
+	 * @param user_id
+	 */
+	Q_INVOKABLE void post_create_direct_channel(int server_index, QString user_id);
+	
 	Q_INVOKABLE void get_user_image(int server_index, int user_index);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
@@ -893,6 +902,7 @@ protected:
 	void reply_post_add_user_to_channel(QNetworkReply *reply);
 	void reply_delete_user_from_channel(QNetworkReply *reply);
 	void reply_post_create_channel(QNetworkReply *reply);
+	void reply_post_create_direct_channel(QNetworkReply *reply);
 	void reply_get_user_info(QNetworkReply *reply);
 	void error_get_user_info(QNetworkReply *reply);
 	void reply_post_users_status(QNetworkReply *reply);
@@ -920,6 +930,7 @@ protected:
 	void event_reaction_added(ServerPtr sc, QJsonObject object);
 	void event_reaction_removed(ServerPtr sc, QJsonObject object);
 	void event_channel_created(ServerPtr sc, QJsonObject object);
+	void event_direct_added(ServerPtr sc, QJsonObject object);
 	void event_user_added(ServerPtr sc, QJsonObject object);
 	void event_user_removed(ServerPtr sc, QJsonObject object);
 
