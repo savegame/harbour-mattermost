@@ -404,19 +404,20 @@ void MattermostQt::set_server_enabled(int server_index, const bool enabled)
 	server->m_enabled = enabled;
 
 	emit serverChanged(server,  QVectorInt() << AccountsModel::RoleIsEnabled );
-	if(server->m_enabled )
+	if( !server->m_enabled )
 	{
 		server->m_ping_timer.stop();
 		qDebug() << QStringLiteral("Server[%0] (%1)  stop ping timer.").arg(server->m_self_index).arg(server->m_display_name);
 		server->m_state = ServerUnconnected;
-		emit serverStateChanged(server_index, ServerUnconnected);
 	}
-	else {
-		//		get_login(server);
+	else 
+	{
+		server->m_state = ServerStartLogin;
 		slot_recconect_servers();
 		m_reconnect_server.start();
 		qDebug() << QStringLiteral("Server[%0] (%1) recconect timer started.").arg(server->m_self_index).arg(server->m_display_name);
 	}
+	emit serverStateChanged(server_index, server->m_state);
 }
 
 void MattermostQt::post_login(QString server, QString login, QString password,
@@ -529,9 +530,9 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 {
 	if(!sc)
 		return;
-	if( sc->m_state == ServerLogin )
+	if( sc->m_state == ServerStartLogin )
 		return;
-	sc->m_state = ServerLogin;
+	sc->m_state = ServerStartLogin;
 	// fix api minimum version
 	if(sc->m_api <= 3)
 		sc->m_api = 4;
@@ -5779,9 +5780,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			{
 				ServerPtr server = m_server[i];
 				server->m_state = ServerState::ServerUnconnected;
+				emit serverStateChanged(i, server->m_state);
 				if(server->m_socket)
 					server->m_socket->close(QWebSocketProtocol::CloseCodeAbnormalDisconnection, QString("Client closing") );
-				emit serverStateChanged(i, server->m_state);
 				server->m_ping_timer.stop();
 				qDebug() << QStringLiteral("Server[%0] (%1)  stop ping timer.").arg(server->m_self_index).arg(server->m_display_name);
 				m_user_status_timer.stop();
@@ -5853,9 +5854,9 @@ void MattermostQt::slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAc
 			ServerPtr server = m_server[i];
 			//			server->m_socket->st
 			server->m_state = ServerState::ServerUnconnected;
+			emit serverStateChanged(i, server->m_state);
 			if(server->m_socket)
 				server->m_socket->close(QWebSocketProtocol::CloseCodeAbnormalDisconnection, QString("Client closing") );
-			emit serverStateChanged(i, server->m_state);
 			server->m_ping_timer.stop();
 			qDebug() << QStringLiteral("Server[%0] (%1)  stop ping timer.").arg(server->m_self_index).arg(server->m_display_name);
 			m_user_status_timer.stop();
@@ -6026,7 +6027,7 @@ void MattermostQt::onWebSocketSslError(QList<QSslError> errors)
 			}
 			ServerPtr sc = m_server[server_index];
 			sc->m_state = (int)QAbstractSocket::ConnectingState;
-			emit serverStateChanged(server_index, (int)sc->m_state);
+			emit serverStateChanged(server_index, sc->m_state);
 		}
 	}
 	//	qDebug() << err;
@@ -6080,7 +6081,7 @@ void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
 			break;
 		ServerPtr server = m_server[server_index];
 
-		//server->m_state = ServerState::ServerUnconnected;
+		server->m_state = ServerState::ServerUnconnected;
 		emit serverStateChanged(server_index, server->m_state);
 		server->m_ping_timer.stop();
 		qDebug() << QStringLiteral("Server[%0] (%1)  stop ping timer.").arg(server->m_self_index).arg(server->m_display_name);
@@ -6124,8 +6125,11 @@ void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 		//		s_state = QStringLiteral("UnconnectedState");
 		m_reconnect_server.start();
 		qDebug() << QLatin1String("Recconect timer started.");
-		sc->m_state = (int)state;
-		emit serverStateChanged(server_index, (int)sc->m_state);
+		if(sc->m_state != ServerStartLogin )
+		{ 
+			sc->m_state = (int)state;
+			emit serverStateChanged(server_index, (int)sc->m_state);
+		}
 		break;
 	case QAbstractSocket::ConnectingState:
 		//		s_state = QStringLiteral("ConnectingState");

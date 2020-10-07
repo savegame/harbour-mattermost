@@ -139,9 +139,9 @@ public:
 		ServerConnected = QAbstractSocket::ConnectedState,
 		ServerConnecting = QAbstractSocket::ConnectingState,
 		ServerUnconnected = QAbstractSocket::UnconnectedState,
-		ServerLogin // when server just start logging in
+		ServerStartLogin, // when server just start logging in
 	};
-	Q_ENUMS(ServerState)
+	Q_ENUM(ServerState)
 
 	enum UserStatus : int {
 		UserNoStatus,

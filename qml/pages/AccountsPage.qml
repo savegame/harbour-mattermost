@@ -149,7 +149,7 @@ Page {
                             case MattermostQt.ServerUnconnected:
                                 qsTr("Offline")
                                 break;
-                            case MattermostQt.ServerLogin:
+                            case MattermostQt.ServerStartLogin:
                                 qsTr("Loggining")
                                 break;
                             }
