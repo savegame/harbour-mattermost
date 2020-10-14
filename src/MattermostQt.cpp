@@ -61,6 +61,7 @@
 #define P_USER_ID            "user_id"
 #define P_FILE_SC_INDEX      "file_sc_index"
 #define P_TEAM_INDEX         "team_index"
+#define P_TEAM_PTR           "team_ptr"
 #define P_MESSAGE_INDEX      "message_index"
 #define P_FILE_INDEX         "file_index"
 #define P_FILE_ID            "file_id"
@@ -88,6 +89,7 @@
 #define GET_USER_INFO_direct_channel    -1 // reques user info for direct channel
 #define GET_USER_INFO_current_user      -2 // request user info for current loggined user
 #define GET_USER_INFO_channel_members   -3 // request user info from channel members
+#define GET_TEAM_ICON_all_teams         -2 // team index for request icon, when user is not in team, and team is not in server->m_team list
 
 //#ifdef _RELEASE
 #define bearer_string(token) QString("Bearer %0").arg(token)
@@ -110,6 +112,7 @@ Q_GLOBAL_STATIC(MattermostQt,mattermostQtGlobalInstance);
 Q_DECLARE_METATYPE(MattermostQt::FilePtr)
 Q_DECLARE_METATYPE(MattermostQt::ChannelPtr)
 Q_DECLARE_METATYPE(MattermostQt::MessagePtr)
+Q_DECLARE_METATYPE(MattermostQt::TeamPtr)
 
 #define ASSERT_REPLY(function_name) \
 	if(!reply) { \
@@ -137,6 +140,7 @@ void MattermostQt::bind_reply_functions()
 	//func_pointer = (reply_func)&MattermostQt::reply_login;
 	BIND_REPLY_FUNCTION(login);
 	BIND_REPLY_FUNCTION(get_teams);
+	BIND_REPLY_FUNCTION(get_all_teams);
 	BIND_REPLY_FUNCTION(get_team_icon);
 	BIND_REPLY_FUNCTION(get_public_channels);
 	BIND_REPLY_FUNCTION(get_team_public_channels);
@@ -585,7 +589,7 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 
 void MattermostQt::get_teams(int server_index)
 {
-	/* TODO first, check teams from filesystem,
+	/* TODO first, check cached teams,
 	 then send request about lst change date    */
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
@@ -624,19 +628,65 @@ void MattermostQt::get_teams(int server_index)
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 }
 
-void MattermostQt::get_team_icon(int server_index, int team_index)
+void MattermostQt::get_all_teams(int server_index)
 {
+	/* TODO first, check cached teams,
+	 then send request about lst change date    */
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	ServerPtr sc = m_server[server_index];
 
-	if( team_index < 0 || team_index >= sc->m_teams.size() )
+	if( !sc->m_teams.isEmpty() )
 	{
+		emit teamsExists(sc->m_teams);
 		return;
 	}
-	TeamPtr team = sc->m_teams[team_index];
-	qDebug() << QStringLiteral("Request: Get team [%0.%1] id(%2) icon").arg(server_index).arg(team_index).arg(team->m_id);
 
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        //	        + QLatin1String("/users/")
+	        //	        + sc->m_user_id
+	        //	        + QLatin1String("/teams");
+	        + QLatin1String("/teams");
+
+	QUrl url(sc->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,sc);
+	request_urlencoded(request);
+
+	if(sc->m_trust_cert)
+		request.setSslConfiguration(sc->m_cert);
+
+	//	foreach( QByteArray n, request.rawHeaderList() )
+	//	{
+	//		qDebug() << n << request.rawHeader(n);
+	//	}
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_all_teams) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+}
+
+void MattermostQt::get_team_icon(int server_index, int team_index)
+{
+	get_team_icon( teamAt(server_index,team_index) );
+}
+
+void MattermostQt::get_team_icon(MattermostQt::TeamPtr team)
+{
+	if(!team) {
+		qWarning() << QStringLiteral("Empty pointer to team");
+		return;
+	}
+	qDebug() << QStringLiteral("Request: Get team [%0:%1] id(%2) icon").arg(team->m_server_index).arg(team->m_self_index).arg(team->m_id);
+
+	ServerPtr sc = serverAt(team->m_server_index);
+	if(!sc) {
+		qCritical() << QStringLiteral("Wrong server_index");
+		return;
+	}
 	//	if(!team->m_image_path.isEmpty())
 	//	{
 	if( QFile::exists(sc->m_cache_path + QStringLiteral("/teams/%0/image.png").arg(team->m_id) ) )
@@ -676,8 +726,9 @@ void MattermostQt::get_team_icon(int server_index, int team_index)
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_team_icon) );
-	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
-	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(team->m_server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team->m_self_index) );
+	reply->setProperty(P_TEAM_PTR, QVariant::fromValue<TeamPtr>(team) );
 }
 
 void MattermostQt::get_public_channels(int server_index, QString team_id)
@@ -2948,6 +2999,11 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 
 	if( !json.isEmpty() && json.isArray() ) {
 		QJsonArray array = json.array();
+		if( array.isEmpty() ) {
+			qInfo() << QStringLiteral("Seems user is not member of any team.");
+			get_all_teams(server_index);
+			return;
+		}
 		for( int i = 0 ; i < array.size(); i ++ )
 		{
 			if( array.at(i).isObject() )
@@ -2968,6 +3024,40 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 				qDebug() << "array[" << i << "]: " << array.at(i);
 		}
 		get_teams_unread(m_server[server_index]);
+	}
+	else {
+		qWarning() << "Cant parse json: " << json;
+	}
+}
+
+void MattermostQt::reply_get_all_teams(QNetworkReply *reply)
+{
+	ASSERT_REPLY(reply_get_all_teams)
+	QJsonDocument json;
+	QByteArray rawData = reply->readAll();
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	json = QJsonDocument::fromJson(rawData);
+	QList<TeamPtr> all_teams;
+	if( !json.isEmpty() && json.isArray() ) {
+		QJsonArray array = json.array();
+		for( int i = 0 ; i < array.size(); i ++ )
+		{
+			if( array.at(i).isObject() )
+			{
+				QJsonObject object = array.at(i).toObject();
+				TeamPtr tc(new TeamContainer(object) );
+				tc->m_server_index = server_index;
+				tc->m_self_index =  GET_TEAM_ICON_all_teams ; //m_server[server_index]->m_teams.size();
+				tc->save_json( m_server[server_index]->m_data_path );
+				// ---------------------------------------------
+				all_teams << tc;
+				get_team_icon(tc->m_server_index, tc->m_self_index);
+				get_team_statistics(tc->m_server_index, tc->m_self_index);
+			}
+			else
+				qDebug() << "array[" << i << "]: " << array.at(i);
+		}
+		emit onReplyAllTeams(all_teams);
 	}
 	else {
 		qWarning() << "Cant parse json: " << json;
@@ -3058,9 +3148,14 @@ void MattermostQt::reply_get_team_icon(QNetworkReply *reply)
 	if(server_index < 0 || server_index >= m_server.size())
 		return;
 	ServerPtr server = m_server[server_index];
-	if(team_index < 0 || team_index >= server->m_teams.size() )
-		return;
-	TeamPtr team = server->m_teams[team_index];
+	TeamPtr team;
+	if(team_index < 0 || team_index >= server->m_teams.size() ) {
+		team = reply->property(P_TEAM_PTR).value<TeamPtr>();
+		if(!team)
+			return;
+	}
+	else
+		team = server->m_teams[team_index];
 
 	QByteArray replyData = reply->readAll();
 	{

@@ -33,7 +33,11 @@ public:
 public:
 	enum ReplyType : int {
 		rt_login = 0,
+		/** TODO Rename get_teams to get_users_teams
+		 * and rename get_all_teams to get_teams
+		  */
 		rt_get_teams,
+		rt_get_all_teams,
 		rt_get_public_channels,
 		rt_get_team_public_channels,
 		rt_get_team_members,
@@ -577,7 +581,9 @@ public:
 	                                     bool trustCertificate = false, QString ca_cert_path = QString(), QString cert_path = QString());
 	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int server_index);
+	Q_INVOKABLE void get_all_teams(int server_index);
 	Q_INVOKABLE void get_team_icon(int server_index, int team_index);
+	void get_team_icon(TeamPtr team);
 	Q_INVOKABLE void get_team_public_channels(int server_index, QString team_id);
 	Q_INVOKABLE void get_team(int server_index, int team_index);
     Q_INVOKABLE void get_team_members(int server_index, int team_index, int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
@@ -800,6 +806,7 @@ Q_SIGNALS:
 	void fileUploaded(int server_index, int file_sc_index);
 	// teams changing signals
 	void teamAdded(TeamPtr team);
+	void onReplyAllTeams(QList<TeamPtr> teams);
 	void teamsExists(const QVector<MattermostQt::TeamPtr> &teams);
 	void teamUnread(QString team_id, int msg, int mention);
 	void teamChanged(TeamPtr team,  QVectorInt roles);
@@ -883,7 +890,7 @@ protected:
 	// repliest
 	void reply_login(QNetworkReply *reply);
 	void reply_get_teams(QNetworkReply *reply);
-
+	void reply_get_all_teams(QNetworkReply *reply);
 	void reply_get_team(QNetworkReply *reply);
 	void reply_get_teams_unread(QNetworkReply *reply);
 	void reply_get_team_icon(QNetworkReply *reply);
