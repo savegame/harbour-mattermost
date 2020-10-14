@@ -3,6 +3,7 @@
 
 #include <QAbstractListModel>
 #include <QPointer>
+#include <QList>
 #include "MattermostQt.h"
 
 class TeamsModel : public QAbstractListModel
@@ -64,6 +65,8 @@ public:
 
 	Q_INVOKABLE QString getTeamId(int index) const;
 	Q_INVOKABLE int getTeamIndex(int index) const;
+	
+	void setTeamsList(QList<MattermostQt::TeamPtr> teams);
 Q_SIGNALS:
 	void serverNameChanged();
 	void serverIndexChanged();

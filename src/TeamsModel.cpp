@@ -65,7 +65,7 @@ QVariant TeamsModel::data(const QModelIndex &index, int role) const
 	}
 	else if(role == Qt::DecorationRole) {
 		if( team->m_image_path.isEmpty() )
-			return QIcon("team->m_image_path");
+			return QIcon();
 		else
 			return QIcon(team->m_image_path);
 	}
@@ -168,6 +168,16 @@ int TeamsModel::getTeamIndex(int index) const
 	if(index >= 0 && index < m_team.size())
 		return m_team[index]->m_self_index;
 	return -1;
+}
+
+void TeamsModel::setTeamsList(QList<MattermostQt::TeamPtr> teams)
+{
+	beginResetModel();
+	m_team.clear();
+	for( auto each : teams ) {
+		m_team << each;
+	}
+	endResetModel();
 }
 
 //void TeamsModel::slot_serverConnected(int id)
