@@ -496,13 +496,16 @@ void UsersModelPrivate::checkRequestsStack(QVector<MattermostQt::UserPtr> &membe
 	{
 		if( member_count > users.size() ) 
 		{
-			parent->beginInsertRows(QModelIndex(), users.size(), users.size() + members.size() - 1 );
-//			users.reserve(users.size() + members.size());
+			QVector<MattermostQt::UserPtr> temp_members;
+			temp_members.reserve(members.size());
 			for(int i = 0; i < members.size(); i++ )
 				if( members[i]->m_delete_at == 0 ) {
-					users << members[i];
+					temp_members << members[i];
 					checkState << Qt::Unchecked;
 				}
+			parent->beginInsertRows(QModelIndex(), users.size(), users.size() + temp_members.size() - 1 );
+//			users.reserve(users.size() + temp_members.size());
+			users.append(temp_members);
 			parent->endInsertRows();
 		}
 		else {
