@@ -45,6 +45,7 @@ static_websocket : {
 }
 
 include(libs/discount.pri);
+include(libs/md4c.pri);
 
 emoji.files = $$PWD/resources/emoji/emoji.json
 emoji.path = /usr/share/$$TARGET/emoji/

@@ -35,8 +35,6 @@ public:
 	int h0,h1,h2,h3,h4,h5;
 };
 
-#define INCRASE_FONT 6
-
 CppHashPrivate::CppHashPrivate() {
 	if(!parse_emoji_json_new( QStringLiteral("%0/emoji.json").arg(EMOJI_PATH) ))
 		qCritical() << "Cant read emoji.json file! Path:" << QStringLiteral("%0/emoji.json").arg(EMOJI_PATH);

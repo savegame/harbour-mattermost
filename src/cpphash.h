@@ -1,6 +1,8 @@
 #ifndef CPPHASH_H
 #define CPPHASH_H
 
+#define INCRASE_FONT 6
+
 class CppHashPrivate;
 class CppHash
 {
