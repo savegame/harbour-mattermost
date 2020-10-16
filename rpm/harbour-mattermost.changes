@@ -10,6 +10,11 @@
 - fix compability with Mattermost 6 server (cant send message) 
 - new donate link
 
+* Sat Okt 17  2020 sashikknox <sashikknox@gmail.com> - 0.1.6-7
+- update chinese translation by dashinfantry
+- add md4c markdown parser as default (discount not removed yet)
+- many api fuctnion (add_chanel, create_Channel, users model) and etc.
+
 * Wed Jun 3   2020 sashikknox <sashikknox@gmail.com> - 0.1.6-6
 - Fix bug when MessageEditor dont show cancel button when message is editing
 - Little bit fix categoies icons

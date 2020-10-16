@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <TeamsModel.h>
+#include <UsersModel.h>
 #include <MattermostQt.h>
 #include <ChannelsModel.h>
 #include <MessagesModel.h>
@@ -53,6 +54,7 @@ int main(int argc, char** argv)
 
 //	qmlRegisterType<MattermostQt>      ("ru.sashikknox", 1, 0, "MattermostQt");
 	qmlRegisterType<TeamsModel>        ("ru.sashikknox", 1, 0, "TeamsModel");
+	qmlRegisterType<UsersModel>        ("ru.sashikknox", 1, 0, "UsersModel");
 	qmlRegisterType<ChannelsModel>     ("ru.sashikknox", 1, 0, "ChannelsModel");
 	qmlRegisterType<MessagesModel>     ("ru.sashikknox", 1, 0, "MessagesModel");
 	qmlRegisterType<ReverseProxyMessagesModel> ("ru.sashikknox", 1, 0, "ReverseProxyMessagesModel");

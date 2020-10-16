@@ -143,6 +143,21 @@
     </message>
 </context>
 <context>
+    <name>ChannelsModel</name>
+    <message>
+        <source>Public Channels</source>
+		<translation>Публичные Каналы</translation>
+    </message>
+    <message>
+        <source>Private Channels</source>
+		<translation>Приватные Каналы</translation>
+    </message>
+    <message>
+        <source>Direct Channels</source>
+		<translation>Личные Сообщения</translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Options</source>
@@ -516,6 +531,21 @@
     <message>
         <source>About</source>
         <translation>О программе</translation>
+    </message>
+</context>
+<context>
+    <name>UsersModel</name>
+    <message>
+        <source>Users</source>
+		<translation>Пользователи</translation>
+    </message>
+    <message>
+        <source>Remove user</source>
+		<translation>Удалить пользователя</translation>
+    </message>
+    <message>
+        <source>Unknown user</source>
+		<translation>Неизвестный</translation>
     </message>
 </context>
 </TS>

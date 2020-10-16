@@ -160,6 +160,7 @@ public:
 		UserStatusRole = Qt::UserRole + 100,
 		UserImageRole,
 		UserNameRole,
+		UserLoginNameRole,
 		UserLastActivityRole, 
 		UserIdRole,
 		UserIsCurrentRole,  // return true, if this user - current loggined user
@@ -748,7 +749,7 @@ public:
 	
 	// helper functions
 	inline UserStatus str2status(const QString &s) const;
-	inline UserPtr    id2user(ServerPtr sc, const QString &id) const;
+	UserPtr    id2user(ServerPtr sc, const QString &id) const;
 	inline TeamPtr    id2team(ServerPtr sc, const QString &id) const;
 	inline ChannelPtr id2channel(ServerPtr sc, const QString &id) const;
 	inline MessagePtr id2message(ChannelPtr channel, const QString &id) const;

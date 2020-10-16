@@ -32,6 +32,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <sailfishapp.h>
+#include <Md4cParser.h>
 #include "TeamsModel.h"
 #include "MattermostQt.h"
 #include "ChannelsModel.h"
@@ -108,6 +109,7 @@ int main(int argc, char *argv[])
 		QObject::connect(m, &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );
 		if(s)
 			m->setSettingsContainer(s);
+		m->replaceMdParser( new Md4cMdParser() );
 //		else
 //			qCritical() << "Cant find SettingsContaier Object, you cant chacnge default settings!";
 	}

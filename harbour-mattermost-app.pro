@@ -71,6 +71,7 @@ SOURCES += src/harbour-mattermost.cpp \
     src/MarkdownParser.cpp \
     src/DiscountMDParser.cpp \
     src/AttachedFilesModel.cpp \
+    src/UsersModel.cpp \
     src/cpphash.cpp
 
 DISTFILES += \
@@ -117,6 +118,7 @@ HEADERS += \
     src/MarkdownParser.h \
     src/DiscountMDParser.h \
     src/AttachedFilesModel.h \
+    src/UsersModel.h \
     src/c_cpphash.h \
     src/cpphash.h
 

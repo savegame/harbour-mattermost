@@ -102,6 +102,8 @@ QVariant UsersModel::data(const QModelIndex &index, int role) const
 		{
 			return tr("Unknown user");
 		}
+	case MattermostQt::UserLoginNameRole:
+		return user->m_username;
 	case MattermostQt::UserImageRole:
 		return user->m_image_path;
 	case Qt::DecorationRole:

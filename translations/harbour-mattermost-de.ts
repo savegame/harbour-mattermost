@@ -143,6 +143,21 @@
     </message>
 </context>
 <context>
+    <name>ChannelsModel</name>
+    <message>
+        <source>Public Channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Private Channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Direct Channels</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ChannelsPage</name>
     <message>
         <source>Options</source>
@@ -515,6 +530,21 @@
     </message>
     <message>
         <source>About</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UsersModel</name>
+    <message>
+        <source>Users</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove user</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown user</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
