@@ -636,11 +636,11 @@ void MattermostQt::get_all_teams(int server_index)
 		return;
 	ServerPtr sc = m_server[server_index];
 
-	if( !sc->m_teams.isEmpty() )
-	{
-		emit teamsExists(sc->m_teams);
-		return;
-	}
+//	if( !sc->m_teams.isEmpty() )
+//	{
+//		emit teamsExists(sc->m_teams);
+//		return;
+//	}
 
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
@@ -965,6 +965,43 @@ void MattermostQt::get_team_statistics(int server_index, int team_index)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_team_statistics) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+}
+
+void MattermostQt::post_add_user_to_team(int server_index, QString user_id, QString team_id)
+{
+	// TODO
+	ServerPtr sc = serverAt(server_index);
+	if(!sc) {
+		qCritical() << QStringLiteral("Wrong server index: %0").arg(server_index);
+		return;
+	}
+	if(user_id.isEmpty())
+		user_id = sc->m_user_id;
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/teams/")
+	        + team_id
+	        + QLatin1String("/members");
+
+	QUrl url(sc->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,sc);
+	request_json(request);
+
+	QJsonDocument json;
+	QJsonObject root;
+	root["user_id"] = user_id;
+	root["team_id"] = team_id;
+	json.setObject(root);
+
+	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_add_user_to_team) );
+	reply->setProperty(P_SERVER_INDEX, server_index);
+	reply->setProperty(P_TEAM_ID, team_id);
+	reply->setProperty(P_USER_ID, user_id);
 }
 
 void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
@@ -3301,6 +3338,24 @@ void MattermostQt::reply_get_team_statistics(QNetworkReply *reply)
 	team->m_active_member_count = object["active_member_count"].toInt(-1);
 	
 	teamChanged(team, QVectorInt() << TeamsModel::TotalMemberCount << TeamsModel::ActiveMemberCount);
+}
+
+void MattermostQt::reply_post_add_user_to_team(QNetworkReply *reply)
+{
+	ASSERT_REPLY(post_add_user_to_team);
+	bool is_ok;
+	int server_index = reply->property(P_SERVER_INDEX).toInt(&is_ok);
+	//	Q_UNUSED(server_index)
+	if(!is_ok) {
+		qWarning() << QStringLiteral("Wrong index in P_SERVER_INDEX property");
+		return;
+	}
+	ServerPtr server = m_server[server_index];
+
+	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
+	QJsonObject object = json.object();
+
+	qWarning() << json;
 }
 
 void MattermostQt::reply_get_post(QNetworkReply *reply)

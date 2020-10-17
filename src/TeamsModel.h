@@ -66,6 +66,9 @@ public:
 	Q_INVOKABLE QString getTeamId(int index) const;
 	Q_INVOKABLE int getTeamIndex(int index) const;
 	
+	Q_INVOKABLE void waitAllTeams(bool wait = true);
+
+public Q_SLOTS:
 	void setTeamsList(QList<MattermostQt::TeamPtr> teams);
 Q_SIGNALS:
 	void serverNameChanged();

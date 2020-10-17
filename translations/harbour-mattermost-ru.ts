@@ -146,15 +146,15 @@
     <name>ChannelsModel</name>
     <message>
         <source>Public Channels</source>
-		<translation>Публичные Каналы</translation>
+        <translation>Публичные Каналы</translation>
     </message>
     <message>
         <source>Private Channels</source>
-		<translation>Приватные Каналы</translation>
+        <translation>Приватные Каналы</translation>
     </message>
     <message>
         <source>Direct Channels</source>
-		<translation>Личные Сообщения</translation>
+        <translation>Личные Сообщения</translation>
     </message>
 </context>
 <context>
@@ -532,20 +532,24 @@
         <source>About</source>
         <translation>О программе</translation>
     </message>
+    <message>
+        <source>Other Teams</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UsersModel</name>
     <message>
         <source>Users</source>
-		<translation>Пользователи</translation>
+        <translation>Пользователи</translation>
     </message>
     <message>
         <source>Remove user</source>
-		<translation>Удалить пользователя</translation>
+        <translation>Удалить пользователя</translation>
     </message>
     <message>
         <source>Unknown user</source>
-		<translation>Неизвестный</translation>
+        <translation>Неизвестный</translation>
     </message>
 </context>
 </TS>

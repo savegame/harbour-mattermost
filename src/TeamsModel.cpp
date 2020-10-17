@@ -170,8 +170,19 @@ int TeamsModel::getTeamIndex(int index) const
 	return -1;
 }
 
+void TeamsModel::waitAllTeams(bool wait)
+{
+	if(!m_mattermost)
+		return;
+	if( wait )
+		connect(m_mattermost, &MattermostQt::onReplyAllTeams, this, &TeamsModel::setTeamsList );
+	else
+		disconnect(m_mattermost, &MattermostQt::onReplyAllTeams, this, &TeamsModel::setTeamsList );
+}
+
 void TeamsModel::setTeamsList(QList<MattermostQt::TeamPtr> teams)
 {
+	disconnect(m_mattermost, &MattermostQt::onReplyAllTeams, this, &TeamsModel::setTeamsList );
 	beginResetModel();
 	m_team.clear();
 	for( auto each : teams ) {

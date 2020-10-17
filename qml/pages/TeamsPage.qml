@@ -42,6 +42,7 @@ Page {
     property int server_index
     property string servername
     property bool temsIsUpToDate: false
+    property bool otherTeams: false
 
     // The effective value will be restricted by ApplicationWindow.allowedOrientations
     allowedOrientations: Orientation.All
@@ -60,9 +61,13 @@ Page {
     Component.onCompleted: {
 
         //        if( status === PageStatus.Active ) {
-        if( context && context.mattermost)
-            context.mattermost.get_teams(server_index)
-        //        }
+        if( context && context.mattermost) {
+            if( otherTeams ) {
+                teamsmodel.waitAllTeams(true)
+                context.mattermost.get_all_teams(server_index)
+            } else
+                context.mattermost.get_teams(server_index)
+        }
     }
 
     SilicaListView {
@@ -81,6 +86,12 @@ Page {
             MenuItem {
                 text: qsTr("Options")
                 onClicked: pageStack.push(Qt.resolvedUrl("OptionsPage.qml"),{context: teamsPage.context})
+            }
+            MenuItem {
+                text: qsTr("Other Teams")
+                visible: !teamsPage.otherTeams
+                onClicked: pageStack.push(Qt.resolvedUrl("TeamsPage.qml"),{context: teamsPage.context,
+                                          otherTeams: true})
             }
         }
 

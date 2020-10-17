@@ -532,6 +532,10 @@
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Other Teams</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UsersModel</name>

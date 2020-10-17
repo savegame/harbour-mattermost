@@ -42,6 +42,7 @@ public:
 		rt_get_team_public_channels,
 		rt_get_team_members,
 		rt_get_team_statistics,
+		rt_post_add_user_to_team,
 		rt_get_channel,
 		rt_post_channel_view,
 		rt_post_add_user_to_channel,
@@ -589,6 +590,7 @@ public:
 	Q_INVOKABLE void get_team(int server_index, int team_index);
     Q_INVOKABLE void get_team_members(int server_index, int team_index, int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
 	Q_INVOKABLE void get_team_statistics(int server_index, int team_index);
+	Q_INVOKABLE void post_add_user_to_team(int server_index, QString user_id, QString team_id);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
 	Q_INVOKABLE void get_channel(int server_index, QString channel_id);
 	Q_INVOKABLE void get_channel(int server_index, int team_index, int channel_type, int channel_index);
@@ -897,6 +899,7 @@ protected:
 	void reply_get_team_icon(QNetworkReply *reply);
 	void reply_get_team_members(QNetworkReply *reply);
 	void reply_get_team_statistics(QNetworkReply *reply);
+	void reply_post_add_user_to_team(QNetworkReply *reply);
 	void reply_get_post(QNetworkReply *reply);
 	void reply_get_posts(QNetworkReply *reply);
 	void reply_get_posts_before(QNetworkReply *reply);
