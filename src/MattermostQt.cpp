@@ -189,6 +189,7 @@ void MattermostQt::bind_event_functions()
 	BIND_EVENT_FUNCTION(reaction_removed);
 	BIND_EVENT_FUNCTION(channel_created);
 	BIND_EVENT_FUNCTION(direct_added);
+	BIND_EVENT_FUNCTION(added_to_team);
 	BIND_EVENT_FUNCTION(user_added);
 	BIND_EVENT_FUNCTION(user_removed);
 }
@@ -881,7 +882,16 @@ void MattermostQt::get_team(int server_index, int team_index)
 	}
 	ServerPtr sc = m_server[server_index];
 	QString team_id = sc->m_teams[team_index]->m_id;
+	get_team(server_index, team_id);
+}
 
+void MattermostQt::get_team(int server_index, QString team_id)
+{
+	ServerPtr sc = serverAt(server_index);
+	if(!sc) {
+		qWarning() << QStringLiteral("Wrong server index");
+		return;
+	}
 	QString urlString = QLatin1String("/api/v")
 	        + QString::number(sc->m_api)
 	        + QLatin1String("/teams/")
@@ -898,7 +908,8 @@ void MattermostQt::get_team(int server_index, int team_index)
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_team) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
-	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+	reply->setProperty(P_TEAM_ID, QVariant(team_id) );
+//	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 }
 
 void MattermostQt::get_team_members(int server_index, int team_index, int page, int per_page)
@@ -3073,6 +3084,12 @@ void MattermostQt::reply_get_all_teams(QNetworkReply *reply)
 	QJsonDocument json;
 	QByteArray rawData = reply->readAll();
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	ServerPtr server = serverAt(server_index);
+	if(!server) {
+		qWarning() << QStringLiteral("Wrong server index");
+		return;
+	}
+
 	json = QJsonDocument::fromJson(rawData);
 	QList<TeamPtr> all_teams;
 	if( !json.isEmpty() && json.isArray() ) {
@@ -3087,9 +3104,16 @@ void MattermostQt::reply_get_all_teams(QNetworkReply *reply)
 				tc->m_self_index =  GET_TEAM_ICON_all_teams ; //m_server[server_index]->m_teams.size();
 				tc->save_json( m_server[server_index]->m_data_path );
 				// ---------------------------------------------
-				all_teams << tc;
-				get_team_icon(tc->m_server_index, tc->m_self_index);
-				get_team_statistics(tc->m_server_index, tc->m_self_index);
+				auto search = std::find_if(server->m_teams.begin(), server->m_teams.end(), [tc](TeamPtr current) {
+				    return current->m_id == tc->m_id;
+			    });
+				if( search != server->m_teams.end() )
+					all_teams << *search;
+				else {
+					all_teams << tc;
+					get_team_icon(tc);
+//					get_team_statistics(tc->m_server_index, tc->m_self_index);
+				}
 			}
 			else
 				qDebug() << "array[" << i << "]: " << array.at(i);
@@ -5489,6 +5513,43 @@ void MattermostQt::event_direct_added(MattermostQt::ServerPtr sc, QJsonObject ob
 	QJsonObject broadcast = object["broadcast"].toObject();
 	QString id = broadcast["channel_id"].toString();
 	get_channel(sc->m_self_index, id);
+}
+
+void MattermostQt::event_added_to_team(MattermostQt::ServerPtr sc, QJsonObject object)
+{
+	// TODO
+	/*
+	{
+		"event": "added_to_team",
+		"data": {
+			"team_id": "sznbhmzpkbdit87ezoidppuejy",
+			"user_id": "fyrn71gupjdd7e4bh84npwxw8r"
+		},
+		"broadcast": {
+			"omit_users": null,
+			"user_id": "fyrn71gupjdd7e4bh84npwxw8r",
+			"channel_id": "",
+			"team_id": ""
+		},
+		"seq": 5
+	}
+	*/
+	QJsonObject data = object["data"].toObject();
+	QJsonObject broadcast = object["broadcast"].toObject();
+	if( data.isEmpty() || broadcast.isEmpty() )
+	{
+		qWarning() << QStringLiteral("Empty data or bradcast");
+		return;
+	}
+
+	QString team_id = data["team_id"].toString();
+	QString user_id = data["user_id"].toString();
+
+	if( user_id == sc->m_user_id ) {
+		// need request team data
+		get_team(sc->m_self_index, team_id);
+		return;
+	}
 }
 
 void MattermostQt::event_user_added(MattermostQt::ServerPtr sc, QJsonObject object)

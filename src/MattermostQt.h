@@ -90,6 +90,7 @@ public:
 		et_reaction_removed,
 		et_channel_created,
 		et_direct_added,
+		et_added_to_team,
 		et_user_added,
 		et_user_removed,
 		//=======================
@@ -588,6 +589,7 @@ public:
 	void get_team_icon(TeamPtr team);
 	Q_INVOKABLE void get_team_public_channels(int server_index, QString team_id);
 	Q_INVOKABLE void get_team(int server_index, int team_index);
+	Q_INVOKABLE void get_team(int server_index, QString team_id);
     Q_INVOKABLE void get_team_members(int server_index, int team_index, int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
 	Q_INVOKABLE void get_team_statistics(int server_index, int team_index);
 	Q_INVOKABLE void post_add_user_to_team(int server_index, QString user_id, QString team_id);
@@ -942,6 +944,7 @@ protected:
 	void event_reaction_removed(ServerPtr sc, QJsonObject object);
 	void event_channel_created(ServerPtr sc, QJsonObject object);
 	void event_direct_added(ServerPtr sc, QJsonObject object);
+	void event_added_to_team(ServerPtr sc, QJsonObject object);
 	void event_user_added(ServerPtr sc, QJsonObject object);
 	void event_user_removed(ServerPtr sc, QJsonObject object);
 
