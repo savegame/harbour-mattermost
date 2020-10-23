@@ -750,12 +750,13 @@ void MessagesModel::slot_messagesAdded(MattermostQt::ChannelPtr channel)
 //	beginInsertRows(QModelIndex(),0,0);
 //	endInsertRows();
 	beginResetModel();
-	endResetModel();
 #ifdef DESKTOP_APP
-	if(m_channel != channel)
+	if(m_channel != channel) {
+		m_channel = channel;
 		emit channelChanged();
-	m_channel = channel;
+	}
 #endif
+	endResetModel();
 	emit messagesInitialized();
 	emit atEndChanged();
 	emit messageCountChanged();

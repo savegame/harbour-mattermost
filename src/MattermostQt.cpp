@@ -61,6 +61,7 @@
 #define P_USER_ID            "user_id"
 #define P_FILE_SC_INDEX      "file_sc_index"
 #define P_TEAM_INDEX         "team_index"
+#define P_REQUEST_USERS_TYPE "request_users_type"
 #define P_TEAM_PTR           "team_ptr"
 #define P_MESSAGE_INDEX      "message_index"
 #define P_FILE_INDEX         "file_index"
@@ -149,6 +150,7 @@ void MattermostQt::bind_reply_functions()
 	BIND_REPLY_FUNCTION(get_channel);
 	BIND_REPLY_FUNCTION(post_channel_view);
 	BIND_REPLY_FUNCTION(get_user_info); //-
+	BIND_REPLY_FUNCTION(get_users); //-
 	BIND_REPLY_FUNCTION(post_users_status);
 	BIND_REPLY_FUNCTION(get_user_image);
 	BIND_REPLY_FUNCTION(get_team);
@@ -945,6 +947,56 @@ void MattermostQt::get_team_members(int server_index, int team_index, int page, 
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_team_members) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+}
+
+void MattermostQt::get_users(int server_index, MattermostQt::GetUsersRequestType request_type, QVariant value, int page, int per_page)
+{
+	ServerPtr server = serverAt(server_index);
+	if( !server ) {
+		qWarning() << QStringLiteral("Cant find server with index: %0").arg(server_index);
+		return;
+	}
+	
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(server->m_api)
+	        + QLatin1String("/users");
+	
+	QUrl url(server->m_url);
+	url.setPath(url.path() + urlString);
+	QUrlQuery query;
+	query.addQueryItem("page", QString::number(page));
+	query.addQueryItem("per_page", QString::number(per_page));
+	if( request_type == GetUsersRequestType::not_in_channel ) {
+		QMap<QString,QVariant> map = value.toMap();
+		if(!map.isEmpty() || !map.contains("not_in_channel") || !map.contains("team_id") ) {
+			QString keys;
+			if ( !map.contains("not_in_channel") )
+				keys.append(QStringLiteral("not_in_channel "));
+			if ( !map.contains("team_id") )
+				keys.append(QStringLiteral("team_id"));
+			qCritical() << QStringLiteral("Warning: No request parameters for \"not_in_channel\" RequestType: %0").arg(keys);
+			return;
+		}
+		query.addQueryItem(QStringLiteral("not_in_channel"), map.value("not_in_channel").toString() );
+		query.addQueryItem(QStringLiteral("team_id"), map.value("team_id").toString() );
+	} 
+	else 
+	{
+		QString query_key = QVariant::fromValue<GetUsersRequestType>(request_type).toString();
+		query.addQueryItem(query_key, value.toString() );
+	}
+	url.setQuery(query);
+	
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,server);
+	request_urlencoded(request);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_users) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_REQUEST_USERS_TYPE, QVariant(request_type) );
 }
 
 void MattermostQt::get_team_statistics(int server_index, int team_index)
@@ -2018,7 +2070,7 @@ void MattermostQt::get_posts(int server_index, int team_index, int channel_type,
 	ServerPtr sc = m_server[server_index];
 
 	//before send a requset, we chek if channel already have posts
-	if(!channel->m_message.isEmpty())
+	if(!channel->m_message.isEmpty() || channel->m_total_msg_count == 0 )
 	{// then we just send signal with messages
 		emit messagesAdded(channel);
 		return;
@@ -4313,6 +4365,31 @@ void MattermostQt::error_get_user_info(QNetworkReply *reply)
 			break;
 		}
 	}
+}
+
+void MattermostQt::reply_get_users(QNetworkReply *reply)
+{
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	ServerPtr sc = serverAt(server_index);
+	if( !sc )
+	{
+		qCritical() << "error_get_user_info():: Error! Wrong server index";
+		return;
+	}
+	
+	QByteArray replyData = reply->readAll();
+	QJsonDocument json = QJsonDocument::fromJson(replyData);
+	
+	qWarning() << json;
+	// first delete user from request list
+//	for(int u = 0; u < sc->m_requested_users.size(); u++ )
+//	{
+//		if( sc->m_requested_users[u] == user_id )
+//		{
+//			sc->m_requested_users.remove(u);
+//			break;
+//		}
+//	}
 }
 
 void MattermostQt::reply_post_users_status(QNetworkReply *reply)
@@ -6805,6 +6882,10 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	//"email": "string",
 	//"email_verified": true,
 	//"auth_service": "string",
+	QString auth_service = object["auth_service"].toString();
+	if( auth_service == "gitlab" ) {
+		m_auth_service = AuthServiceGitlab;
+	}
 	//"roles": "string",
 	memset(m_roles, false, UserSystemRolesCount * sizeof(bool) );
 

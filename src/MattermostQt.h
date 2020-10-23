@@ -51,6 +51,7 @@ public:
 		rt_post_create_direct_channel,
 		rt_get_user_info,
 		rt_get_user_image,
+		rt_get_users,
 		rt_post_users_status,
 		rt_get_team,
 		rt_get_teams_unread,
@@ -78,6 +79,15 @@ public:
 	};
 	Q_ENUM(ReplyType)
 
+	/**
+	 * @brief The EventType enum
+	 * request type for get_users function 
+	 * this values directly convert to string values
+	 * by QVariant::fromValue<EventType>().toString()
+	 * because of the Q_ENUM macro for this enum.
+	 * After conversion, it and cutting string beggingig "et_"
+	 * it equal real event name from Mattermost server
+	 */
 	enum EventType : int {
 		et_noevent = 0,
 		et_posted,
@@ -157,6 +167,12 @@ public:
 		UserDnd
 	};
 	Q_ENUM(UserStatus)
+	
+	enum AuthService  : int {
+		AuthServiceEmail,
+		AuthServiceGitlab
+	};
+	Q_ENUM(AuthService)
 
 	enum UserDataRole {
 		UserStatusRole = Qt::UserRole + 100,
@@ -177,6 +193,22 @@ public:
 		ChannelLastDataRole
 	};
 	Q_ENUM(ChannelDataRole)
+	
+	/**
+	 * @brief The GetUsersRequestType enum
+	 * request type for get_users function 
+	 * this values directly convert to string values
+	 * by QVariant::fromValue<GetUsersRequestType>().toString()
+	 * because of the Q_ENUM macro for this enum
+	 */
+	enum GetUsersRequestType {
+		in_team,
+		not_in_team,
+		in_channel,
+		not_in_channel,
+		in_group
+	};
+	Q_ENUM(GetUsersRequestType)
 
 	/**
 	 * @brief The UserSystemRole enum
@@ -360,6 +392,7 @@ public:
 		//"email": "string",
 		//"email_verified": true,
 		//"auth_service": "string",
+		AuthService m_auth_service = AuthServiceEmail;
 		//"roles": "string",
 		bool m_roles[UserSystemRolesCount]; //
 
@@ -590,7 +623,27 @@ public:
 	Q_INVOKABLE void get_team_public_channels(int server_index, QString team_id);
 	Q_INVOKABLE void get_team(int server_index, int team_index);
 	Q_INVOKABLE void get_team(int server_index, QString team_id);
-    Q_INVOKABLE void get_team_members(int server_index, int team_index, int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
+	Q_INVOKABLE void get_team_members(int server_index, int team_index, int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
+	
+	/**
+	 * @brief get_users     request list of users
+	 * @param server_index  
+	 * @param request_type
+	 * @param value
+	 */
+//	Q_INVOKABLE void get_users(int server_index, GetUsersRequestType request_type, QStringList values,
+//	                           int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
+	/**
+	 * @brief get_users     send request for users list with specific parameters ( in_team, not_in_team and so on ) 
+	 * @param server_index  as is 
+	 * @param request_type  type of request
+	 * @param value         string value or QMap<QString,QVariant> values for not_in_channel request type
+	 * @param page          requested page
+	 * @param per_page      per page 
+	 */
+	Q_INVOKABLE void get_users(int server_index, GetUsersRequestType request_type, QVariant value,
+	                           int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
+	
 	Q_INVOKABLE void get_team_statistics(int server_index, int team_index);
 	Q_INVOKABLE void post_add_user_to_team(int server_index, QString user_id, QString team_id);
 	Q_INVOKABLE void get_public_channels(int server_index, QString team_id);
@@ -918,6 +971,7 @@ protected:
 	void reply_post_create_direct_channel(QNetworkReply *reply);
 	void reply_get_user_info(QNetworkReply *reply);
 	void error_get_user_info(QNetworkReply *reply);
+	void reply_get_users(QNetworkReply *reply);
 	void reply_post_users_status(QNetworkReply *reply);
 	void reply_error(QNetworkReply *reply);
 	void reply_get_file_thumbnail(QNetworkReply *reply);
