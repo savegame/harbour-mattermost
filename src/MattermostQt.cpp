@@ -3622,6 +3622,9 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 		emit messagesAdded(channel);
 		if(its_all < 60 )
 			emit messagesIsEnd(channel);
+	} else {
+		emit messagesAdded(channel);
+		emit messagesIsEnd(channel);
 	}
 #ifdef MQT_TRACE
 	qInfo() << "MattermostQt::reply_get_posts() end function";
