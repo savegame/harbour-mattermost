@@ -1,4 +1,4 @@
-//#include "MattermostQt.h"
+﻿//#include "MattermostQt.h"
 #include <algorithm>
 
 #include <QNetworkRequest>
@@ -31,19 +31,19 @@
 
 // some inline tests (for debug)
 #define check_file_indexes(message, channel) \
-	if( message->m_self_index >= 0 && channel->m_message[message->m_self_index] == message ) \
+	if( (message)->m_self_index >= 0 && (channel)->m_message[message->m_self_index] == (message) ) \
 	{/* check all files for right indexes*/\
-		if( message->m_file.size() > 0 )\
-		for(int f = 0; f < message->m_file.size(); f++ )\
+		if( (message)->m_file.size() > 0 )\
+		for(int f = 0; f < (message)->m_file.size(); f++ )\
 		{\
-			if( message->m_file[f]->m_message_index != message->m_self_index )\
+			if( (message)->m_file[f]->m_message_index != (message)->m_self_index )\
 			{/* really bad error !!!!*/ \
 				qCritical() << QStringLiteral("File has wrong message index. It can be fixed now.");\
 				qWarning() << QStringLiteral("Fix message index in file");\
-				message->m_file[f]->m_message_index = message->m_self_index;\
+				(message)->m_file[f]->m_message_index = (message)->m_self_index;\
 			}\
-			else if( message->m_file[f]->m_post_id != message->m_id )\
-				qCritical() << QStringLiteral("Message (%0) has wrong attached files list;").arg(message->m_id);\
+			else if( (message)->m_file[f]->m_post_id != (message)->m_id )\
+				qCritical() << QStringLiteral("Message (%0) has wrong attached files list;").arg((message)->m_id);\
 		}\
 	}\
 	else\
@@ -121,8 +121,12 @@ Q_DECLARE_METATYPE(MattermostQt::TeamPtr)
 	    return; \
 	}
 
-#define BIND_REPLY_FUNCTION(name) m_reply_func[ReplyType:: CONCAT2(rt_,name) ] = &MattermostQt:: CONCAT2(reply_, name)
-#define BIND_EVENT_FUNCTION(name) m_event_func[EventType:: CONCAT2(et_,name) ] = &MattermostQt:: CONCAT2(event_, name)
+#define BIND_ENUMED_FUNCTION(EnumName,EnumPrefix,FunctionPrefix,FunctionName) CONCAT2(m_, CONCAT2(FunctionPrefix,func) )[EnumName:: CONCAT2(EnumPrefix,FunctionName) ] = &MattermostQt:: CONCAT2(FunctionPrefix, FunctionName)
+
+//#define BIND_REPLY_FUNCTION(name) m_reply_func[ReplyType:: CONCAT2(rt_,name) ] = &MattermostQt:: CONCAT2(reply_, name)
+#define BIND_REPLY_FUNCTION(name) BIND_ENUMED_FUNCTION(ReplyType,rt_,reply_,name)
+//#define BIND_EVENT_FUNCTION(name) m_event_func[EventType:: CONCAT2(et_,name) ] = &MattermostQt:: CONCAT2(event_, name)
+#define BIND_EVENT_FUNCTION(name) BIND_ENUMED_FUNCTION(EventType,et_,event_,name)
 
 MattermostQt *MattermostQt::getInstance()
 {
@@ -1108,8 +1112,22 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 
 	if( file_sc_index < 0 || file_sc_index >= sc->m_file.size() )
 		return;
-
+	
 	FilePtr file = sc->m_file[file_sc_index];
+	if( file->m_preview_path.isEmpty() )
+		file->m_preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
+	if( QFile::exists(file->m_preview_path) ) {
+
+		QVectorInt file_update_roles;
+		file_update_roles << AttachedFilesModel::FilePreviewPath << MessagesModel::FilePreview;
+		MessagePtr mc = messageAt(server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index);
+		if(mc) {
+			emit attachedFilesChanged(mc, QVector<QString>(), file_update_roles);
+			return;
+		}
+	}
+	file->m_preview_path.clear();
+
 	QString file_id = file->m_id;
 	//files/{file_id}/preview
 	QString urlString = QLatin1String("/api/v")
@@ -7359,9 +7377,9 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 			m_thumb_path.clear();
 			result = false;
 		}
-		if( !m_has_preview_image || m_preview_path.isEmpty() || !QFile::exists(m_preview_path) )
+		if( m_preview_path.isEmpty() || !QFile::exists(m_preview_path) )
 		{
-			m_has_preview_image = false;
+//			m_has_preview_image = false;
 			m_preview_path.clear();
 			result = false;
 		}
