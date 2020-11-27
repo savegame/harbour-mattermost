@@ -2228,6 +2228,47 @@ void MattermostQt::post_users_status(int server_index)
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 }
 
+void MattermostQt::post_users_status(int server_index, QStringList ids)
+{
+	if( server_index < 0 || server_index >= m_server.size() )
+		return;
+	ServerPtr sc = m_server[server_index];
+
+	QString urlString = QLatin1String("/api/v")
+	        + QString::number(sc->m_api)
+	        + QLatin1String("/users/status/ids");
+
+	QUrl url(sc->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	if(ids.isEmpty())
+	{
+		//m_user_status_timer.start(1000);
+		return;
+	}
+
+	QJsonDocument json;
+	QJsonArray json_ids;
+
+	for(auto id : ids)
+	{
+		json_ids.append(id);
+	}
+	json.setArray(json_ids);
+
+	request.setUrl(url);
+	request_set_headers(request,sc);
+	request_json(request);
+
+	if(sc->m_trust_cert)
+		request.setSslConfiguration(sc->m_cert);
+
+	QNetworkReply *reply = m_networkManager->post(request,json.toJson());
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_users_status) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+}
+
 void MattermostQt::post_create_reaction(int server_index, const QString &post_id, const QString &emoji_name) const
 {
 	if( server_index < 0 || server_index >= m_server.size() )
@@ -3784,8 +3825,9 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 
 void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 {
-	ASSERT_REPLY(reply_get_public_channels)
-	        int server_index = reply->property(P_SERVER_INDEX).toInt();
+	ASSERT_REPLY(reply_get_public_channels);
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int team_index = reply->property(P_TEAM_INDEX).toInt();
 	if( server_index < 0 || server_index >= m_server.size() )
 	{
 		qWarning() << "Wrong server index";
@@ -3814,7 +3856,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 				{
 				// open channels
 				case MattermostQt::ChannelPublic:
-					ct->m_team_index = reply->property(P_TEAM_INDEX).toInt();
+					ct->m_team_index = team_index;
 					tc.reset();
 					tc = sc->m_teams[ct->m_team_index];
 					ct->m_self_index = tc->m_public_channels.size();
@@ -3825,7 +3867,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 					break;
 					// private channels
 				case MattermostQt::ChannelPrivate:
-					ct->m_team_index = reply->property(P_TEAM_INDEX).toInt();
+					ct->m_team_index = team_index;
 					tc.reset();
 					tc = sc->m_teams[ct->m_team_index];
 					ct->m_self_index = tc->m_private_channels.size();
@@ -3872,6 +3914,11 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 			}
 		}
 	}
+//	if(sc->m_user.size() == 1) {
+//		TeamPtr team = teamAt(server_index,team_index);
+//		if(team)
+//			get_users(server_index, MattermostQt::GetUsersRequestType::in_team,team->m_id);
+//	} 
 	post_users_status(server_index);
 }
 
@@ -4275,6 +4322,7 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 		user->m_self_index = sc->m_user.size();
 		sc->m_user.append(user);
 		emit userAdded(user);
+		post_users_status(server_index, QStringList() << user->m_id);
 
 		QString path = sc->m_cache_path +
 		        QString("/users/") +
@@ -4507,12 +4555,17 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 					}
 					qCritical() << message;
 				}
-				else if( error_id.compare("user.login.invalid_credentials_email_username") == 0 )
-				{
-					int server_index  = reply->property(P_SERVER_INDEX).toInt();
-					emit onConnectionError(ConnectionError::WrongPasswordOrEmail, message, server_index);
-				}
-				else if( error_id.indexOf("team.") == 0 ) {
+				else if( error_id.indexOf("user.login.") == 0 ) {
+					error_id = error_id.mid( 11 );
+					if( error_id.compare("invalid_credentials_email_username") == 0 )
+					{
+						int server_index  = reply->property(P_SERVER_INDEX).toInt();
+						emit onConnectionError(ConnectionError::WrongPasswordOrEmail, message, server_index);
+					} else if ( error_id.compare("invalid_credentials_sso") == 0 ) {
+						int server_index  = reply->property(P_SERVER_INDEX).toInt();
+						emit onConnectionError(ConnectionError::InvalidAuthMethod, message, server_index);
+					}
+				} else if( error_id.indexOf("team.") == 0 ) {
 					error_id = error_id.mid(5);
 					if( error_id == QStringLiteral("get_team_icon.read_file.app_error") ){
 						// team has no icon

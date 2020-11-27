@@ -113,6 +113,7 @@ public:
 		SslError,
 		SessionExpired,
 		WrongPasswordOrEmail,
+		InvalidAuthMethod,
 		UnknownError
 	};
 	Q_ENUM(ConnectionError)
@@ -738,6 +739,7 @@ public:
 	Q_INVOKABLE void get_posts(int server_index, int team_index, int channel_type, int channel_index);
 	Q_INVOKABLE void get_posts_before(int server_index, int team_index, int channel_index, int channel_type);
 	Q_INVOKABLE void post_users_status(int server_index);
+	Q_INVOKABLE void post_users_status(int server_index, QStringList ids);
 
 	Q_INVOKABLE void post_create_reaction(int server_index, const QString &post_id, const QString &emoji_name) const;
 	Q_INVOKABLE void delete_reaction(int server_index, const QString &post_id, const QString &emoji_name) const;
