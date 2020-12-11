@@ -5276,7 +5276,7 @@ void MattermostQt::event_posted(ServerPtr sc, QJsonObject object)
 				}
 			}
 			message->m_team_index = team_index;
-			message->updateFiles(this);
+
 			teamChanged(team, QVectorInt() << TeamsModel::RoleUnreadMessageCount << TeamsModel::RoleUnreadMentionCount );
 			emit messageUnreadChanged();
 		}
