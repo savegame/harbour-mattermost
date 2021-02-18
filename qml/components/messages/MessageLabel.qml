@@ -44,8 +44,8 @@ ListItem {
     property color linkColor: Theme.primaryColor
     property color blobColor:  Theme.rgba(Theme.darkPrimaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
 
-    property bool  isMessageEditable   : messageOwner === MattermostQt.MessageMine || context.mattermost.user_role(server_index,-2,MattermostQt.SystemAdmin)
-    property bool  isMessageDeletable  : messageOwner === MattermostQt.MessageMine || context.mattermost.user_role(server_index,-2,MattermostQt.SystemAdmin)
+    property bool  isMessageEditable   : messageOwner === MattermostQt.MessageMine || MattermostQt.user_role(server_index,-2,MattermostQt.SystemAdmin)
+    property bool  isMessageDeletable  : messageOwner === MattermostQt.MessageMine || MattermostQt.user_role(server_index,-2,MattermostQt.SystemAdmin)
     property bool  isMessageMineOrOther: false
 
     onMessageOwnerChanged: {
@@ -131,16 +131,16 @@ ListItem {
 
                 onReactionClicked: {
                     if( !reactionItem.reactionIsMine ) {
-                        context.mattermost.post_create_reaction( server_index, role_post_id, reactionItem.reactionEmoji)
+                        MattermostQt.post_create_reaction( server_index, role_post_id, reactionItem.reactionEmoji)
                      } else {
-                        context.mattermost.delete_reaction( server_index, role_post_id, reactionItem.reactionEmoji)
+                        MattermostQt.delete_reaction( server_index, role_post_id, reactionItem.reactionEmoji)
                     }
                 }
             }
         }
 
         ReactionItem {
-            reactionPath: context.mattermost.emojiPath() + "/svg/1f642.svg"
+            reactionPath: MattermostQt.emojiPath() + "/svg/1f642.svg"
 //            reactionCount: 1
             isAddButton: true
             context: messageLabel.context
@@ -149,7 +149,7 @@ ListItem {
                 ReactionsPage {
                     id: reactionsPicker
                     onReactionChanged: {
-                        context.mattermost.post_create_reaction( server_index, role_post_id, reactionsPicker.reaction )
+                        MattermostQt.post_create_reaction( server_index, role_post_id, reactionsPicker.reaction )
                     }
                 }
             }

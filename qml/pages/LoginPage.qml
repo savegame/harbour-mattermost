@@ -48,48 +48,48 @@ Page {
     signal accepted()
 
     Component.onCompleted: {
-        context.mattermost.onConnectionError.connect(
+        MattermostQt.onConnectionError.connect(
             function connectionError(code, message, server_index) {
                 // its mean your token is outdated
                 if( code === MattermostQt.SessionExpired )
                 {
                     // then just paste server information to editor lines and ask password
-                    server_name.text = context.mattermost.get_server_name(server_index);
-                    server.text = context.mattermost.get_server_url(server_index);
-                    trust_certificate_switcher.checked = context.mattermost.get_server_trust_certificate(server_index);
-                    ca_cert_text_field.text = context.mattermost.get_server_cert_path(server_index);
-                    cert_text_field.text = context.mattermost.get_server_ca_cert_path(server_index);
+                    server_name.text = MattermostQt.get_server_name(server_index);
+                    server.text = MattermostQt.get_server_url(server_index);
+                    trust_certificate_switcher.checked = MattermostQt.get_server_trust_certificate(server_index);
+                    ca_cert_text_field.text = MattermostQt.get_server_cert_path(server_index);
+                    cert_text_field.text = MattermostQt.get_server_ca_cert_path(server_index);
                 }
                 connectionStatus = status_server_unconnected
                 specialmessage.text = message
                 specialmessage.opacity = 1
             }
         );
-        if ( context.mattermost.get_server_count() === 1 ) {
+        if ( MattermostQt.get_server_count() === 1 ) {
             server_id = 0;
-            server_name.text = context.mattermost.get_server_name(server_id);
-            server.text = context.mattermost.get_server_url(server_id);
-            trust_certificate_switcher.checked = context.mattermost.get_server_trust_certificate(server_id);
+            server_name.text = MattermostQt.get_server_name(server_id);
+            server.text = MattermostQt.get_server_url(server_id);
+            trust_certificate_switcher.checked = MattermostQt.get_server_trust_certificate(server_id);
         }
     }
 
     onAccepted: {
         if(use_token_switcher.checked)
-            context.mattermost.post_login_by_token(
+            MattermostQt.post_login_by_token(
                 server.text, login_id.text,
                 api, server_name.text, trust_certificate_switcher.checked,
                 ca_cert_text_field.text, cert_text_field.text
             );
         else
-            context.mattermost.post_login( server.text, login_id.text, password.text,
+            MattermostQt.post_login( server.text, login_id.text, password.text,
                                       api, server_name.text, trust_certificate_switcher.checked,
                                       ca_cert_text_field.text, cert_text_field.text )
     }
 
     onContextChanged:{
         // TODO when multi user ablity is enbled? need rewrite this part
-        connectionStatus = context.mattermost.get_server_state(server_id)
-        context.mattermost.serverStateChanged.connect( function onServerConnected(server_index,state){
+        connectionStatus = MattermostQt.get_server_state(server_id)
+        MattermostQt.serverStateChanged.connect( function onServerConnected(server_index,state){
             if( server_index !== server_id )
                 console.debug("Server index is " + server_index )
             connectionStatus = state;
@@ -97,13 +97,13 @@ Page {
                 var teamspage = pageStack.replace(Qt.resolvedUrl("TeamsPage.qml"),
                                                   {
                                                       server_index: server_index,
-                                                      servername: context.mattermost.get_server_name(server_index),
+                                                      servername: MattermostQt.get_server_name(server_index),
                                                       context: loginpage.context
                                                   })
             }
         })
 
-        context.mattermost.onConnectionError.connect( function onConnectionError(id,message,server_index){
+        MattermostQt.onConnectionError.connect( function onConnectionError(id,message,server_index){
             specialmessage.text = message;
             specialmessage.opacity = 1.0;
 //            connectionStatus = status_server_unconnected

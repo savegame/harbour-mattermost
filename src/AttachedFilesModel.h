@@ -76,7 +76,7 @@ protected Q_SLOTS:
 protected:
 	MattermostQt::ChannelPtr           m_channel;
 	MattermostQt::MessagePtr           m_message;
-	QPointer<MattermostQt>             m_mattermost;
+	// QPointer<MattermostQt>             m_mattermost;
 	qreal                              m_maxWidth;
 	bool m_init;
 };

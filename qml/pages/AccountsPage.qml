@@ -8,10 +8,10 @@ import "../model"
 Page {
     id: accountsPage
     property Context context
-    property MattermostQt mattermost: context.mattermost
+    property MattermostQt mattermost: MattermostQt
 
     property AccountsModel accauntsModel: AccountsModel {
-        mattermost: context.mattermost
+        mattermost: MattermostQt
     }
 
     SilicaFlickable {
@@ -71,7 +71,7 @@ Page {
                     MenuItem {
                         text: role_is_enabled ? qsTr("Disable") : qsTr("Enable")
                         onClicked: {
-                            context.mattermost.set_server_enabled(index,!role_is_enabled);
+                            MattermostQt.set_server_enabled(index,!role_is_enabled);
                         }
                     }
 

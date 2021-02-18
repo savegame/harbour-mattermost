@@ -27,7 +27,7 @@ Page {
     allowedOrientations: Orientation.All
 
     property ChannelsModel channelsmodel: ChannelsModel {
-        mattermost: context.mattermost
+        mattermost: MattermostQt
     }
 
     property ChannelsFilterProxy channelsFilter: ChannelsFilterProxy {
@@ -39,7 +39,7 @@ Page {
         if( status == PageStatus.Active && isuptodate == false )
         {
             isuptodate = true;
-            context.mattermost.get_public_channels(server_index,teamid)
+            MattermostQt.get_public_channels(server_index,teamid)
         }
     }
 
@@ -194,7 +194,7 @@ Page {
                                 server_index: channelsPage.server_index,
                                 channel_index: channellabel._index,
                                 channel_type: channellabel.channelType,
-                                channel_id: context.mattermost.getChannelId(
+                                channel_id: MattermostQt.getChannelId(
                                                 channelsPage.server_index,
                                                 channelsPage.team_index,
                                                 channellabel.channelType,

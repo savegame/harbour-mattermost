@@ -29,7 +29,7 @@ Page {
 
     /** Messages Model from C++ */
     property MessagesModel messagesModel: MessagesModel {
-        mattermost: context.mattermost
+        mattermost: MattermostQt
         onMessagesEnded: {
             pullMenu.visible = false;
         }
@@ -47,12 +47,12 @@ Page {
     Component.onCompleted: {
         if(channel_index >= 0)
         {
-            context.mattermost.get_posts(server_index,team_index,channel_type,channel_index)
+            MattermostQt.get_posts(server_index,team_index,channel_type,channel_index)
         }
         else
         {
-            context.mattermost.get_channel(server_index,channel_id)
-            context.mattermost.updateChannelInfo.connect(
+            MattermostQt.get_channel(server_index,channel_id)
+            MattermostQt.updateChannelInfo.connect(
                         function onUpdateChannelInfo(ch_id,tm_index,ch_index) {
                             if( messagesPage.channel_id === ch_id ) {
                                 messagesPage.team_index = tm_index
@@ -106,7 +106,7 @@ Page {
                 text:qsTr("get older")
                 onClicked:
                 {
-                    context.mattermost.get_posts_before(
+                    MattermostQt.get_posts_before(
                                 server_index,
                                 team_index,
                                 channel_index,
@@ -212,7 +212,7 @@ Page {
                         ReactionsPage {
                             id: reactionsPicker
                             onReactionChanged: {
-                                context.mattermost.post_create_reaction( server_index, role_post_id, reactionsPicker.reaction )
+                                MattermostQt.post_create_reaction( server_index, role_post_id, reactionsPicker.reaction )
                             }
                         }
                     }
@@ -250,7 +250,7 @@ Page {
                                     function rm() {
                                         if(Settings.debug)
                                             console.log( "mi = " + String(mi) + "; role_row_index = " + String(role_row_index)  )
-                                        context.mattermost.delete_message(si,ti,ct,ci,mi,mid)
+                                        MattermostQt.delete_message(si,ti,ct,ci,mi,mid)
                                     })
                     }
 
@@ -349,6 +349,6 @@ Page {
 
 
 //    function remove(server_index, team_index, channel_type, channel_index, message_index) {
-//        context.mattermost.delete_message(server_index,team_index,channel_type,channel_index,message_index)
+//        MattermostQt.delete_message(server_index,team_index,channel_type,channel_index,message_index)
 //    }
 }

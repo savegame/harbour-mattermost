@@ -18,7 +18,7 @@ Page {
     id: optionsPage
 //    layer.enabled: true
     property Context context
-    property string cacheSize: context.mattermost.cacheSize()
+    property string cacheSize: MattermostQt.cacheSize()
 
     allowedOrientations: Orientation.All
 
@@ -286,8 +286,8 @@ Page {
                 text: qsTr("Clear cache")
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
-                    context.mattermost.clearCache()
-                    cacheSize = context.mattermost.cacheSize()
+                    MattermostQt.clearCache()
+                    cacheSize = MattermostQt.cacheSize()
                 }
             }
 

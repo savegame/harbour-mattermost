@@ -31,7 +31,7 @@ FullscreenContentPage {
     }
 
     Component.onCompleted: {
-        isInGallery = context.mattermost.isImageFileInGallery(serverIndex, selfScIndex)
+        isInGallery = MattermostQt.isImageFileInGallery(serverIndex, selfScIndex)
     }
 
     allowedOrientations: Orientation.All
@@ -321,7 +321,7 @@ FullscreenContentPage {
                 image_preview.opacity = 1
                 image_preview.duration = 300
                 image_previev_behavior.enabled = true
-                var result = context.mattermost.saveImageFileToGallery(serverIndex,selfScIndex);
+                var result = MattermostQt.saveImageFileToGallery(serverIndex,selfScIndex);
                 if( result.length != 0 )
                 {
                     isInGallery = true;

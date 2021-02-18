@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 	// For details see:
 	// https://harbour.jolla.com/faq#1.5.0
 
-	qmlRegisterType<MattermostQt>      ("ru.sashikknox", 1, 0, "MattermostQt");
+	// qmlRegisterType<MattermostQt>      ("ru.sashikknox", 1, 0, "MattermostQt");
 	qmlRegisterType<TeamsModel>        ("ru.sashikknox", 1, 0, "TeamsModel");
 	qmlRegisterType<ChannelsModel>     ("ru.sashikknox", 1, 0, "ChannelsModel");
 	qmlRegisterType<MessagesModel>     ("ru.sashikknox", 1, 0, "MessagesModel");
@@ -98,12 +98,13 @@ int main(int argc, char *argv[])
 	qmlRegisterType<EmojiProxyList    >("ru.sashikknox", 1, 0, "EmojiProxyList");
 	qmlRegisterType<ChannelsFilterProxy>("ru.sashikknox", 1, 0, "ChannelsFilterProxy");
 	qmlRegisterSingletonType<SettingsContainer>("ru.sashikknox", 1, 0, "Settings", SettingsContainer_singletontype_provider );
+	qmlRegisterSingletonType<MattermostQt>("ru.sashikknox", 1, 0, "MattermostQt", MattermostQt_singletontype_provider );
 
 	// Start the application.
 	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));
 	v->show();
 
-	MattermostQt *m = v->rootObject()->findChild<MattermostQt*>();
+	MattermostQt *m = MattermostQt::getInstance();//v->rootObject()->findChild<MattermostQt*>();
 	SettingsContainer *s = v->rootObject()->findChild<SettingsContainer*>();
 	if(m) {
 		QObject::connect(m, &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );

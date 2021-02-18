@@ -59,11 +59,11 @@ CoverBackground {
 
     onContextChanged: {
         // for now, we have just 1 server, and his index is 0
-        server_state = context.mattermost.get_server_state(0);
-        context.mattermost.serverStateChanged.connect( function f(server_index, state) {
+        server_state = MattermostQt.get_server_state(0);
+        MattermostQt.serverStateChanged.connect( function f(server_index, state) {
             onServerStateChanged(server_index,state)
         } )
-        context.mattermost.onConnectionError.connect( function f(id,message, server_index) {
+        MattermostQt.onConnectionError.connect( function f(id,message, server_index) {
             onConnectionError(id,message)
         } )
     }
@@ -75,11 +75,11 @@ CoverBackground {
         switch(status) {
         case PageStatus.Active:
             // when we go to bg mode
-            server_state = context.mattermost.get_server_state(0);
-            context.mattermost.serverStateChanged.connect( function f(server_index, state) {
+            server_state = MattermostQt.get_server_state(0);
+            MattermostQt.serverStateChanged.connect( function f(server_index, state) {
                 onServerStateChanged(server_index,state)
             } )
-            context.mattermost.onConnectionError.connect( function f(id,message,server_index) {
+            MattermostQt.onConnectionError.connect( function f(id,message,server_index) {
                 onConnectionError(id,message)
             } )
             break;
@@ -157,7 +157,7 @@ CoverBackground {
         Label {
             id: unreadLabel
             anchors.verticalCenter: messageIcon.verticalCenter
-            text: context.mattermost.messageUnread
+            text: MattermostQt.messageUnread
             wrapMode: Text.Wrap
             elide: Text.ElideMiddle
             horizontalAlignment: Text.AlignHCenter
@@ -187,7 +187,7 @@ CoverBackground {
             id: forceReconnect
             iconSource: "image://theme/icon-cover-refresh"
             onTriggered: {
-                context.mattermost.force_server_recconect()
+                MattermostQt.force_server_recconect()
             }
         }
 //        CoverAction {

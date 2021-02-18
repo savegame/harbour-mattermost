@@ -51,7 +51,7 @@ ApplicationWindow
 //    }
 
     Component.onCompleted: {
-//        context.mattermost.newMessage.connect(
+//        MattermostQt.newMessage.connect(
 //            function onNewMessage(channel_name, user_name){
 //                mainwindow.previewString =
 //                        qsTr("New post on ") +
@@ -68,11 +68,11 @@ ApplicationWindow
         onActiveChanged : {
             if( Qt.application.active ) {
 //                console.debug( "Application is active")
-                context.mattermost.applicationStatus = MattermostQt.AppActive
+                MattermostQt.applicationStatus = MattermostQt.AppActive
             }
             else {
 //                console.debug( "Application is NOT active")
-                context.mattermost.applicationStatus = MattermostQt.AppInactive
+                MattermostQt.applicationStatus = MattermostQt.AppInactive
             }
         }
     }

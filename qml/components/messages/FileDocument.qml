@@ -7,11 +7,12 @@ MouseArea {
     height: fileDocumentRow.height
     width:  maxWidth
 
-    property int fileStatus
+    // property int currentStatus
 //    property string filePath
 
-    onFileStatusChanged: {
-        switch(fileStatus)
+    Component.onCompleted: {
+        console.log("FileDocument complete")
+        switch(currentStatus)
         {
             case MattermostQt.FileDownloading:
                 progressCircle.visible = true;
@@ -24,9 +25,9 @@ MouseArea {
     }
 
     onClicked: {
-        switch(fileStatus) {
+        switch(currentStatus) {
         case MattermostQt.FileRemote:
-            context.mattermost.get_file(
+            MattermostQt.get_file(
                         server_index,
                         team_index,
                         channel_type,
@@ -66,7 +67,7 @@ MouseArea {
                 width: Theme.iconSizeSmall
                 height: Theme.iconSizeSmall
                 source: "image://theme/icon-s-device-download"
-                visible: fileStatus === MattermostQt.FileRemote
+                visible: currentStatus === MattermostQt.FileRemote
             }
         }
 
@@ -105,7 +106,7 @@ MouseArea {
         width: fileTypeIcon.width
         height: fileTypeIcon.height
         onVisibleChanged: {
-            context.mattermost.fileDownloadingProgress.connect(
+            MattermostQt.fileDownloadingProgress.connect(
                 function onDownloading(id_of_file,progress) {
                     if(id_of_file === fileId)
                         value = progress

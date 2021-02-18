@@ -64,7 +64,7 @@ Item {
             title: qsTr("Choose image")
             onSelectedContentPropertiesChanged: {
                 console.log(selectedContentProperties.filePath)
-                context.mattermost.post_file_upload(
+                MattermostQt.post_file_upload(
                             server_index,
                             team_index,
                             channel_type,
@@ -81,7 +81,7 @@ Item {
             title: qsTr("Choose document")
             onSelectedContentPropertiesChanged: {
                 console.log(selectedContentProperties.filePath)
-                context.mattermost.post_file_upload(
+                MattermostQt.post_file_upload(
                             server_index,
                             team_index,
                             channel_type,
@@ -98,7 +98,7 @@ Item {
             title: qsTr("Choose file")
             onSelectedContentPropertiesChanged: {
                 console.log(selectedContentProperties.filePath)
-                context.mattermost.post_file_upload(
+                MattermostQt.post_file_upload(
                             server_index,
                             team_index,
                             channel_type,
@@ -114,7 +114,7 @@ Item {
         CameraPicker {
             onUploadImage: {
                 console.log("Upload image from CameraPicker " + capturedImagePath)
-                context.mattermost.post_file_upload(
+                MattermostQt.post_file_upload(
                             server_index,
                             team_index,
                             channel_type,
@@ -126,13 +126,13 @@ Item {
     }
 
     onContextChanged: {
-        context.mattermost.fileUploaded.connect( function fileUp(sindex,findex){
+        MattermostQt.fileUploaded.connect( function fileUp(sindex,findex){
 //            console.log(sindex + " " + findex)
             attachCount++
             uploadprogress.uploaded = true
         })
 
-        context.mattermost.fileUploadProgress.connect(
+        MattermostQt.fileUploadProgress.connect(
             function upProgress(channel_id,progress)
             {
                 uploadprogress.uploaded = false
@@ -398,7 +398,7 @@ Item {
                 else {
                     if(editMode)
                     {
-                        context.mattermost.put_message_edit
+                        MattermostQt.put_message_edit
                                 (textEdit.text,
                                  server_index,
                                  team_index,
@@ -412,7 +412,7 @@ Item {
                     }
                     else
                     {
-                        context.mattermost.post_send_message
+                        MattermostQt.post_send_message
                                 (textEdit.text,
                                  server_index,
                                  team_index,

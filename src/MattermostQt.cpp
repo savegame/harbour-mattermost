@@ -1105,6 +1105,7 @@ void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 
 void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 {
+	qDebug() << QStringLiteral("get_file_preview ( server_index = %0, file_sc_index = %1").arg(server_index).arg(file_sc_index);
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	// we think all indexes is right

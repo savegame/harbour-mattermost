@@ -50,23 +50,23 @@ Page {
 
     property TeamsModel teamsmodel : TeamsModel {
         id: teamsmodel_id
-        //        mattermost: context.mattermost
+        //        mattermost: MattermostQt
         server_index: teamsPage.server_index
     }
 
     onContextChanged: {
-        teamsmodel.mattermost = context.mattermost
+        teamsmodel.mattermost = MattermostQt
     }
 
     Component.onCompleted: {
 
         //        if( status === PageStatus.Active ) {
-        if( context && context.mattermost) {
+        if( context && MattermostQt) {
             if( otherTeams ) {
                 teamsmodel.waitAllTeams(true)
-                context.mattermost.get_all_teams(server_index)
+                MattermostQt.get_all_teams(server_index)
             } else
-                context.mattermost.get_teams(server_index)
+                MattermostQt.get_teams(server_index)
         }
     }
 

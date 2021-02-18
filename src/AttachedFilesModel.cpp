@@ -39,7 +39,7 @@ int AttachedFilesModel::rowCount(const QModelIndex &parent) const
 
 QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 {
-	if(!m_message || !m_channel || !m_mattermost || !m_init)
+	if(!m_message || !m_channel || !MattermostQt::getInstance() || !m_init)
 		return QVariant();
 
 	MattermostQt::FilePtr file = m_message->fileAt(index.row());
@@ -60,7 +60,7 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 	}
 	/*
 	else if( role == FileIsInCache ) {
-		MattermostQt::ServerPtr s = m_mattermost->server()[file->m_server_index];
+		MattermostQt::ServerPtr s = MattermostQt::getInstance()->server()[file->m_server_index];
 		return file->is_file_in_cache(s->m_cache_path);
 	}
 	*/
@@ -85,16 +85,15 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 
 	else if ( file->m_file_type == MattermostQt::FileImage ||  file->m_file_type == MattermostQt::FileAnimatedImage ) {
 		if( role == FileThumbnailPath ) {
-			// TODO that request is no need here? because its requested in reply_get_file_info
-//			if(file->m_thumb_path.isNull())
-//				m_mattermost->get_file_thumbnail(file->m_server_index, file->m_self_sc_index);
+			if(file->m_thumb_path.isEmpty() )
+				MattermostQt::getInstance()->get_file_thumbnail(file->m_server_index, file->m_self_sc_index);
 			return QVariant(file->m_thumb_path);
 		}
 		else if( role == FilePreviewPath ) {
 			if(!file->m_preview_path.isEmpty() )
 				return file->m_preview_path;
 			else {
-				m_mattermost->get_file_preview(file->m_server_index, file->m_self_sc_index);
+				MattermostQt::getInstance()->get_file_preview(file->m_server_index, file->m_self_sc_index);
 				return file->m_thumb_path;
 			}
 		}
@@ -144,12 +143,14 @@ QHash<int, QByteArray> AttachedFilesModel::roleNames() const
 
 void AttachedFilesModel::setMattermost(MattermostQt *mattermost)
 {
-	m_mattermost = mattermost;
+	qDebug() << QStringLiteral("Set pointer to MattermostQt from QML.");
+	// MattermostQt::getInstance() = mattermost;
+	// MattermostQt::getInstance() = MattermostQt::getInstance()
 }
 
 MattermostQt *AttachedFilesModel::getMattermost() const
 {
-	return m_mattermost.data();
+	return MattermostQt::getInstance();
 }
 
 qreal AttachedFilesModel::getMaxWidth() const
@@ -176,16 +177,17 @@ void AttachedFilesModel::setMaxWidth(qreal value)
 
 void AttachedFilesModel::init(int server_index, int team_index, int channel_type, int channel_index, int message_row)
 {
-	if(!m_mattermost) {
+	// qDebug() << "Init";
+	if(!MattermostQt::getInstance()) {
 		qCritical() << "Mattermost Client Pointer was not set!";
 		return;
 	}
 	m_init = true;
 
-	connect( m_mattermost.data(), SIGNAL(attachedFilesChanged(MattermostQt::MessagePtr,QVector<QString>,  QVectorInt)),
+	connect( MattermostQt::getInstance(), SIGNAL(attachedFilesChanged(MattermostQt::MessagePtr,QVector<QString>,  QVectorInt)),
 	         SLOT(slot_attachedFilesChanged(MattermostQt::MessagePtr,QVector<QString>, QVectorInt)) );
 
-	m_channel = m_mattermost->channelAt(server_index,team_index,channel_type,channel_index);
+	m_channel = MattermostQt::getInstance()->channelAt(server_index,team_index,channel_type,channel_index);
 	if(!m_channel) {
 //		qWarning() << "Cant find channel";
 		return;
@@ -206,7 +208,7 @@ void AttachedFilesModel::init(int server_index, int team_index, int channel_type
 		for( int i = 0; i < m_message->m_file_ids.size(); i++ )
 		{
 			QString file_id = m_message->m_file_ids.at(i);
-			m_mattermost->get_file_info(server_index,team_index,channel_type,channel_index,message_row, file_id);
+			MattermostQt::getInstance()->get_file_info(server_index,team_index,channel_type,channel_index,message_row, file_id);
 		}
 	}
 	endResetModel();
@@ -214,6 +216,7 @@ void AttachedFilesModel::init(int server_index, int team_index, int channel_type
 
 QSizeF AttachedFilesModel::computeItemSize(MattermostQt::FilePtr file) const
 {
+	// qDebug() << "computeItemSize";
 	QSize sourceSize = file->m_image_size;
 	if( !file->m_item_size.isEmpty() && file->m_contentwidth == (int)m_maxWidth )
 		return file->m_item_size;

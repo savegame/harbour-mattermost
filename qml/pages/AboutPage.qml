@@ -8,7 +8,7 @@ Page {
     property Context context
 
     onContextChanged: {
-        versionlabel.text = qsTr("Version: ") + context.mattermost.getVersion()
+        versionlabel.text = qsTr("Version: ") + MattermostQt.getVersion()
     }
 
     SilicaListView {
@@ -41,7 +41,7 @@ Page {
                 id: versionlabel
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text : qsTr("Version: ") + (context !== null)?context.mattermost.getVersion():"0.0.0"
+                text : qsTr("Version: ") + (context !== null)?MattermostQt.getVersion():"0.0.0"
                 anchors {
                     leftMargin: Theme.paddingLarge
                     rightMargin: Theme.paddingLarge

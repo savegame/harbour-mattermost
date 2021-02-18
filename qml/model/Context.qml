@@ -12,9 +12,9 @@ Item {
     property bool bolbs: Settings.showBlobs
     property real reactionSize : Theme.fontSizeMedium
 
-    property MattermostQt mattermost: MattermostQt {
-//        settings =
-    }
+//     property MattermostQt mattermost: MattermostQt {
+// //        settings =
+//     }
     // status mask and statuses
 
 
@@ -86,8 +86,8 @@ Item {
 
         function newMessage(server,team,type,channel,channel_id) {
 //            console.log("Server: " + server + " Team " + team + " " + type + " " + channel )
-            var team_name = context.mattermost.getTeamName(server,team)
-            var team_id = context.mattermost.getTeamId(server,team)
+            var team_name = MattermostQt.getTeamName(server,team)
+            var team_id = MattermostQt.getTeamId(server,team)
             mattermost.notificationActivated( server, team, type, channel )
             __silica_applicationwindow_instance.activate();
             if( pageStack !== null && pageStack.currentPage !== null ) {

@@ -11,11 +11,26 @@ MouseArea {
     id: attachedImage
     height: fileNameRow.height + inBlobContent.spacing + pictureMaxWidth * sizeCoef.y
     width: Math.min(Math.max(imageWithName.width,realBlobWidth),maxWidth)
-    property int _fileStatus: currentStatus
+    // property int fileStatus: currentStatus
     property real pictureMaxWidth: maxWidth //* 0.9
 
     onHeightChanged: {
         componentHeight = height
+    }
+
+    Component.onCompleted: {
+        console.log("FileImage component entry")
+        switch(currentStatus)
+        {
+            case MattermostQt.FileDownloading:
+                progressCircle.visible = true;
+                break;
+            case MattermostQt.FileDownloaded:
+                progressCircle.visible = false
+                progressCircle.enabled = false
+                break;
+        }
+        console.log("FileType is " + (fileType === MattermostQt.FileAnimatedImage ? "animatedImage" : "staticImage")  )
     }
 
 
@@ -36,24 +51,25 @@ MouseArea {
 //        }
 //    }
     // *
-    on_FileStatusChanged: {
-        switch(currentStatus)
-        {
-            case MattermostQt.FileDownloading:
-                progressCircle.visible = true;
-                break;
-            case MattermostQt.FileDownloaded:
-                progressCircle.visible = false
-                progressCircle.enabled = false
-                break;
-        }
-    }
+    // on_FileStatusChanged: {
+    //     console.log("on_FileStatusChanged")
+    //     switch(currentStatus)
+    //     {
+    //         case MattermostQt.FileDownloading:
+    //             progressCircle.visible = true;
+    //             break;
+    //         case MattermostQt.FileDownloaded:
+    //             progressCircle.visible = false
+    //             progressCircle.enabled = false
+    //             break;
+    //     }
+    // }
 
-    Component {
-        id: imageViewPage
-        ImageViewPage {
-        }
-    }
+    // Component {
+    //     id: imageViewPage
+    //     ImageViewPage {
+    //     }
+    // }
 
     function openImageViewer() {
         pageStack.push( Qt.resolvedUrl("../../pages/ImageViewPage.qml"),
@@ -68,15 +84,16 @@ MouseArea {
     }
 
     onClicked: {
-        switch(_fileStatus) {
+        switch(currentStatus) {
         case MattermostQt.FileRemote:
-            context.mattermost.get_file(
+            MattermostQt.get_file(
                         server_index,
                         team_index,
                         channel_type,
                         channel_index,
                         rowIndex,
-                        fileIndex)
+                        fileIndex
+                )
             progressCircle.visible = true;
             break;
         case MattermostQt.FileRequested:
@@ -179,6 +196,7 @@ MouseArea {
                     layer.effect: OpacityMask {
                         maskSource: maskRect
                     }
+
                 }
             }
         }
@@ -207,7 +225,7 @@ MouseArea {
                     source: filePath
                     anchors.fill: parent
                     onStatusChanged: {
-                        var isReady = status == AnimatedImage.Ready
+                        var isReady = status === AnimatedImage.Ready
                         playing = isReady
                         if(isReady && filePath.length > 0)
                             thumbImage.opacity = 0
@@ -246,22 +264,23 @@ MouseArea {
                 id: imageComponentLoader
                 sourceComponent: fileType === MattermostQt.FileAnimatedImage ? animatedImage : staticImage
                 anchors.fill: parent
+                Component.onCompleted: {
+                    console.log("Loader Component.onCompleted")
+                    console.log("FileType is :" + (fileType === MattermostQt.FileAnimatedImage ? "animatedImage" : "staticImage")  )
+                }
             }
 
             ProgressCircle {
                 id:  progressCircle
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
-//                property point begin : parent.mapFromItem(imageWithName,imageComponentLoader.x,imageComponentLoader.y)
-//                x: begin.x + imageComponentLoader.width * 0.5 - width * 0.5
-//                y: begin.y + imageComponentLoader.height * 0.5 - height * 0.5
                 value: 0
                 visible: false
 
                 onVisibleChanged: {
                     if(!visible)
                         return;
-                    context.mattermost.fileDownloadingProgress.connect(
+                    MattermostQt.fileDownloadingProgress.connect(
                         function onDownloading(id_of_file,progress) {
                             if( id_of_file === fileId )
                                 value = progress

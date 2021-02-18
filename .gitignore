@@ -3,3 +3,16 @@
 .DS_Store
 server.pri
 
+*.o
+moc_*.cpp
+*.qm
+*.rpm
+*.certs
+*.crt
+Makefile
+documentation.list
+Makefile.*
+build/*
+*.pro.user
+qrc_*.cpp
+*.pro.user*
