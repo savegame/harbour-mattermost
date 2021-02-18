@@ -973,6 +973,8 @@ void MessagesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr message, 
 	if( message->m_channel_id != m_channel->m_id )
 		return;
 
+	//qWarning() << "MessagesModel: slot_attachedFilesChanged";
+
 	roles.clear();
 	roles << RootMessage << RootMessageUserName << FilePreview << RoleFileInfo << FilesCount << FileStatus << Qt::DecorationRole;
 

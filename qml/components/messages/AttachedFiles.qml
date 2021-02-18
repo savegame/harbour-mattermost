@@ -52,17 +52,7 @@ Repeater {
         messageRow: messageLabel.rowIndex
     } //*/
 
-    Component {
-        id: fileDocument
-        FileDocument {
-        }
-    }
 
-    Component {
-        id: fileImage
-        FileImage {
-        }
-    }
 
     // *
     delegate: Loader {//for different file types
@@ -73,7 +63,7 @@ Repeater {
         property int    fileIndex      : index
         property string filePath       : role_file_path
         property int    currentStatus  : role_status   
-        property string filePreview    : role_preview   // bug - no preview (segfault) 
+        // property string filePreview    : role_preview   // bug - no preview (segfault, QML some times say its circuit binding ??? ) 
         property string fileThumbnail  : role_thumbnail // bug - no thumbnail 
         property string fileName       : role_file_name
         property string fileSize       : role_size
@@ -86,6 +76,19 @@ Repeater {
         property int    selfScIndex    : role_self_sc_index
         property real   componentHeight: 0.0
         property point  sizeCoef       : point(1.0,1.0) // coeficient for right computing size of preview
+
+        Component {
+            id: fileImage
+            FileImage {
+                imagePreview : role_preview
+            }
+        }
+
+        Component {
+            id: fileDocument
+            FileDocument {
+            }
+        }
 
         onImageSizeChanged: {
             if(imageSize.width > imageSize.height)

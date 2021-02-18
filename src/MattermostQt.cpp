@@ -1106,27 +1106,37 @@ void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 {
 	qDebug() << QStringLiteral("get_file_preview ( server_index = %0, file_sc_index = %1").arg(server_index).arg(file_sc_index);
+	qDebug() << QStringLiteral("This pointer: %0").arg((qlonglong)this, 1, 16);
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	// we think all indexes is right
-	ServerPtr sc = m_server[server_index];
-
+	ServerPtr sc = serverAt(server_index);
+	if( !sc ) {
+		qCritical() <<  QStringLiteral("Cant find server with 'server_index' == %0").arg(server_index);
+		return;
+	}
 	if( file_sc_index < 0 || file_sc_index >= sc->m_file.size() )
 		return;
 	
 	FilePtr file = sc->m_file[file_sc_index];
+	if( !file ) {
+		qCritical() <<  QStringLiteral("Cant find server with 'server_index' == %0; 'file_index' = %1").arg(server_index).arg(file_sc_index);
+		return;
+	}
 	if( file->m_preview_path.isEmpty() )
 		file->m_preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
-	if( QFile::exists(file->m_preview_path) ) {
+	//qDebug() << QStringLiteral("Preview path: \"%0\"").arg(file->m_preview_path);
 
+	if( QFile::exists(file->m_preview_path) ) {
 		QVectorInt file_update_roles;
 		file_update_roles << AttachedFilesModel::FilePreviewPath << MessagesModel::FilePreview;
 		MessagePtr mc = messageAt(server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index);
 		if(mc) {
-			emit attachedFilesChanged(mc, QVector<QString>(), file_update_roles);
+			emit attachedFilesChanged(mc, QVector<QString>() << file->m_id , file_update_roles);
 			return;
 		}
 	}
+	//qDebug() << QStringLiteral("File is not founded in cache dir. Try download it from server.");
 	file->m_preview_path.clear();
 
 	QString file_id = file->m_id;
@@ -1285,7 +1295,7 @@ void MattermostQt::get_file(int server_index, int team_index,
 	QVectorInt roles;
 	file_ids << file->m_id;
 	roles << AttachedFilesModel::FileStatus;
-	attachedFilesChanged(message, file_ids, roles);
+	emit attachedFilesChanged(message, file_ids, roles);
 
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );

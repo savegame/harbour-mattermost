@@ -81,16 +81,19 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 	}
 	else if( role == FileId ) {
 		return QVariant(file->m_id);
-	}
-
+	} 
 	else if ( file->m_file_type == MattermostQt::FileImage ||  file->m_file_type == MattermostQt::FileAnimatedImage ) {
+		if( file->m_file_type == MattermostQt::FileAnimatedImage && role == FilePreviewPath ) {
+			role = FileThumbnailPath;
+		}
 		if( role == FileThumbnailPath ) {
+			// qDebug() << "try Thumbnail";
 			if(file->m_thumb_path.isEmpty() )
 				MattermostQt::getInstance()->get_file_thumbnail(file->m_server_index, file->m_self_sc_index);
 			return QVariant(file->m_thumb_path);
 		}
 		else if( role == FilePreviewPath ) {
-			if(!file->m_preview_path.isEmpty() )
+			if( !file->m_preview_path.isEmpty() )
 				return file->m_preview_path;
 			else {
 				MattermostQt::getInstance()->get_file_preview(file->m_server_index, file->m_self_sc_index);
@@ -98,12 +101,14 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 			}
 		}
 		else if( role == FileImageSize ) {
+			// qDebug() << "try ImageSize";
 			return file->m_image_size;
 		}
 		else if ( role == FileItemSize ) {
+			// qDebug() << "try ItemSize";
 			return computeItemSize(file);
 		}
-	}
+	} 
 	else {
 		if( role == FileThumbnailPath ) {
 			return QLatin1String("");
@@ -261,7 +266,8 @@ void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, Q
 	if( m != m_message )
 		return;
 
-	if( roles.isEmpty() ) // reset model (all data are updated)
+	qWarning() << QStringLiteral("Reset AttachedFilesModel with roles: %0").arg( QVariant::fromValue<QVector<int>>(roles).toString() );
+	if( roles.isEmpty() || file_ids.isEmpty() ) // reset model (all data are updated)
 	{
 		beginResetModel();
 		endResetModel();
@@ -276,6 +282,15 @@ void AttachedFilesModel::slot_attachedFilesChanged(MattermostQt::MessagePtr m, Q
 			return;
 		}
 	}
+
+	for( int i = 0; i < m->m_file.size(); i++ ) {
+		auto search = std::find(file_ids.begin(),file_ids.end(), m->m_file[i]->m_id );
+		if( search ==  file_ids.end() )
+			continue;
+		QModelIndex indx = index(i);
+		dataChanged(indx,indx,roles);
+	}
+	return;
 //	QModelIndex topLeft = index(0);
 //	QModelIndex bottomRight = index(m_message->m_file.size()?m_message->m_file.size()-1:0);
 //	dataChanged(topLeft, bottomRight, roles);

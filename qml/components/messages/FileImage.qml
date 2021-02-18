@@ -13,13 +13,13 @@ MouseArea {
     width: Math.min(Math.max(imageWithName.width,realBlobWidth),maxWidth)
     // property int fileStatus: currentStatus
     property real pictureMaxWidth: maxWidth //* 0.9
+    property string imagePreview : ""
 
     onHeightChanged: {
         componentHeight = height
     }
 
     Component.onCompleted: {
-        console.log("FileImage component entry")
         switch(currentStatus)
         {
             case MattermostQt.FileDownloading:
@@ -30,52 +30,14 @@ MouseArea {
                 progressCircle.enabled = false
                 break;
         }
-        console.log("FileType is " + (fileType === MattermostQt.FileAnimatedImage ? "animatedImage" : "staticImage")  )
     }
 
-
-//    Image {
-//        id: thumbImage
-
-//        width: pictureMaxWidth * sizeCoef.x
-//        height: pictureMaxWidth * sizeCoef.y
-
-//        fillMode: Image.PreserveAspectFit
-//        source: fileThumbnail
-//        sourceSize: imageSize
-//        anchors.fill: parent
-//        asynchronous: true
-//        layer.enabled: true
-//        layer.effect: OpacityMask {
-//            maskSource: maskRect
-//        }
-//    }
-    // *
-    // on_FileStatusChanged: {
-    //     console.log("on_FileStatusChanged")
-    //     switch(currentStatus)
-    //     {
-    //         case MattermostQt.FileDownloading:
-    //             progressCircle.visible = true;
-    //             break;
-    //         case MattermostQt.FileDownloaded:
-    //             progressCircle.visible = false
-    //             progressCircle.enabled = false
-    //             break;
-    //     }
-    // }
-
-    // Component {
-    //     id: imageViewPage
-    //     ImageViewPage {
-    //     }
-    // }
 
     function openImageViewer() {
         pageStack.push( Qt.resolvedUrl("../../pages/ImageViewPage.qml"),
                        {
                            imagePath: filePath,
-                           previewPath: filePreview,//fileThumbnail,
+                           previewPath: attachedImage.imagePreview,
                            animatedImage: fileType === MattermostQt.FileAnimatedImage,
                            imageSize: imageSize,
                            selfScIndex: selfScIndex,
@@ -168,8 +130,7 @@ MouseArea {
                     id: image
 
                     fillMode: Image.PreserveAspectFit
-                    source: filePreview
-//                    visible: filePreview.length > 0
+                    source: attachedImage.imagePreview//filePreview
                     sourceSize: imageSize
                     anchors.fill: parent
                     asynchronous: true
@@ -264,10 +225,6 @@ MouseArea {
                 id: imageComponentLoader
                 sourceComponent: fileType === MattermostQt.FileAnimatedImage ? animatedImage : staticImage
                 anchors.fill: parent
-                Component.onCompleted: {
-                    console.log("Loader Component.onCompleted")
-                    console.log("FileType is :" + (fileType === MattermostQt.FileAnimatedImage ? "animatedImage" : "staticImage")  )
-                }
             }
 
             ProgressCircle {
