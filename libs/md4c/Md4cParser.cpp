@@ -44,8 +44,8 @@ Md4cMdParser::Md4cMdParser()
 		for( int j = 0; j < short_names.size(); j++)
 		{
 			QString short_name = short_names[j].toString();
-			if( re.indexIn(short_name) != -1 )
-				short_name.replace("-","_");
+//			if( re.indexIn(short_name) != -1 )
+//				short_name.replace("-","_");
 			emoji.insert( short_name, image );
 		}
 	}
@@ -119,9 +119,9 @@ QString Md4cMdParser::parse(const QString &input)
 				{
 					if( len == 0 )
 						len = 1;
-					else if ( len == 2 ) // это значит что между двумя двоеточиями нет букв, т.е. это просто повторяющееся двоеточие
+					else if ( len == 2 ) // it happens when between two ':' no words, just skip it
 						len = 1;
-					else{ //поймали слово, пробуем определить
+					else{ //we catch a word, try serach it in emoji hash map
 						QString word = part.mid(i - len + 2,len - 2);
 //						CppHas::instance()
 						QHash<QString,QString>::iterator search = parser->emoji.find(word);

@@ -101,7 +101,7 @@ Item {
 
     SlideshowView {
         id: emojiCategoryView
-        orientation: Qt.Horisontal
+        orientation: Qt.Horizontal
         anchors.top: panel.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left

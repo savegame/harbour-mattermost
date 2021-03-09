@@ -75,7 +75,7 @@ Repeater {
 //      property bool   isInCache      : role_is_in_cache
         property int    selfScIndex    : role_self_sc_index
         property real   componentHeight: 0.0
-        property point  sizeCoef       : point(1.0,1.0) // coeficient for right computing size of preview
+        property point  sizeCoef       : Qt.point(1.0,1.0) // coeficient for right computing size of preview
 
         Component {
             id: fileImage
@@ -103,9 +103,9 @@ Repeater {
             }
         }
 
-        Component.onCompleted: {
-            console.log("Loader component complete")
-        }
+//        Component.onCompleted: {
+//            console.log("Loader component complete")
+//        }
 
         onComponentHeightChanged:{
             if( componentHeight === 0.0 ) {

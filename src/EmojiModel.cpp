@@ -142,7 +142,7 @@ void EmojiModel::loadEmoji()
 	QJsonParseError error;
 	QJsonDocument doc = QJsonDocument::fromJson(file.readAll(), &error);
 
-	if (!error.errorString().isEmpty())
+	if (error.error != QJsonParseError::NoError && error.errorString().isEmpty())
 		qWarning() << error.errorString();
 	if (doc.isEmpty())
 		return ;
