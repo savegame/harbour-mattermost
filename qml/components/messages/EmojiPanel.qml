@@ -122,7 +122,6 @@ Item {
                 width: emojiCategoryView.itemWidth - emojiPanel.pagePadding * 2
                 height: emojiCategoryView.height
 
-                VerticalScrollDecorator {}
                 //anchors.horizontalCenter: parent.horizontalCenter
 
                 cellWidth: emojiPanel.emojiItemWidth
@@ -166,6 +165,9 @@ Item {
                     }
                 }// delegate: BackgroundItem
             }// GridView emojiGridView
+            VerticalScrollDecorator {
+                flickable: emojiGridView
+            }
         }
     }
 }

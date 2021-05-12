@@ -4544,6 +4544,16 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 				else if( error_id.compare("context.session_expired.app_error") == 0 )
 				{
 					int server_index  = reply->property(P_SERVER_INDEX).toInt();
+
+					qCritical() << QStringLiteral("Session Expired Error");
+					qCritical() << QStringLiteral("ReplyType: %0").arg( QVariant::fromValue<ReplyType>(reply_type).toString() );
+					ServerPtr server = serverAt(server_index);
+					if(server) {
+						QString token = server->m_token;
+						QString url = server->m_url;
+						qDebug() << QStringLiteral("test curl:\n curl -i -H 'Authorization: Bearer %0' %1/api/v4/users/me").arg(token,url);
+					}
+
 					emit onConnectionError(ConnectionError::SessionExpired, message, server_index);
 					ReplyType type = reply->property(P_REPLY_TYPE).value<ReplyType>();
 					// output request authorisation header

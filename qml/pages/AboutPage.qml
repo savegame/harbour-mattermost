@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import QtQml.Models 2.2
+import ru.sashikknox 1.0
 import "../model"
 
 Page {
@@ -41,13 +42,13 @@ Page {
                 id: versionlabel
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text : qsTr("Version: ") + (context !== null)?MattermostQt.getVersion():"0.0.0"
+                text : qsTr("Version: ") + (context !== null) ? MattermostQt.getVersion():"0.0.0"
                 anchors {
                     leftMargin: Theme.paddingLarge
                     rightMargin: Theme.paddingLarge
                     topMargin: Theme.paddingMedium
                     bottomMargin: Theme.paddingLarge
-                    //                horizontalCenter: parent.horizontalCenter
+//                    horizontalCenter: parent.horizontalCenter
                     left: parent.left
                     right: parent.right
                 }

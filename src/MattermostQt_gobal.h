@@ -16,9 +16,9 @@
 	    type_ CONCAT2(m_,name_); \
 	public: \
 	    type_ name_ () const \
-    { \
-	    return CONCAT2(m_,name_); \
-	} \
+        { \
+	        return CONCAT2(m_,name_); \
+	    } \
 	void CONCAT2(set_,name_) ( type_ value );
 
 #define MT_PROPERTY_NO_SIGNAL_DEF(type_, name_, signal_, defvalue_) \

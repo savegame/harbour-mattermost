@@ -44,7 +44,7 @@ static_websocket : {
     QT += websockets
 }
 
-include(libs/discount.pri);
+#include(libs/discount.pri);
 include(libs/md4c.pri);
 
 emoji.files = $$PWD/resources/emoji/emoji.json
@@ -58,21 +58,6 @@ INSTALLS += emoji emoji_svg emoji_png
 debug: DEFINES += _DEBUG
 !debug: DEFINES += _RELEASE
 !debug: DEFINES -= _DEBUG
-
-SOURCES += src/harbour-mattermost.cpp \
-    src/EmojiModel.cpp \
-    src/TeamsModel.cpp \
-    src/MattermostQt.cpp \
-    src/ChannelsModel.cpp \
-    src/MessagesModel.cpp \
-    src/SailNotify.cpp \
-    src/AccountsModel.cpp \
-    src/SettingsContainer.cpp \
-    src/MarkdownParser.cpp \
-    src/DiscountMDParser.cpp \
-    src/AttachedFilesModel.cpp \
-    src/UsersModel.cpp \
-    src/cpphash.cpp
 
 DISTFILES += \
     resources/emoji/* \
@@ -116,11 +101,26 @@ HEADERS += \
     src/AccountsModel.h \
     src/SettingsContainer.h \
     src/MarkdownParser.h \
-    src/DiscountMDParser.h \
+#    src/DiscountMDParser.h \
     src/AttachedFilesModel.h \
     src/UsersModel.h \
     src/c_cpphash.h \
     src/cpphash.h
+
+SOURCES += src/harbour-mattermost.cpp \
+    src/EmojiModel.cpp \
+	src/TeamsModel.cpp \
+	src/MattermostQt.cpp \
+	src/ChannelsModel.cpp \
+	src/MessagesModel.cpp \
+	src/SailNotify.cpp \
+	src/AccountsModel.cpp \
+	src/SettingsContainer.cpp \
+	src/MarkdownParser.cpp \
+#    src/DiscountMDParser.cpp \
+    src/AttachedFilesModel.cpp \
+	src/UsersModel.cpp \
+	src/cpphash.cpp
 
 RESOURCES += \
     resources.qrc
