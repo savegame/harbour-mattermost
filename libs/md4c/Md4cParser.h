@@ -3,6 +3,7 @@
 
 #include <MarkdownParser.h>
 #include <QHash>
+#include <QMap>
 #include <memory>
 #include <md4c.h>
 
@@ -22,12 +23,15 @@ public:
 	Md4cMdParser();
 	virtual ~Md4cMdParser() override;
 	
-	virtual QString parse(const QString &input) override;
-	
+    virtual QString parse(const QString &input, const QString server_id) override;
+    virtual void    add_custom_emoji(const QString key, const QString path, const QString server_id) override;
+    virtual QString find_emoji_path(const QString short_name) const override;
 private:
 	QString buff;
 	BlockType block_type = Block_Null;
+    QString current_server_id;
 	QHash<QString,QString> emoji;
+    QMap<QString, QHash<QString,QString>*> custom_emoji;
 	bool      is_code_block = false;
 	unsigned int parser_flags = MD_DIALECT_GITHUB;
 	unsigned int renderer_flags;

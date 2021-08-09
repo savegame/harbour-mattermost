@@ -79,6 +79,9 @@
 #define P_CA_CERT_PATH       "ca_cert_path"
 #define P_CERT_PATH          "cert_path"
 #define P_NEED_SAVE_SETTINGS "save_settings"
+#define P_UPDATE_TIME        "update_time"
+#define P_EMOJI_NAME         "emoji_name"
+#define P_EMOJI_ID           "emoji_id"
 // config file name
 #define F_CONFIG_FILE        "config.json"
 #define F_SETTINGS_FILE      "settings.json"
@@ -98,11 +101,15 @@
 #define request_urlencoded(requset) \
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-urlencoded")
 
+#define request_set_cookie(request, server) \
+    if( !server->m_cookie.isEmpty() ) \
+        request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
+
 #define request_set_headers(requset, server) \
 	request_urlencoded(request); \
 	request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Sailfish Mattermost v%0").arg(MATTERMOSTQT_VERSION) ); \
 	if( !server->m_cookie.isEmpty() ) \
-	request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
+		request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
 	request.setRawHeader("Authorization", server->m_bearer.toUtf8())
 
 #define request_json(requset) \
@@ -130,12 +137,12 @@ Q_DECLARE_METATYPE(MattermostQt::TeamPtr)
 
 MattermostQt *MattermostQt::getInstance()
 {
-//	static MattermostQt *mattermost = new MattermostQt();
-//	static bool first_call = true;
-//	if( first_call ) {
-//		first_call = false;
-//		qInfo() << QStringLiteral("MattermostQt::getInstance() first call: MattermostQt static object alloicated.");
-//	}
+	//	static MattermostQt *mattermost = new MattermostQt();
+	//	static bool first_call = true;
+	//	if( first_call ) {
+	//		first_call = false;
+	//		qInfo() << QStringLiteral("MattermostQt::getInstance() first call: MattermostQt static object alloicated.");
+	//	}
 	return mattermostQtGlobalInstance;
 }
 
@@ -179,6 +186,8 @@ void MattermostQt::bind_reply_functions()
 	BIND_REPLY_FUNCTION(delete_user_from_channel);
 	BIND_REPLY_FUNCTION(post_create_channel);
 	BIND_REPLY_FUNCTION(post_create_direct_channel);
+	BIND_REPLY_FUNCTION(get_emoji_list);
+	BIND_REPLY_FUNCTION(get_custom_emoji_image);
 }
 
 void MattermostQt::bind_event_functions()
@@ -202,8 +211,8 @@ void MattermostQt::bind_event_functions()
 
 MattermostQt::MattermostQt(QObject *parent )
     : QObject(parent)
-    , m_settings(nullptr)
-    , m_mdParser(nullptr)
+      , m_settings(nullptr)
+      , m_mdParser(nullptr)
 {
 	bind_reply_functions();
 	bind_event_functions();
@@ -231,7 +240,7 @@ MattermostQt::MattermostQt(QObject *parent )
 	        this, SLOT(replySSLErrors(QNetworkReply*,QList<QSslError>)));
 
 	m_config_path = QDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-	        .filePath(QCoreApplication::applicationName());
+						.filePath(QCoreApplication::applicationName());
 
 	m_data_path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
 	if( m_data_path.lastIndexOf( QCoreApplication::organizationName()) != -1 )
@@ -259,7 +268,7 @@ MattermostQt::MattermostQt(QObject *parent )
 	m_cache_path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 	if( m_cache_path.lastIndexOf( QStringLiteral(".cache/").arg(QCoreApplication::organizationName()) ) != -1 )
 	{	// this wrong path, try fix it
-// its /home/nemo/.local/share/sashikknox/harbour-mattermost
+		// its /home/nemo/.local/share/sashikknox/harbour-mattermost
 
 		QString wrong_path = m_cache_path + QStringLiteral("/");
 		QDir cacheDir(wrong_path);
@@ -269,7 +278,7 @@ MattermostQt::MattermostQt(QObject *parent )
 		{ // try it move to right location
 			if( cacheDir.rename(wrong_path, m_cache_path) ) {
 				qInfo() << QStringLiteral("Cache dir moved from '%0' to '%1'").arg(wrong_path).arg(m_cache_path);
-//				dataDir.remove( wrong_path.remove(QCoreApplication::applicationName().append("/")) );
+				//				dataDir.remove( wrong_path.remove(QCoreApplication::applicationName().append("/")) );
 				wrong_path.remove(QCoreApplication::applicationName().append("/"));
 				QDir removeDir( wrong_path );
 				if( removeDir.removeRecursively() )
@@ -289,18 +298,18 @@ MattermostQt::MattermostQt(QObject *parent )
 	qDebug() << QStringLiteral("Global cache path is: %0").arg(m_cache_path);
 
 	m_documents_path = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
-	        .filePath(QCoreApplication::applicationName());
+						   .filePath(QCoreApplication::applicationName());
 	m_pictures_path = QDir(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation))
-	        .filePath(QCoreApplication::applicationName());
+						  .filePath(QCoreApplication::applicationName());
 	m_download_path = QDir(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation))
-	        .filePath(QCoreApplication::applicationName());
+						  .filePath(QCoreApplication::applicationName());
 
 	m_settings = SettingsContainer::getInstance();
 	//	m_settings.reset(new SettingsContainer(this));
 	connect(m_settings, &SettingsContainer::settingsChanged, this, &MattermostQt::slot_settingsChanged);
 	connect(this, &MattermostQt::channelAdded, this, &MattermostQt::slot_channelAdded);
 
-	m_mdParser = nullptr;//new DiscountMDParser();
+	//	m_mdParser = nullptr;//new DiscountMDParser();
 
 	load_settings();
 
@@ -310,8 +319,21 @@ MattermostQt::MattermostQt(QObject *parent )
 MattermostQt::~MattermostQt()
 {
 	m_server.clear();
-	if( m_mdParser )
+	if( m_mdParser ) {
 		delete m_mdParser;
+		m_mdParser = nullptr;
+	}
+}
+
+QString MattermostQt::crashSave() const
+{
+	QTemporaryFile file(QDir::home().absoluteFilePath("crashSave_XXXXXX.txt"));
+	file.setAutoRemove(false);
+	if(file.open()) {
+		//        file.write(mTextEdit->toPlainText().toLocal8Bit());
+		return file.fileName();
+	}
+	return QString();
 }
 
 void MattermostQt::replaceMdParser(MarkdownParser *parser)
@@ -319,6 +341,19 @@ void MattermostQt::replaceMdParser(MarkdownParser *parser)
 	if( m_mdParser )
 		delete m_mdParser;
 	m_mdParser = parser;
+	if( m_isWaitForMDParser ) {
+		for(int server_index = 0; server_index < m_server.size(); server_index++ ) {
+			ServerPtr current = m_server[server_index];
+			if( current->m_tempCustomEmoji ) {
+				for(int i = 0; i < current->m_tempCustomEmoji->size(); i++) {
+					QJsonObject object = current->m_tempCustomEmoji->at(i).toObject();
+					get_custom_emoji_image(server_index, object["id"].toString(), object["name"].toString(), (qint64)object["update_at"].isDouble() );
+				}
+				current->m_tempCustomEmoji.reset();
+			}
+		}
+		m_isWaitForMDParser = false;
+	}
 }
 
 MattermostQt::ApplicationStatus MattermostQt::getApplicationStatus() const
@@ -441,8 +476,8 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 	// {"login_id":"someone@nowhere.com","password":"thisisabadpassword"}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(api)
-	        + QLatin1String("/users/login");
+						+ QString::number(api)
+						+ QLatin1String("/users/login");
 	//	QRegExp hasPort(":[0-9]+");
 	//	if( server.indexOf("https://") >= 0 && )
 	//		server.append(":443")
@@ -549,8 +584,8 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 		sc->m_api = 4;
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/me");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/users/me");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -609,11 +644,11 @@ void MattermostQt::get_teams(int server_index)
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        //	        + QLatin1String("/users/")
-	        //	        + sc->m_user_id
-	        //	        + QLatin1String("/teams");
-	        + QLatin1String("/users/me/teams");
+						+ QString::number(sc->m_api)
+						//	        + QLatin1String("/users/")
+						//	        + sc->m_user_id
+						//	        + QLatin1String("/teams");
+						+ QLatin1String("/users/me/teams");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -643,18 +678,18 @@ void MattermostQt::get_all_teams(int server_index)
 		return;
 	ServerPtr sc = m_server[server_index];
 
-//	if( !sc->m_teams.isEmpty() )
-//	{
-//		emit teamsExists(sc->m_teams);
-//		return;
-//	}
+	//	if( !sc->m_teams.isEmpty() )
+	//	{
+	//		emit teamsExists(sc->m_teams);
+	//		return;
+	//	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        //	        + QLatin1String("/users/")
-	        //	        + sc->m_user_id
-	        //	        + QLatin1String("/teams");
-	        + QLatin1String("/teams");
+						+ QString::number(sc->m_api)
+						//	        + QLatin1String("/users/")
+						//	        + sc->m_user_id
+						//	        + QLatin1String("/teams");
+						+ QLatin1String("/teams");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -715,10 +750,10 @@ void MattermostQt::get_team_icon(MattermostQt::TeamPtr team)
 	//	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/teams/")
-	        + team->m_id
-	        + QLatin1String("/image");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/teams/")
+						+ team->m_id
+						+ QLatin1String("/image");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -780,10 +815,10 @@ void MattermostQt::get_public_channels(int server_index, QString team_id)
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/me/teams/")
-	        + team_id
-	        + QLatin1String("/channels");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/users/me/teams/")
+						+ team_id
+						+ QLatin1String("/channels");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -822,10 +857,10 @@ void MattermostQt::get_team_public_channels(int server_index, QString team_id)
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/teams/")
-	        + team_id
-	        + QLatin1String("/channels");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/teams/")
+						+ team_id
+						+ QLatin1String("/channels");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -852,9 +887,9 @@ void MattermostQt::get_channel(int server_index, QString channel_id)
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/")
-	        + channel_id;
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/")
+						+ channel_id;
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -881,7 +916,7 @@ void MattermostQt::get_channel(int server_index, int team_index, int channel_typ
 void MattermostQt::get_team(int server_index, int team_index)
 {
 	if( server_index < 0 || server_index >= m_server.size()
-	        || team_index < 0 || team_index >= m_server[server_index]->m_teams.size() )
+		|| team_index < 0 || team_index >= m_server[server_index]->m_teams.size() )
 	{
 		qWarning() << "Wrond indexes";
 		return;
@@ -899,9 +934,9 @@ void MattermostQt::get_team(int server_index, QString team_id)
 		return;
 	}
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/teams/")
-	        + team_id;
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/teams/")
+						+ team_id;
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -915,7 +950,7 @@ void MattermostQt::get_team(int server_index, QString team_id)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_team) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 	reply->setProperty(P_TEAM_ID, QVariant(team_id) );
-//	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+	//	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 }
 
 void MattermostQt::get_team_members(int server_index, int team_index, int page, int per_page)
@@ -929,10 +964,10 @@ void MattermostQt::get_team_members(int server_index, int team_index, int page, 
 	ServerPtr server = m_server[server_index];
 	
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(server->m_api)
-	        + QLatin1String("/teams/")
-	        + team->m_id
-	        + QLatin1String("/members");
+						+ QString::number(server->m_api)
+						+ QLatin1String("/teams/")
+						+ team->m_id
+						+ QLatin1String("/members");
 	
 	QUrl url(server->m_url);
 	url.setPath(url.path() + urlString);
@@ -962,8 +997,8 @@ void MattermostQt::get_users(int server_index, MattermostQt::GetUsersRequestType
 	}
 	
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(server->m_api)
-	        + QLatin1String("/users");
+						+ QString::number(server->m_api)
+						+ QLatin1String("/users");
 	
 	QUrl url(server->m_url);
 	url.setPath(url.path() + urlString);
@@ -1014,10 +1049,10 @@ void MattermostQt::get_team_statistics(int server_index, int team_index)
 	ServerPtr server = m_server[server_index];
 	
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(server->m_api)
-	        + QLatin1String("/teams/")
-	        + team->m_id
-	        + QLatin1String("/stats");
+						+ QString::number(server->m_api)
+						+ QLatin1String("/teams/")
+						+ team->m_id
+						+ QLatin1String("/stats");
 	
 	QUrl url(server->m_url);
 	url.setPath(url.path() + urlString);
@@ -1045,10 +1080,10 @@ void MattermostQt::post_add_user_to_team(int server_index, QString user_id, QStr
 	if(user_id.isEmpty())
 		user_id = sc->m_user_id;
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/teams/")
-	        + team_id
-	        + QLatin1String("/members");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/teams/")
+						+ team_id
+						+ QLatin1String("/members");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1083,10 +1118,10 @@ void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 	QString file_id = file->m_id;
 	//files/{file_id}/thumbnail
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/files/")
-	        + file_id
-	        + QLatin1String("/thumbnail");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/files/")
+						+ file_id
+						+ QLatin1String("/thumbnail");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1107,9 +1142,6 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 {
 	qDebug() << QStringLiteral("get_file_preview ( server_index = %0, file_sc_index = %1").arg(server_index).arg(file_sc_index);
 	qDebug() << QStringLiteral("This pointer: %0").arg((qlonglong)this, 1, 16);
-	if( server_index < 0 || server_index >= m_server.size() )
-		return;
-	// we think all indexes is right
 	ServerPtr sc = serverAt(server_index);
 	if( !sc ) {
 		qCritical() <<  QStringLiteral("Cant find server with 'server_index' == %0").arg(server_index);
@@ -1117,8 +1149,9 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 	}
 	if( file_sc_index < 0 || file_sc_index >= sc->m_file.size() )
 		return;
-	
-	FilePtr file = sc->m_file[file_sc_index];
+	qDebug() << "Get file";
+	FilePtr file = sc->m_file.at(file_sc_index);
+	qDebug() << "All okay!";
 	if( !file ) {
 		qCritical() <<  QStringLiteral("Cant find server with 'server_index' == %0; 'file_index' = %1").arg(server_index).arg(file_sc_index);
 		return;
@@ -1142,10 +1175,10 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 	QString file_id = file->m_id;
 	//files/{file_id}/preview
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/files/")
-	        + file_id
-	        + QLatin1String("/preview");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/files/")
+						+ file_id
+						+ QLatin1String("/preview");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1232,10 +1265,10 @@ void MattermostQt::get_file_info(int server_index, int team_index, int channel_t
 
 	//files/{file_id}/info
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/files/")
-	        + file_id
-	        + QLatin1String("/info");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/files/")
+						+ file_id
+						+ QLatin1String("/info");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1265,11 +1298,11 @@ void MattermostQt::get_file(int server_index, int team_index,
 	if(!message)
 	{
 		qCritical() << QString("Message (si:%0,ti:%1,cht:%2,chi:%3,mi:%4) not found")
-		               .arg(server_index)
-		               .arg(team_index)
-		               .arg(channel_type == ChannelPublic?"Public":(channel_type == ChannelPrivate?"Private":"Direct"))
-		               .arg(channel_index)
-		               .arg(message_index);
+						   .arg(server_index)
+						   .arg(team_index)
+						   .arg(channel_type == ChannelPublic?"Public":(channel_type == ChannelPrivate?"Private":"Direct"))
+						   .arg(channel_index)
+						   .arg(message_index);
 		return;
 	}
 	ServerPtr sc = m_server[server_index];
@@ -1277,9 +1310,9 @@ void MattermostQt::get_file(int server_index, int team_index,
 
 	//files/{file_id}/thumbnail
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/files/")
-	        + file->m_id;
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/files/")
+						+ file->m_id;
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1327,8 +1360,8 @@ void MattermostQt::post_file_upload(int server_index, int team_index, int channe
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/files");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/files");
 	QFileInfo fileinfo(*file);
 
 	QUrlQuery query;
@@ -1386,8 +1419,8 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	ServerPtr sc = m_server[server_index];
 	//files/{file_id}/thumbnail
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/posts");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/posts");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1402,8 +1435,8 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	QJsonArray files;
 
 	QList<FilePtr>::iterator
-	        it = sc->m_unattached_file.begin(),
-	        end = sc->m_unattached_file.end();
+		it = sc->m_unattached_file.begin(),
+		end = sc->m_unattached_file.end();
 	while(it != end)
 	{
 		FilePtr f = *it;
@@ -1471,9 +1504,9 @@ void MattermostQt::delete_message(int server_index, int team_index, int channel_
 	MessagePtr message = channel->m_message[message_index];
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/posts/")
-	        + message->m_id;
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/posts/")
+						+ message->m_id;
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1499,10 +1532,10 @@ void MattermostQt::put_message_edit(QString text, int server_index, int team_ind
 	MessagePtr message = channel->m_message[message_index];
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/posts/")
-	        + message->m_id
-	        + QLatin1String("/patch");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/posts/")
+						+ message->m_id
+						+ QLatin1String("/patch");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1532,10 +1565,10 @@ void MattermostQt::post_channel_view(int server_index, int team_index, int chann
 	///channels/members/{user_id}/view
 	ServerPtr sc = m_server[server_index];
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/members/")
-	        + sc->m_user_id // or QStringLiteral("me")
-	        + QLatin1String("/view");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/members/")
+						+ sc->m_user_id // or QStringLiteral("me")
+						+ QLatin1String("/view");
 	ChannelPtr channel;
 
 	if(channel_type == ChannelType::ChannelDirect)
@@ -1588,9 +1621,9 @@ void MattermostQt::post_add_user_to_channel(int server_index, int team_index, QS
 	if(user_id.isEmpty())
 		user_id = sc->m_user_id;
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/")
-	        + channel_id 
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/")
+						+ channel_id
 	        + QLatin1String("/members");
 
 	QUrl url(sc->m_url);
@@ -1608,7 +1641,7 @@ void MattermostQt::post_add_user_to_channel(int server_index, int team_index, QS
 	QJsonDocument json;
 	QJsonObject root;
 	root["user_id"] = user_id;
-//	root["post_root_id"] = QString();
+	//	root["post_root_id"] = QString();
 	json.setObject(root);
 	
 	ChannelPtr channel = id2channel(sc, channel_id);
@@ -1633,11 +1666,11 @@ void MattermostQt::delete_user_from_channel(int server_index, QString channel_id
 	if(user_id.isEmpty())
 		user_id = sc->m_user_id;
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/")
-	        + channel_id 
-	        + QLatin1String("/members/")
-	        + user_id;
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/")
+						+ channel_id
+			+ QLatin1String("/members/")
+						+ user_id;
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1671,8 +1704,8 @@ void MattermostQt::post_create_channel(int server_index, int team_index,
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1682,14 +1715,14 @@ void MattermostQt::post_create_channel(int server_index, int team_index,
 	request_set_headers(request,sc);
 	request_json(request);
 
-//	{
-//	  "team_id": "string",
-//	  "name": "string",
-//	  "display_name": "string",
-//	  "purpose": "string",
-//	  "header": "string",
-//	  "type": "string"
-//	}
+	//	{
+	//	  "team_id": "string",
+	//	  "name": "string",
+	//	  "display_name": "string",
+	//	  "purpose": "string",
+	//	  "header": "string",
+	//	  "type": "string"
+	//	}
 	if( url_name.isEmpty() ) {
 		url_name=name;
 	}
@@ -1719,8 +1752,8 @@ void MattermostQt::post_create_direct_channel(int server_index, QString user_id)
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/direct");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/direct");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1730,10 +1763,10 @@ void MattermostQt::post_create_direct_channel(int server_index, QString user_id)
 	request_set_headers(request,sc);
 	request_json(request);
 
-//	[
-//	  "user_id_1",
-//	  "user_id_2",
-//	]
+	//	[
+	//	  "user_id_1",
+	//	  "user_id_2",
+	//	]
 
 	QJsonDocument json;
 	QJsonArray root;
@@ -1767,10 +1800,10 @@ void MattermostQt::get_channel_members(int server_index, int team_index, int cha
 	qDebug() << QStringLiteral("Request: get_channel_members for %1 (%2)").arg(channel->m_display_name).arg(channel->m_id);
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/")
-	        + channel->m_id
-	        + QLatin1String("/members");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/")
+						+ channel->m_id
+						+ QLatin1String("/members");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1811,10 +1844,10 @@ void MattermostQt::get_channel_statistics(int server_index, int team_index, int 
 	qDebug() << QStringLiteral("Request: get_channel_members for %1 (%2)").arg(channel->m_display_name).arg(channel->m_id);
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/")
-	        + channel->m_id
-	        + QLatin1String("/stats");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/")
+						+ channel->m_id
+						+ QLatin1String("/stats");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1851,12 +1884,12 @@ void MattermostQt::get_channel_unread(MattermostQt::ChannelPtr channel)
 	qDebug() << QStringLiteral("Request: Get channel unread for %1 (%2)").arg(channel->m_display_name).arg(channel->m_id);
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/")
-	        + sc->m_user_id
-	        + QLatin1String("/channels/")
-	        + channel->m_id
-	        + QLatin1String("/unread");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/users/")
+						+ sc->m_user_id
+						+ QLatin1String("/channels/")
+						+ channel->m_id
+						+ QLatin1String("/unread");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1888,9 +1921,9 @@ void MattermostQt::get_user_image(int server_index, int user_index)
 	UserPtr user = sc->m_user[user_index];
 
 	QString path = sc->m_cache_path +
-	        QString("/users/") +
-	        user->m_id +
-	        QString("/image.png");
+				   QString("/users/") +
+				   user->m_id +
+				   QString("/image.png");
 	// check if user has image
 	QFile user_image(path);
 
@@ -1910,10 +1943,10 @@ void MattermostQt::get_user_image(int server_index, int user_index)
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/")
-	        + user->m_id
-	        + QLatin1String("/image");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/users/")
+						+ user->m_id
+						+ QLatin1String("/image");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -1947,9 +1980,9 @@ void MattermostQt::get_user_info(int server_index, QString userId, int team_inde
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/")
-	        + userId;
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/users/")
+						+ userId;
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -2038,14 +2071,14 @@ void MattermostQt::get_post(int server_index, QString post_id, MattermostQt::Mes
 				}
 			}
 			else for(int i =0; i < channel->m_message.size(); i++)
-			{
-				if( channel->m_message[i]->m_id == message->m_root_id )
 				{
-					message->m_root_ptr = channel->m_message[i];
-					message->m_root_ptr->m_thread_messages.append(message);
-					break;
+					if( channel->m_message[i]->m_id == message->m_root_id )
+					{
+						message->m_root_ptr = channel->m_message[i];
+						message->m_root_ptr->m_thread_messages.append(message);
+						break;
+					}
 				}
-			}
 
 			if( message->updateRootMessage(this) )
 			{
@@ -2066,9 +2099,9 @@ void MattermostQt::get_post(int server_index, QString post_id, MattermostQt::Mes
 	}
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/posts/")
-	        + post_id;
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/posts/")
+						+ post_id;
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -2115,10 +2148,10 @@ void MattermostQt::get_posts(int server_index, int team_index, int channel_type,
 	 */
 	//	QString per_page("\"20\"");
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/")
-	        + channel->m_id
-	        + QLatin1String("/posts");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/")
+						+ channel->m_id
+						+ QLatin1String("/posts");
 	//	        + per_page;
 
 	QUrl url(sc->m_url);
@@ -2169,10 +2202,10 @@ void MattermostQt::get_posts_before(int server_index, int team_index,
 	before = channel->m_message[0];
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/channels/")
-	        + channel->m_id
-	        + QLatin1String("/posts");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/channels/")
+						+ channel->m_id
+						+ QLatin1String("/posts");
 
 	QUrlQuery query;
 	query.addQueryItem("before", before->m_id);
@@ -2205,8 +2238,8 @@ void MattermostQt::post_users_status(int server_index)
 	ServerPtr sc = m_server[server_index];
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/status/ids");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/users/status/ids");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -2246,8 +2279,8 @@ void MattermostQt::post_users_status(int server_index, QStringList ids)
 	ServerPtr sc = m_server[server_index];
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/users/status/ids");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/users/status/ids");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -2290,8 +2323,8 @@ void MattermostQt::post_create_reaction(int server_index, const QString &post_id
 	ServerPtr sc = m_server[server_index];
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QLatin1String("/reactions");
+						+ QString::number(sc->m_api)
+						+ QLatin1String("/reactions");
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -2331,11 +2364,11 @@ void MattermostQt::delete_reaction(int server_index, const QString &post_id, con
 	ServerPtr sc = m_server[server_index];
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(sc->m_api)
-	        + QStringLiteral("/users/%0/posts/%1/reactions/%2")
-	        .arg(sc->m_user_id)
-	        .arg(post_id)
-	        .arg(emoji_name);
+						+ QString::number(sc->m_api)
+						+ QStringLiteral("/users/%0/posts/%1/reactions/%2")
+							  .arg(sc->m_user_id)
+							  .arg(post_id)
+							  .arg(emoji_name);
 
 	QUrl url(sc->m_url);
 	url.setPath(url.path() + urlString);
@@ -2352,6 +2385,80 @@ void MattermostQt::delete_reaction(int server_index, const QString &post_id, con
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 }
 
+void MattermostQt::get_emoji_list(int  server_index)
+{
+	ServerPtr server = serverAt(server_index);
+	if( !server )
+	{
+		qCritical() << QStringLiteral("Wrong server index");
+		return;
+	}
+	qDebug() << QStringLiteral("Request custom emoji list");
+	// here we should first try load emoji list from cache ( or not? )
+	QString urlString = QLatin1String("/api/v")
+						+ QString::number(server->m_api)
+						+ QStringLiteral("/emoji");
+
+	QUrl url(server->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	//    qDebug() << QStringLiteral("curl -H 'Authorization: Bearer %0' -H 'Accept: application/json' %1").arg(server->m_token).arg(url.toString());
+	request_set_headers(request,server);
+	request_json(request);
+
+	//	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(server->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_emoji_list) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+}
+
+void MattermostQt::get_custom_emoji_image(int server_index, QString emoji_id, QString emoji_name, qint64 update_time )
+{
+	// TODO first check if this emoji already cached ( need last date update here to )
+	ServerPtr server = serverAt(server_index);
+	if( !server )
+	{
+		qCritical() << QStringLiteral("Wrong server index");
+		return;
+	}
+
+	QString file_path = server->m_cache_path
+						+ QStringLiteral("/emoji/")
+						+ QStringLiteral("%0").arg(emoji_id);
+	if( QFile::exists(file_path) ) {
+		QFileInfo file(file_path);
+		if( file.lastModified().toMSecsSinceEpoch() >= update_time ) {
+			m_mdParser->add_custom_emoji(emoji_name,file_path, QString::number(server_index));
+			return;
+		}
+	}
+	// here we should first try load emoji list from cache ( or not? )
+	QString urlString = QLatin1String("/api/v")
+						+ QString::number(server->m_api)
+						+ QStringLiteral("/emoji/%0/image").arg(emoji_id);
+
+	QUrl url(server->m_url);
+	url.setPath(url.path() + urlString);
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	//    qDebug() << QStringLiteral("curl -H 'Authorization: Bearer %0' -H 'Accept: application/json' %1").arg(server->m_token).arg(url.toString());
+	request_set_headers(request,server);
+	//    request_json(request);
+
+	//	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(server->m_trust_cert) );
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_custom_emoji_image) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_UPDATE_TIME, QVariant(update_time) );
+	reply->setProperty(P_EMOJI_NAME, QVariant(emoji_name) );
+	reply->setProperty(P_EMOJI_ID, QVariant(emoji_id) );
+}
+
 QString MattermostQt::user_id(int server_index) const
 {
 	return m_server[server_index]->m_user_id;
@@ -2360,7 +2467,7 @@ QString MattermostQt::user_id(int server_index) const
 bool MattermostQt::user_role(int server_index, int user_index, int role) const
 {
 	if( server_index < 0 || server_index >= m_server.size() ||
-	        role < 0 || role >= UserSystemRolesCount )
+		role < 0 || role >= UserSystemRolesCount )
 		return false;
 	ServerPtr server = m_server[server_index];
 	if( user_index == GET_USER_INFO_current_user ) {
@@ -2411,11 +2518,12 @@ void MattermostQt::notificationActivated(int server_index, int team_index, int c
 	//
 }
 
-QString MattermostQt::parseMD(const QString &input) const
+QString MattermostQt::parseMD(const QString &input, int server_index) const
 {
+	//    ServerPtr server = serverAt(server_index);
 	if(!m_mdParser)
 		return QString::Null();
-	return m_mdParser->parse(input);
+	return m_mdParser->parse(input, QString::number(server_index));
 }
 
 QString formatSize(qint64 size) {
@@ -2472,7 +2580,7 @@ void MattermostQt::clearCache()
 		{
 			FilePtr file = m_server[i]->m_file[f];
 			if(file->m_file_type != FileImage ||
-			        file->m_file_type != FileAnimatedImage )
+				file->m_file_type != FileAnimatedImage )
 				continue;
 			// TODO check if file is on local storage
 			file->m_file_status = FileRemote;
@@ -2543,7 +2651,7 @@ QString MattermostQt::saveImageFileToGallery(int server_index, int file_sc_index
 QString MattermostQt::getUserName(int server_index, int user_index)
 {
 	if(server_index < 0 || server_index >= m_server.size()
-	        || user_index < 0 || user_index >= m_server[server_index]->m_url.size() )
+		|| user_index < 0 || user_index >= m_server[server_index]->m_url.size() )
 		return QString();
 	return m_server[server_index]->m_user[user_index]->m_username;
 }
@@ -2552,8 +2660,8 @@ void MattermostQt::get_teams_unread(MattermostQt::ServerPtr server)
 {
 	// request url users/{user_id}/teams/unread
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(server->m_api)
-	        + QLatin1String("/users/me/teams/unread");
+						+ QString::number(server->m_api)
+						+ QLatin1String("/users/me/teams/unread");
 
 
 	QUrl url(server->m_url);
@@ -2781,8 +2889,8 @@ void MattermostQt::prepare_direct_channel(int server_index, int channel_index)
 			}
 			if(self_chat)
 				sc->m_direct_channels[channel_index]->m_display_name = displayname
-				        + QLatin1String(" ") // for right translation, if someone forgot about space before '(you)'
-				        + QObject::tr("(you)");
+																	   + QLatin1String(" ") // for right translation, if someone forgot about space before '(you)'
+																	   + QObject::tr("(you)");
 			else
 				sc->m_direct_channels[channel_index]->m_display_name = displayname;
 			sc->m_direct_channels[channel_index]->m_dc_user_index = user->m_self_index;
@@ -3029,8 +3137,8 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	        SLOT(onWebSocketPong(quint64,QByteArray)) );
 
 	QString urlString = QLatin1String("/api/v")
-	        + QString::number(server->m_api)
-	        + QLatin1String("/websocket");
+						+ QString::number(server->m_api)
+						+ QLatin1String("/websocket");
 
 	QString serUrl = server->m_url;
 	if( serUrl.indexOf("https://") >= 0 )
@@ -3039,7 +3147,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 		serUrl.replace("http://","ws://");
 	else
 		serUrl.replace("https://","wss://")
-		        .replace("http://","ws://");
+			.replace("http://","ws://");
 
 	/// fix #31
 	QUrl url(serUrl);
@@ -3073,7 +3181,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 		if( json.isObject() )
 		{
 			QJsonObject object = json.object();
-//			qDebug() << object;
+			//			qDebug() << object;
 			server->m_user_id = object["id"].toString();
 			server->m_auth_data = object["auth_data"].toString();
 			server->m_auth_service = object["auth_service"].toString();
@@ -3087,6 +3195,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 		websocket_connect(server);
 		// TODO add singnal server Added
 		//		emit serverConnected(server->m_self_index);
+		get_emoji_list(server_id);
 		return;
 	}
 	// first login, or update token
@@ -3131,7 +3240,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 				for(int i = 0; i < m_server.size(); i++ )
 				{
 					if( server->m_url == m_server[i]->m_url &&
-					        server->m_user_id == m_server[i]->m_user_id )
+						server->m_user_id == m_server[i]->m_user_id )
 					{
 						is_new_account = false;
 						m_server[i]->m_token = server->m_token;
@@ -3152,7 +3261,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 
 			if(is_new_account)
 				emit serverAdded(server);
-
+			get_emoji_list(server->m_self_index);
 			return;
 		}
 	}
@@ -3162,7 +3271,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 void MattermostQt::reply_get_teams(QNetworkReply *reply)
 {
 	ASSERT_REPLY(reply_get_teams)
-	        QJsonDocument json;
+	QJsonDocument json;
 	QByteArray rawData = reply->readAll();
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
 	json = QJsonDocument::fromJson(rawData);
@@ -3227,14 +3336,14 @@ void MattermostQt::reply_get_all_teams(QNetworkReply *reply)
 				tc->save_json( m_server[server_index]->m_data_path );
 				// ---------------------------------------------
 				auto search = std::find_if(server->m_teams.begin(), server->m_teams.end(), [tc](TeamPtr current) {
-				    return current->m_id == tc->m_id;
-			    });
+					return current->m_id == tc->m_id;
+				});
 				if( search != server->m_teams.end() )
 					all_teams << *search;
 				else {
 					all_teams << tc;
 					get_team_icon(tc);
-//					get_team_statistics(tc->m_server_index, tc->m_self_index);
+					//					get_team_statistics(tc->m_server_index, tc->m_self_index);
 				}
 			}
 			else
@@ -3312,8 +3421,8 @@ void MattermostQt::reply_get_teams_unread(QNetworkReply *reply)
 		// change signal to TeamPtr instead team_id string
 		//		emit teamUnread(team_id, (int)msg_count, (int)mention_count);
 		emit teamChanged(team, QVectorInt()
-		                 << TeamsModel::RoleUnreadMentionCount
-		                 << TeamsModel::RoleUnreadMessageCount);
+								   << TeamsModel::RoleUnreadMentionCount
+								   << TeamsModel::RoleUnreadMessageCount);
 		emit messageUnreadChanged();
 	}
 }
@@ -3343,8 +3452,8 @@ void MattermostQt::reply_get_team_icon(QNetworkReply *reply)
 	QByteArray replyData = reply->readAll();
 	{
 		QString file_path = server->m_cache_path
-		        + QLatin1String("/teams/")
-		        + team->m_id;
+							+ QLatin1String("/teams/")
+							+ team->m_id;
 		QDir dir;
 		if( QFile::exists(file_path + QLatin1String("/image.png")) )
 		{
@@ -3585,7 +3694,7 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 	channel->m_message.reserve(order.size());
 	QJsonObject posts = json.object()["posts"].toObject();
 	QJsonObject::iterator it = posts.begin(),
-	        end = posts.end();
+						  end = posts.end();
 	bool new_messages = false;
 	int its_all = order.size();
 	QList<MessagePtr> answers;
@@ -3671,12 +3780,12 @@ void MattermostQt::reply_get_posts(QNetworkReply *reply)
 					for(int k = 0; k < temp->m_file_ids.size(); k++ )
 					{
 						get_file_info(
-						            server_index,
-						            team_index,
-						            channel_type,
-						            channel_index,
-						            temp->m_self_index,
-						            temp->m_file_ids[k]);
+							server_index,
+							team_index,
+							channel_type,
+							channel_index,
+							temp->m_self_index,
+							temp->m_file_ids[k]);
 					}
 #endif
 					break;
@@ -3723,7 +3832,7 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 	QJsonArray order = json.object()["order"].toArray();
 	QJsonObject posts = json.object()["posts"].toObject();
 	QJsonObject::iterator it = posts.begin(),
-	        end = posts.end();
+						  end = posts.end();
 	messages.reserve(order.size() + channel->m_message.size());
 	bool new_messages = false;
 	int its_all = order.size();
@@ -3821,12 +3930,12 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 		for(int k = 0; k < temp->m_file_ids.size() && false; k++ )
 		{
 			get_file_info(
-			            server_index,
-			            team_index,    //temp->m_team_index,
-			            channel_type,  //temp->m_channel_type,
-			            channel_index, //temp->m_channel_index,
-			            temp->m_self_index,
-			            temp->m_file_ids[k]);
+				server_index,
+				team_index,    //temp->m_team_index,
+				channel_type,  //temp->m_channel_type,
+				channel_index, //temp->m_channel_index,
+				temp->m_self_index,
+				temp->m_file_ids[k]);
 		}
 	}
 #endif
@@ -3916,7 +4025,7 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 					emit channelAdded(ct);
 					prepare_direct_channel(ct->m_server_index, ct->m_self_index);
 				}
-					break;
+				break;
 				default:
 					break;
 				}
@@ -3925,11 +4034,11 @@ void MattermostQt::reply_get_public_channels(QNetworkReply *reply)
 			}
 		}
 	}
-//	if(sc->m_user.size() == 1) {
-//		TeamPtr team = teamAt(server_index,team_index);
-//		if(team)
-//			get_users(server_index, MattermostQt::GetUsersRequestType::in_team,team->m_id);
-//	} 
+	//	if(sc->m_user.size() == 1) {
+	//		TeamPtr team = teamAt(server_index,team_index);
+	//		if(team)
+	//			get_users(server_index, MattermostQt::GetUsersRequestType::in_team,team->m_id);
+	//	}
 	post_users_status(server_index);
 }
 
@@ -3962,8 +4071,8 @@ void MattermostQt::reply_get_team_public_channels(QNetworkReply *reply)
 		QString channel_id = jsonChannel["id"].toString();
 		// check if we already has this channel in our channels model 
 		auto search = std::find_if(team->m_public_channels.begin(),team->m_public_channels.end(), [channel_id](const ChannelPtr &current)->bool {
-		              return current->m_id == channel_id;
-		          });
+			return current->m_id == channel_id;
+		});
 		if( search != team->m_public_channels.end() ) {
 			continue;
 		}
@@ -4047,7 +4156,7 @@ void MattermostQt::reply_get_channel(QNetworkReply *reply)
 void MattermostQt::reply_post_channel_view(QNetworkReply *reply)
 {
 	ASSERT_REPLY(reply_post_channel_view)
-	        ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
 	if(!channel)
 		return;
 	ServerPtr pc = m_server[channel->m_server_index];
@@ -4093,13 +4202,13 @@ void MattermostQt::reply_post_add_user_to_channel(QNetworkReply *reply)
 	}*/
 	QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
 	QJsonObject object = json.object();
-//	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
-//	if(channel) {
-//		channel->m_member_count++;
-//	}
+	//	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
+	//	if(channel) {
+	//		channel->m_member_count++;
+	//	}
 	qDebug() << QStringLiteral("User %0 added to channel %1").
-	         arg(object["user_id"].toString()).
-	         arg(object["channel_id"].toString());
+				arg(object["user_id"].toString()).
+				arg(object["channel_id"].toString());
 }
 
 void MattermostQt::reply_delete_user_from_channel(QNetworkReply *reply)
@@ -4112,9 +4221,9 @@ void MattermostQt::reply_delete_user_from_channel(QNetworkReply *reply)
 	QString user_id = reply->property(P_USER_ID).toString();
 	QString channel_id = reply->property(P_CHANNEL_ID).toString();
 	ChannelPtr channel = reply->property(P_CHANNEL_PTR).value<ChannelPtr>();
-//	if(channel) {
-//		channel->m_member_count--;
-//	}
+	//	if(channel) {
+	//		channel->m_member_count--;
+	//	}
 	qDebug() << QStringLiteral("User \"%0\" leaving channel \"%1\", status : %2").arg(user_id).arg(channel_id).arg(object["status"].toString());
 }
 
@@ -4236,9 +4345,9 @@ void MattermostQt::reply_get_channel_members(QNetworkReply *reply)
 		members << user;
 	}
 	emit onReplyChannelMembers(channel, members);
-//	channel->m_msg_unread    = object["msg_count"].toInt();
-//	channel->m_mention_count = object["mention_count"].toInt();
-//	emit updateChannel( channel, QVectorInt() << ChannelsModel::MessageUnread << ChannelsModel::MentionCount );
+	//	channel->m_msg_unread    = object["msg_count"].toInt();
+	//	channel->m_mention_count = object["mention_count"].toInt();
+	//	emit updateChannel( channel, QVectorInt() << ChannelsModel::MessageUnread << ChannelsModel::MentionCount );
 	//	emit messageUnreadChanged();
 }
 
@@ -4257,10 +4366,10 @@ void MattermostQt::reply_get_channel_statistics(QNetworkReply *reply)
 		return;
 	}
 	QJsonObject object = json.object();
-//	{
-//	    "channel_id": "string",
-//	    "member_count": 0
-//	}
+	//	{
+	//	    "channel_id": "string",
+	//	    "member_count": 0
+	//	}
 	QString channel_id = object["channel_id"].toString();
 	if( object["channel_id"].toString() != channel->m_id ) 
 	{
@@ -4277,7 +4386,7 @@ void MattermostQt::reply_get_channel_statistics(QNetworkReply *reply)
 void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 {
 	ASSERT_REPLY(reply_get_user_info)
-	        int server_index = reply->property(P_SERVER_INDEX).toInt();
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
 	int team_index = reply->property(P_TEAM_INDEX).toInt();
 	bool direct_channel = reply->property(P_DIRECT_CHANNEL).toBool();
 	QString user_id = reply->property(P_USER_ID).toString();
@@ -4336,9 +4445,9 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 		post_users_status(server_index, QStringList() << user->m_id);
 
 		QString path = sc->m_cache_path +
-		        QString("/users/") +
-		        user->m_id +
-		        QString("/image.png");
+					   QString("/users/") +
+					   user->m_id +
+					   QString("/image.png");
 		// check if user has image
 		QFile user_image(path);
 		bool user_image_exists = user_image.exists();
@@ -4381,8 +4490,8 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 			if(self_chat && ch_name.isEmpty())
 			{
 				channel->m_display_name = user->m_username
-				        + QLatin1String(" ") // for right translation, if someone forgot about space before '(you)'
-				        + QObject::trUtf8("(you)");
+										  + QLatin1String(" ") // for right translation, if someone forgot about space before '(you)'
+										  + QObject::trUtf8("(you)");
 				channel->m_dc_user_index = user->m_self_index;
 				QVectorInt roles;
 				roles << ChannelsModel::DisplayName << ChannelsModel::AvatarPath;
@@ -4415,7 +4524,7 @@ void MattermostQt::reply_get_user_info(QNetworkReply *reply)
 				channel->m_dc_user_index = user->m_self_index;
 
 				emit updateChannel(channel, roles);
-//				qDebug() << QString("direct_channel \"%0\" id: '%1'").arg(channel->m_display_name).arg(channel->m_id) ;
+				//				qDebug() << QString("direct_channel \"%0\" id: '%1'").arg(channel->m_display_name).arg(channel->m_id) ;
 				break;
 			}
 		}
@@ -4462,14 +4571,14 @@ void MattermostQt::reply_get_users(QNetworkReply *reply)
 	
 	qWarning() << json;
 	// first delete user from request list
-//	for(int u = 0; u < sc->m_requested_users.size(); u++ )
-//	{
-//		if( sc->m_requested_users[u] == user_id )
-//		{
-//			sc->m_requested_users.remove(u);
-//			break;
-//		}
-//	}
+	//	for(int u = 0; u < sc->m_requested_users.size(); u++ )
+	//	{
+	//		if( sc->m_requested_users[u] == user_id )
+	//		{
+	//			sc->m_requested_users.remove(u);
+	//			break;
+	//		}
+	//	}
 }
 
 void MattermostQt::reply_post_users_status(QNetworkReply *reply)
@@ -4598,8 +4707,8 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 							qWarning() << QStringLiteral("Team id(%0) has no icon.").arg(team->m_id);
 							ServerPtr server = m_server[si];
 							QString file_path = server->m_cache_path
-							        + QLatin1String("/teams/")
-							        + team->m_id;
+												+ QLatin1String("/teams/")
+												+ team->m_id;
 							QDir dir;
 							if( QFile::exists(file_path + QLatin1String("/image.png")) )
 							{
@@ -4660,29 +4769,29 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 	if(!channel) {
 		// try fix file 
 		qCritical() << QStringLiteral("Try use FilePtr (%0) with incorrect indexes.").arg(file->m_id);
-//		file->m_post_id;
-		
-//		channel = id2message(ChannelPtr(), file->m_post_id);
+		//		file->m_post_id;
+
+		//		channel = id2message(ChannelPtr(), file->m_post_id);
 		return;
 	}
-//	if(channel_type != ChannelDirect)
-//	{
-//		TeamPtr tc = sc->m_teams[team_index];
-//		if( channel_type == ChannelType::ChannelPublic )
-//			channel = tc->m_public_channels[channel_index];
-//		else// if( channel_type == ChannelType::ChannelPublic )
-//			channel = tc->m_private_channels[channel_index];
-//	}
-//	else
-//		channel = sc->m_direct_channels[channel_index];
+	//	if(channel_type != ChannelDirect)
+	//	{
+	//		TeamPtr tc = sc->m_teams[team_index];
+	//		if( channel_type == ChannelType::ChannelPublic )
+	//			channel = tc->m_public_channels[channel_index];
+	//		else// if( channel_type == ChannelType::ChannelPublic )
+	//			channel = tc->m_private_channels[channel_index];
+	//	}
+	//	else
+	//		channel = sc->m_direct_channels[channel_index];
 
 	MessagePtr mc = channel->m_message[message_index];
 
 	QByteArray replyData = reply->readAll();
 	{
 		QString file_path = sc->m_cache_path
-		        + QLatin1String("/files/")
-		        + file->m_id;
+							+ QLatin1String("/files/")
+							+ file->m_id;
 		QDir dir;
 		if( !QFile::exists(file_path + QLatin1String("/thumb.jpeg")) )
 		{
@@ -4733,8 +4842,8 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 	QByteArray replyData = reply->readAll();
 	{
 		QString file_path = sc->m_cache_path
-		        + QLatin1String("/files/")
-		        + file->m_id;
+							+ QLatin1String("/files/")
+							+ file->m_id;
 		QDir dir;
 		if( !QFile::exists(file_path + QLatin1String("/preview.jpeg")) )
 		{
@@ -4967,11 +5076,11 @@ void MattermostQt::reply_get_file(QNetworkReply *reply)
 
 	{
 		ChannelPtr channel = channelAt(
-		            file->m_server_index,
-		            file->m_team_index,
-		            file->m_channel_type,
-		            file->m_channel_index
-		            );
+			file->m_server_index,
+			file->m_team_index,
+			file->m_channel_type,
+			file->m_channel_index
+			);
 		if(channel && file->m_message_index >=0 && file->m_message_index < channel->m_message.size())
 		{
 			MessagePtr message = channel->m_message[file->m_message_index];
@@ -5066,8 +5175,8 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 		}
 
 		QString file_path = sc->m_cache_path
-		        + QLatin1String("/users/")
-		        + user->m_id;
+							+ QLatin1String("/users/")
+							+ user->m_id;
 		QDir dir;
 		if( !QFile::exists(file_path + QLatin1String("/image.png")) )
 		{
@@ -5151,6 +5260,78 @@ void MattermostQt::reply_post_create_reaction(QNetworkReply *reply)
 void MattermostQt::reply_delete_reaction(QNetworkReply *reply)
 {
 	qDebug() << reply->readAll();
+}
+
+void MattermostQt::reply_get_emoji_list(QNetworkReply *reply)
+{
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	ServerPtr server = serverAt(server_index);
+	if(!server) {
+		qCritical() << QStringLiteral("Wrong server index");
+		return;
+	}
+	QByteArray replyData = reply->readAll();
+	QJsonParseError error;
+	QJsonDocument jsonDocument = QJsonDocument::fromJson(replyData, &error);
+	if( error.error != QJsonParseError::NoError || !jsonDocument.isArray() ) {
+		qCritical() << QStringLiteral("Cant parse emoji list reply: %0").arg(error.errorString());
+		return;
+	}
+	/*[ { json
+        "id": "string",
+        "creator_id": "string",
+        "name": "string",
+        "create_at": 0,
+        "update_at": 0,
+        "delete_at": 0
+    } ...]*/
+    QJsonArray array = jsonDocument.array();
+    if(!m_mdParser) {
+        m_isWaitForMDParser = true;
+        server->m_tempCustomEmoji.reset( new QJsonArray(array) );
+        return;
+    }
+    for(int i = 0; i < array.size(); i++) {
+        QJsonObject object = array[i].toObject();
+        get_custom_emoji_image(server_index, object["id"].toString(), object["name"].toString(), (qint64)object["update_at"].isDouble() );
+    }
+}
+
+void MattermostQt::reply_get_custom_emoji_image(QNetworkReply *reply)
+{
+	int server_index = reply->property(P_SERVER_INDEX).toInt();
+	QString emoji_name = reply->property(P_EMOJI_NAME).toString();
+	QString emoji_id = reply->property(P_EMOJI_ID).toString();
+	ServerPtr server = serverAt(server_index);
+	if(!server) {
+		qCritical() << QStringLiteral("Wrong server index");
+		return;
+	}
+	// TODO save emoji picture to file
+	QByteArray replyData = reply->readAll();
+	{
+		QString file_path = server->m_cache_path
+							+ QStringLiteral("/emoji/");
+		QDir dir;
+		if( QFile::exists(file_path + QStringLiteral("%0").arg(emoji_id)) )
+		{
+			qWarning() << QStringLiteral("Remove old emoji image: %0").arg(emoji_name);
+			dir.remove(file_path + QStringLiteral("%0").arg(emoji_id));
+		}
+
+		dir.mkpath(file_path);
+		file_path += QStringLiteral("%0").arg(emoji_id);
+		QFile save(file_path);
+		if(save.open(QIODevice::WriteOnly))
+		{
+			save.write( replyData );
+			save.close();
+			qDebug() << QStringLiteral("Emoji \"%0\" image saved: %1").arg(emoji_name).arg(file_path);
+			m_mdParser->add_custom_emoji(emoji_name, file_path, QString::number(server_index));
+		}
+		else
+			qWarning() << QStringLiteral("Cant save emoji \"%0\" image: %1").arg(emoji_name).arg(file_path);
+	}
 }
 
 void MattermostQt::event_posted(ServerPtr sc, QJsonObject object)
@@ -5819,9 +6000,9 @@ void MattermostQt::event_user_removed(MattermostQt::ServerPtr sc, QJsonObject ob
 		channel_id = broadcast["channel_id"].toString();
 		user_id = data["user_id"].toString();
 	}
-//	if( user_id.isEmpty() ) {
-//		qWarning() << QStringLiteral("Empty channel_id in broadcast:")<< broadcast;
-//	}
+	//	if( user_id.isEmpty() ) {
+	//		qWarning() << QStringLiteral("Empty channel_id in broadcast:")<< broadcast;
+	//	}
 	// check user_id
 	if( user_id != sc->m_user_id ) {
 		qWarning() << QStringLiteral("Current user_id (%0) not equal broadcast.user_id (%1)").arg(sc->m_user_id).arg(user_id);
@@ -5841,7 +6022,7 @@ void MattermostQt::event_user_removed(MattermostQt::ServerPtr sc, QJsonObject ob
 		qCritical() << QStringLiteral("Cant remove channel, channel (%0) not found.").arg(channel_id);
 		return;
 	}
-		
+
 	if( channel->m_type != ChannelType::ChannelDirect ) {
 		TeamPtr team = teamAt(sc->m_self_index, channel->m_team_index);
 		if(!team) {
@@ -6032,8 +6213,8 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject ob
 			if(!deleted->m_thread_messages.isEmpty())
 			{
 				for(QList<MattermostQt::MessagePtr>::iterator
-				    it = deleted->m_thread_messages.begin(), end = deleted->m_thread_messages.end();
-				    it != end; it++ )
+						 it = deleted->m_thread_messages.begin(), end = deleted->m_thread_messages.end();
+					 it != end; it++ )
 				{
 					MattermostQt::MessagePtr ans = *it;
 					//					ans->m_root_message = tr("Message deleted"); ans->m_root_ptr.reset();
@@ -6063,8 +6244,8 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject ob
 			//			deleted->m_thread_messages.pop_front();
 
 			for(QList<MattermostQt::MessagePtr>::iterator
-			    it = deleted->m_thread_messages.begin(), end = deleted->m_thread_messages.end();
-			    it != end; it++ )
+					 it = deleted->m_thread_messages.begin(), end = deleted->m_thread_messages.end();
+				 it != end; it++ )
 			{	// nothing to do here
 				// check if messages has its own replies
 				// (its possible ony by API, but not in official client)
@@ -6072,8 +6253,8 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject ob
 				if(!answer->m_thread_messages.isEmpty())
 				{
 					for(QList<MattermostQt::MessagePtr>::iterator
-					    t_it = answer->m_thread_messages.begin(), t_end = answer->m_thread_messages.end();
-					    t_it != t_end; t_it++ )
+							 t_it = answer->m_thread_messages.begin(), t_end = answer->m_thread_messages.end();
+						 t_it != t_end; t_it++ )
 					{
 						MessagePtr reply = *t_it;
 						reply->m_root_ptr = MessagePtr();
@@ -6089,8 +6270,8 @@ void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject ob
 			{
 				MessagePtr root_ptr = deleted->m_root_ptr;
 				for(QList<MattermostQt::MessagePtr>::iterator
-				    it = root_ptr->m_thread_messages.begin(), end = root_ptr->m_thread_messages.end();
-				    it != end; it++ )
+						 it = root_ptr->m_thread_messages.begin(), end = root_ptr->m_thread_messages.end();
+					 it != end; it++ )
 				{
 					MessagePtr current = *it;
 					if( current == deleted )
@@ -6307,10 +6488,10 @@ void MattermostQt::replyDownloadProgress(qint64 bytesReceived, qint64 bytesTotal
 		bytesTotal = file->m_file_size;
 	}
 	emit fileDownloadingProgress(file->m_id, (qreal)bytesReceived/(qreal)bytesTotal);
-//	MessagePtr message = messageAt(file->m_server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index);
-//	if(message) {
-//		emit updateMessage(message, MessagesModel::RoleFileProgress);
-//	}
+	//	MessagePtr message = messageAt(file->m_server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index);
+	//	if(message) {
+	//		emit updateMessage(message, MessagesModel::RoleFileProgress);
+	//	}
 }
 
 void MattermostQt::replyUploadProgress(qint64 bytesReceived, qint64 bytesTotal)
@@ -6425,8 +6606,8 @@ void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
 		return;
 	}
 	QString message = QStringLiteral("WebSocketError (%0) : %1")
-	        .arg( QVariant::fromValue<QAbstractSocket::SocketError>(error).toString() )
-	        .arg( socket->errorString() );
+						  .arg( QVariant::fromValue<QAbstractSocket::SocketError>(error).toString() )
+						  .arg( socket->errorString() );
 
 	QVariant sId = socket->property(P_SERVER_INDEX);
 	if(!sId.isValid()) // that too strange!!! that cant be!
@@ -6455,25 +6636,25 @@ void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
 		}
 		return;
 	}
-		break;
+	break;
 	case QAbstractSocket::NetworkError:
 	case QAbstractSocket::SocketTimeoutError :
 		// should i reconnect by my self, or its automatically ?
-	{
-		if( server_index < 0 || server_index >= m_server.size() )
-			break;
-		ServerPtr server = m_server[server_index];
+		{
+			if( server_index < 0 || server_index >= m_server.size() )
+				break;
+			ServerPtr server = m_server[server_index];
 
-		server->m_state = ServerState::ServerUnconnected;
-		emit serverStateChanged(server_index, server->m_state);
-		server->m_ping_timer.stop();
-		qDebug() << QStringLiteral("Server[%0] (%1)  stop ping timer.").arg(server->m_self_index).arg(server->m_display_name);
-		m_user_status_timer.stop();
-		m_reconnect_server.start();
-		qDebug() << QStringLiteral("Reconnect timer started.");
-		server->m_socket->close(QWebSocketProtocol::CloseCodeAbnormalDisconnection, QString("Client closing") );
-		emit onConnectionError(error, message, server_index);
-	}
+			server->m_state = ServerState::ServerUnconnected;
+			emit serverStateChanged(server_index, server->m_state);
+			server->m_ping_timer.stop();
+			qDebug() << QStringLiteral("Server[%0] (%1)  stop ping timer.").arg(server->m_self_index).arg(server->m_display_name);
+			m_user_status_timer.stop();
+			m_reconnect_server.start();
+			qDebug() << QStringLiteral("Reconnect timer started.");
+			server->m_socket->close(QWebSocketProtocol::CloseCodeAbnormalDisconnection, QString("Client closing") );
+			emit onConnectionError(error, message, server_index);
+		}
 		break;
 	default:
 		emit onConnectionError(error, message, server_index);
@@ -6535,7 +6716,7 @@ void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 			qDebug() << QLatin1String("Recconect timer stoped.");
 		}
 	}
-		break;
+	break;
 	case QAbstractSocket::HostLookupState:
 		//		s_state = QStringLiteral("HostLookupState");
 		break;
@@ -6696,12 +6877,12 @@ void MattermostQt::slot_recconect_servers()
 		         && m_server[i]->m_state != ServerConnecting )
 		{
 			QString urlString = QLatin1String("/api/v")
-			        + QString::number(m_server[i]->m_api)
-			        + QLatin1String("/websocket");
+								+ QString::number(m_server[i]->m_api)
+								+ QLatin1String("/websocket");
 
 			QString serUrl = m_server[i]->m_url;
 			serUrl.replace("https://","wss://")
-			        .replace("http://","ws://");
+				.replace("http://","ws://");
 			QUrl url(serUrl);
 			url.setPath(url.path() + urlString);
 			// disable forcing websocket port to 443
@@ -6806,8 +6987,8 @@ MattermostQt::TeamContainer::TeamContainer(QJsonObject &object) noexcept
 bool MattermostQt::TeamContainer::save_json(QString server_dir_path) const
 {// server_dir_path ~/.config/{mattermost_config_dir}/{server_dir}/
 	QString path = server_dir_path + QDir::separator()
-	        + QLatin1String("teams") + QDir::separator()
-	        + m_id + QDir::separator();
+				   + QLatin1String("teams") + QDir::separator()
+				   + m_id + QDir::separator();
 	QDir dir;
 	if(!dir.exists(path))
 		dir.mkpath(path);
@@ -6857,8 +7038,8 @@ bool MattermostQt::TeamContainer::save_json(QString server_dir_path) const
 bool MattermostQt::TeamContainer::load_json(QString server_dir_path)
 {// server_dir_path ~/.config/{mattermost_config_dir}/{server_dir}/
 	QString path = server_dir_path + QDir::separator()
-	        + QLatin1String("teams") + QDir::separator()
-	        + m_id + QDir::separator();
+				   + QLatin1String("teams") + QDir::separator()
+				   + m_id + QDir::separator();
 	QDir dir;
 	if(!dir.exists(path))
 		return false;
@@ -7070,7 +7251,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 	m_team_index = -1;
 	m_root_user_index = -1;
 	m_item_height = 16;
-//	qDebug() << object;
+	//	qDebug() << object;
 	m_id = object["id"].toString();
 	m_channel_id = object["channel_id"].toString();
 	m_message = object["message"].toString();
@@ -7079,10 +7260,10 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 	m_root_id = object["root_id"].toString();
 	m_parent_id = object["parent_id"].toString();
 	m_original_id = object["original_id"].toString();
-//	if( !m_root_id.isEmpty() ) {
-//		qDebug() << "Reply message:";
-//		qDebug() << object;
-//	}
+	//	if( !m_root_id.isEmpty() ) {
+	//		qDebug() << "Reply message:";
+	//		qDebug() << object;
+	//	}
 	m_create_at = (qlonglong)object["create_at"].toDouble(0);
 	m_update_at = (qlonglong)object["update_at"].toDouble(0);
 	m_delete_at = (qlonglong)object["delete_at"].toDouble(0);
@@ -7106,7 +7287,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 			QJsonObject metadata = v.toObject();
 			if( !metadata.keys().isEmpty() )
 			{
-				qDebug() << "Message" << m_id << "has metadata:" << metadata.keys();
+				//qDebug() << "Message" << m_id << "has metadata:" << metadata.keys();
 				QJsonValue v_reactions = metadata["reactions"];
 				if( v_reactions.isArray() )
 				{ // this post has reactions
@@ -7117,18 +7298,28 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 						QString emoji_name = reaction["emoji_name"].toString();
 						QString reaction_user_id = reaction["user_id"].toString();
 						QString emoji_path;
-						QByteArray name = emoji_name.toUtf8();
-						const char* _emoji_path = CppHash::instance()->find_emoji_path(name.data(),name.size());
-						if( _emoji_path != nullptr ) {
-							emoji_path = QString("file://") + QString::fromUtf8(_emoji_path);
+						if( MattermostQt::getInstance()->m_mdParser != nullptr ) {
+							emoji_path = MattermostQt::getInstance()->m_mdParser->find_emoji_path(emoji_name);
+							if( !emoji_path.isNull() )
+								emoji_path = QString("file://") + emoji_path;
 						}
+						// DEPRECATED BEGIN ---------------------------------------
+						//                        else {
+						//                            // (this code used when we use old discount md parser
+						//                            QByteArray name = emoji_name.toUtf8();
+						//                            const char* _emoji_path = CppHash::instance()->find_emoji_path(name.data(),name.size());
+						//                            if( _emoji_path != nullptr ) {
+						//                                emoji_path = QString("file://") + QString::fromUtf8(_emoji_path);
+						//                            }
+						//                        }
+						// DEPRECATED END -----------------------------------------
 						for( int index = 0; index < m_reactions.size(); index++ )
 						{
 							if( m_reactions[index].m_emoji ==  emoji_name ) {
 								m_reactions[index].m_user_id.push_back( reaction_user_id );
 								if( !m_reactions[index].m_mine_emoji )
 								{
-									m_reactions[index].m_mine_emoji = reaction_user_id == user_id;
+									m_reactions[index].m_mine_emoji = (reaction_user_id == user_id);
 								}
 								emoji_name.clear();
 								break;
@@ -7200,8 +7391,8 @@ bool MattermostQt::MessageContainer::updateFiles(MattermostQt *mattermost)
 		file->m_self_sc_index = server->m_file.size();
 		/** */
 		server->m_file.append(file);
-//		file->m_file_path = file_path;
-//		file->m_file_status = FileDownloaded;
+		//		file->m_file_path = file_path;
+		//		file->m_file_status = FileDownloaded;
 		file->m_channel_type = channel->m_type;
 		file->m_team_index = channel->m_team_index;
 		file->m_channel_index = channel->m_self_index;
@@ -7221,30 +7412,40 @@ bool MattermostQt::MessageContainer::addReaction(ReactionContainer &reaction)
 		if( m_reactions[index].m_emoji == reaction.m_emoji ) {
 			// try check if reaction is already there
 			if( std::find( m_reactions[index].m_user_id.begin(),
-			               m_reactions[index].m_user_id.end(),
-			               reaction.m_user_id[0]) == m_reactions[index].m_user_id.end() )
+						  m_reactions[index].m_user_id.end(),
+						  reaction.m_user_id[0]) == m_reactions[index].m_user_id.end() )
 				m_reactions[index].m_user_id.append( reaction.m_user_id[0] );
 			else
 				qWarning() << QStringLiteral("Reaction %0 already in message id(%1) user id(%2)%3")
-				        .arg(reaction.m_emoji)
-				        .arg(m_id)
-				        .arg( reaction.m_mine_emoji ? QStringLiteral(" (this you)") : QStringLiteral("") );
+								  .arg(reaction.m_emoji)
+								  .arg(m_id)
+								  .arg( reaction.m_mine_emoji ? QStringLiteral(" (this you)") : QStringLiteral("") );
 
 			if( reaction.m_mine_emoji )
 				m_reactions[index].m_mine_emoji = true;
 			return result;
 		}
 	}
-
-
-	QByteArray name = reaction.m_emoji.toUtf8();
-	const char* emoji_path = CppHash::instance()->find_emoji_path(name.data(),name.size());
-	if( emoji_path != nullptr ) {
-		reaction.m_path = QString("file://") +QString::fromUtf8(emoji_path);
+	// ok, search reactions image path
+	result = false;
+	if( MattermostQt::getInstance()->m_mdParser != nullptr ) {
+		reaction.m_path = MattermostQt::getInstance()->m_mdParser->find_emoji_path(reaction.m_emoji);
+		if( !reaction.m_path.isNull() ) {
+			reaction.m_path = QString("file://") + reaction.m_path;
+			result = true;
+		}
 	}
-	else {
-		result = false;
-	}
+	// DEPRECATED BEGIN ---------------------------------------
+	//    else {
+	//        // (this code used when we use old discount md parser
+	//        QByteArray name = reaction.m_emoji.toUtf8();
+	//        const char* emoji_path = CppHash::instance()->find_emoji_path(name.data(),name.size());
+	//        if( emoji_path != nullptr ) {
+	//            reaction.m_path = QString("file://") +QString::fromUtf8(emoji_path);
+	//            result = true;
+	//        }
+	//    }
+	// DEPRECATED END -----------------------------------------
 
 	m_reactions.append(reaction);
 	return result;
@@ -7276,14 +7477,14 @@ bool MattermostQt::MessageContainer::removeReaction(const ReactionContainer &rea
 	}
 
 	qWarning() << QStringLiteral("Cant find reaction %0 in message id(%1)").arg(reaction.m_emoji).arg(m_id);
-//	m_reactions_paths.append( emoji_name);
-//	m_reactions_count.append(1);
+	//	m_reactions_paths.append( emoji_name);
+	//	m_reactions_count.append(1);
 	return result;
 }
 
 bool MattermostQt::MessageContainer::updateRootMessage( MattermostQt *mattermost )
 {
-//	qInfo() << "MattermostQt::MessageContainer::updateRootMessage";
+	//	qInfo() << "MattermostQt::MessageContainer::updateRootMessage";
 	if(m_root_ptr.isNull())
 	{
 		return false;
@@ -7315,7 +7516,7 @@ bool MattermostQt::MessageContainer::updateRootMessage( MattermostQt *mattermost
 			m_root_user_index = -1;
 		}
 	}
-//	qInfo() << "MattermostQt::MessageContainer::updateRootMessage end";
+	//	qInfo() << "MattermostQt::MessageContainer::updateRootMessage end";
 	return true;
 }
 
@@ -7328,24 +7529,24 @@ MattermostQt::FilePtr MattermostQt::MessageContainer::fileAt(int file_index)
 
 MattermostQt::FileContainer::FileContainer() noexcept
     : m_file_status(FileUninitialized)
-    , m_self_sc_index(-1)
-    , m_self_index(-1)
-    , m_server_index(-1)
-    , m_channel_index(-1)
-    , m_message_index(-1)
-    , m_is_in_cache(2)
+      , m_self_sc_index(-1)
+      , m_self_index(-1)
+      , m_server_index(-1)
+      , m_channel_index(-1)
+      , m_message_index(-1)
+      , m_is_in_cache(2)
 {
 
 }
 
 MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept
     : m_file_status(FileUninitialized)
-    , m_self_sc_index(-1)
-    , m_self_index(-1)
-    , m_server_index(-1)
-    , m_channel_index(-1)
-    , m_message_index(-1)
-    , m_is_in_cache(2)
+      , m_self_sc_index(-1)
+      , m_self_index(-1)
+      , m_server_index(-1)
+      , m_channel_index(-1)
+      , m_message_index(-1)
+      , m_is_in_cache(2)
 {
 	parse_from_json(object);
 }
@@ -7353,8 +7554,8 @@ MattermostQt::FileContainer::FileContainer(QJsonObject object) noexcept
 bool MattermostQt::FileContainer::save_json(QString server_data_path) const
 {
 	QString fpath = server_data_path + QDir::separator()
-	        + QLatin1String("files") + QDir::separator()
-	        + m_id;
+					+ QLatin1String("files") + QDir::separator()
+					+ m_id;
 	QDir dir(fpath);
 	if( !dir.exists() )
 		dir.mkpath(fpath);
@@ -7396,8 +7597,8 @@ bool MattermostQt::FileContainer::save_json(QString server_data_path) const
 bool MattermostQt::FileContainer::load_json(QString server_data_path)
 {
 	QString fpath = server_data_path + QDir::separator()
-	        + QLatin1String("files") + QDir::separator()
-	        + m_id;
+					+ QLatin1String("files") + QDir::separator()
+					+ m_id;
 	fpath += QDir::separator() + QLatin1String("info.json");
 	QFile conf(fpath);
 	//conf.setPermissions(QFile::WriteOwner | QFile::ReadOwner);
@@ -7453,7 +7654,7 @@ bool MattermostQt::FileContainer::load_json(QString server_data_path)
 		}
 		if( m_preview_path.isEmpty() || !QFile::exists(m_preview_path) )
 		{
-//			m_has_preview_image = false;
+			//			m_has_preview_image = false;
 			m_preview_path.clear();
 			result = false;
 		}

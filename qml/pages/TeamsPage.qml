@@ -65,8 +65,9 @@ Page {
             if( otherTeams ) {
                 teamsmodel.waitAllTeams(true)
                 MattermostQt.get_all_teams(server_index)
-            } else
+            } else {
                 MattermostQt.get_teams(server_index)
+            }
         }
     }
 

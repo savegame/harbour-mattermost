@@ -73,7 +73,9 @@ int main(int argc, char *argv[])
 	qInstallMessageHandler( myMessageOutput );
 	// Set up QML engine.
 	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
+
 	QScopedPointer<QQuickView> v(SailfishApp::createView());
+
 	QScopedPointer<SailNotify> notify(new SailNotify());
 
 	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
@@ -111,6 +113,9 @@ int main(int argc, char *argv[])
 		if(s)
 			m->setSettingsContainer(s);
 		m->replaceMdParser( new Md4cMdParser() );
+		for( int i = 0; i < m->server().size(); i++ ) {
+			m->get_emoji_list(i);
+		}
 //		else
 //			qCritical() << "Cant find SettingsContaier Object, you cant chacnge default settings!";
 	}

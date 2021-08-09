@@ -27,7 +27,7 @@ class MattermostQt : public QObject
 
 	friend class MessagesModel;
 	friend class ChannelsModel;
-//	friend QObject* MattermostQt_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine);
+	//	friend QObject* MattermostQt_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine);
 public:
 	static MattermostQt *getInstance();
 public:
@@ -72,6 +72,8 @@ public:
 		rt_get_channel_members,
 		rt_get_channel_statistics,
 		rt_get_team_icon,
+		rt_get_emoji_list,
+		rt_get_custom_emoji_image,
 		rt_post_create_reaction,
 		rt_delete_reaction,
 		//======================
@@ -123,7 +125,7 @@ public:
 		FileDocument,
 		FileImage,
 		FileAnimatedImage,
-	};
+		};
 	Q_ENUM(FileType)
 
 	enum FileStatus {
@@ -249,9 +251,9 @@ public:
 		}
 
 		bool is_file_in_cache(QString cache_path) {
-//			if(m_is_in_cache == 2) {
-				m_is_in_cache = (m_file_path.indexOf(filedir(cache_path)) == 0)?1:0;
-//			}
+			//			if(m_is_in_cache == 2) {
+			m_is_in_cache = (m_file_path.indexOf(filedir(cache_path)) == 0)?1:0;
+			//			}
 			return m_is_in_cache == 1;
 		}
 
@@ -283,7 +285,7 @@ public:
 		int m_message_index; // post index
 		int m_self_index; // in message files list
 		int m_self_sc_index; // in server files list
-//		MessagePtr m_message;// test
+		//		MessagePtr m_message;// test
 		char m_is_in_cache;
 	};
 	typedef QSharedPointer<FileContainer> FilePtr;
@@ -292,7 +294,7 @@ public:
 	struct ReactionContainer {
 		QString m_path;
 		QString m_emoji;
-		QVector<QString> m_user_id;
+		QVector<QString> m_user_id; // who is set this reaction ( users list )
 		/// if we too add this reaction
 		bool    m_mine_emoji = false;
 	};
@@ -312,7 +314,7 @@ public:
 
 		QString          m_message;
 		QString          m_formated_message;
-//		QVector<FilePtr> m_file;
+		//		QVector<FilePtr> m_file;
 		QVector<QString> m_filenames;
 		QVector<QString> m_file_ids;
 		QString          m_id;
@@ -327,8 +329,8 @@ public:
 		qlonglong        m_update_at;
 		qlonglong        m_delete_at;
 		// reactions
-//		QVector<QString>  m_reactions_paths; // for simple view only
-//		QVector<int>      m_reactions_count;
+		//		QVector<QString>  m_reactions_paths; // for simple view only
+		//		QVector<int>      m_reactions_count;
 		QVector<ReactionContainer> m_reactions;
 
 		// inside types
@@ -348,7 +350,7 @@ public:
 		QList<Ptr>       m_thread_messages; // answers to this message (for dynamic update it, when message is edited)
 
 		/// special parameters, delete if not use
-//		ChannelPtr       m_channel;// test
+		//		ChannelPtr       m_channel;// test
 		bool             m_is_files_info_requested; // is files already requested from server
 		qlonglong        m_request_time;  // request time, for repeat if it need
 		FilePtr   fileAt(int file_index);
@@ -382,7 +384,7 @@ public:
 		}
 
 		QString m_id;
-//		qlonglong m_create_at;
+		//		qlonglong m_create_at;
 		qlonglong m_update_at = 0;
 		qlonglong m_delete_at = 0;
 		//"delete_at": 0,
@@ -440,9 +442,9 @@ public:
 		bool load_json(QString server_dir_path);
 
 		QString m_id;
-//		"create_at": 0,
+		//		"create_at": 0,
 		qlonglong m_update_at;
-//		"delete_at": 0,
+		//		"delete_at": 0,
 		QString m_team_id;
 		ChannelType m_type;
 		QString m_display_name;
@@ -520,12 +522,12 @@ public:
 	};
 	typedef QSharedPointer<TeamContainer> TeamPtr;
 
-//	struct UnattachedMessageContainer {
-//		UnattachedMessageContainer() noexcept {}
-//		QString     m_team_id;
-//		MessagePtr  m_message;
-//	};
-//	typedef QSharedPointer<UnattachedMessageContainer> UMessagePtr;
+	//	struct UnattachedMessageContainer {
+	//		UnattachedMessageContainer() noexcept {}
+	//		QString     m_team_id;
+	//		MessagePtr  m_message;
+	//	};
+	//	typedef QSharedPointer<UnattachedMessageContainer> UMessagePtr;
 
 	struct ServerContainer
 	{
@@ -551,14 +553,14 @@ public:
 		QVector<TeamPtr>            m_teams; /**< allowed teams */
 		int                         m_state; /**< server state (from WebSocket) */
 		QString                     m_data_path; /**< local config path */
-		QString                     m_cache_path;
+		QString                     m_cache_path;/**< loacl cache path */
 		QVector<UserPtr>            m_user;/**< list of users by theirs id's */
 		QVector<ChannelPtr>         m_direct_channels; /**< direct channels */
 		QString                     m_display_name; /**< custom server name */
 		bool                        m_trust_cert; /**< trust self signed certificate */
-		QString                     m_ca_cert_path;
-		QString                     m_cert_path;
-		QVector<FilePtr>            m_file;
+		QString                     m_ca_cert_path;/**< saved CA certificate path (if trust option enabled) */
+		QString                     m_cert_path;/**< saved certificate path (if trust option enabled) */
+		QVector<FilePtr>            m_file;/**< all files from server */
 		QList<FilePtr>              m_unattached_file; /**< uploaded, but not sended files */
 		QList<FilePtr>              m_sended_files; /**<  */
 		QList<MessagePtr>           m_nouser_messages;/**< messages without user */
@@ -570,6 +572,7 @@ public:
 
 		QString                     m_auth_data;
 		QString                     m_auth_service;
+		QSharedPointer<QJsonArray>  m_tempCustomEmoji; /**< when md parser not created, put emmoji here, for a while */
 	};
 	typedef QSharedPointer<ServerContainer> ServerPtr;
 
@@ -586,6 +589,8 @@ public:
 	MattermostQt(QObject *parent = nullptr);
 
 	~MattermostQt();
+
+	QString crashSave() const;
 	
 	/**
 	 * @brief replaceMdParser 
@@ -632,8 +637,8 @@ public:
 	 * @param request_type
 	 * @param value
 	 */
-//	Q_INVOKABLE void get_users(int server_index, GetUsersRequestType request_type, QStringList values,
-//	                           int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
+	//	Q_INVOKABLE void get_users(int server_index, GetUsersRequestType request_type, QStringList values,
+	//	                           int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
 	/**
 	 * @brief get_users     send request for users list with specific parameters ( in_team, not_in_team and so on ) 
 	 * @param server_index  as is 
@@ -654,18 +659,18 @@ public:
 	Q_INVOKABLE void get_channel_unread(int server_index, int team_index,
 	                                    int channel_type, int channel_index);
 	Q_INVOKABLE void get_channel_members(int server_index, int team_index,
-	                                    int channel_type, int channel_index, 
+										 int channel_type, int channel_index,
 	                                     int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
 	Q_INVOKABLE void get_channel_statistics(int server_index, int team_index,
 	                                        int channel_type, int channel_index);
-	
-//	void get_team(int server_index, QString team_id);
+
+	//	void get_team(int server_index, QString team_id);
 	void get_file_thumbnail(int server_index, int file_sc_index);
 	void get_file_preview(int server_index, int file_sc_index);
-//	void get_file_thumbnail(int server_index, int team_index, int channel_type,
-//	                        int channel_index, int message_index, QString file_id);
+	//	void get_file_thumbnail(int server_index, int team_index, int channel_type,
+	//	                        int channel_index, int message_index, QString file_id);
 	Q_INVOKABLE void get_file_info(int server_index, int team_index, int channel_type,
-	                   int channel_index, int message_index, QString file_id);
+								   int channel_index, int message_index, QString file_id);
 
 	Q_INVOKABLE void get_file(int server_index, int team_index, int channel_type,
 	                          int channel_index, int message_index, int file_index);
@@ -677,9 +682,9 @@ public:
 	Q_INVOKABLE void post_send_message(QString message, int server_index, int team_index, int channel_type,
 	                                   int channel_index, QString root_id = QString());
 	Q_INVOKABLE void delete_message(int server_index, int team_index, int channel_type,
-	                                     int channel_index, int message_index, QString message_id = QString());
+									int channel_index, int message_index, QString message_id = QString());
 	Q_INVOKABLE void put_message_edit(QString text, int server_index, int team_index, int channel_type,
-	                                     int channel_index, int message_index);
+									  int channel_index, int message_index);
 
 	Q_INVOKABLE void post_channel_view(int server_index, int team_index,
 	                                   int channel_type, int channel_index);
@@ -727,9 +732,9 @@ public:
 	Q_INVOKABLE void get_user_image(int server_index, int user_index);
 	Q_INVOKABLE void get_user_info(int server_index, QString userId,  int team_index = -1);
 	Q_INVOKABLE void get_teams_unread(int server_index);
-//	Q_INVOKABLE void get_users(int server_index);
+	//	Q_INVOKABLE void get_users(int server_index);
 
-//	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
+	//	Q_INVOKABLE void get_posts(int server_index, int team_index, QString channel_id);
 	/**
 	 * @brief get_post download post by its id
 	 * @param post_id  post id
@@ -743,6 +748,9 @@ public:
 
 	Q_INVOKABLE void post_create_reaction(int server_index, const QString &post_id, const QString &emoji_name) const;
 	Q_INVOKABLE void delete_reaction(int server_index, const QString &post_id, const QString &emoji_name) const;
+
+	Q_INVOKABLE void get_emoji_list(int  server_index);
+	Q_INVOKABLE void get_custom_emoji_image(int  server_index, QString emoji_id, QString emoji_name, qint64 updatre_time = 0);
 	/** get current user id */
 	Q_INVOKABLE QString user_id(int server_index) const;
 
@@ -765,7 +773,7 @@ public:
 	Q_INVOKABLE void notificationActivated(int server_index, int team_index, int channel_type, int channel_index);
 
 	/** Markdown support */
-	Q_INVOKABLE QString parseMD(const QString &input) const;
+	Q_INVOKABLE QString parseMD(const QString &input, int server_index) const;
 
 	/** Compute cache size */
 	Q_INVOKABLE QString cacheSize() const;
@@ -843,7 +851,7 @@ Q_SIGNALS:
 	void updateChannelInfo(QString channel_id, int team_index, int self_index );
 	void onReplyChannelMembers(ChannelPtr channel, QVector<UserPtr> members);
 	void showTeamPublicChannels(QList<ChannelPtr> channels);
-//	void updateChannel()
+	//	void updateChannel()
 	void messagesAdded(ChannelPtr channel);
 	void messagesIsEnd(ChannelPtr channel); // its mean no more messages in channel
 	void messagesAddedBefore(ChannelPtr channel, int count);
@@ -882,7 +890,7 @@ Q_SIGNALS:
 
 	/// renew signals
 	void attachedFilesChanged(MattermostQt::MessagePtr message, QVector<QString> file_ids,  QVectorInt roles);
-//	void fileUploaded(FilePtr file);
+	//	void fileUploaded(FilePtr file);
 
 	/**
 	 * @brief fileDownloadingProgress
@@ -987,6 +995,8 @@ protected:
 	void reply_put_message_edit(QNetworkReply *reply);
 	void reply_post_create_reaction(QNetworkReply *reply);
 	void reply_delete_reaction(QNetworkReply *reply);
+	void reply_get_emoji_list(QNetworkReply *reply);
+	void reply_get_custom_emoji_image(QNetworkReply *reply);
 	// failed replies
 	void failed_get_file_info(QNetworkReply *reply);
 	// events
@@ -1004,14 +1014,14 @@ protected:
 	void event_user_added(ServerPtr sc, QJsonObject object);
 	void event_user_removed(ServerPtr sc, QJsonObject object);
 
-//	void  message_format(MessagePtr message);
+	//	void  message_format(MessagePtr message);
 	/**
 	 * @brief generateCachePath
 	 * @param isOk if cache generated wrong, it set to false ( for fixing paths
 	 * @return cache path
 	 */
 	const QString generateCachePath(bool *isOk = nullptr) const;
-//	const QString generateDataPath() const;
+	//	const QString generateDataPath() const;
 protected Q_SLOTS:
 	void replyFinished(QNetworkReply *reply);
 	void slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible);
@@ -1023,7 +1033,7 @@ protected Q_SLOTS:
 	void onWebSocketSslError(QList<QSslError> errors);
 	void onWebSocketError(QAbstractSocket::SocketError error);
 	void onWebSocketStateChanged(QAbstractSocket::SocketState state);
-//	void onWebSocketTextFrameReceived(const QString &frame, bool isLastFrame);
+	//	void onWebSocketTextFrameReceived(const QString &frame, bool isLastFrame);
 	void onWebSocketTextMessageReceived(const QString &message);
 	void onWebSocketPong(quint64 elapsedTime,QByteArray payload);
 
@@ -1038,9 +1048,10 @@ protected Q_SLOTS:
 protected:
 	QVector<ServerPtr>    m_server;
 	QSharedPointer<QNetworkAccessManager>  m_networkManager;
-//	QSharedPointer<SettingsContainer>    m_settings;
-	SettingsContainer    *m_settings;
-	MarkdownParser       *m_mdParser; /**< simple Markdown parser insterface */
+	//	QSharedPointer<SettingsContainer>    m_settings;
+	SettingsContainer    *m_settings = nullptr;
+	MarkdownParser       *m_mdParser = nullptr; /**< simple Markdown parser insterface */
+	bool                  m_isWaitForMDParser = false;
 
 	QString m_config_path;
 	QString m_data_path;
@@ -1048,7 +1059,7 @@ protected:
 	QString m_pictures_path;
 	QString m_documents_path;
 	QString m_download_path;
-//	QTimer  m_settings_timer;
+	//	QTimer  m_settings_timer;
 
 	int    m_update_server_timeout;
 	QTimer m_reconnect_server;

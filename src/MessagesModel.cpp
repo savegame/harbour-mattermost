@@ -23,8 +23,8 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 	if (!m_channel)
 		return QVariant();
 
-	if ( index.row() < 0 || index.row() >= m_channel->m_message.size() )
-		return QVariant();
+//	if ( index.row() < 0 || index.row() >= m_channel->m_message.size() )
+//		return QVariant();
 
 	int row = m_channel->m_message.size() - 1 - index.row();
 
@@ -78,8 +78,8 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				else
 					m_request_channel_viewed = true;
 			}
-			if( message->m_formated_message.isEmpty() )
-				message->m_formated_message = m_mattermost->parseMD(message->m_message);
+            if( message->m_formated_message.isEmpty() )
+                message->m_formated_message = m_mattermost->parseMD(message->m_message, message->m_server_index);
 			return QVariant(message->m_formated_message);
 		}
 		break;
@@ -277,7 +277,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		{
 			QVariantList paths;
 			for( int i = 0; i < message->m_reactions.size(); i ++ )
-				paths.push_back(message->m_reactions[i].m_path );
+                paths.push_back(message->m_reactions[i].m_path );
 			return QVariant::fromValue(paths);
 		}
 	case MessagesModel::RoleReactionsAddCount:

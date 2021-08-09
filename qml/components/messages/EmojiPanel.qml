@@ -149,6 +149,8 @@ Item {
                         anchors.fill: parent
                         anchors.margins: Theme.paddingMedium * 0.7
                         fillMode: Image.PreserveAspectFit
+                        sourceSize.width: emojiPanel.emojiItemWidth
+                        sourceSize.height: emojiPanel.emojiItemSize
                         cache: true
                         asynchronous: true
                         Behavior on opacity {

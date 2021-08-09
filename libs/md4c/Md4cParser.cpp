@@ -49,9 +49,7 @@ Md4cMdParser::Md4cMdParser()
 			emoji.insert( short_name, image );
 		}
 	}
-	
-	
-	
+
 #ifndef MD4C_USE_ASCII
 	renderer_flags = MD_HTML_FLAG_SKIP_UTF8_BOM;
 #else
@@ -75,16 +73,19 @@ Md4cMdParser::Md4cMdParser()
 
 Md4cMdParser::~Md4cMdParser()
 {
-	
+    for(auto current_hash : custom_emoji) {
+        delete current_hash;
+    }
+    custom_emoji.clear();
 }
 
-QString Md4cMdParser::parse(const QString &input)
+QString Md4cMdParser::parse(const QString &input, const QString server_id)
 {
 //	QString buff;
 	buff.clear();
 	block_type = Block_Null;
-	is_code_block = false;
-	
+    is_code_block = false;
+    current_server_id = server_id;
 	QByteArray utf8 = input.toUtf8();
 //	utf8 = QString("Hello\nWorld").toUtf8();
 	md_html( utf8.data(), utf8.size(), [](const MD_CHAR* text, MD_SIZE size, void *userdata) {
@@ -124,11 +125,13 @@ QString Md4cMdParser::parse(const QString &input)
 					else{ //we catch a word, try serach it in emoji hash map
 						QString word = part.mid(i - len + 2,len - 2);
 //						CppHas::instance()
-						QHash<QString,QString>::iterator search = parser->emoji.find(word);
-						if( search == parser->emoji.end() ) 
+                        QString found_image_path = parser->find_emoji_path(word);
+
+//                        if( search == parser->emoji.end() )
+                        if( found_image_path.isNull() )
 							len = 1; // word not found, try search to next ":"
 						else {
-							part.replace(i - len + 1,len, QStringLiteral("<img width=\"%0\" height=\"%0\" src=\"%1\"/>").arg(int( parser->block_size[parser->block_type] )).arg(search.value()) );
+                            part.replace(i - len + 1,len, QStringLiteral("<img width=\"%0\" height=\"%0\" src=\"%1\"/>").arg(int( parser->block_size[parser->block_type] )).arg(found_image_path) );
 							len = 0; // word is found, clear len  parametr, while not found another ":"
 	//						qWarning() << QStringLiteral("Word is \"%0\"").arg(word);
 						}
@@ -139,7 +142,44 @@ QString Md4cMdParser::parse(const QString &input)
 			}
 		
 		parser->buff.append( part );
-	}, this, parser_flags, renderer_flags );
-	return buff;
+    }, this, parser_flags, renderer_flags );
+    return buff;
+}
+
+void Md4cMdParser::add_custom_emoji(const QString key, const QString path, const QString server_id)
+{
+    QMap<QString, QHash<QString,QString>* >::iterator search_ce = custom_emoji.find(server_id);
+    if( search_ce == custom_emoji.end() ) {
+        search_ce = custom_emoji.insert(server_id, new QHash<QString,QString>() );
+    }
+    QHash<QString,QString> *servers_emoji = search_ce.value();
+    QHash<QString,QString>::iterator search = servers_emoji->find(key);
+    if( search != servers_emoji->end() ) {
+        qWarning() << QStringLiteral("Emoji with short name %0 already in map").arg(key);
+        return;
+    }
+    servers_emoji->insert(key, path);
+}
+
+QString Md4cMdParser::find_emoji_path(const QString short_name) const
+{
+    QString found_image_path = QString::Null();
+    QHash<QString,QString>::const_iterator search = emoji.find(short_name);
+    if( search == emoji.end() ) {
+        QMap<QString, QHash<QString,QString> *>::const_iterator search_ce = custom_emoji.find(current_server_id);
+        QHash<QString,QString> *custom_emoji_hash;
+        QHash<QString,QString>::const_iterator search_custom_emoji;
+        if( search_ce != custom_emoji.end() ) {
+            custom_emoji_hash = search_ce.value();
+            search_custom_emoji = custom_emoji_hash->find(short_name);
+            if( search_custom_emoji != custom_emoji_hash->end() ) {
+                found_image_path = search_custom_emoji.value();
+            }
+        }
+    }
+    else {
+        found_image_path = search.value();
+    }
+    return found_image_path;
 }
 

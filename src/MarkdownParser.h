@@ -14,7 +14,9 @@ public:
 	
 	virtual ~MarkdownParser() {};
 
-	virtual QString parse(const QString &input) = 0;
+    virtual QString parse(const QString &input, const QString server_id) = 0;
+    virtual void    add_custom_emoji(const QString key, const QString path, const QString server_id) = 0;
+    virtual QString find_emoji_path(const QString short_name) const = 0;
 };
 
 #endif // MARKDOWNPARSER_H
