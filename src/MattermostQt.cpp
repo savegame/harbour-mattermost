@@ -3343,7 +3343,7 @@ void MattermostQt::reply_get_all_teams(QNetworkReply *reply)
 				else {
 					all_teams << tc;
 					get_team_icon(tc);
-					//					get_team_statistics(tc->m_server_index, tc->m_self_index);
+					//get_team_statistics(tc->m_server_index, tc->m_self_index);
 				}
 			}
 			else
@@ -6385,7 +6385,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 			}
 		}
 	}
-	delete reply;
+	reply->deleteLater();
 }
 
 void MattermostQt::slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible)

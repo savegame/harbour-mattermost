@@ -99,6 +99,8 @@ Page {
                                 anchors.margins: Theme.paddingMedium
                                 fillMode: Image.PreserveAspectFit
                                 cache: true
+                                sourceSize.width: reactionsPage.emojiItemSize
+                                sourceSize.height: reactionsPage.emojiItemSize
                                 asynchronous: true
                                 Behavior on opacity {
                                     NumberAnimation { duration: 200 }

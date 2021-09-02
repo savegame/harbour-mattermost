@@ -44,8 +44,6 @@ static_websocket : {
     QT += websockets
 }
 
-include(libs/md4c.pri);
-
 emoji.files = $$PWD/resources/emoji/emoji.json
 emoji.path = /usr/share/$$TARGET/emoji/
 emoji_svg.files = $$PWD/resources/emoji/svg
@@ -74,52 +72,45 @@ DISTFILES += \
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 
-# to disable building translations every time, comment out the
-# following CONFIG line
 CONFIG += sailfishapp_i18n
 
+include(libs/md4c.pri);
 
-# German translation is enabled as an example. If you aren't
-# planning to localize your app, remember to comment out the
-# following TRANSLATIONS line. And also do not forget to
-# modify the localized app name in the the .desktop file.
 TRANSLATIONS += \
-    translations/harbour-mattermost.ts \
-    translations/harbour-mattermost-ru.ts \
-    translations/harbour-mattermost-zh_CN.ts \
-    translations/harbour-mattermost-de.ts
-
-HEADERS += \
-    src/EmojiModel.h \
-    src/MattermostQt_gobal.h \
-    src/TeamsModel.h \
-    src/MattermostQt.h \
-    src/ChannelsModel.h \
-    src/MessagesModel.h \
-    src/SailNotify.h \
-    src/AccountsModel.h \
-    src/SettingsContainer.h \
-    src/MarkdownParser.h \
-#    src/DiscountMDParser.h \
-    src/AttachedFilesModel.h \
-    src/UsersModel.h \
-    src/c_cpphash.h \
-    src/cpphash.h
-
-SOURCES += src/harbour-mattermost.cpp \
-    src/EmojiModel.cpp \
-	src/TeamsModel.cpp \
-	src/MattermostQt.cpp \
-	src/ChannelsModel.cpp \
-	src/MessagesModel.cpp \
-	src/SailNotify.cpp \
-	src/AccountsModel.cpp \
-	src/SettingsContainer.cpp \
-	src/MarkdownParser.cpp \
-#    src/DiscountMDParser.cpp \
-    src/AttachedFilesModel.cpp \
-	src/UsersModel.cpp \
-	src/cpphash.cpp
+    $$PWD/translations/harbour-mattermost.ts \
+    $$PWD/translations/harbour-mattermost-ru.ts \
+    $$PWD/translations/harbour-mattermost-zh_CN.ts \
+    $$PWD/translations/harbour-mattermost-de.ts
 
 RESOURCES += \
     resources.qrc
+
+HEADERS += \
+    $$PWD/src/EmojiModel.h \
+    $$PWD/src/MattermostQt_gobal.h \
+    $$PWD/src/TeamsModel.h \
+    $$PWD/src/MattermostQt.h \
+    $$PWD/src/ChannelsModel.h \
+    $$PWD/src/MessagesModel.h \
+    $$PWD/src/SailNotify.h \
+    $$PWD/src/AccountsModel.h \
+    $$PWD/src/SettingsContainer.h \
+    $$PWD/src/MarkdownParser.h \
+    $$PWD/src/AttachedFilesModel.h \
+    $$PWD/src/UsersModel.h \
+    $$PWD/src/c_cpphash.h \
+    $$PWD/src/cpphash.h
+
+SOURCES += src/harbour-mattermost.cpp \
+    $$PWD/src/EmojiModel.cpp \
+    $$PWD/src/TeamsModel.cpp \
+    $$PWD/src/MattermostQt.cpp \
+    $$PWD/src/ChannelsModel.cpp \
+    $$PWD/src/MessagesModel.cpp \
+    $$PWD/src/SailNotify.cpp \
+    $$PWD/src/AccountsModel.cpp \
+    $$PWD/src/SettingsContainer.cpp \
+    $$PWD/src/MarkdownParser.cpp \
+    $$PWD/src/AttachedFilesModel.cpp \
+    $$PWD/src/UsersModel.cpp \
+    $$PWD/src/cpphash.cpp
