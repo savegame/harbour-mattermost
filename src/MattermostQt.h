@@ -1073,6 +1073,8 @@ protected:
 	ApplicationStatus m_appStatus = ApplicationStatus::AppInactive;
 };
 
+Q_GLOBAL_STATIC(MattermostQt,mattermostQtGlobalInstance);
+
 // Second, define the singleton type provider function (callback).
 static QObject *MattermostQt_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
 {

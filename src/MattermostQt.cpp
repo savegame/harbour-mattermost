@@ -115,7 +115,6 @@
 #define request_json(requset) \
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json")
 
-Q_GLOBAL_STATIC(MattermostQt,mattermostQtGlobalInstance);
 
 Q_DECLARE_METATYPE(MattermostQt::FilePtr)
 Q_DECLARE_METATYPE(MattermostQt::ChannelPtr)
@@ -145,6 +144,7 @@ MattermostQt *MattermostQt::getInstance()
 	//	}
 	return mattermostQtGlobalInstance;
 }
+
 
 void MattermostQt::bind_reply_functions()
 {
@@ -2233,6 +2233,9 @@ void MattermostQt::get_posts_before(int server_index, int team_index,
 
 void MattermostQt::post_users_status(int server_index)
 {
+	qWarning() << QStringLiteral("post_users_status: This function locked now, just skip it");
+	return;
+
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	ServerPtr sc = m_server[server_index];
@@ -2274,6 +2277,9 @@ void MattermostQt::post_users_status(int server_index)
 
 void MattermostQt::post_users_status(int server_index, QStringList ids)
 {
+	qWarning() << QStringLiteral("post_users_status: This function locked now, just skip it");
+	return;
+
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	ServerPtr sc = m_server[server_index];
@@ -6386,6 +6392,7 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 		}
 	}
 	reply->deleteLater();
+	delete reply;
 }
 
 void MattermostQt::slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible)

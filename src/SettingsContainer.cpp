@@ -7,6 +7,7 @@
 #include <sailfishapp.h>
 #include <libsailfishsilica/silicatheme.h>
 #endif
+#include <QStandardPaths>
 
 #define SET_SETTINGS_PROPERTY(_t, _n) MT_SET_PROPERTY_2(SettingsContainer, _t, _n, settingsChanged)
 // TODO make two difenes for RW properties and R only properties
@@ -26,6 +27,12 @@ SET_SETTINGS_PROPERTY(bool,              useLog)
 SET_SETTINGS_PROPERTY(LogLevel,          logLevel)
 SET_SETTINGS_PROPERTY(ReactionSize,      reactionSize)
 SET_SETTINGS_PROPERTY(UserNameDisplay,   userNameDisplay)
+SET_SETTINGS_PROPERTY(QString,           logFilePath)
+
+QString getLogFileLocationDefault()
+{
+	return QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + QDir::separator() + QStringLiteral("mattermost_0.log");
+}
 
 SettingsContainer::SettingsContainer(QObject *parent) : QObject(parent)
 {
@@ -66,6 +73,7 @@ void SettingsContainer::resetToDefault()
 	m_useLog                = true;
 	m_logLevel              = LogLevelDefault;
 	m_userNameDisplay       = UserNameDisplayDefault;
+	m_logFilePath           = getLogFileLocationDefault();
 }
 
 #define ADD_VALUE(x) settings[#x] = x
@@ -106,6 +114,7 @@ QJsonObject SettingsContainer::asJsonObject() const
 	ADD_ENUM(m_logLevel, LogLevel);
 	ADD_VALUE(m_useLog);
 	ADD_ENUM(m_userNameDisplay, UserNameDisplay);
+	ADD_VALUE(m_logFilePath);
 	return settings;
 }
 
@@ -126,6 +135,7 @@ void SettingsContainer::fromJsonObject(const QJsonObject &settings)
 	FROM_ENUM(m_logLevel, LogLevel);
 	FROM_VALUE(m_useLog, toBool());
 	FROM_ENUM(m_userNameDisplay, UserNameDisplay);
+	FROM_VALUE(m_logFilePath, toString(getLogFileLocationDefault()));
 
 	if( m_usedReactionsCount == 0 )
 		m_usedReactionsCount = 21;

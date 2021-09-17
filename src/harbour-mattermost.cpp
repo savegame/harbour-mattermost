@@ -43,6 +43,8 @@
 #include "SettingsContainer.h"
 #include "SailNotify.h"
 
+QFile *logFile = nullptr;
+
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
 	if( SettingsContainer::getInstance()->useLog() == false || SettingsContainer::getInstance()->logLevel() > (SettingsContainer::LogLevel)type )
@@ -52,25 +54,56 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 	switch (type) {
 	case QtDebugMsg:
 		fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		if(logFile) {
+			QTextStream out(logFile);
+			out << QStringLiteral("Debug: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+		}
 		break;
 	case QtWarningMsg:
 		fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		if(logFile) {
+			QTextStream out(logFile);
+			out << QStringLiteral("Warning: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+		}
 		break;
 	case QtCriticalMsg:
 		fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		if(logFile) {
+			QTextStream out(logFile);
+			out << QStringLiteral("Critical: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+		}
 		break;
 	case QtFatalMsg:
 		fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		if(logFile) {
+			QTextStream out(logFile);
+			out << QStringLiteral("Fatal: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+		}
 		//abort();
 	case QtInfoMsg:
 		fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+		if(logFile) {
+			QTextStream out(logFile);
+			out << QStringLiteral("Info: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+		}
 		break;
 	}
 }
 
 int main(int argc, char *argv[])
 {
+	logFile = new QFile(MattermostQt::getInstance()->settings()->logFilePath());
+	if( !logFile->open(QIODevice::WriteOnly ) ) {
+		delete logFile;
+		logFile = nullptr;
+	}
 	qInstallMessageHandler( myMessageOutput );
+	if( !logFile ) {
+		qCritical() << QStringLiteral("Cant create log file: %0").arg(MattermostQt::getInstance()->settings()->logFilePath());
+	}
+	else {
+		qInfo() << QStringLiteral("Create log file: %0").arg(logFile->fileName());
+	}
 	// Set up QML engine.
 	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
 
@@ -121,6 +154,12 @@ int main(int argc, char *argv[])
 	}
 	else
 		qCritical() << "Cant find MattermostQt main Object, possible you cant receive notifications!";
-
+	QObject::connect(MattermostQt::getInstance(),&QObject::destroyed, [=](){
+		if(logFile) {
+			logFile->close();
+			delete logFile;
+			logFile = nullptr;
+		}
+	});
 	return app->exec();
 }

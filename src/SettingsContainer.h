@@ -71,6 +71,7 @@ private:
 	MT_PROPERTY_DEF(LogLevel, logLevel, LogLevelDefault);
 	MT_PROPERTY_DEF(bool,     useLog, true);
 	MT_PROPERTY_DEF(UserNameDisplay,  userNameDisplay, UserNameDisplayDefault);
+	MT_PROPERTY(QString, logFilePath);
 public:
 	explicit SettingsContainer(QObject *parent = nullptr);
 
