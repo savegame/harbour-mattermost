@@ -12,10 +12,10 @@
 
 #define lastUsed QStringLiteral("Last Used")
 
-QVector<EmojiModel::ItemPtr>                       EmojiModel::m_items;
-QHash<QString, EmojiModel::ItemPtr>                EmojiModel::m_hashItems;
+//QVector<EmojiModel::ItemPtr>                       EmojiModel::m_items;
+//QHash<QString, EmojiModel::ItemPtr>                EmojiModel::m_hashItems;
 //QVector<EmojiModel::ItemPtr>                       EmojiModel::m_usedItems;
-QVector< QPair<QString, EmojiModel::IndexRange> >  EmojiModel::m_categories;
+//QVector< QPair<QString, EmojiModel::IndexRange> >  EmojiModel::m_categories;
 
 EmojiModel::EmojiModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -448,14 +448,17 @@ void EmojiProxyCategory::setCategory(const QString &in_category)
 
 void EmojiProxyCategory::updateCategoryIndex()
 {
+	qDebug() << QStringLiteral("EmojiModel is %0").arg(m_emojiModel == nullptr?QStringLiteral("nullptr"):QStringLiteral("valid") );
+	qDebug() << QStringLiteral("Emojy Category is %0").arg(m_category);
 	if(m_emojiModel && !m_category.isEmpty()) {
-		auto search = std::find_if(m_emojiModel->m_categories.begin(),
-		                           m_emojiModel->m_categories.end(),
-		                           [=](QPair<QString,EmojiModel::IndexRange> current){
-			if( current.first == m_category )
-				return true;
-			return false;
-		});
+		auto search = std::find_if(
+			m_emojiModel->m_categories.begin(),
+			m_emojiModel->m_categories.end(),
+			[=](QPair<QString,EmojiModel::IndexRange> current){
+				if( current.first == m_category )
+					return true;
+				return false;
+			});
 		m_categoryIndex = search->second;
 	}
 }

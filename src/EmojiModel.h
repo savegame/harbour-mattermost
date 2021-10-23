@@ -77,10 +77,10 @@ Q_SIGNALS:
 
 private:
 //	MattermostQt *m_mattermost = nullptr;
-	static QVector<ItemPtr>                       m_items; // indexed list of emoji
-	static QHash<QString, ItemPtr>                m_hashItems; // hased list of emoji ( for fast search )
-	QVector<ItemPtr>      m_usedItems;
-	static QVector< QPair<QString, IndexRange> >  m_categories;
+	QVector<ItemPtr>                       m_items;     // indexed list of emoji
+	QHash<QString, ItemPtr>                m_hashItems; // hased list of emoji ( for fast search )
+	QVector<ItemPtr>                       m_usedItems;
+	QVector< QPair<QString, IndexRange> >  m_categories;
 };
 
 class EmojiProxyCategory : public QAbstractProxyModel
