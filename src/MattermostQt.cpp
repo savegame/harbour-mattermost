@@ -67,6 +67,8 @@
 #define GET_USER_INFO_current_user   -2 // request user info for current loggined user
 
 //#ifdef _RELEASE
+#define bearer_string(token) QString("Bearer %0").arg(token)
+
 #define request_urlencoded(requset) \
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-urlencoded")
 
@@ -75,7 +77,7 @@
 	request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Sailfish Mattermost v%0").arg(MATTERMOSTQT_VERSION) ); \
 	if( !server->m_cookie.isEmpty() ) \
 	request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
-	request.setRawHeader("Authorization", QStringLiteral("Bearer %0").arg(server->m_token).toUtf8())
+	request.setRawHeader("Authorization", server->m_bearer.toUtf8())
 
 #define request_json(requset) \
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json")
@@ -2431,6 +2433,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 			server->m_url   = reply->property(P_SERVER_URL).toString();
 			server->m_display_name = reply->property(P_SERVER_NAME).toString();
 			server->m_token = reply->rawHeader(head).data();
+			server->m_bearer = bearer_string(server->m_token);
 			server->m_trust_cert = reply->property(P_TRUST_CERTIFICATE).toBool();
 			server->m_ca_cert_path = reply->property(P_CA_CERT_PATH).toString();
 			server->m_cert_path = reply->property(P_CERT_PATH).toString();
@@ -2459,6 +2462,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 					{
 						is_new_account = false;
 						m_server[i]->m_token = server->m_token;
+						m_server[i]->m_bearer = bearer_string(m_server[i]->m_token);
 						m_server[i]->m_cookie = server->m_cookie;
 						//server.reset();
 						server = m_server[i];
@@ -3386,6 +3390,15 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 				{
 					int server_index  = reply->property(P_SERVER_INDEX).toInt();
 					emit onConnectionError(ConnectionError::SessionExpired, message, server_index);
+					// output request authorisation header
+					if( reply->hasRawHeader("Authorization") )
+					{
+						QString message;
+						QString token = reply->rawHeader("Authorization");
+						message += QString("Header token: ") + token;
+						message += QString("\nStored token: ") + m_server[server_index]->m_bearer;
+						qCritical() << message;
+					}
 				}
 				else if( error_id.compare("user.login.invalid_credentials_email_username") == 0 )
 				{
@@ -5576,6 +5589,17 @@ MattermostQt::UserContainer::UserContainer(QJsonObject object)
 	m_last_activity_at = 0;
 	//"failed_attempts": 0,
 	//"mfa_active": true
+}
+
+MattermostQt::ServerContainer::ServerContainer(QString url, QString token, int api)
+{
+	m_url = url;
+	m_api = api;
+	m_token = token;
+	m_bearer = bearer_string(token);
+	m_trust_cert = false;
+	m_ping_timer.setSingleShot(false);
+	m_enabled = true;
 }
 
 MattermostQt::ServerContainer::~ServerContainer()

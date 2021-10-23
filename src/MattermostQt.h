@@ -453,15 +453,7 @@ public:
 	public:
 		ServerContainer() : m_api(4), m_trust_cert(false), m_enabled(true) {}
 
-		ServerContainer(QString url, QString token, int api)
-		{
-			m_url = url;
-			m_api = api;
-			m_token = token;
-			m_trust_cert = false;
-			m_ping_timer.setSingleShot(false);
-			m_enabled = true;
-		}
+		ServerContainer(QString url, QString token, int api);
 
 		~ServerContainer() ;
 
@@ -470,6 +462,7 @@ public:
 		QString                     m_url;   /**< server URL */
 		int                         m_api;   /**< server API version */
 		QString                     m_token; /**< server access token*/
+		QString                     m_bearer;/**< cached authorization bearer header */
 		QString                     m_cookie;/**< cookie if needed */
 		QSslConfiguration           m_cert;  /**< server certificate */
 		QSharedPointer<QWebSocket>  m_socket;/**< websocket connection */
