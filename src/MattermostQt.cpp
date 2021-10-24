@@ -3390,15 +3390,26 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 				{
 					int server_index  = reply->property(P_SERVER_INDEX).toInt();
 					emit onConnectionError(ConnectionError::SessionExpired, message, server_index);
+					ReplyType type = reply->property(P_REPLY_TYPE).value<ReplyType>();
 					// output request authorisation header
-					if( reply->hasRawHeader("Authorization") )
-					{
-						QString message;
-						QString token = reply->rawHeader("Authorization");
-						message += QString("Header token: ") + token;
-						message += QString("\nStored token: ") + m_server[server_index]->m_bearer;
-						qCritical() << message;
+					qWarning() << QStringLiteral("Reply type: %0").arg( QVariant::fromValue<ReplyType>(type).toString() );
+//					QList<QByteArray> headers =  reply->rawHeaderList();
+					QList<QNetworkReply::RawHeaderPair> headers = reply->rawHeaderPairs();
+					QString authheader("Authorization");
+					QString message;
+					for(auto header : headers) {
+						if( authheader.indexOf(header.first)!= -1 )
+						{
+							QString token = header.second;
+							message += QString("  Header token: ") + token;
+							message += QString("\n  Stored token: ") + m_server[server_index]->m_bearer + QStringLiteral("\n");
+						}
+						else
+						{
+							message += QStringLiteral("  Header: \"") + QString(header.first) + QStringLiteral("\" : ") + header.second + QStringLiteral("\n");
+						}
 					}
+					qCritical() << message;
 				}
 				else if( error_id.compare("user.login.invalid_credentials_email_username") == 0 )
 				{
@@ -5282,10 +5293,11 @@ void MattermostQt::slot_recconect_servers()
 			        .replace("http://","ws://");
 			QUrl url(serUrl);
 			url.setPath(url.path() + urlString);
-			if( url.toString().indexOf("wss://") >= 0 && (url.port() == 80 || url.port() == -1) ) {
-				url.setPort(443);
-				qWarning() << QStringLiteral("Force set port to 443 for WebSocket connection");
-			}
+			// disable forcing websocket port to 443
+//			if( url.toString().indexOf("wss://") >= 0 && (url.port() == 80 || url.port() == -1) ) {
+//				url.setPort(443);
+//				qWarning() << QStringLiteral("Force set port to 443 for WebSocket connection");
+//			}
 			m_server[i]->m_socket->open(url);
 		}
 	}
