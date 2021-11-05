@@ -3243,7 +3243,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 					{
 						is_new_account = false;
 						m_server[i]->m_token = server->m_token;
-						m_server[i]->m_bearer = bearer_string(m_server[i]->m_token);
+						m_server[i]->m_bearer = bearer_string(server->m_token);
 						m_server[i]->m_cookie = server->m_cookie;
 						//server.reset();
 						server = m_server[i];

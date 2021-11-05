@@ -7,13 +7,18 @@
 #include <QJsonDocument>
 #include <string>
 #include <md4c-html.h>
+#ifndef DISABLE_SILICA_SAILFISH
 #include <libsailfishsilica/silicatheme.h>
+#endif
 #include <cpphash.h>
 
 Md4cMdParser::Md4cMdParser()
 {
+#ifndef DISABLE_SILICA_SAILFISH
 	block_size[Block_Null] = Silica::Theme::instance()->fontSizeSmall() + 2;
-
+#else
+	block_size[Block_Null] = 14;
+#endif
 	for( int h = 1; h < BlockCount; h++ )
 		block_size[h] = block_size[h - 1] + INCRASE_FONT;
 
@@ -183,3 +188,11 @@ QString Md4cMdParser::find_emoji_path(const QString short_name) const
     return found_image_path;
 }
 
+void Md4cMdParser::setBlockSize(const QVector<int> &sizes)
+{
+	Q_ASSERT_X(sizes.size() == BlockCount, "Block sizes count should be equal to BlockType::BlockCount", "");
+
+	for(int type = Block_Null; type < BlockCount; type++ ){
+		block_size[type] = sizes[type];
+	}
+}

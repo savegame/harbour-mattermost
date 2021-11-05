@@ -26,6 +26,12 @@ public:
     virtual QString parse(const QString &input, const QString server_id) override;
     virtual void    add_custom_emoji(const QString key, const QString path, const QString server_id) override;
     virtual QString find_emoji_path(const QString short_name) const override;
+
+	/**
+	 * @brief setBlockSize set blocks sizes
+	 * @param sizes
+	 */
+	void setBlockSize(const QVector<int> &sizes);
 private:
 	QString buff;
 	BlockType block_type = Block_Null;
