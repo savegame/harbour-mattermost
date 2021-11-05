@@ -10,7 +10,7 @@
 - fix compability with Mattermost 6 server (cant send message) 
 - new donate link
 
-* Sat Okt 17  2020 sashikknox <sashikknox@gmail.com> - 0.1.6-7
+* Sat Oct 17   2020 sashikknox <sashikknox@gmail.com> - 0.1.6-7
 - update chinese translation by dashinfantry
 - add md4c markdown parser as default (discount not removed yet)
 - many api fuctnion (add_chanel, create_Channel, users model) and etc.
