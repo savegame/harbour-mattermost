@@ -101,15 +101,13 @@
 #define request_urlencoded(requset) \
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-urlencoded")
 
-#define request_set_cookie(request, server) \
-    if( !server->m_cookie.isEmpty() ) \
-        request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
+//#define request_set_cookie(request, server) \
+//    if( !server->m_cookie.isEmpty() ) \
+//        request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
 
 #define request_set_headers(requset, server) \
 	request_urlencoded(request); \
 	request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Sailfish Mattermost v%0").arg(MATTERMOSTQT_VERSION) ); \
-	if( !server->m_cookie.isEmpty() ) \
-		request.setHeader(QNetworkRequest::CookieHeader, server->m_cookie); \
 	request.setRawHeader("Authorization", server->m_bearer.toUtf8())
 
 #define request_json(requset) \
@@ -1456,7 +1454,7 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	root["channel_id"] = channel->m_id;
 	root["message"] = message;
 	root["file_ids"] = files;
-	root["props"] = QJsonObject();
+//	root["props"] = QJsonObject();
 	if( !root_id.isEmpty() )
 		root["root_id"] = root_id;
 	json.setObject(root);
@@ -2233,9 +2231,6 @@ void MattermostQt::get_posts_before(int server_index, int team_index,
 
 void MattermostQt::post_users_status(int server_index)
 {
-	qWarning() << QStringLiteral("post_users_status: This function locked now, just skip it");
-	return;
-
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	ServerPtr sc = m_server[server_index];
@@ -2277,9 +2272,6 @@ void MattermostQt::post_users_status(int server_index)
 
 void MattermostQt::post_users_status(int server_index, QStringList ids)
 {
-	qWarning() << QStringLiteral("post_users_status: This function locked now, just skip it");
-	return;
-
 	if( server_index < 0 || server_index >= m_server.size() )
 		return;
 	ServerPtr sc = m_server[server_index];
@@ -2767,9 +2759,10 @@ bool MattermostQt::save_settings()
 bool MattermostQt::load_settings()
 {
 	QJsonDocument json;
-	QFile jsonFile( m_data_path + QDir::separator() + QLatin1String(F_CONFIG_FILE) );
+	QString config_file_path = m_data_path + QDir::separator() + QLatin1String(F_CONFIG_FILE);
+	QFile jsonFile( config_file_path );
 	if( !jsonFile.open(QFile::ReadOnly | QFile::Text) ) {
-		qWarning() << QStringLiteral("No config file found.");
+		qWarning() << QStringLiteral("No config file found. Path: ") + config_file_path;
 		return false;
 	}
 	qDebug() << QStringLiteral("Read settings from config file: %0").arg(m_data_path + QDir::separator() + QLatin1String(F_CONFIG_FILE));
@@ -4663,30 +4656,32 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 					qCritical() << QStringLiteral("Session Expired Error");
 					qCritical() << QStringLiteral("ReplyType: %0").arg( QVariant::fromValue<ReplyType>(reply_type).toString() );
 					ServerPtr server = serverAt(server_index);
-					if(server) {
-						QString token = server->m_token;
-						QString url = server->m_url;
-						qDebug() << QStringLiteral("test curl:\n curl -i -H 'Authorization: Bearer %0' %1/api/v4/users/me").arg(token,url);
-					}
+//					if(server) {
+//						QString token = server->m_token;
+//						QString url = server->m_url;
+//						qDebug() << QStringLiteral("test curl:\n curl -i -H 'Authorization: Bearer %0' %1/api/v4/users/me").arg(token,url);
+//					}
 
 					emit onConnectionError(ConnectionError::SessionExpired, message, server_index);
 					ReplyType type = reply->property(P_REPLY_TYPE).value<ReplyType>();
 					// output request authorisation header
 					qWarning() << QStringLiteral("Reply type: %0").arg( QVariant::fromValue<ReplyType>(type).toString() );
 //					QList<QByteArray> headers =  reply->rawHeaderList();
-					QList<QNetworkReply::RawHeaderPair> headers = reply->rawHeaderPairs();
+					QNetworkRequest request = reply->request();
+					QList<QByteArray> headers = request.rawHeaderList();
 					QString authheader("Authorization");
 					QString message;
 					for(auto header : headers) {
-						if( authheader.indexOf(header.first)!= -1 )
+						QByteArray header_data = request.rawHeader(header);
+						if( authheader.indexOf(header)!= -1  && server)
 						{
-							QString token = header.second;
+							QString token = header_data;
 							message += QString("  Header token: ") + token;
-							message += QString("\n  Stored token: ") + m_server[server_index]->m_bearer + QStringLiteral("\n");
+							message += QString("\n  Stored token: ") + server->m_bearer + QStringLiteral("\n");
 						}
 						else
 						{
-							message += QStringLiteral("  Header: \"") + QString(header.first) + QStringLiteral("\" : ") + header.second + QStringLiteral("\n");
+							message += QStringLiteral("  RawHeader: \"") + QString(header) + QStringLiteral("\" : ") + header_data + QStringLiteral("\n");
 						}
 					}
 					qCritical() << message;

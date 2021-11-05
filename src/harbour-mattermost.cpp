@@ -56,35 +56,35 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 		fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
 		if(logFile) {
 			QTextStream out(logFile);
-			out << QStringLiteral("Debug: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+			out << QString("Debug: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
 		}
 		break;
 	case QtWarningMsg:
 		fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
 		if(logFile) {
 			QTextStream out(logFile);
-			out << QStringLiteral("Warning: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+			out << QString("Warning: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
 		}
 		break;
 	case QtCriticalMsg:
 		fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
 		if(logFile) {
 			QTextStream out(logFile);
-			out << QStringLiteral("Critical: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+			out << QString("Critical: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
 		}
 		break;
 	case QtFatalMsg:
 		fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
 		if(logFile) {
 			QTextStream out(logFile);
-			out << QStringLiteral("Fatal: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+			out << QString("Fatal: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
 		}
 		//abort();
 	case QtInfoMsg:
 		fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
 		if(logFile) {
 			QTextStream out(logFile);
-			out << QStringLiteral("Info: %0 (%1:%2, %3)").arg(msg).arg(context.file).arg(context.line).arg(context.function);
+			out << QString("Info: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
 		}
 		break;
 	}
@@ -92,7 +92,15 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 
 int main(int argc, char *argv[])
 {
-	logFile = new QFile(MattermostQt::getInstance()->settings()->logFilePath());
+	// Set up QML engine.
+	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
+
+	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
+	QCoreApplication::setOrganizationDomain("harbour");
+	QCoreApplication::setOrganizationName("sashikknox");
+//	QCoreApplication::setApplicationName("harbour-mattermost");
+	// TODO settings should read here!
+	logFile = new QFile(SettingsContainer::getInstance()->logFilePath());
 	if( !logFile->open(QIODevice::WriteOnly ) ) {
 		delete logFile;
 		logFile = nullptr;
@@ -104,18 +112,12 @@ int main(int argc, char *argv[])
 	else {
 		qInfo() << QStringLiteral("Create log file: %0").arg(logFile->fileName());
 	}
-	// Set up QML engine.
-	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
 
 	QScopedPointer<QQuickView> v(SailfishApp::createView());
+	qInfo() << "App version: " << MATTERMOSTQT_VERSION;
 
 	QScopedPointer<SailNotify> notify(new SailNotify());
 
-	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
-	QCoreApplication::setOrganizationDomain("harbour");
-	QCoreApplication::setOrganizationName("sashikknox");
-
-	qInfo() << "App version: " << MATTERMOSTQT_VERSION;
 	// If you wish to publish your app on the Jolla harbour, it is recommended
 	// that you prefix your internal namespaces with "harbour.".
 	//
@@ -140,11 +142,11 @@ int main(int argc, char *argv[])
 	v->show();
 
 	MattermostQt *m = MattermostQt::getInstance();//v->rootObject()->findChild<MattermostQt*>();
-	SettingsContainer *s = v->rootObject()->findChild<SettingsContainer*>();
+//	SettingsContainer *s = v->rootObject()->findChild<SettingsContainer*>();
 	if(m) {
 		QObject::connect(m, &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );
-		if(s)
-			m->setSettingsContainer(s);
+//		if(s)
+//			m->setSettingsContainer(s);
 		m->replaceMdParser( new Md4cMdParser() );
 		for( int i = 0; i < m->server().size(); i++ ) {
 			m->get_emoji_list(i);

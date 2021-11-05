@@ -12,10 +12,10 @@
 
 #define lastUsed QStringLiteral("Last Used")
 
-//QVector<EmojiModel::ItemPtr>                       EmojiModel::m_items;
-//QHash<QString, EmojiModel::ItemPtr>                EmojiModel::m_hashItems;
+QVector<EmojiModel::ItemPtr>                       EmojiModel::m_items;
+QHash<QString, EmojiModel::ItemPtr>                EmojiModel::m_hashItems;
 //QVector<EmojiModel::ItemPtr>                       EmojiModel::m_usedItems;
-//QVector< QPair<QString, EmojiModel::IndexRange> >  EmojiModel::m_categories;
+QVector< QPair<QString, EmojiModel::IndexRange> >  EmojiModel::m_categories;
 
 EmojiModel::EmojiModel(QObject *parent)
     : QAbstractListModel(parent)
