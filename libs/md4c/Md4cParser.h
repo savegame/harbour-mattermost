@@ -17,6 +17,7 @@ public:
 		Block_H3,
 		Block_H2,
 		Block_H1,
+		Block_Image,
 		BlockCount
 	};
 	
