@@ -15,23 +15,26 @@ Repeater {
     /** MessagesModel */
     property MessagesModel messagesModel
     /** index of message in qvector */
-    property int rowIndex
+    property int rowIndex: -1
     /** maximum width */
-    property real maxWidth
+    property real maxWidth: 0
     /** spacing of columnt, where filesRepeater situated */
-    property real spacing
+    property real spacing: 0
     /** own properties */
     property var summaryHeight: []
     /** files count */
-    property int filesCount
+    property int filesCount : -1
 
     function computeFinalHeight() {
         height = 0;
-        for(var i = 0; i < filesRepeater.count; i++)
+//        if(summaryHeight.length != filesRepeater.count) {
+//            console.warn("Wrong size of summaryHeight: siles count is " + filesRepeater.count + " and size is " + summaryHeight.length)
+//        }
+
+        for(var i = 0; i < summaryHeight.length; i++)
         {
             height += summaryHeight[i]
         }
-//        console.log("Repeater height changed: " + String(height))
     }
 
     //Component.onCompleted: {
@@ -52,7 +55,15 @@ Repeater {
         messageRow: messageLabel.rowIndex
     } //*/
 
-
+//    Component.onCompleted: {
+//        console.warn("=========================================================")
+//        console.warn("messagesPage.server_index: " + messagesPage.server_index)
+//        console.warn("messagesPage.team_index: " + messagesPage.team_index)
+//        console.warn("messagesPage.channel_type: " + messagesPage.channel_type)
+//        console.warn("messagesPage.channel_index: " + messagesPage.channel_index)
+//        console.warn("messageLabel.rowIndex: " + messageLabel.rowIndex)
+//        console.warn("messageLabel.filesCount: " + messageLabel.filesCount)
+//    }
 
     // *
     delegate: Loader {//for different file types

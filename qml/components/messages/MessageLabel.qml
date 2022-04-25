@@ -19,15 +19,15 @@ ListItem {
     /** path to avatar */
     property string senderImage
     /**  sender user status */
-    property int senderStatus
+    property int senderStatus: -1
     /** count  of attached files */
-    property int filesCount
+    property int filesCount: 0
     /** date of mesage */
     property string messageTimestamp
     /** MessagesModel */
     property MessagesModel messagesModel
     /** index of message in qvector */
-    property int rowIndex
+    property int rowIndex: -1
     /** root message, if message is answer */
     property string rootMessage
     /** username if message is answer */
@@ -251,6 +251,7 @@ ListItem {
                 // anchors.rightMargin: Theme.paddingMedium
                 // anchors.leftMargin: Theme.paddingMedium
                 spacing: Theme.paddingMedium
+                property Component attachedFilesComponent: Qt.createComponent("AttachedFiles.qml");
                 property real inBlobMargins:
                     (Settings.showBlobs) ?
                         Theme.paddingMedium :
@@ -297,18 +298,23 @@ ListItem {
                     }
                 } // plainTextLabel
 
-                AttachedFiles {
-                    id: attachedFiles
-                    anchors.margins: plainTextLablel.anchors.margins
-                    maxWidth: Math.min(inBlobContent.maxBlobContentWidth,messagesListHeight)
-                    messagesModel: messageLabel.messagesModel
-                    textColor:     messageLabel.textColor
-                    rowIndex:      messageLabel.rowIndex
-                    filesCount:    messageLabel.filesCount
-                    spacing:       inBlobContent.spacing
-                    visible:       messageLabel.filesCount > 0
-                    enabled:       visible
-                }// files repeater */
+                Component.onCompleted: {
+//                    var component;
+                    var attachedFiles;
+                    if( messageLabel.filesCount > 0 ) {
+                        attachedFiles = attachedFilesComponent.createObject(inBlobContent, {
+                                                        "anchors.margins": plainTextLablel.anchors.margins,
+                                                        "maxWidth": Math.min(inBlobContent.maxBlobContentWidth,messagesListHeight),
+                                                        "messagesModel": messageLabel.messagesModel,
+                                                        "textColor":     messageLabel.textColor,
+                                                        "rowIndex":      messageLabel.rowIndex,
+                                                        "filesCount":    messageLabel.filesCount,
+                                                        "spacing":       inBlobContent.spacing,
+                                                        "visible":       messageLabel.filesCount > 0,
+                                                        "enabled":       visible
+                                                    });
+                    }
+                }
             }
         }
     }
