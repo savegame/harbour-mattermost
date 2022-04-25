@@ -97,7 +97,7 @@ QVariant AttachedFilesModel::data(const QModelIndex &index, int role) const
 				return file->m_preview_path;
 			else {
 				MattermostQt::getInstance()->get_file_preview(file->m_server_index, file->m_self_sc_index);
-				return file->m_thumb_path;
+				return file->m_preview_path.isEmpty() ? file->m_thumb_path : file->m_preview_path;
 			}
 		}
 		else if( role == FileImageSize ) {
