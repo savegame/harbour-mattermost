@@ -32,6 +32,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		return QVariant();
 
 	MattermostQt::MessagePtr message = m_channel->m_message[row];
+	MattermostQt::ServerPtr server = MattermostQt::getInstance()->serverAt(message->m_server_index);
 
 	switch (role) {
 	case MessagesModel::PostId:
@@ -110,25 +111,20 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		}
 		break;
 	case Qt::DecorationRole:
-		if( message->m_user_index >= 0
-		         &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
+
+		if( server && message->m_user_index >= 0
+		         &&  message->m_user_index < server->m_user.size())
 		{
-			MattermostQt::UserPtr user =
-			        m_mattermost->
-			        m_server[message->m_server_index]->
-			        m_user[message->m_user_index];
+			MattermostQt::UserPtr user = server->m_user[message->m_user_index];
 			return QImage(user->m_image_path);
 		}
 		return QIcon(":/icons/resources/logo_rect_white.png");
 	case MessagesModel::SenderImagePath:
 		{
-			if( message->m_user_index >= 0
-			         &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
+		    if( server && message->m_user_index >= 0
+			         &&  message->m_user_index < server->m_user.size())
 			{
-				MattermostQt::UserPtr user =
-				        m_mattermost->
-				        m_server[message->m_server_index]->
-				        m_user[message->m_user_index];
+				MattermostQt::UserPtr user = server->m_user[message->m_user_index];
 				return QVariant(user->m_image_path);
 			}
 			else
@@ -137,13 +133,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::SenderUserName:
 		{
-			if( message->m_user_index >= 0
-			        &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
+		    if( server &&  message->m_user_index >= 0
+			        &&  message->m_user_index < server->m_user.size())
 			{
-				MattermostQt::UserPtr user =
-				        m_mattermost->
-				        m_server[message->m_server_index]->
-				        m_user[message->m_user_index];
+				MattermostQt::UserPtr user = server->m_user[message->m_user_index];
 				return QVariant(user->m_username);
 			}
 			else
@@ -152,7 +145,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				{
 					qWarning() << QString("Cant find USER name  message->m_user_index(%0) < size(%1) uid(%3)")
 					              .arg( message->m_user_index)
-					              .arg(m_mattermost->m_server[message->m_server_index]->m_user.size())
+					              .arg( server ? QString::number(server->m_user.size()) : QStringLiteral("Empty SERVER Ptr") )
 					        .arg( message->m_user_id);
 				}
 				return QVariant("error!");
@@ -161,12 +154,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::RoleSenderFullName:
 	    {
-		    if( message->m_user_index >= 0
-			        &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
+		    if( server && message->m_user_index >= 0
+			        &&  message->m_user_index < server->m_user.size())
 			{
-				MattermostQt::UserPtr user =
-				        m_mattermost->
-				        m_server[message->m_server_index]->
+				MattermostQt::UserPtr user = server->
 				        m_user[message->m_user_index];
 				if ( !user->m_first_name.isEmpty() || !user->m_last_name.isEmpty() )
 					return QStringLiteral("%0 %1").arg(user->m_first_name).arg(user->m_last_name);
@@ -179,7 +170,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 				{
 					qWarning() << QString("Cant find USER name  message->m_user_index(%0) < size(%1) uid(%3)")
 					              .arg( message->m_user_index)
-					              .arg(m_mattermost->m_server[message->m_server_index]->m_user.size())
+					              .arg( server ? QString::number(server->m_user.size()) : QStringLiteral("Empty SERVER Ptr")  )
 					        .arg( message->m_user_id);
 				}
 				return QStringLiteral("RoleSenderFullName: error!");
@@ -188,12 +179,10 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 		break;
 	case MessagesModel::UserStatus:
 		{
-			if( message->m_user_index >= 0
-			        &&  message->m_user_index < m_mattermost->m_server[message->m_server_index]->m_user.size())
+		    if( server && message->m_user_index >= 0
+			        &&  message->m_user_index < server->m_user.size())
 			{
-				MattermostQt::UserPtr user =
-				        m_mattermost->
-				        m_server[message->m_server_index]->
+				MattermostQt::UserPtr user = server->
 				        m_user[message->m_user_index];
 				return QVariant(user->m_status);
 			}
@@ -808,7 +797,7 @@ void MessagesModel::slot_messageUpdated(QList<MattermostQt::MessagePtr> messages
 	if( !m_channel )
 		return;
 
-	 QVectorInt roles;
+	QVectorInt roles;
 	roles << CreateAt << Text << ValidPaths << FilesCount << FormatedText << RootId << RootMessage << RootMessageUserName;
 	int br = 0,lt = m_channel->m_message.size() - 1;
 

@@ -49,6 +49,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 {
 	if( SettingsContainer::getInstance()->useLog() == false || SettingsContainer::getInstance()->logLevel() > (SettingsContainer::LogLevel)type )
 		return; // TODO test no stdout
+	MattermostQt *m = MattermostQt::getInstance();
 	// TODO write log to databse in separate thread
 	QByteArray localMsg = msg.toLocal8Bit();
 	switch (type) {
@@ -79,7 +80,8 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 			QTextStream out(logFile);
 			out << QString("Fatal: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
 		}
-		//abort();
+		abort();
+		break;
 	case QtInfoMsg:
 		fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
 		if(logFile) {

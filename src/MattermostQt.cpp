@@ -1,5 +1,6 @@
 ﻿//#include "MattermostQt.h"
 #include <algorithm>
+#include <functional>
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -1106,13 +1107,30 @@ void MattermostQt::post_add_user_to_team(int server_index, QString user_id, QStr
 
 void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 {
-	if( server_index < 0 || server_index >= m_server.size() )
+	ServerPtr sc = serverAt(server_index);
+	if( sc.isNull() )
 		return;
-	// we think all indexes is right
-	ServerPtr sc = m_server[server_index];
+
 	if( file_sc_index < 0 || file_sc_index >= sc->m_file.size() )
 		return;
 	FilePtr file = sc->m_file[file_sc_index];
+
+	if( file->m_thumb_path.isEmpty() )
+		file->m_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
+	//qDebug() << QStringLiteral("Preview path: \"%0\"").arg(file->m_preview_path);
+
+	if( QFile::exists(file->m_thumb_path) ) {
+		QVectorInt file_update_roles;
+		file_update_roles << AttachedFilesModel::FileThumbnailPath;
+		MessagePtr mc = messageAt(server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index);
+		if(mc) {
+			emit attachedFilesChanged(mc, QVector<QString>() << file->m_id , file_update_roles);
+			return;
+		}
+	}
+	//qDebug() << QStringLiteral("File is not founded in cache dir. Try download it from server.");
+	file->m_thumb_path.clear();
+
 	QString file_id = file->m_id;
 	//files/{file_id}/thumbnail
 	QString urlString = QLatin1String("/api/v")
@@ -3868,6 +3886,14 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 	if(!new_messages)
 		return;
 
+	std::function<void (MessagePtr message)> fixMessageIndexInFiles = [](MessagePtr message){
+		if( message->m_file.isEmpty() )
+			return;
+		for(FilePtr file : message->m_file) {
+			file->m_message_index = message->m_self_index;
+		}
+	};
+
 	// sorting with right order
 	for(int i = 0, j2 = messages.size() - 1; i < order.size(); i++, j2 = messages.size() - 1 - i)
 	{
@@ -3882,6 +3908,9 @@ void MattermostQt::reply_get_posts_before(QNetworkReply *reply)
 				messages[j2] = temp;
 				messages[j2]->m_self_index = j2;
 				messages[j]->m_self_index = j;
+
+				fixMessageIndexInFiles(messages[j2]);
+				fixMessageIndexInFiles(messages[j]);
 
 				for(QList<MessagePtr>::iterator it = answers.begin(); it != answers.end(); it++)
 				{
@@ -4759,13 +4788,22 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 	// we think all indexes right
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
 	int file_sc_index = reply->property(P_FILE_SC_INDEX).toInt();
-	FilePtr file = m_server[server_index]->m_file[file_sc_index];
+
+	ServerPtr server = serverAt(server_index);
+	if(!server)
+		qFatal("Server not found!");
+	if(file_sc_index < 0 || file_sc_index >= server->m_file.size())
+	{
+		qCritical() << QStringLiteral("Wrong file index");
+		return;
+	}
+
+	FilePtr file = server->m_file[file_sc_index];
 	int team_index = file->m_team_index;
 	int channel_type = file->m_channel_type;
 	int channel_index = file->m_channel_index;
 	int message_index = file->m_message_index;
 
-	ServerPtr sc = m_server[server_index];
 	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
 	if(!channel) {
 		// try fix file 
@@ -4790,7 +4828,7 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 
 	QByteArray replyData = reply->readAll();
 	{
-		QString file_path = sc->m_cache_path
+		QString file_path = server->m_cache_path
 							+ QLatin1String("/files/")
 							+ file->m_id;
 		QDir dir;
@@ -4825,7 +4863,17 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 	// we think all indexes right
 	int server_index = reply->property(P_SERVER_INDEX).toInt();
 	int file_sc_index = reply->property(P_FILE_SC_INDEX).toInt();
-	FilePtr file = m_server[server_index]->m_file[file_sc_index];
+
+	ServerPtr server = serverAt(server_index);
+	if(!server)
+		qFatal("Server not found!");
+	if(file_sc_index < 0 || file_sc_index >= server->m_file.size())
+	{
+		qCritical() << QStringLiteral("Wrong file index");
+		return;
+	}
+
+	FilePtr file = server->m_file[file_sc_index];
 	int team_index = file->m_team_index;
 	int channel_type = file->m_channel_type;
 	int channel_index = file->m_channel_index;
@@ -7347,6 +7395,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 						FilePtr file(new FileContainer(fileObject));
 						file->m_file_status = FileStatus::FileRemote;
 						file->m_self_index = m_file.size();
+						file->m_message_index = m_self_index;
 						m_file.push_back(file);
 					}
 				}
@@ -7365,7 +7414,7 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 
 bool MattermostQt::MessageContainer::updateFiles(MattermostQt *mattermost)
 {
-	if(!mattermost)
+	if(!mattermost || m_file.empty())
 		return false;
 
 	ChannelPtr channel = mattermost->channelAt(m_server_index,m_team_index,m_channel_type,m_channel_index);
@@ -7381,6 +7430,7 @@ bool MattermostQt::MessageContainer::updateFiles(MattermostQt *mattermost)
 	for( int f = 0; f < m_file.size(); f++ )
 	{
 		FilePtr file = m_file[f];
+
 		if( file->m_server_index >= 0 ) 
 		{
 			/** looks like file already have correct indexes */

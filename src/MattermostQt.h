@@ -278,13 +278,13 @@ public:
 		int     m_contentwidth;
 		// if it document
 
-		int m_server_index;
-		int m_team_index;
-		int m_channel_type;
-		int m_channel_index;
-		int m_message_index; // post index
-		int m_self_index; // in message files list
-		int m_self_sc_index; // in server files list
+		int m_server_index  = -1;
+		int m_team_index    = -1;
+		int m_channel_type  = -1;
+		int m_channel_index = -1;
+		int m_message_index = -1; // post index
+		int m_self_index    = -1; // in message files list
+		int m_self_sc_index = -1; // in server files list
 		//		MessagePtr m_message;// test
 		char m_is_in_cache;
 	};
@@ -336,11 +336,11 @@ public:
 		// inside types
 		QVector<FilePtr>     m_file;
 		ChannelType      m_channel_type;
-		int              m_user_index;  // index in server users
-		int              m_server_index;
-		int              m_team_index;
-		int              m_channel_index;
-		int              m_self_index;
+		int              m_user_index    = -1;  // index in server users
+		int              m_server_index  = -1;
+		int              m_team_index    = -1;
+		int              m_channel_index = -1;
+		int              m_self_index    = -1;
 		qreal            m_item_height;
 		// data for reply message
 		QString          m_root_message;
