@@ -60,7 +60,6 @@
 	    emit add_signal_ (); \
 	} \
 
-
 typedef  QVector<int> QVectorInt;
 
 #endif // MATTERMOSTQT_GOBAL_H

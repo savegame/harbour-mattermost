@@ -448,8 +448,10 @@ void EmojiProxyCategory::setCategory(const QString &in_category)
 
 void EmojiProxyCategory::updateCategoryIndex()
 {
-	qDebug() << QStringLiteral("EmojiModel is %0").arg(m_emojiModel == nullptr?QStringLiteral("nullptr"):QStringLiteral("valid") );
-	qDebug() << QStringLiteral("Emojy Category is %0").arg(m_category);
+//	qDebug() << QStringLiteral("EmojiModel is %0").arg(m_emojiModel == nullptr?QStringLiteral("nullptr"):QStringLiteral("valid") );
+//	qDebug() << QStringLiteral("Emojy Category is %0").arg(m_category);
+	if( m_category.isEmpty() )
+		return;
 	if(m_emojiModel && !m_category.isEmpty()) {
 		auto search = std::find_if(
 			m_emojiModel->m_categories.begin(),

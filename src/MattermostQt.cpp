@@ -83,6 +83,8 @@
 #define P_UPDATE_TIME        "update_time"
 #define P_EMOJI_NAME         "emoji_name"
 #define P_EMOJI_ID           "emoji_id"
+#define P_POST_DATA          "post_data"
+#define P_REPEATED_REQUEST   "repeated_request"
 // config file name
 #define F_CONFIG_FILE        "config.json"
 #define F_SETTINGS_FILE      "settings.json"
@@ -97,6 +99,12 @@
 #define GET_TEAM_ICON_all_teams         -2 // team index for request icon, when user is not in team, and team is not in server->m_team list
 
 //#ifdef _RELEASE
+#ifdef _DEBUG_POST_REQUEST
+#	define NM_SAVE_POST_DATA(reply,data) reply->setProperty(P_POST_DATA, data.toJson() );
+#else
+#	define NM_SAVE_POST_DATA(reply,data)
+#endif
+
 #define bearer_string(token) QString("Bearer %0").arg(token)
 
 #define request_urlencoded(requset) \
@@ -500,6 +508,7 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 	request.setRawHeader("X-Custom-User-Agent", QString("MattermosQt v%0").arg(MATTERMOSTQT_VERSION).toUtf8());
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson() );
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_login) );
 	reply->setProperty(P_API, QVariant(api) );
 	reply->setProperty(P_SERVER_URL, server );
@@ -1099,6 +1108,7 @@ void MattermostQt::post_add_user_to_team(int server_index, QString user_id, QStr
 	json.setObject(root);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_add_user_to_team) );
 	reply->setProperty(P_SERVER_INDEX, server_index);
 	reply->setProperty(P_TEAM_ID, team_id);
@@ -1413,8 +1423,8 @@ void MattermostQt::post_file_upload(int server_index, int team_index, int channe
 	//	multipart->append(filePart);
 
 
-	QNetworkReply *reply = m_networkManager->post(request,file);
-	file->setParent(reply); // we cannot delete the file now, so delete it with the multiPart
+	QNetworkReply *reply = m_networkManager->post(request, file);
+	file->setParent(multipart); // we cannot delete the file now, so delete it with the multiPart
 	multipart->setParent(reply);// delete multipart with reply
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_file_upload) );
@@ -1478,6 +1488,7 @@ void MattermostQt::post_send_message(QString message, int server_index, int team
 	json.setObject(root);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_send_message) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
@@ -1532,7 +1543,6 @@ void MattermostQt::delete_message(int server_index, int team_index, int channel_
 	request_set_headers(request,sc);
 	request_urlencoded(request);
 
-	//	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
 	QNetworkReply *reply = m_networkManager->deleteResource(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_delete_message) );
@@ -1571,6 +1581,7 @@ void MattermostQt::put_message_edit(QString text, int server_index, int team_ind
 	json.setObject(root);
 
 	QNetworkReply *reply = m_networkManager->put(request, json.toJson());
+	NM_SAVE_POST_DATA(reply, json)
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_put_message_edit) );
 	reply->setProperty(P_MESSAGE_PTR, QVariant::fromValue<MessagePtr>(message) );
@@ -1621,6 +1632,7 @@ void MattermostQt::post_channel_view(int server_index, int team_index, int chann
 	json.setObject(root);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_channel_view) );
 	reply->setProperty(P_CHANNEL_PTR, QVariant::fromValue<ChannelPtr>(channel) );
@@ -1663,6 +1675,7 @@ void MattermostQt::post_add_user_to_channel(int server_index, int team_index, QS
 	ChannelPtr channel = id2channel(sc, channel_id);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_add_user_to_channel) );
 	reply->setProperty(P_SERVER_INDEX, server_index);
 	reply->setProperty(P_TEAM_INDEX, team_index );
@@ -1753,6 +1766,7 @@ void MattermostQt::post_create_channel(int server_index, int team_index,
 	json.setObject(root);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_create_channel) );
 	reply->setProperty(P_SERVER_INDEX, server_index);
 	reply->setProperty(P_TEAM_INDEX, team_index );
@@ -1791,6 +1805,7 @@ void MattermostQt::post_create_direct_channel(int server_index, QString user_id)
 	json.setArray(root);
 
 	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_create_direct_channel) );
 	reply->setProperty(P_SERVER_INDEX, server_index);
 	reply->setProperty(P_USER_ID, user_id );
@@ -2283,7 +2298,8 @@ void MattermostQt::post_users_status(int server_index)
 	if(sc->m_trust_cert)
 		request.setSslConfiguration(sc->m_cert);
 
-	QNetworkReply *reply = m_networkManager->post(request,json.toJson());
+	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_users_status) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 }
@@ -2324,7 +2340,8 @@ void MattermostQt::post_users_status(int server_index, QStringList ids)
 	if(sc->m_trust_cert)
 		request.setSslConfiguration(sc->m_cert);
 
-	QNetworkReply *reply = m_networkManager->post(request,json.toJson());
+	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_users_status) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 }
@@ -2360,7 +2377,8 @@ void MattermostQt::post_create_reaction(int server_index, const QString &post_id
 	if(sc->m_trust_cert)
 		request.setSslConfiguration(sc->m_cert);
 
-	QNetworkReply *reply = m_networkManager->post(request,json.toJson());
+	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
+	NM_SAVE_POST_DATA(reply,json)
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_post_create_reaction) );
 	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
 
@@ -2394,7 +2412,6 @@ void MattermostQt::delete_reaction(int server_index, const QString &post_id, con
 	request_set_headers(request,sc);
 	request_urlencoded(request);
 
-	//	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
 	QNetworkReply *reply = m_networkManager->deleteResource(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(sc->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_delete_reaction) );
@@ -2424,7 +2441,6 @@ void MattermostQt::get_emoji_list(int  server_index)
 	request_set_headers(request,server);
 	request_json(request);
 
-	//	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(server->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_emoji_list) );
@@ -2465,7 +2481,6 @@ void MattermostQt::get_custom_emoji_image(int server_index, QString emoji_id, QS
 	request_set_headers(request,server);
 	//    request_json(request);
 
-	//	QNetworkReply *reply = m_networkManager->post(request, json.toJson());
 	QNetworkReply *reply = m_networkManager->get(request);
 	reply->setProperty(P_TRUST_CERTIFICATE, QVariant(server->m_trust_cert) );
 	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_custom_emoji_image) );
@@ -4685,35 +4700,74 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 					qCritical() << QStringLiteral("Session Expired Error");
 					qCritical() << QStringLiteral("ReplyType: %0").arg( QVariant::fromValue<ReplyType>(reply_type).toString() );
 					ServerPtr server = serverAt(server_index);
-//					if(server) {
-//						QString token = server->m_token;
-//						QString url = server->m_url;
-//						qDebug() << QStringLiteral("test curl:\n curl -i -H 'Authorization: Bearer %0' %1/api/v4/users/me").arg(token,url);
-//					}
 
-					emit onConnectionError(ConnectionError::SessionExpired, message, server_index);
 					ReplyType type = reply->property(P_REPLY_TYPE).value<ReplyType>();
+					if( reply->dynamicPropertyNames().contains(P_REPEATED_REQUEST) ) {
+						qCritical() << QStringLiteral("REPEATED REQUEST DECTECTED: %0").arg( QVariant::fromValue<ReplyType>(type).toString() );
+						emit onConnectionError(ConnectionError::SessionExpired, message, server_index);
+						return;
+					}
 					// output request authorisation header
-					qWarning() << QStringLiteral("Reply type: %0").arg( QVariant::fromValue<ReplyType>(type).toString() );
-//					QList<QByteArray> headers =  reply->rawHeaderList();
 					QNetworkRequest request = reply->request();
 					QList<QByteArray> headers = request.rawHeaderList();
 					QString authheader("Authorization");
-					QString message;
+
 					for(auto header : headers) {
 						QByteArray header_data = request.rawHeader(header);
-						if( authheader.indexOf(header)!= -1  && server)
+						if( authheader.indexOf(header) != -1 )
 						{
+							if( !server ) {
+								qCritical() << QStringLiteral("No server ith index: %0").arg(server_index);
+								qDebug() << QStringLiteral("  RawHeader[ %0 ]: %1").arg( QString(header) ).arg( QString(header_data) );
+								continue;
+							}
 							QString token = header_data;
-							message += QString("  Header token: ") + token;
-							message += QString("\n  Stored token: ") + server->m_bearer + QStringLiteral("\n");
+							qDebug() << QString("  Header token: ") + token;
+							qDebug() <<  QString("\n  Stored token: ") + server->m_bearer + QStringLiteral("\n");
+							if( token == server->m_bearer ) {
+								// try repeat request again
+								bool send_request_again  = false;
+								if( send_request_again )
+								{
+									qCritical() << QStringLiteral("Try send same request again: %0").arg( QVariant::fromValue<ReplyType>(reply_type).toString() );
+									QNetworkRequest repeatRequest(request);
+									QNetworkReply *newReply = nullptr;
+									switch( reply->operation() ) {
+									case QNetworkAccessManager::Operation::PostOperation:
+									{
+										QByteArray prevData = reply->property(P_POST_DATA).toByteArray();
+										newReply = m_networkManager->post(reply->request(), prevData);
+									}
+										break;
+									case QNetworkAccessManager::Operation::GetOperation:
+										newReply = m_networkManager->get(reply->request());
+										break;
+									case QNetworkAccessManager::Operation::PutOperation:
+									{
+										QByteArray prevData = reply->property(P_POST_DATA).toByteArray();
+										newReply = m_networkManager->put(reply->request(), prevData);
+									}
+										break;
+									};
+									if( newReply ) {
+										for( QByteArray propName : reply->dynamicPropertyNames() ) {
+											newReply->setProperty(propName, reply->property(propName) );
+										}
+										newReply->setProperty(P_REPEATED_REQUEST, true);
+									}
+								}
+								else {
+									qCritical() << QStringLiteral("Try test request with user status");
+									post_users_status(server_index, QStringList() << server->m_current_user->m_id );
+								}
+							}
 						}
 						else
 						{
-							message += QStringLiteral("  RawHeader: \"") + QString(header) + QStringLiteral("\" : ") + header_data + QStringLiteral("\n");
+							qDebug() << QStringLiteral("  RawHeader[ %0 ]: %1").arg( QString(header) ).arg( QString(header_data) );
 						}
 					}
-					qCritical() << message;
+					// here try repeat request with some specific mark
 				}
 				else if( error_id.indexOf("user.login.") == 0 ) {
 					error_id = error_id.mid( 11 );
@@ -7353,16 +7407,6 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 							if( !emoji_path.isNull() )
 								emoji_path = QString("file://") + emoji_path;
 						}
-						// DEPRECATED BEGIN ---------------------------------------
-						//                        else {
-						//                            // (this code used when we use old discount md parser
-						//                            QByteArray name = emoji_name.toUtf8();
-						//                            const char* _emoji_path = CppHash::instance()->find_emoji_path(name.data(),name.size());
-						//                            if( _emoji_path != nullptr ) {
-						//                                emoji_path = QString("file://") + QString::fromUtf8(_emoji_path);
-						//                            }
-						//                        }
-						// DEPRECATED END -----------------------------------------
 						for( int index = 0; index < m_reactions.size(); index++ )
 						{
 							if( m_reactions[index].m_emoji ==  emoji_name ) {
@@ -7487,17 +7531,6 @@ bool MattermostQt::MessageContainer::addReaction(ReactionContainer &reaction)
 			result = true;
 		}
 	}
-	// DEPRECATED BEGIN ---------------------------------------
-	//    else {
-	//        // (this code used when we use old discount md parser
-	//        QByteArray name = reaction.m_emoji.toUtf8();
-	//        const char* emoji_path = CppHash::instance()->find_emoji_path(name.data(),name.size());
-	//        if( emoji_path != nullptr ) {
-	//            reaction.m_path = QString("file://") +QString::fromUtf8(emoji_path);
-	//            result = true;
-	//        }
-	//    }
-	// DEPRECATED END -----------------------------------------
 
 	m_reactions.append(reaction);
 	return result;

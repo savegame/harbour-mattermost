@@ -115,6 +115,8 @@ QString Md4cMdParser::parse(const QString &input, const QString server_id)
 					parser->is_code_block = true;
 				else if( parser->is_code_block && (part.lastIndexOf(QRegExp("</table>")) >= 0 || part.lastIndexOf(QRegExp("</span  >")) >= 0) )
 					parser->is_code_block = false;
+//#define GIF_AS_ATTACHMENT
+#ifdef GIF_AS_ATTACHMENT
 				else if( part.lastIndexOf("<img src=\"") != -1 ) {
 					// catch image
 					parser->block_type = Block_Image;
@@ -122,6 +124,7 @@ QString Md4cMdParser::parse(const QString &input, const QString server_id)
 //					re.indexIn( part );
 //					qDebug() << QStringLiteral("Detected gif post: %0").arg(re.cap(1));
 				}
+#endif
 
 			}
 			else if(!parser->is_code_block && parser->block_type != Block_Image) {// we are not in code block
