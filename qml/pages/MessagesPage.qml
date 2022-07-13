@@ -22,6 +22,7 @@ Page {
     property int    channel_type
     property string channel_id
     property string channel_name
+    property string channel_image: ""
 
     // self properties
     property string textForEdit: ""
@@ -71,6 +72,8 @@ Page {
             top:   messagesPage.top
         }
         text: channel_name
+        channelType: channel_type
+        channelImagePath: channel_image
     }
 
     SilicaListView {

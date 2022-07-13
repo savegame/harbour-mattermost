@@ -42,7 +42,31 @@ ListItem {
     property color textColor: Theme.highlightColor
     property color textSecondaryColor: Theme.secondaryHighlightColor
     property color linkColor: Theme.primaryColor
-    property color blobColor:  Theme.rgba(Theme.darkPrimaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+
+    property color blobPrimaryColor:
+        switch(Theme.colorScheme) {
+        case Theme.LightOnDark:
+            Theme.rgba(Theme.darkPrimaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+            break
+        case Theme.DarkOnLight:
+        default:
+            Theme.rgba(Theme.lightPrimaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+            break
+        }
+
+    property color blobSecondaryColor:
+        switch(Theme.colorScheme) {
+        case Theme.LightOnDark:
+            Theme.rgba(Theme.darkSecondaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+            break
+        case Theme.DarkOnLight:
+        default:
+            Theme.rgba(Theme.lightSecondaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+            break
+        }
+
+
+    property color blobColor: messageLabel.blobPrimaryColor
 
     property bool  isMessageEditable   : messageOwner === MattermostQt.MessageMine || MattermostQt.user_role(server_index,-2,MattermostQt.SystemAdmin)
     property bool  isMessageDeletable  : messageOwner === MattermostQt.MessageMine || MattermostQt.user_role(server_index,-2,MattermostQt.SystemAdmin)
@@ -81,11 +105,11 @@ ListItem {
             switch(messageLabel.messageOwner) {
                 //TODO check if theme is dark or light, and set properly BG color
             case MattermostQt.MessageMine:
-                messageLabel.blobColor = Theme.rgba(Theme.darkPrimaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+                messageLabel.blobColor = messageLabel.blobPrimaryColor
                 break
             case MattermostQt.MessageOther:
             default:
-                messageLabel.blobColor = Theme.rgba(Theme.darkSecondaryColor,Theme.highlightBackgroundOpacity * blobsOpacity)
+                messageLabel.blobColor = messageLabel.blobSecondaryColor
                 break
             }
         }
@@ -140,7 +164,7 @@ ListItem {
         }
 
         ReactionItem {
-            reactionPath: MattermostQt.emojiPath() + "/svg/1f642.svg"
+            reactionPath: Qt.resolvedUrl("qrc:/resources/icons/emoji_picker.svg")
 //            reactionCount: 1
             isAddButton: true
             context: messageLabel.context

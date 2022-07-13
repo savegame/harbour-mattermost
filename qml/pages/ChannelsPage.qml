@@ -200,6 +200,7 @@ Page {
                                                 channellabel.channelType,
                                                 channellabel._index
                                                 ),
+                                channel_image: channellabel.directChannelImage,
                                 channel_name: channellabel._display_name,
                                 context: channelsPage.context
                             } );
