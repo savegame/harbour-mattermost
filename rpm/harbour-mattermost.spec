@@ -12,7 +12,7 @@ Name:       harbour-mattermost
 
 Summary:    Mattermost Sailfish client
 Version:    0.1.9
-Release:    2
+Release:    3
 Group:      Qt/Qt
 License:    LICENSE
 Source0:    %{name}-%{version}.tar.bz2

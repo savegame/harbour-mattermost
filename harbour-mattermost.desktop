@@ -6,8 +6,3 @@ Exec=harbour-mattermost
 Name=Mattermost
 Name[de]=Mattermost
 Name[ru]=Mattermost
-
-[X-Sailjail]
-Permissions=Internet;Camera;PublicDir;RemovableMedia;UserDirs;WebView;
-OrganizationName=ru.sashikknox
-ApplicationName=Mattermost
