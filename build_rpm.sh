@@ -66,19 +66,19 @@ for each in $sfdk_targets; do
         continue; 
     fi
 
-    result_rpm_path=`pwd`/${build_dir}/RPMS/${target_arch}/harbour-mattermost-${version}-${release_number}.${target_arch}.rpm
+    result_rpm_path=`pwd`/${build_dir}/RPMS/${target_arch}/harbour-mattermost-${version}-${release_number}.
 
     # sign RPM packacge 
     if [[ "${engine}" == *"aurora"* ]]; then
         echo -n "Signing RPMs: "
-        ${target} rpmsign-external sign --key `pwd`/regular_key.pem --cert `pwd`/regular_cert.pem ${result_rpm_path}
+        ${target} rpmsign-external sign --key `pwd`/regular_key.pem --cert `pwd`/regular_cert.pem ${result_rpm_path}*
         if [ $? -ne 0 ] ; then 
             echo "FAIL"
             break; 
         fi
         echo "OK"
         echo -n "Validate RPMs: "
-        ${target} rpm-validator -p regular ${result_rpm_path}
+        ${target} rpm-validator -p regular ${result_rpm_path}*
         if [ $? -ne 0 ] ; then 
             echo "FAIL"
             break; 
