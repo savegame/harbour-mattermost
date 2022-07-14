@@ -69,7 +69,7 @@ private:
 	MT_PROPERTY(bool,    searchInChannels); // show or not search field in channels view
 	MT_PROPERTY(bool,    useCameraPicker);
 	MT_PROPERTY_DEF(LogLevel, logLevel, LogLevelDefault);
-	MT_PROPERTY_DEF(bool,     useLog, true);
+	MT_PROPERTY_DEF(bool,     useLog, false);
 	MT_PROPERTY_DEF(UserNameDisplay,  userNameDisplay, UserNameDisplayDefault);
 	MT_PROPERTY(QString, logFilePath);
 public:
