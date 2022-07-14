@@ -16,3 +16,4 @@ build/*
 *.pro.user
 qrc_*.cpp
 *.pro.user*
+build_*

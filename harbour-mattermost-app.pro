@@ -20,6 +20,7 @@ message("Version is "$$VERSION)
 DEFINES += SAILFISHAPP
 DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 DEFINES += EMOJI_PATH=\\\"/usr/share/$$TARGET/emoji\\\"
+DEFINES += _DEBUG_POST_REQUEST
 
 dbus.files = dbus/sashikknox.mattermost.service
 dbus.path = /usr/share/dbus-1/services/

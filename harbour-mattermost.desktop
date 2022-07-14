@@ -4,10 +4,10 @@ X-Nemo-Application-Type=silica-qt5
 Icon=harbour-mattermost
 Exec=harbour-mattermost
 Name=Mattermost
-# translation example:
-# your app name in German locale (de)
-#
-# Remember to comment out the following line, if you do not want to use
-# a different app name in German locale (de).
 Name[de]=Mattermost
 Name[ru]=Mattermost
+
+[X-Sailjail]
+Permissions=Internet;Camera;PublicDir;RemovableMedia;UserDirs;WebView;
+OrganizationName=ru.sashikknox
+ApplicationName=Mattermost
