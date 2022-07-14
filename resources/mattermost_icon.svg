@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    viewBox="0 0 500 500"
    version="1.1"
    id="svg862"
    sodipodi:docname="mattermost_icon.svg"
-   inkscape:version="0.92.2 5c3e80d, 2017-08-06"
-   inkscape:export-filename="/Users/colombo/Programming/SailfishOS/Projects/mattermost/icons/128x128/harbour-mattermost.png"
-   inkscape:export-xdpi="24.575998"
-   inkscape:export-ydpi="24.575998">
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   inkscape:export-filename="/home/sashikknox/Projects/SailfishOS/harbour-mattermost/icons/172x172/harbour-mattermost.png"
+   inkscape:export-xdpi="33.023998"
+   inkscape:export-ydpi="33.023998"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <metadata
      id="metadata868">
     <rdf:RDF>
@@ -96,18 +96,19 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1440"
-     inkscape:window-height="814"
+     inkscape:window-width="1920"
+     inkscape:window-height="1015"
      id="namedview864"
      showgrid="false"
      inkscape:zoom="0.86832713"
-     inkscape:cx="60.346044"
-     inkscape:cy="292.18899"
+     inkscape:cx="60.461085"
+     inkscape:cy="291.94067"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer3"
-     inkscape:snap-object-midpoints="true" />
+     inkscape:snap-object-midpoints="true"
+     inkscape:pagecheckerboard="0" />
   <g
      inkscape:groupmode="layer"
      id="layer1"
