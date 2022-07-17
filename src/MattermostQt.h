@@ -348,6 +348,8 @@ public:
 		int              m_root_user_index;
 		Ptr              m_root_ptr; // it can be emty, if message not downloaded
 		QList<Ptr>       m_thread_messages; // answers to this message (for dynamic update it, when message is edited)
+		bool             m_has_attachments = false;
+		QJsonObject      m_props;
 
 		/// special parameters, delete if not use
 		//		ChannelPtr       m_channel;// test

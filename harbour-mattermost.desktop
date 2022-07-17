@@ -3,6 +3,11 @@ Type=Application
 X-Nemo-Application-Type=silica-qt5
 Icon=harbour-mattermost
 Exec=harbour-mattermost
-Name=Mattermost
-Name[de]=Mattermost
-Name[ru]=Mattermost
+Name=Wattermost
+Name[de]=Wattermost
+Name[ru]=Wattermost
+
+[X-Sailjail]
+Permissions=Internet;UserDirs;RemovableMedia;Camera;WebView;Videos;PublicDir;Pictures;Documents
+OrganizationName=ru.sashikknox
+ApplicationName=wattermost

@@ -12,7 +12,7 @@ Name:       harbour-mattermost
 
 Summary:    Mattermost Sailfish client
 Version:    0.1.9
-Release:    3
+Release:    4
 Group:      Qt/Qt
 License:    LICENSE
 Source0:    %{name}-%{version}.tar.bz2
@@ -42,7 +42,8 @@ Mattermost native client for SailfishOS
 # >> build pre
 # << build pre
 
-%qtc_qmake5 %{name}.pro
+#%qtc_qmake5 %{name}.pro
+qmake -r %{name}.pro
 
 %qtc_make %{?_smp_mflags}
 

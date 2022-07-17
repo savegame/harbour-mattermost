@@ -87,10 +87,10 @@ int main(int argc, char *argv[])
 	QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
 
 	QCoreApplication::setApplicationVersion(MATTERMOSTQT_VERSION);
-	QCoreApplication::setOrganizationDomain("harbour");
-	QCoreApplication::setOrganizationName("sashikknox");
-//	QCoreApplication::setApplicationName("harbour-mattermost");
-	// TODO settings should read here!
+//	QCoreApplication::setOrganizationDomain("harbour");
+	QCoreApplication::setOrganizationName( QStringLiteral("ru.sashikknox") );
+	QCoreApplication::setApplicationName( QStringLiteral("wattermost") );
+
 	logFile = new QFile(SettingsContainer::getInstance()->logFilePath());
 	if( !logFile->open(QIODevice::WriteOnly ) ) {
 		delete logFile;
@@ -109,13 +109,6 @@ int main(int argc, char *argv[])
 
 	QScopedPointer<SailNotify> notify(new SailNotify());
 
-	// If you wish to publish your app on the Jolla harbour, it is recommended
-	// that you prefix your internal namespaces with "harbour.".
-	//
-	// For details see:
-	// https://harbour.jolla.com/faq#1.5.0
-
-	// qmlRegisterType<MattermostQt>      ("ru.sashikknox", 1, 0, "MattermostQt");
 	qmlRegisterType<TeamsModel>        ("ru.sashikknox", 1, 0, "TeamsModel");
 	qmlRegisterType<ChannelsModel>     ("ru.sashikknox", 1, 0, "ChannelsModel");
 	qmlRegisterType<MessagesModel>     ("ru.sashikknox", 1, 0, "MessagesModel");
@@ -136,14 +129,7 @@ int main(int argc, char *argv[])
 //	SettingsContainer *s = v->rootObject()->findChild<SettingsContainer*>();
 	if(m) {
 		QObject::connect(m, &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );
-//		if(s)
-//			m->setSettingsContainer(s);
 		m->replaceMdParser( new Md4cMdParser() );
-		for( int i = 0; i < m->server().size(); i++ ) {
-			m->get_emoji_list(i);
-		}
-//		else
-//			qCritical() << "Cant find SettingsContaier Object, you cant chacnge default settings!";
 	}
 	else
 		qCritical() << "Cant find MattermostQt main Object, possible you cant receive notifications!";

@@ -246,55 +246,55 @@ MattermostQt::MattermostQt(QObject *parent )
 	connect(m_networkManager.data(),SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
 	        this, SLOT(replySSLErrors(QNetworkReply*,QList<QSslError>)));
 
-	m_config_path = QDir(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation))
-						.filePath(QCoreApplication::applicationName());
+	QString appSubPath = QDir::separator() + QCoreApplication::organizationName() + QDir::separator() + QCoreApplication::applicationName();
+	m_config_path = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + appSubPath;
 
-	m_data_path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-	if( m_data_path.lastIndexOf( QCoreApplication::organizationName()) != -1 )
-	{	// this wrong path, try fix it
-		// its /home/nemo/.local/share/sashikknox/harbour-mattermost
+	m_data_path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+//	if( m_data_path.lastIndexOf( QCoreApplication::organizationName()) != -1 )
+//	{	// this wrong path, try fix it
+//		// its /home/nemo/.local/share/sashikknox/harbour-mattermost
 
-		QString wrong_path = m_data_path + QStringLiteral("/");
-		QDir dataDir(wrong_path);
-		m_data_path.remove( m_data_path.lastIndexOf( QCoreApplication::organizationName()) , QCoreApplication::organizationName().append("/").length() );
+//		QString wrong_path = m_data_path + QStringLiteral("/");
+//		QDir dataDir(wrong_path);
+//		m_data_path.remove( m_data_path.lastIndexOf( QCoreApplication::organizationName()) , QCoreApplication::organizationName().append("/").length() );
 
-		if( dataDir.exists() )
-		{ // try it move to right location
-			if( dataDir.rename(wrong_path, m_data_path) ) {
-				qInfo() << QStringLiteral("Data dir moved from '%0' to '%1'").arg(wrong_path).arg(m_data_path);
-				wrong_path.remove(QCoreApplication::applicationName().append("/"));
-				QDir removeDir( wrong_path );
-				if( removeDir.removeRecursively() )
-					qWarning() << QStringLiteral("Old data dir removed %0").arg(wrong_path);
-			}
-			else
-				qWarning() << QStringLiteral("Cant move dir from '%0' to '%1'").arg(wrong_path).arg(m_data_path);
-		}
-	}
+//		if( dataDir.exists() )
+//		{ // try it move to right location
+//			if( dataDir.rename(wrong_path, m_data_path) ) {
+//				qInfo() << QStringLiteral("Data dir moved from '%0' to '%1'").arg(wrong_path).arg(m_data_path);
+//				wrong_path.remove(QCoreApplication::applicationName().append("/"));
+//				QDir removeDir( wrong_path );
+//				if( removeDir.removeRecursively() )
+//					qWarning() << QStringLiteral("Old data dir removed %0").arg(wrong_path);
+//			}
+//			else
+//				qWarning() << QStringLiteral("Cant move dir from '%0' to '%1'").arg(wrong_path).arg(m_data_path);
+//		}
+//	}
 
 	m_cache_path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-	if( m_cache_path.lastIndexOf( QStringLiteral(".cache/").arg(QCoreApplication::organizationName()) ) != -1 )
-	{	// this wrong path, try fix it
-		// its /home/nemo/.local/share/sashikknox/harbour-mattermost
+//	if( m_cache_path.lastIndexOf( QStringLiteral(".cache/").arg(QCoreApplication::organizationName()) ) != -1 )
+//	{	// this wrong path, try fix it
+//		// its /home/nemo/.local/share/sashikknox/harbour-mattermost
 
-		QString wrong_path = m_cache_path + QStringLiteral("/");
-		QDir cacheDir(wrong_path);
-		m_cache_path.remove( m_cache_path.lastIndexOf( QCoreApplication::organizationName()) , QCoreApplication::organizationName().append("/").length() );
+//		QString wrong_path = m_cache_path + QStringLiteral("/");
+//		QDir cacheDir(wrong_path);
+//		m_cache_path.remove( m_cache_path.lastIndexOf( QCoreApplication::organizationName()) , QCoreApplication::organizationName().append("/").length() );
 
-		if( cacheDir.exists() )
-		{ // try it move to right location
-			if( cacheDir.rename(wrong_path, m_cache_path) ) {
-				qInfo() << QStringLiteral("Cache dir moved from '%0' to '%1'").arg(wrong_path).arg(m_cache_path);
-				//				dataDir.remove( wrong_path.remove(QCoreApplication::applicationName().append("/")) );
-				wrong_path.remove(QCoreApplication::applicationName().append("/"));
-				QDir removeDir( wrong_path );
-				if( removeDir.removeRecursively() )
-					qWarning() << QStringLiteral("Old cache dir removed %0").arg(wrong_path);
-			}
-			else
-				qWarning() << QStringLiteral("Cant cache move dir from '%0' to '%1'").arg(wrong_path).arg(m_cache_path);
-		}
-	}
+//		if( cacheDir.exists() )
+//		{ // try it move to right location
+//			if( cacheDir.rename(wrong_path, m_cache_path) ) {
+//				qInfo() << QStringLiteral("Cache dir moved from '%0' to '%1'").arg(wrong_path).arg(m_cache_path);
+//				//				dataDir.remove( wrong_path.remove(QCoreApplication::applicationName().append("/")) );
+//				wrong_path.remove(QCoreApplication::applicationName().append("/"));
+//				QDir removeDir( wrong_path );
+//				if( removeDir.removeRecursively() )
+//					qWarning() << QStringLiteral("Old cache dir removed %0").arg(wrong_path);
+//			}
+//			else
+//				qWarning() << QStringLiteral("Cant cache move dir from '%0' to '%1'").arg(wrong_path).arg(m_cache_path);
+//		}
+//	}
 
 	if( m_cache_path.isEmpty() ) {
 		qCritical() << QStringLiteral("Cant get CacheLocation");
@@ -1167,7 +1167,7 @@ void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 {
 	qDebug() << QStringLiteral("get_file_preview ( server_index = %0, file_sc_index = %1").arg(server_index).arg(file_sc_index);
-	qDebug() << QStringLiteral("This pointer: %0").arg((qlonglong)this, 1, 16);
+//	qDebug() << QStringLiteral("This pointer: %0").arg((qlonglosng)this, 1, 16);
 	ServerPtr sc = serverAt(server_index);
 	if( !sc ) {
 		qCritical() <<  QStringLiteral("Cant find server with 'server_index' == %0").arg(server_index);
@@ -1175,9 +1175,7 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 	}
 	if( file_sc_index < 0 || file_sc_index >= sc->m_file.size() )
 		return;
-	qDebug() << "Get file";
 	FilePtr file = sc->m_file.at(file_sc_index);
-	qDebug() << "All okay!";
 	if( !file ) {
 		qCritical() <<  QStringLiteral("Cant find server with 'server_index' == %0; 'file_index' = %1").arg(server_index).arg(file_sc_index);
 		return;
@@ -7389,13 +7387,13 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 		if(v.isObject())
 		{
 			QJsonObject metadata = v.toObject();
-			if( !metadata.keys().isEmpty() )
-			{
+			if( !metadata.keys().isEmpty() ) {
+				QJsonObject::iterator i_search;
 				//qDebug() << "Message" << m_id << "has metadata:" << metadata.keys();
-				QJsonValue v_reactions = metadata["reactions"];
-				if( v_reactions.isArray() )
-				{ // this post has reactions
-					QJsonArray reactions = v_reactions.toArray();
+				i_search = metadata.find("reactions");
+				if( i_search != metadata.end() && i_search->isArray() ) {
+					// this post has reactions
+					QJsonArray reactions = i_search->toArray();
 					for( int i = 0; i < reactions.size(); i++)
 					{
 						QJsonObject reaction = reactions[i].toObject();
@@ -7429,10 +7427,10 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 						m_reactions.append( new_reaction );
 					}
 				}
-				QJsonValue v_files = metadata["files"];
-				if( v_files.isArray() ) 
-				{
-					QJsonArray files = v_files.toArray();
+
+				i_search = metadata.find("files");
+				if( i_search != metadata.end() && i_search->isArray() ) {
+					QJsonArray files = i_search->toArray();
 					for(int f = 0; f < files.size(); f++ )
 					{
 						QJsonObject fileObject = files[f].toObject();
@@ -7443,16 +7441,46 @@ MattermostQt::MessageContainer::MessageContainer(QJsonObject object, const QStri
 						m_file.push_back(file);
 					}
 				}
+
+				i_search = metadata.find("embeds");
+				if( i_search != metadata.end() && i_search->isArray() ) {
+					QJsonArray embeds = i_search->toArray();
+					for(int i = 0; i < embeds.size(); i++ )
+					{
+						if( embeds[i].isObject() ) {
+							QJsonObject embed = embeds[i].toObject();
+							QJsonObject::iterator search_type = embed.find( QStringLiteral("type") );
+							if( search_type != embed.end() && search_type->isString() ) {
+								QString embed_type = search_type->toString();
+								if ( embed_type == QStringLiteral("message_attachment") ) {
+									m_has_attachments = true;
+								}
+							}
+							else {
+								qDebug() << QStringLiteral("No type present in embed! ") << embed;
+							}
+						}
+					}
+					qDebug() << object;
+				}
 			}
 		}
 		else {
 			qDebug() << v;
 		}
 	}
-	
-	QJsonArray attachments = object["attachments"].toArray();
-	if(!attachments.isEmpty()) {
-		qWarning() << QStringLiteral("Attachments: ") << attachments;
+
+	auto search = object.find( QStringLiteral("props") );
+	if( search != object.end() && search->isObject() ) {
+		m_props = search->toObject();
+		QJsonArray attachments = m_props["attachments"].toArray();
+		if(!attachments.isEmpty()) {
+			for(int i = 0; i < attachments.size(); i++)
+			{
+				QJsonObject attachment = attachments[i].toObject();
+//				m_props["attachments"].toArray()[i].toObject()["text_md"] = m_mdParser->parse(attachment["text"],"");
+			}
+		}
 	}
 }
 
