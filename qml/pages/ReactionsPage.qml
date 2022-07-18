@@ -17,8 +17,8 @@ Page {
 
     allowedOrientations: Orientation.All//defaultOrientationTransition
 
-    property real emojiItemSize: Theme.fontSizeHuge + Theme.paddingMedium
-    property int columnCount: (reactionsPage.width - anchors.leftMargin * 2) / reactionsPage.emojiItemSize
+    property real emojiItemSize: Theme.iconSizeLarge * 0.8
+    property int columnCount: Math.min( (reactionsPage.width - anchors.leftMargin * 2) / reactionsPage.emojiItemSize, 8 )
 
     property real emojiItemWidth: reactionsPage.emojiItemSize + ((reactionsPage.width - anchors.leftMargin * 2) - columnCount * reactionsPage.emojiItemSize)/columnCount
 
