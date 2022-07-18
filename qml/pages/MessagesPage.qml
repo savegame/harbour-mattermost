@@ -133,6 +133,7 @@ Page {
             rootMessage:      role_root_message
             rootUser:         role_root_username
             messageTimestamp: role_message_create_at
+            isHasAttachment:  role_has_attachments
 
             property string rootId:  role_root_id
             property real messagesListHeight: messagesListView.height

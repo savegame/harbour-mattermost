@@ -339,6 +339,12 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
 			return previews;
 		}
 		return QStringList();
+	case MessagesModel::RoleHasAttachments:
+		return message->m_has_attachments;
+		break;
+	case MessagesModel::RolePropsJson:
+		return QString::fromLocal8Bit( QJsonDocument(message->m_props).toJson(QJsonDocument::Indented) );
+		break;
 	default:
 		break;
 	}
@@ -409,7 +415,9 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
 	{MessagesModel::RoleServerIndex,       "role_server_index"},
 	{MessagesModel::RoleTeamIndex,         "role_team_index"},
 	{MessagesModel::RoleChannelIndex,      "role_channel_index"},
-	{MessagesModel::RoleChannelType,       "role_channel_type"}};
+	{MessagesModel::RoleChannelType,       "role_channel_type"},
+	{MessagesModel::RoleHasAttachments,    "role_has_attachments"},
+	{MessagesModel::RolePropsJson,         "role_props_json"}};
 	return names;
 }
 
@@ -678,6 +686,58 @@ bool MessagesModel::atEnd() const
 	if(!m_channel)
 		return false;
 	return m_channel->m_message.size() == m_channel->m_total_msg_count;
+}
+
+QString MessagesModel::getAttachmentProperty(int row, const QString &key) const
+{
+	if (!m_channel)
+		return QString();
+
+	MattermostQt::MessagePtr message = m_channel->messageAt(row);
+
+	if(!message) {
+		qWarning() << QStringLiteral("Cant find message %0 in channel [%1] %2").arg(row).arg(m_channel->m_id).arg(m_channel->m_display_name);
+		return QString();
+	}
+
+	if(!message->m_has_attachments) {
+		return QString();
+	}
+
+	QStringList keys = key.split(".");
+	QJsonObject::iterator search;
+
+	QJsonValue current_value = message->m_props;
+	for(QString current_key : keys)
+	{
+		if( current_value.isObject() ) {
+			QJsonObject current_object = current_value.toObject();
+			search = current_object.find(current_key);
+			if( search == current_object.end() ) {
+				qWarning() << QStringLiteral("Cant find property \"%0\" in message;").arg(key);
+				return QString();
+			}
+
+			current_value = search.value();
+		}
+		else if( current_value.isArray() ) {
+			QJsonArray current_array = current_value.toArray();
+			bool isOk= false;
+			int index = current_key.toInt(&isOk);
+			if(!isOk) {
+				qWarning() << QStringLiteral("No index in array %0").arg(key);
+				return QString();
+			}
+
+			current_value = current_array[index];
+		}
+		else {
+			qWarning() << QStringLiteral("Cant find property \"%0\" in message; No such object in json").arg(key);
+			return QString();
+		}
+
+	}
+	return current_value.toString();
 }
 
 int MessagesModel::isPageActive() const

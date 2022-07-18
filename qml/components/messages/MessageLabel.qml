@@ -71,6 +71,7 @@ ListItem {
     property bool  isMessageEditable   : messageOwner === MattermostQt.MessageMine || MattermostQt.user_role(server_index,-2,MattermostQt.SystemAdmin)
     property bool  isMessageDeletable  : messageOwner === MattermostQt.MessageMine || MattermostQt.user_role(server_index,-2,MattermostQt.SystemAdmin)
     property bool  isMessageMineOrOther: false
+    property bool  isHasAttachment: false
 
     onMessageOwnerChanged: {
         switch(messageLabel.messageOwner) {
@@ -299,15 +300,11 @@ ListItem {
                     textHeaderColor: messageLabel.textColor
                 }
 
-                Label {
+                MarkdownLabel {
                     id: plainTextLablel
                     text: Settings.formatedText
                           ? "<style>a:link { color: " + messageLabel.linkColor + "; }</style>" + messageLabel.formatedText
                           : messageLabel.plainText
-                    wrapMode: Text.Wrap
-                    font.pixelSize: Theme.fontSizeSmall
-                    font.family: Theme.fontFamily
-                    textFormat: Text.RichText
 
                     anchors.margins: inBlobContent.inBlobMargins
                     width:
@@ -316,27 +313,111 @@ ListItem {
                             inBlobContent.maxBlobContentWidth
                     height: implicitHeight
                     color: messageLabel.textColor
-//                    linkColor: messageLabel.linkColor
                     onLinkActivated: {
                         Qt.openUrlExternally(link);
                     }
                 } // plainTextLabel
+
+//                AttachmentItem {
+//                    id: messageAattachment
+//                    visible: messageLabel.isHasAttachment
+
+//                    anchors.margins: inBlobContent.inBlobMargins
+//                    width:  messageLabel.isMessageMineOrOther ?
+//                                Math.min( inBlobContent.maxBlobContentWidth, implicitWidth ) :
+//                                inBlobContent.maxBlobContentWidth
+//                    height: 100
+//                    Component.onCompleted: {
+//                        if(!messageLabel.isHasAttachment)
+//                            return
+//                        title = messagesModel.getAttachmentProperty(rowIndex, "attachments.0.title" )
+//                        text = MattermostQt.parseMD( messagesModel.getAttachmentProperty(rowIndex, "attachments.0.text" ), server_index )
+//                    }
+//                }
+
+                Item {
+                    id: messageAattachment
+                    visible: messageLabel.isHasAttachment
+
+                    anchors.margins: inBlobContent.inBlobMargins
+                    width: (visible) ? inBlobContent.maxBlobContentWidth : 0
+                    height: attachmentInnerArea.height
+                    Component.onCompleted: {
+                        if(!messageLabel.isHasAttachment)
+                            return
+                        title = messagesModel.getAttachmentProperty(rowIndex, "attachments.0.title" )
+                        text = "<style>a:link { color: " + messageLabel.linkColor + "; }</style>" + MattermostQt.parseMD( messagesModel.getAttachmentProperty(rowIndex, "attachments.0.text" ), server_index )
+                    }
+
+                    clip: true
+
+                    property real defaultHeight: Theme.fontSizeSmall * 2 + Theme.paddingMedium
+                    property alias title: titleLabel.text
+                    property alias text:  textLabel.text
+                    property color  textColor: Theme.secondaryColor
+                    property color  textHeaderColor: Theme.primaryColor
+
+                    Row {
+                        id: attachmentInnerArea
+                        spacing: Theme.paddingMedium
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.topMargin: Theme.paddingSmall
+
+//                        height: attachmentArea.height
+
+                        Rectangle {
+                            id: line
+                            width: Theme.paddingSmall * 0.5
+
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+
+                            color: textHeaderColor
+                        }
+
+                        Column {
+                            id: replyLabelsColumn
+                            spacing: Theme.paddingSmall
+                            Label {
+                                id: titleLabel
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeTiny
+                                textFormat: Text.RichText
+                                truncationMode: TruncationMode.Fade
+                                color: messageAattachment.textHeaderColor
+                            }
+
+                            MarkdownLabel {
+                                id: textLabel
+                                width: attachmentInnerArea.width - attachmentInnerArea.spacing - line.width
+                                height: implicitHeight
+                                color: messageAattachment.textColor
+
+                                onLinkActivated: {
+                                    Qt.openUrlExternally(link);
+                                }
+                            } // label with filename
+                        }
+                    }
+                }
 
                 Component.onCompleted: {
 //                    var component;
                     var attachedFiles;
                     if( messageLabel.filesCount > 0 ) {
                         attachedFiles = attachedFilesComponent.createObject(inBlobContent, {
-                                                        "anchors.margins": plainTextLablel.anchors.margins,
-                                                        "maxWidth": Math.min(inBlobContent.maxBlobContentWidth,messagesListHeight),
-                                                        "messagesModel": messageLabel.messagesModel,
-                                                        "textColor":     messageLabel.textColor,
-                                                        "rowIndex":      messageLabel.rowIndex,
-                                                        "filesCount":    messageLabel.filesCount,
-                                                        "spacing":       inBlobContent.spacing,
-                                                        "visible":       messageLabel.filesCount > 0,
-                                                        "enabled":       visible
-                                                    });
+                            "anchors.margins": plainTextLablel.anchors.margins,
+                            "maxWidth": Math.min(inBlobContent.maxBlobContentWidth,messagesListHeight),
+                            "messagesModel": messageLabel.messagesModel,
+                            "textColor":     messageLabel.textColor,
+                            "rowIndex":      messageLabel.rowIndex,
+                            "filesCount":    messageLabel.filesCount,
+                            "spacing":       inBlobContent.spacing,
+                            "visible":       messageLabel.filesCount > 0,
+                            "enabled":       visible
+                        });
                     }
                 }
             }

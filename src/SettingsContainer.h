@@ -9,7 +9,7 @@
 #include "MattermostQt_gobal.h"
 #include "MattermostQt.h"
 
-
+class SettingsContainerPrivate;
 class SettingsContainer : public QObject
 {
 	Q_OBJECT
@@ -116,6 +116,8 @@ private Q_SLOTS:
 	void echoLogLevelChanged();
 Q_SIGNALS:
 	void settingsChanged();
+private:
+	SettingsContainerPrivate *d;
 };
 
 // Second, define the singleton type provider function (callback).

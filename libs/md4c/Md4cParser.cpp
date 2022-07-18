@@ -90,7 +90,8 @@ QString Md4cMdParser::parse(const QString &input, const QString server_id)
 	buff.clear();
 	block_type = Block_Null;
 	is_code_block = false;
-	current_server_id = server_id;
+	if( !server_id.isEmpty() )
+		current_server_id = server_id;
 	QByteArray utf8 = input.toUtf8();
 	//	utf8 = QString("Hello\nWorld").toUtf8();
 	md_html( utf8.data(), utf8.size(), [](const MD_CHAR* text, MD_SIZE size, void *userdata) {

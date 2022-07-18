@@ -9,6 +9,10 @@
 #endif
 #include <QStandardPaths>
 
+class SettingsContainerPrivate {
+friend class SettingsContainer;
+};
+
 #define SET_SETTINGS_PROPERTY(_t, _n) MT_SET_PROPERTY_2(SettingsContainer, _t, _n, settingsChanged)
 // TODO make two difenes for RW properties and R only properties
 SET_SETTINGS_PROPERTY(int,               autoDownloadImageSize)

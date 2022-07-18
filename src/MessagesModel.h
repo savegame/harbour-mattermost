@@ -61,6 +61,8 @@ public:
 		RoleFileInfo,
 		RoleSenderFullName,
 		RoleFileProgress,
+		RoleHasAttachments,
+		RolePropsJson,
 		UserStatus = MattermostQt::UserStatusRole,
 		UserId = MattermostQt::UserIdRole,
 	};
@@ -106,6 +108,7 @@ public:
 	Q_INVOKABLE int getReactionCount(int row, int reaction_index) const;
 	bool    atEnd() const;
 	//	Q_INVOKABLE int   getImageSize(int row, int i) const;
+	Q_INVOKABLE QString getAttachmentProperty(int row, const QString &key) const;
 
 	int isPageActive() const;
 	void setPageActive(bool active);
