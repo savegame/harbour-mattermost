@@ -105,11 +105,6 @@ FullscreenContentPage {
                 width: image_preview.width
                 height: image_preview.height
 
-//                onSourceSizeChanged: {
-//                    if(sourceSize != imageSize)
-//                        sourceSize = imageSize;
-//                }
-
                 onStatusChanged: {
                     if(status == Image.Ready)
                     {

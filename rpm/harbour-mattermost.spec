@@ -1,5 +1,8 @@
-Name:       harbour-mattermost
-
+%if "0%{?_special_name}" != "0"
+Name:  %_special_name
+%else
+Name:  harbour-mattermost
+%endif
 # >> macros
 # % define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*|libQt5WebSockets.so.5(Qt_5)|libgcrypt*$
 # % define __requires_exclude ^|libQt5WebSockets.so.*$
@@ -12,10 +15,12 @@ Name:       harbour-mattermost
 
 Summary:    Mattermost Sailfish client
 Version:    0.1.9
-Release:    4
+Release:    6
 Group:      Qt/Qt
 License:    LICENSE
 Source0:    %{name}-%{version}.tar.bz2
+# harbour-mattermost - its old name same application 
+Obsoletes:  harbour-mattermost >= 0.1.7
 Requires:   sailfishsilica-qt5 >= 0.10.9
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires:  pkgconfig(sailfishsilica)
@@ -40,11 +45,22 @@ Mattermost native client for SailfishOS
 
 %build
 # >> build pre
+%if "0%{?_special_name}" != "0"
+mv harbour-mattermost.pro %{name}.pro
+sed -i '1s/.*/TARGET=%{name}/g' harbour-mattermost-app.pro
+
+for each in 86 108 128 172; do 
+  icon_path="/icons/${each}x${each}"
+  mv .${icon_path}/harbour-mattermost.png  .${icon_path}/%{name}.png
+done
+
+mv harbour-mattermost.desktop %{name}.desktop
+sed -i "s/harbour-mattermost/%{name}/g" %{name}.desktop
+%endif
 # << build pre
 
 #%qtc_qmake5 %{name}.pro
 qmake -r %{name}.pro
-
 %qtc_make %{?_smp_mflags}
 
 # >> build post
@@ -57,6 +73,13 @@ rm -rf %{buildroot}
 %qmake5_install
 
 # >> install post
+%if "0%{?_special_name}" != "0"
+pushd %{buildroot}
+echo `pwd`
+# mv .%{_bindir}/harbour-mattermost .%{_bindir}/%{name}
+# mv .%{_datadir}/harbour-mattermost .%{_datadir}/%{name}
+popd
+%endif
 # << install post
 
 desktop-file-install --delete-original       \

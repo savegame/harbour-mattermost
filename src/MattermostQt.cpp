@@ -2424,7 +2424,7 @@ void MattermostQt::get_emoji_list(int  server_index)
 		qCritical() << QStringLiteral("Wrong server index");
 		return;
 	}
-	qDebug() << QStringLiteral("Request custom emoji list");
+	qDebug() << QStringLiteral("Request standart emoji list");
 	// here we should first try load emoji list from cache ( or not? )
 	QString urlString = QLatin1String("/api/v")
 						+ QString::number(server->m_api)
@@ -2454,7 +2454,7 @@ void MattermostQt::get_custom_emoji_image(int server_index, QString emoji_id, QS
 		qCritical() << QStringLiteral("Wrong server index");
 		return;
 	}
-
+	qDebug() << QStringLiteral("Request custom emoji list");
 	QString file_path = server->m_cache_path
 						+ QStringLiteral("/emoji/")
 						+ QStringLiteral("%0").arg(emoji_id);
@@ -6487,7 +6487,6 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 		}
 	}
 	reply->deleteLater();
-	delete reply;
 }
 
 void MattermostQt::slotNetworkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility accessible)
