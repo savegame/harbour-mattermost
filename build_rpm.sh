@@ -2,9 +2,13 @@
 export PATH=$HOME/SailfishOS/bin:${PATH}
 export PWD=`pwd`
 
+# export package_name="harbour-mattermost"
+export package_name="ru.sashikknox.wattermost"
+
 # uncomment right engine for your 
 # export engine="sfdk engine exec"
-export engine="docker exec --user mersdk -w `pwd` aurora-os-build-engine"
+export engine="docker exec -u mersdk -w `pwd` sailfish-sdk-build-engine_sashikknox"
+# export engine="docker exec --user mersdk -w `pwd` aurora-os-build-engine"
 
 build_dir="build_rpm"
 if [[ "${engine}" == *"aurora"* ]]; then
@@ -12,7 +16,7 @@ if [[ "${engine}" == *"aurora"* ]]; then
 fi
 version=`grep "Version:" rpm/harbour-mattermost.spec|sed "s/Version: \+\([^ ]\+\)/\1/g"`
 release_number=`grep "Release:" rpm/harbour-mattermost.spec|sed "s/Release: \+\([^ ]\+\)/\1/g"`
-archive_prefix="harbour-mattermost-${version}"
+archive_prefix="${package_name}-${version}"
 echo "version=\"${version}\""; 
 archive_path="${build_dir}/SOURCES/${archive_prefix}.tar.bz2"
 echo "Pack latest git cmmit to an archive: ${archive_path}"
@@ -45,7 +49,8 @@ for each in `grep "BuildRequires:" rpm/harbour-mattermost.spec|sed "s/BuildRequi
 # echo "build_dependencies=\"${build_dependencies}\""
 # exit
 
-sfdk_targets=`${engine} sb2-config -l|grep -v default`
+sfdk_targets=`${engine} sb2-config -l|grep -v default|grep aarch`
+[ $? -ne 0 ] && echo "FAIL" && exit 1 
 
 echo "WARNING: Build Mattermost Client for ALL your targets in SailfishSDK"
 for each in $sfdk_targets; do
@@ -60,13 +65,13 @@ for each in $sfdk_targets; do
     ${target} -R -m sdk-install zypper in -y ${build_dependencies}
     
     # build RPM for current target
-    ${target} rpmbuild --define "_topdir `pwd`/${build_dir}" --define "_arch $target_arch" -ba `pwd`/rpm/harbour-mattermost.spec
+    ${target} rpmbuild --define "_topdir `pwd`/${build_dir}" --define "_arch $target_arch" --define "_special_name $package_name" -ba `pwd`/rpm/harbour-mattermost.spec
     if [ $? -ne 0 ] ; then 
         echo "Build RPM for ${each} : FAIL"
         continue; 
     fi
 
-    result_rpm_path=`pwd`/${build_dir}/RPMS/${target_arch}/harbour-mattermost-${version}-${release_number}.
+    result_rpm_path=`pwd`/${build_dir}/RPMS/${target_arch}/${archive_prefix}-${release_number}.
 
     # sign RPM packacge 
     if [[ "${engine}" == *"aurora"* ]]; then
