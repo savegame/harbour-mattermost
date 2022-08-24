@@ -1,9 +1,9 @@
 #include "AppWindow.h"
 #include "ui_AppWindow.h"
 
-AppWindow::AppWindow(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::AppWindow)
+AppWindow::AppWindow(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::AppWindow)
 {
 	ui->setupUi(this);
 	ui->quickView->setSource(QUrl("qrc:/qml/main.qml"));

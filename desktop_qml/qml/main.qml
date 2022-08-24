@@ -18,10 +18,11 @@ Item {
 
     property int server_id: 0
 
+
     Connections {
         target: MattermostQt
 
-        onServerStateChanged :{
+        onServerStateChanged : function (server_index, state){
             if( server_index !== server_id )
                 console.debug("Server index is " + server_index )
             if(state === MattermostQt.ServerConnected) {
@@ -32,7 +33,7 @@ Item {
             }
         }
 
-        onOnConnectionError: {
+        onOnConnectionError: function(message) {
             console.log(" Error: " + message)
         }
     }

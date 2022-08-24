@@ -15,7 +15,7 @@
 #		define EMOJI_PATH MattermostQt::getInstance()->emojiPath()
 #	endif
 #elif DESKTOP_QML
-#include <desktop/theme.h>
+#include <desktop_qml/theme.h>
 #else
 #include <libsailfishsilica/silicatheme.h>
 #endif

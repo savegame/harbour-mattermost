@@ -29,6 +29,14 @@ dbus.path = /usr/share/dbus-1/services/
 
 CONFIG += sailfishapp warnoff
 CONFIG += qt
+
+debug {
+    QMAKE_CFLAGS_DEBUG="-O0 -g"
+    QMAKE_CXXFLAGS=-O0 -g
+    QMAKE_CFLAGS=-O0 -g
+    QMAKE_CFLAGS_RELEASE=""
+}
+
 QT += gui qml quick network dbus svg
 PKGCONFIG += nemonotifications-qt5 sailfishsilica
 #PKGCONFIG += libgcrypt
@@ -63,7 +71,6 @@ DISTFILES += \
     rpm/harbour-mattermost.spec \
     translations/*.ts \
     harbour-mattermost.desktop \
-    server.pri \
     translations/harbour-mattermost-ru.ts \
     dbus/sashikknox.mattermost.service \
     CHANGELOG \
