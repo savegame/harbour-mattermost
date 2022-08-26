@@ -374,7 +374,7 @@ ListItem {
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
 
-                            color: textHeaderColor
+                            color: messageAattachment.textHeaderColor
                         }
 
                         Column {

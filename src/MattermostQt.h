@@ -55,6 +55,7 @@ public:
 		rt_post_users_status,
 		rt_get_team,
 		rt_get_teams_unread,
+		rt_get_team_categories,
 		rt_get_posts,
 		rt_get_post,
 		rt_get_posts_since,
@@ -531,6 +532,36 @@ public:
 	//	};
 	//	typedef QSharedPointer<UnattachedMessageContainer> UMessagePtr;
 
+	class ServerVersion {
+	public:
+		ServerVersion();
+
+		ServerVersion(int major, int minor, int patch);
+
+		ServerVersion(const QString &version);
+
+		ServerVersion(const ServerVersion &v);
+
+		void operator=(const ServerVersion &v);
+
+		void operator=(const QString &v);
+
+		bool operator==(const ServerVersion &v);
+
+		bool operator!=(const ServerVersion &v);
+
+		bool operator>(const ServerVersion &v);
+
+		bool operator<(const ServerVersion &v);
+
+		bool isValid() const;
+
+	private:
+		int m_major = -1;
+		int m_minor = -1;
+		int m_patch = -1;
+	};
+
 	struct ServerContainer
 	{
 	public:
@@ -544,6 +575,8 @@ public:
 
 		QString                     m_url;   /**< server URL */
 		int                         m_api;   /**< server API version */
+		QString                     m_version_string; /**< server version string */
+		ServerVersion               m_version; /**< server version */
 		QString                     m_token; /**< server access token*/
 		QString                     m_bearer;/**< cached authorization bearer header */
 		QString                     m_cookie;/**< cookie if needed */
@@ -632,6 +665,7 @@ public:
 	Q_INVOKABLE void get_team(int server_index, int team_index);
 	Q_INVOKABLE void get_team(int server_index, QString team_id);
 	Q_INVOKABLE void get_team_members(int server_index, int team_index, int page = 0, int per_page = MM_DEFAULT_PER_PAGE);
+	Q_INVOKABLE void get_team_categories(int server_index, int team_index);
 	
 	/**
 	 * @brief get_users     request list of users

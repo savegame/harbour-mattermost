@@ -996,6 +996,40 @@ void MattermostQt::get_team_members(int server_index, int team_index, int page, 
 	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
 }
 
+void MattermostQt::get_team_categories(int server_index, int team_index)
+{
+//	http://your-mattermost-url.com/api/v4/users/{user_id}/teams/{team_id}/channels/categories
+	TeamPtr team = teamAt(server_index, team_index);
+	if( !team ) {
+		qWarning() << QStringLiteral("Cant find team with indexes: si=%0, ti=%1").arg(server_index).arg(team_index);
+		return;
+	}
+
+	ServerPtr server = m_server[server_index];
+
+	QString urlString = QLatin1String("/api/v")
+	                    + QString::number(server->m_api)
+	                    + QLatin1String("/users/")
+	                    + server->m_current_user->m_id
+	                    + QLatin1String("/teams/")
+	                    + team->m_id
+	                    + QLatin1String("/channels/categories");
+
+	QUrl url(server->m_url);
+	url.setPath(url.path() + urlString);
+
+	QNetworkRequest request;
+
+	request.setUrl(url);
+	request_set_headers(request,server);
+	request_urlencoded(request);
+
+	QNetworkReply *reply = m_networkManager->get(request);
+	reply->setProperty(P_REPLY_TYPE, QVariant(ReplyType::rt_get_team_categories) );
+	reply->setProperty(P_SERVER_INDEX, QVariant(server_index) );
+	reply->setProperty(P_TEAM_INDEX, QVariant(team_index) );
+}
+
 void MattermostQt::get_users(int server_index, MattermostQt::GetUsersRequestType request_type, QVariant value, int page, int per_page)
 {
 	ServerPtr server = serverAt(server_index);
@@ -2424,7 +2458,7 @@ void MattermostQt::get_emoji_list(int  server_index)
 		qCritical() << QStringLiteral("Wrong server index");
 		return;
 	}
-	qDebug() << QStringLiteral("Request standart emoji list");
+	qDebug() << QStringLiteral("Request custom emoji list");
 	// here we should first try load emoji list from cache ( or not? )
 	QString urlString = QLatin1String("/api/v")
 						+ QString::number(server->m_api)
@@ -2454,7 +2488,7 @@ void MattermostQt::get_custom_emoji_image(int server_index, QString emoji_id, QS
 		qCritical() << QStringLiteral("Wrong server index");
 		return;
 	}
-	qDebug() << QStringLiteral("Request custom emoji list");
+	qDebug() << QStringLiteral("Request custom emoji");
 	QString file_path = server->m_cache_path
 						+ QStringLiteral("/emoji/")
 						+ QStringLiteral("%0").arg(emoji_id);
@@ -3206,6 +3240,15 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 
 		server->m_cert  = reply->sslConfiguration();
 		server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
+		QString version = QString(reply->rawHeader("X-Version-ID"));
+		{
+			int from = 0;
+			for(int i =0; i < 3; i ++ ) {
+				from = version.indexOf(".",from+1);
+			}
+			server->m_version_string = version.left(from);
+			server->m_version = server->m_version_string;
+		}
 
 		QJsonDocument json = QJsonDocument::fromJson( reply->readAll() );
 		if( json.isObject() )
@@ -3326,7 +3369,7 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 				tc->save_json( m_server[server_index]->m_data_path );
 				// ---------------------------------------------
 				emit teamAdded(tc);
-				get_team_icon(tc->m_server_index, tc->m_self_index);
+//				get_team_icon(tc->m_server_index, tc->m_self_index); // FIXME - looks like request with erros are freeze app (without end point )
 				get_team_statistics(tc->m_server_index, tc->m_self_index);
 			}
 			else
@@ -7807,4 +7850,73 @@ void MattermostQt::FileContainer::parse_from_json(QJsonObject object)
 	}
 	else
 		m_file_type = FileUnknown;
+}
+
+MattermostQt::ServerVersion::ServerVersion()
+{
+	// nothing todo
+}
+
+MattermostQt::ServerVersion::ServerVersion(int major, int minor, int patch)
+    : m_major(major)
+    , m_minor(minor)
+    , m_patch(patch)
+{}
+
+MattermostQt::ServerVersion::ServerVersion(const QString &version) {
+	this->operator=(version);
+}
+
+MattermostQt::ServerVersion::ServerVersion(const ServerVersion &v)
+{
+	this->operator=(v);
+}
+
+void MattermostQt::ServerVersion::operator=(const ServerVersion &v) {
+	*this = {v.m_major, v.m_minor, v.m_patch };
+}
+
+void MattermostQt::ServerVersion::operator=(const QString &v) {
+	QStringList num = v.split(".");
+	if( num.size() != 3 ) {
+		m_major = -1;
+		m_minor = -1;
+		m_patch = -1;
+		return;
+	}
+	m_major = num.at(0).toInt();
+	m_minor = num.at(1).toInt();
+	m_patch = num.at(2).toInt();
+}
+
+bool MattermostQt::ServerVersion::operator==(const ServerVersion &v) {
+	return m_major == v.m_major && m_minor == v.m_minor && m_patch == v.m_patch;
+}
+
+bool MattermostQt::ServerVersion::operator!=(const ServerVersion &v) {
+	return !this->operator==(v);
+}
+
+bool MattermostQt::ServerVersion::operator>(const ServerVersion &v) {
+	if( m_major <= v.m_major )
+		return false;
+	if ( m_minor <= v.m_minor )
+		return false;
+	if( m_patch <= v.m_patch )
+		return false;
+	return true;
+}
+
+bool MattermostQt::ServerVersion::operator<(const ServerVersion &v) {
+	if( m_major >= v.m_major )
+		return false;
+	if ( m_minor >= v.m_minor )
+		return false;
+	if( m_patch >= v.m_patch )
+		return false;
+	return true;
+}
+
+bool MattermostQt::ServerVersion::isValid() const {
+	return m_major == -1 || m_minor == -1 || m_patch == -1;
 }

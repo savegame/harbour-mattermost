@@ -32,52 +32,52 @@
 #include "SettingsContainer.h"
 #include "SailNotify.h"
 
-QFile *logFile = nullptr;
-
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
 	if( SettingsContainer::getInstance()->useLog() == false || SettingsContainer::getInstance()->logLevel() > (SettingsContainer::LogLevel)type )
 		return; // TODO test no stdout
-	MattermostQt *m = MattermostQt::getInstance();
+
+	static QScopedPointer<QFile> logFile( new QFile(SettingsContainer::getInstance()->logFilePath()) );
+	static QScopedPointer<QTextStream> out; //(logFile.data());
+	static bool use_log_file = false;
+
 	// TODO write log to databse in separate thread
+	if( use_log_file == false ) {
+		if( logFile->open(QIODevice::WriteOnly ) ) {
+			out.reset( new QTextStream(logFile.data()) );
+		} else {
+			logFile.reset(nullptr);
+			fprintf(stderr, "E: Cant init log file\n");
+		}
+		use_log_file = true;
+	}
+
 	QByteArray localMsg = msg.toLocal8Bit();
+	char prefix = 'U';
 	switch (type) {
 	case QtDebugMsg:
-		fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-		if(logFile) {
-			QTextStream out(logFile);
-			out << QString("Debug: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
-		}
+		prefix = 'D';
 		break;
 	case QtWarningMsg:
-		fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-		if(logFile) {
-			QTextStream out(logFile);
-			out << QString("Warning: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
-		}
+		prefix = 'W';
 		break;
 	case QtCriticalMsg:
-		fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-		if(logFile) {
-			QTextStream out(logFile);
-			out << QString("Critical: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
-		}
+		prefix = 'E';
 		break;
 	case QtFatalMsg:
-		fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-		if(logFile) {
-			QTextStream out(logFile);
-			out << QString("Fatal: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
-		}
-		abort();
+		prefix = 'F';
 		break;
 	case QtInfoMsg:
-		fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-		if(logFile) {
-			QTextStream out(logFile);
-			out << QString("Info: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function);
-		}
+		prefix = 'I';
 		break;
+	}
+
+	fprintf(stderr, "%c: %s (%s:%u, %s)\n", prefix, localMsg.constData(), context.file, context.line, context.function);
+	if(out) {
+		*out.data() << QString("%4: %0 (%1:%2, %3)\n").arg(msg).arg(context.file).arg(context.line).arg(context.function).arg(prefix);
+	}
+	if( type == QtFatalMsg ) {
+		abort();
 	}
 }
 
@@ -91,18 +91,7 @@ int main(int argc, char *argv[])
 	QCoreApplication::setOrganizationName( QStringLiteral("ru.sashikknox") );
 	QCoreApplication::setApplicationName( QStringLiteral("wattermost") );
 
-	logFile = new QFile(SettingsContainer::getInstance()->logFilePath());
-	if( !logFile->open(QIODevice::WriteOnly ) ) {
-		delete logFile;
-		logFile = nullptr;
-	}
 	qInstallMessageHandler( myMessageOutput );
-	if( !logFile ) {
-		qCritical() << QStringLiteral("Cant create log file: %0").arg(MattermostQt::getInstance()->settings()->logFilePath());
-	}
-	else {
-		qInfo() << QStringLiteral("Create log file: %0").arg(logFile->fileName());
-	}
 
 	QScopedPointer<QQuickView> v(SailfishApp::createView());
 	qInfo() << "App version: " << MATTERMOSTQT_VERSION;
@@ -125,20 +114,8 @@ int main(int argc, char *argv[])
 	v->setSource(SailfishApp::pathTo("qml/harbour-mattermost.qml"));
 	v->show();
 
-	MattermostQt *m = MattermostQt::getInstance();//v->rootObject()->findChild<MattermostQt*>();
-//	SettingsContainer *s = v->rootObject()->findChild<SettingsContainer*>();
-	if(m) {
-		QObject::connect(m, &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );
-		m->replaceMdParser( new Md4cMdParser() );
-	}
-	else
-		qCritical() << "Cant find MattermostQt main Object, possible you cant receive notifications!";
-	QObject::connect(MattermostQt::getInstance(),&QObject::destroyed, [=](){
-		if(logFile) {
-			logFile->close();
-			delete logFile;
-			logFile = nullptr;
-		}
-	});
+	QObject::connect(MattermostQt::getInstance(), &MattermostQt::newMessage, notify.data(), &SailNotify::slotNewMessage );
+	MattermostQt::getInstance()->replaceMdParser( new Md4cMdParser() );
+
 	return app->exec();
 }
