@@ -49,7 +49,7 @@ for each in `grep "BuildRequires:" rpm/harbour-mattermost.spec|sed "s/BuildRequi
 # echo "build_dependencies=\"${build_dependencies}\""
 # exit
 
-sfdk_targets=`${engine} sb2-config -l|grep -v default|grep aarch`
+sfdk_targets=`${engine} sb2-config -l|grep default|grep aarch`
 [ $? -ne 0 ] && echo "FAIL" && exit 1 
 
 echo "WARNING: Build Mattermost Client for ALL your targets in SailfishSDK"
@@ -91,7 +91,7 @@ for each in $sfdk_targets; do
         echo "OK"
     elif [[ "${engine}" == "sfdk "* ]] ;then
         echo -n "Validate RPM: "
-        sfdk config target=${each}
+        sfdk config target=${each/.default/}
         sfdk check ${result_rpm_path}*
         if [ $? -ne 0 ] ; then 
             echo "FAIL"

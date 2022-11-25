@@ -52,7 +52,6 @@ int main(int argc, char** argv)
 
 	qInfo() << "App version: " << MATTERMOSTQT_VERSION;
 
-//	qmlRegisterType<MattermostQt>      ("ru.sashikknox", 1, 0, "MattermostQt");
 	qmlRegisterType<TeamsModel>        ("ru.sashikknox", 1, 0, "TeamsModel");
 	qmlRegisterType<UsersModel>        ("ru.sashikknox", 1, 0, "UsersModel");
 	qmlRegisterType<ChannelsModel>     ("ru.sashikknox", 1, 0, "ChannelsModel");
