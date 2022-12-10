@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtQuick.Layouts 1.1
 import Sailfish.Silica 1.0
 import Sailfish.Pickers 1.0
 import ru.sashikknox 1.0
@@ -27,23 +28,12 @@ Page {
                 server.isComplete &
                 login_id.isComplete &
                 ((use_token_switcher.checked)?true:password.isComplete)
-//                & ( !trust_certificate_switcher.checked
-//                 ? true
-//                 : ca_cert_text_field.isComplete & cert_text_field.isComplete )
 
     property int api: 4
     property string caCertPath
     property string certPath
     property string lastFolder
     property int    server_id: 0
-
-    onCaCertPathChanged: {
-        ca_cert_text_field.text = caCertPath;
-    }
-
-    onCertPathChanged: {
-        cert_text_field.text = certPath;
-    }
 
     signal accepted()
 
@@ -57,8 +47,6 @@ Page {
                     server_name.text = MattermostQt.get_server_name(server_index);
                     server.text = MattermostQt.get_server_url(server_index);
                     trust_certificate_switcher.checked = MattermostQt.get_server_trust_certificate(server_index);
-                    ca_cert_text_field.text = MattermostQt.get_server_cert_path(server_index);
-                    cert_text_field.text = MattermostQt.get_server_ca_cert_path(server_index);
                 }
                 connectionStatus = status_server_unconnected
                 specialmessage.text = message
@@ -78,12 +66,12 @@ Page {
             MattermostQt.post_login_by_token(
                 server.text, login_id.text,
                 api, server_name.text, trust_certificate_switcher.checked,
-                ca_cert_text_field.text, cert_text_field.text
+                "", ""
             );
         else
             MattermostQt.post_login( server.text, login_id.text, password.text,
                                       api, server_name.text, trust_certificate_switcher.checked,
-                                      ca_cert_text_field.text, cert_text_field.text )
+                                      "", "" )
     }
 
     onContextChanged:{
@@ -131,35 +119,49 @@ Page {
 
             TextField {
                 id: server_name
+
                 property bool isComplete: false
+
+                anchors { left: parent.left; right: parent.right }
+
                 label: qsTr("server custom name");
                 placeholderText: label
-                anchors { left: parent.left; right: parent.right }
+
+                function nextItem() { server.focus = true; isComplete = true; }
+
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                EnterKey.onClicked: {
-                    server.focus = true;
-                    isComplete = true;
-//                    computeAccept();
-                }
+                EnterKey.onClicked: nextItem()
+
                 onTextChanged: isComplete = true;
+
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Tab) {
+                        nextItem()
+                    }
+                }
             }
 
             TextField {
                 id: server
                 property bool isComplete: false
+
+                anchors { left: parent.left; right: parent.right }
+
                 label: qsTr("server address");
                 placeholderText: label + ": https://example.com"
-                anchors { left: parent.left; right: parent.right }
+                inputMethodHints: Qt.ImhNoAutoUppercase
+
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                inputMethodHints: Qt.ImhNoAutoUppercase
-                EnterKey.onClicked: {
-                    isComplete = true;
-                    login_id.focus = true;
-//                    computeAccept();
-                }
+                EnterKey.onClicked: { login_id.focus = true; isComplete = true; }
                 onTextChanged: isComplete = true;
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Tab) {
+                        isComplete = true
+                        use_token_switcher.focus = true
+                    }
+                }
             }
 
             TextSwitch {
@@ -169,43 +171,94 @@ Page {
                     if(checked)
                     {
                         login_id.label = qsTr("Authentication token")
-                        password.visible = false
+                        passwordRow.visible = false
                     }
                     else
                     {
                         login_id.label = qsTr("Username or Email address")
-                        password.visible = true
+                        passwordRow.visible = true
+                    }
+                }
+
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Tab) {
+                        login_id.focus = true
+                    } else {
+                        checked = !checked
                     }
                 }
             }
 
             TextField {
                 id: login_id
+
                 property bool isComplete: false
+
                 anchors { left: parent.left; right: parent.right }
+
                 label: qsTr("Username or Email address")
                 placeholderText: label
                 inputMethodHints: Qt.ImhEmailCharactersOnly | Qt.ImhNoAutoUppercase
+
+                onTextChanged: isComplete = true;
                 EnterKey.enabled: text || inputMethodComposing
                 EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                EnterKey.onClicked: {
-                    isComplete = true;
-                    password.focus = true;
-//                    computeAccept();
+                EnterKey.onClicked: { isComplete = true;  password.focus = true; }
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Tab) {
+                        isComplete = true;  password.focus = true;
+                    }
                 }
-                onTextChanged: isComplete = true;
             }
 
-            TextField {
-                id: password
-                property bool isComplete: false
-                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhHiddenText
-                echoMode: TextInput.Password
-                anchors { left: parent.left; right: parent.right }
-                label: qsTr("Password"); placeholderText: label
-                EnterKey.enabled: text || inputMethodComposing
-                EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                onTextChanged: isComplete = true;
+            RowLayout {
+                id: passwordRow
+
+                anchors { left: parent.left; right: parent.right; rightMargin: Theme.paddingLarge }
+
+                spacing: 0
+
+                TextField {
+                    id: password
+
+                    property bool isComplete: false
+
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Layout.maximumWidth: parent.width - hidePassword.width
+                    width: parent.width - hidePassword.width - 100
+                    inputMethodHints: Qt.ImhNoPredictiveText | (hidePassword.checked ? Qt.ImhHiddenText : Qt.ImhNone)
+                    echoMode: hidePassword.checked ? TextInput.Normal : TextInput.Password
+                    label: qsTr("Password");
+                    placeholderText: label
+
+                    onTextChanged: isComplete = true;
+                    EnterKey.enabled: text || inputMethodComposing
+                    EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                    Keys.onPressed: {
+                        if (event.key === Qt.Key_Tab) {
+                            isComplete = true;
+                            trust_certificate_switcher.focus = true
+                        }
+                    }
+                }
+
+                IconButton {
+                    id: hidePassword
+
+                    property bool checked
+
+                    anchors.top: parent.top
+
+                    icon.source: "image://theme/icon-splus-" + (checked ? "show" : "hide") + "-password"
+
+                    width: Theme.iconSizeSmallPlus
+                    height: Theme.iconSizeSmallPlus
+
+                    onClicked: {
+                        checked = !checked
+                    }
+                }
             }
 
             SectionHeader {
@@ -218,79 +271,17 @@ Page {
             TextSwitch {
                 id: trust_certificate_switcher
                 text: qsTr("trust certificate")
-                onCheckedChanged: {
-                    // TODO : delete fields for choosing certificate files, no need more
-                    //ca_cert_row.visible = checked
-                    //cert_row.visible = checked
-                }
-            }
 
-            Row {
-                id: ca_cert_row
-                visible: false
-
-                Component {
-                    id: ca_picker
-                    FilePickerPage {
-                        title: qsTr("Choose CA certificate")
-                        nameFilters: [ '*.crt', '*.pem' ]
-                        onSelectedContentPropertiesChanged: {
-                            loginpage.caCertPath = selectedContentProperties.filePath;
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Tab) {
+                        if (canAccept) {
+                            acceptButton.focus = true
+                        } else {
+                            server_name.focus = true
                         }
+                    } else {
+                        checked = !checked
                     }
-                }
-
-                TextField {
-                    id: ca_cert_text_field
-                    property bool isComplete: false
-                    label: qsTr("CA certificate path");
-                    placeholderText: label
-                    anchors.leftMargin: Theme.paddingMedium
-                    width: loginpage.width - Theme.paddingMedium - button_ca_cert.width
-                    EnterKey.enabled: text || inputMethodComposing
-                    EnterKey.iconSource: "image://theme/icon-m-enter-next"
-                    EnterKey.onClicked:{
-                        cert_text_field.focus = true;
-                    }
-                    onTextChanged: isComplete = true;
-                }
-                IconButton {
-                    id:button_ca_cert
-                    icon.source: "image://theme/icon-s-attach"
-                    onClicked: {
-                        pageStack.push(ca_picker)
-                    }
-                }
-            }
-
-            Row {
-                id: cert_row
-                visible: false
-
-                Component {
-                    id: cert_picker
-                    FilePickerPage {
-                        title: qsTr("Choose server certificate")
-                        nameFilters: [ '*.crt', '*.pem', '*.cert' ]
-                        onSelectedContentPropertiesChanged: {
-                            loginpage.certPath = selectedContentProperties.filePath;
-                        }
-                    }
-                }
-
-                TextField {
-                    id: cert_text_field
-                    property bool isComplete: false
-                    label: qsTr("Server certificate path");
-                    placeholderText: label
-                    anchors.leftMargin: Theme.paddingMedium
-                    width: loginpage.width - Theme.paddingMedium - button_cert.width
-                    onTextChanged: isComplete = true;
-                }
-                IconButton {
-                    id:button_cert
-                    icon.source: "image://theme/icon-s-attach"
-                    onClicked: pageStack.push(cert_picker)
                 }
             }
 
@@ -324,12 +315,23 @@ Page {
             }
 
             Button {
+                id: acceptButton
+
                 enabled: canAccept
                 text: qsTr("Login")
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
                     specialmessage.opacity = 0;
                     accepted();
+                }
+
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Tab) {
+                        server_name.focus = true
+                    } else if (event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                        specialmessage.opacity = 0;
+                        accepted();
+                    }
                 }
             }
         }//Column
