@@ -225,22 +225,6 @@
         <source>trust certificate</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Choose CA certificate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>CA certificate path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose server certificate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Server certificate path</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>MattermostQt</name>

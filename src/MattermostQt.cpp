@@ -1159,11 +1159,15 @@ void MattermostQt::get_file_thumbnail(int server_index, int file_sc_index)
 		return;
 	FilePtr file = sc->m_file[file_sc_index];
 
-	if( file->m_thumb_path.isEmpty() )
+	if( file->m_thumb_path.isEmpty() ) {
 		file->m_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
-	//qDebug() << QStringLiteral("Preview path: \"%0\"").arg(file->m_preview_path);
 
-	if( QFile::exists(file->m_thumb_path) ) {
+		if (!QFile::exists(file->m_thumb_path)) {
+			file->m_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.png").arg(file->m_id);
+		}
+	}
+
+	if (QFile::exists(file->m_thumb_path)) {
 		QVectorInt file_update_roles;
 		file_update_roles << AttachedFilesModel::FileThumbnailPath;
 		MessagePtr mc = messageAt(server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index);
@@ -1214,11 +1218,16 @@ void MattermostQt::get_file_preview(int server_index, int file_sc_index)
 		qCritical() <<  QStringLiteral("Cant find server with 'server_index' == %0; 'file_index' = %1").arg(server_index).arg(file_sc_index);
 		return;
 	}
-	if( file->m_preview_path.isEmpty() )
+	if( file->m_preview_path.isEmpty() ) {
 		file->m_preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
+
+		if (!QFile::exists(file->m_preview_path)) {
+			file->m_preview_path = sc->m_cache_path + QString("/files/%0/preview.png").arg(file->m_id);
+		}
+	}
 	//qDebug() << QStringLiteral("Preview path: \"%0\"").arg(file->m_preview_path);
 
-	if( QFile::exists(file->m_preview_path) ) {
+	if (QFile::exists(file->m_preview_path)) {
 		QVectorInt file_update_roles;
 		file_update_roles << AttachedFilesModel::FilePreviewPath << MessagesModel::FilePreview;
 		MessagePtr mc = messageAt(server_index, file->m_team_index, file->m_channel_type, file->m_channel_index, file->m_message_index);
@@ -2452,6 +2461,7 @@ void MattermostQt::delete_reaction(int server_index, const QString &post_id, con
 
 void MattermostQt::get_emoji_list(int  server_index)
 {
+	return;
 	ServerPtr server = serverAt(server_index);
 	if( !server )
 	{
@@ -3250,15 +3260,18 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 			server->m_version = server->m_version_string;
 		}
 
-		QJsonDocument json = QJsonDocument::fromJson( reply->readAll() );
-		if( json.isObject() )
-		{
+		QByteArray replyData = reply->readAll();
+		QJsonDocument json = QJsonDocument::fromJson( replyData );
+		if (json.isObject()) {
 			QJsonObject object = json.object();
 			//			qDebug() << object;
 			server->m_user_id = object["id"].toString();
 			server->m_auth_data = object["auth_data"].toString();
 			server->m_auth_service = object["auth_service"].toString();
 			get_user_info(server_id, server->m_user_id, GET_USER_INFO_current_user);
+		} else {
+			qCritical() << QStringLiteral("Wrong response from server: ") << reply << replyData;
+			return;
 		}
 		QString server_dir = QString("%0_%1").arg(server->m_self_index).arg(server->m_user_id);
 		if( server->m_data_path.isEmpty() || server->m_data_path != m_data_path + QDir::separator() +  server_dir )
@@ -3350,6 +3363,7 @@ void MattermostQt::reply_get_teams(QNetworkReply *reply)
 	json = QJsonDocument::fromJson(rawData);
 
 	if( !json.isEmpty() && json.isArray() ) {
+		qDebug() << json;
 		QJsonArray array = json.array();
 		if( array.isEmpty() ) {
 			qInfo() << QStringLiteral("Seems user is not member of any team.");
@@ -4924,25 +4938,28 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 	QByteArray replyData = reply->readAll();
 	{
 		QString file_path = server->m_cache_path
-							+ QLatin1String("/files/")
-							+ file->m_id;
+		        + QLatin1String("/files/")
+		        + file->m_id;
+
+		QString extension = replyData.left(4).right(3);
+		QString thumb_name = extension == QStringLiteral("PNG") ?  QLatin1String("/thumb.png") :  QLatin1String("/thumb.jpeg");
+
 		QDir dir;
-		if( !QFile::exists(file_path + QLatin1String("/thumb.jpeg")) )
-		{
+		if (!QFile::exists(file_path + thumb_name)) {
 			dir.mkpath(file_path);
-			file_path += QLatin1String("/thumb.jpeg");
+			file_path += thumb_name;
 			QFile save(file_path);
 			if(save.open(QIODevice::WriteOnly | QIODevice::Truncate))
 			{
 				save.write( replyData );
 				save.close();
 				file->m_thumb_path = file_path;
-			}
-			else
+			} else {
 				qDebug() << file_path;
+			}
+		} else {
+			file->m_thumb_path = file_path + thumb_name;
 		}
-		else
-			file->m_thumb_path = file_path + QLatin1String("/thumb.jpeg");
 	}
 	if(!file->m_thumb_path.isEmpty())
 	{
@@ -4985,14 +5002,20 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 
 	QByteArray replyData = reply->readAll();
 	{
+		QString extension = replyData.left(4).right(3);
+		QString preview_name = QLatin1String("/preview.jpeg");
+
+		if (extension == QStringLiteral("PNG") )
+			preview_name = QStringLiteral("/preview.png");
+
 		QString file_path = sc->m_cache_path
 							+ QLatin1String("/files/")
 							+ file->m_id;
 		QDir dir;
-		if( !QFile::exists(file_path + QLatin1String("/preview.jpeg")) )
+		if( !QFile::exists(file_path + preview_name) )
 		{
 			dir.mkpath(file_path);
-			file_path += QLatin1String("/preview.jpeg");
+			file_path += preview_name;
 			QFile save(file_path);
 			if(save.open(QIODevice::WriteOnly | QIODevice::Truncate))
 			{
@@ -5004,13 +5027,10 @@ void MattermostQt::reply_get_file_preview(QNetworkReply *reply)
 				qDebug() << file_path;
 		}
 		else
-			file->m_preview_path = file_path + QLatin1String("/preview.jpeg");
+			file->m_preview_path = file_path + preview_name;
 	}
 	if(!file->m_preview_path.isEmpty())
 	{
-		//		QList<MessagePtr> messages;
-		//		messages << mc;
-		//		emit messageUpdated(messages);
 		QVectorInt file_update_roles;
 		file_update_roles << AttachedFilesModel::FilePreviewPath << MessagesModel::FilePreview;
 		emit attachedFilesChanged(mc, QVector<QString>(), file_update_roles);
@@ -5029,8 +5049,7 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	int file_index    = reply->property(P_FILE_INDEX).toInt();
 
 	MessagePtr mc = messageAt(server_index,team_index,channel_type,channel_index,message_index);
-	if(!mc)
-	{
+	if (!mc) {
 		qWarning() << "Cant found message ";
 		return;
 	}
@@ -5042,19 +5061,16 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 	//	FilePtr file(new FileContainer(json.object()));
 	FilePtr file = mc->fileAt(file_index);
 
-	if(!file){
+	if (!file) {
 		qCritical() << "Something went wrong! File index is empty in reply_get_file_info()!";
 		QString file_id   = reply->property(P_FILE_ID).toString();
-		for(int fi = 0 ; fi < mc->m_file.size(); fi++ )
-		{
-			if( file_id == mc->m_file[fi]->m_id )
-			{
+		for (int fi = 0 ; fi < mc->m_file.size(); fi++) {
+			if (file_id == mc->m_file[fi]->m_id) {
 				file = mc->m_file[fi];
 				break;
 			}
 		}
-		if( !file )
-		{
+		if (!file) {
 			qCritical() << QStringLiteral("File with id(%0) not found in message with id(%1)").arg(file_id).arg(mc->m_id);
 			return;
 		}
@@ -5086,13 +5102,16 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 
 	bool download_current_file = false;
 
-	if(file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage )
-	{
+	if (file->m_file_type == FileImage || file->m_file_type == FileAnimatedImage) {
 		file_update_roles << AttachedFilesModel::FileImageSize;
-		//		QString file_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
-		if( file->m_thumb_path.isEmpty() )
+
+		if( file->m_thumb_path.isEmpty() ) {
 			file->m_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.jpeg").arg(file->m_id);
-		if( !QFile::exists(file->m_thumb_path) ) {
+			if (!QFile::exists(file->m_thumb_path)) {
+				file->m_thumb_path = sc->m_cache_path + QString("/files/%0/thumb.png").arg(file->m_id);
+			}
+		}
+		if (!QFile::exists(file->m_thumb_path)) {
 			file->m_thumb_path = QString("");
 			get_file_thumbnail(server_index,file->m_self_sc_index);
 		}
@@ -5105,8 +5124,12 @@ void MattermostQt::reply_get_file_info(QNetworkReply *reply)
 			download_current_file = true;
 
 		if(file->m_has_preview_image && !download_current_file ) {
-			if( file->m_preview_path.isEmpty() )
+			if( file->m_preview_path.isEmpty() ) {
 				file->m_preview_path = sc->m_cache_path + QString("/files/%0/preview.jpeg").arg(file->m_id);
+				if (!QFile::exists(file->m_preview_path)) {
+					file->m_preview_path = sc->m_cache_path + QString("/files/%0/preview.png").arg(file->m_id);
+				}
+			}
 			if( !QFile::exists(file->m_preview_path) ) {
 				file->m_preview_path.clear();
 				get_file_preview(server_index,file->m_self_sc_index);
@@ -5307,9 +5330,9 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 			sc->m_cache_path = m_cache_path + QStringLiteral("/%0_%1").arg(sc->m_self_index).arg(sc->m_user_id);
 			qDebug() << QStringLiteral("Cache path set to: %0").arg(sc->m_cache_path);
 		}
-		else {
-			qDebug() << QStringLiteral("Account cache path is: %0").arg(sc->m_cache_path);
-		}
+//		else { // too verbose
+//			qDebug() << QStringLiteral("Account cache path is: %0").arg(sc->m_cache_path);
+//		}
 
 		if( sc->m_data_path.isEmpty() || sc->m_data_path != m_data_path + QStringLiteral("/%0_%1").arg(sc->m_self_index).arg(sc->m_user_id) )
 		{
@@ -7850,6 +7873,14 @@ void MattermostQt::FileContainer::parse_from_json(QJsonObject object)
 	}
 	else
 		m_file_type = FileUnknown;
+
+	// TODO save mini preview  16x16 image
+	if (m_has_preview_image && object.contains("mini_preview")) {
+		auto image64 = QByteArray::fromBase64( object["mini_preview"].toString().toLatin1() );
+		QPixmap image;
+		image.loadFromData(image64);
+//		image.save( m_preview_path, m_extension.toLatin1().data() );
+	}
 }
 
 MattermostQt::ServerVersion::ServerVersion()
@@ -7907,6 +7938,11 @@ bool MattermostQt::ServerVersion::operator>(const ServerVersion &v) {
 	return true;
 }
 
+bool MattermostQt::ServerVersion::operator>=(const ServerVersion &v)
+{
+	return this->operator==(v) || this->operator>(v);
+}
+
 bool MattermostQt::ServerVersion::operator<(const ServerVersion &v) {
 	if( m_major >= v.m_major )
 		return false;
@@ -7915,6 +7951,11 @@ bool MattermostQt::ServerVersion::operator<(const ServerVersion &v) {
 	if( m_patch >= v.m_patch )
 		return false;
 	return true;
+}
+
+bool MattermostQt::ServerVersion::operator<=(const ServerVersion &v)
+{
+	return this->operator==(v) || this->operator<(v);
 }
 
 bool MattermostQt::ServerVersion::isValid() const {

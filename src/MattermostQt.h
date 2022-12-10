@@ -552,7 +552,11 @@ public:
 
 		bool operator>(const ServerVersion &v);
 
+		bool operator>=(const ServerVersion &v);
+
 		bool operator<(const ServerVersion &v);
+
+		bool operator<=(const ServerVersion &v);
 
 		bool isValid() const;
 
