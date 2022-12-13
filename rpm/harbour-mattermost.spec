@@ -20,7 +20,7 @@ Group:      Qt/Qt
 License:    LICENSE
 Source0:    %{name}-%{version}.tar.bz2
 # harbour-mattermost - its old name same application 
-Obsoletes:  harbour-mattermost >= 0.1.7
+# Obsoletes:  harbour-mattermost <= 0.1.7
 Requires:   sailfishsilica-qt5 >= 0.10.9
 BuildRequires:  pkgconfig(sailfishapp) >= 1.0.2
 BuildRequires:  pkgconfig(sailfishsilica)
@@ -71,15 +71,7 @@ rm -rf %{buildroot}
 # >> install pre
 # << install pre
 %qmake5_install
-
 # >> install post
-%if "0%{?_special_name}" != "0"
-pushd %{buildroot}
-echo `pwd`
-# mv .%{_bindir}/harbour-mattermost .%{_bindir}/%{name}
-# mv .%{_datadir}/harbour-mattermost .%{_datadir}/%{name}
-popd
-%endif
 # << install post
 
 desktop-file-install --delete-original       \
