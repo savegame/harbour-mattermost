@@ -1,4 +1,4 @@
-﻿#ifndef MATTERMOSTQT_H
+#ifndef MATTERMOSTQT_H
 #define MATTERMOSTQT_H
 
 #include <QObject>
@@ -656,10 +656,10 @@ public:
 
 	Q_INVOKABLE void post_login(QString server, QString login, QString password,
 	                            int api = 4,QString display_name = QString("Mattermost Server"),
-	                            bool trustCertificate = false, QString ca_cert_path = QString(), QString cert_path = QString());
+	                            bool trustCertificate = false, QString mfa_token = QString());
 	Q_INVOKABLE void post_login_by_token(QString url, QString token,
 	                                     int api = 4,QString display_name = QString("Mattermost Server"),
-	                                     bool trustCertificate = false, QString ca_cert_path = QString(), QString cert_path = QString());
+	                                     bool trustCertificate = false);
 	void get_login(ServerPtr sc);
 	Q_INVOKABLE void get_teams(int server_index);
 	Q_INVOKABLE void get_all_teams(int server_index);

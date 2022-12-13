@@ -25,9 +25,10 @@ Page {
 
 
     property bool canAccept : server_name.isComplete &
-                server.isComplete &
-                login_id.isComplete &
-                ((use_token_switcher.checked)?true:password.isComplete)
+                              server.isComplete &
+                              login_id.isComplete &
+                              (use_mfa_token.checked ? mfa_token.isComplete : true) &
+                              (use_token_switcher.checked ? true : password.isComplete)
 
     property int api: 4
     property string caCertPath
@@ -62,16 +63,16 @@ Page {
     }
 
     onAccepted: {
-        if(use_token_switcher.checked)
-            MattermostQt.post_login_by_token(
-                server.text, login_id.text,
-                api, server_name.text, trust_certificate_switcher.checked,
-                "", ""
-            );
-        else
-            MattermostQt.post_login( server.text, login_id.text, password.text,
-                                      api, server_name.text, trust_certificate_switcher.checked,
-                                      "", "" )
+        if (use_token_switcher.checked) {
+            MattermostQt.post_login_by_token(server.text, login_id.text,
+                                             api, server_name.text,
+                                             trust_certificate_switcher.checked)
+        } else {
+            MattermostQt.post_login(server.text, login_id.text, password.text,
+                                    api, server_name.text,
+                                    trust_certificate_switcher.checked,
+                                    use_mfa_token.checked ? mfa_token.text : "")
+        }
     }
 
     onContextChanged:{
@@ -238,7 +239,7 @@ Page {
                     Keys.onPressed: {
                         if (event.key === Qt.Key_Tab) {
                             isComplete = true;
-                            trust_certificate_switcher.focus = true
+                            use_mfa_token.focus = true
                         }
                     }
                 }
@@ -259,6 +260,50 @@ Page {
                         checked = !checked
                     }
                 }
+            }
+
+            TextSwitch {
+                id: use_mfa_token
+
+                text: qsTr("Use MFA token")
+
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Tab) {
+                        if (checked) {
+                            mfa_token.focus = true
+                        } else {
+                            trust_certificate_switcher.focus = true
+                        }
+                    } else {
+                        checked = !checked
+                    }
+                }
+            }
+
+            TextField {
+                id: mfa_token
+
+                property bool isComplete: false
+
+                anchors { left: parent.left; right: parent.right }
+
+                label: qsTr("MFA token")
+                placeholderText: label
+                inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhDigitsOnly
+                visible: opacity > 0
+                opacity: use_mfa_token.checked ? 1.0 : 0.0
+
+                onTextChanged: isComplete = true;
+                EnterKey.enabled: text || inputMethodComposing
+                EnterKey.iconSource: "image://theme/icon-m-enter-next"
+                EnterKey.onClicked: { isComplete = true;  trust_certificate_switcher.focus = true; }
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Tab) {
+                        isComplete = true;  trust_certificate_switcher.focus = true;
+                    }
+                }
+
+                Behavior on opacity { FadeAnimation {} }
             }
 
             SectionHeader {

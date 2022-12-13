@@ -225,17 +225,17 @@
         <source>trust certificate</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use MFA token</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MFA token</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MattermostQt</name>
-    <message>
-        <source>Cant open CA certificate file: &quot;%0&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cant open certificate file: &quot;%0&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>File: id(%0); </source>
         <translation type="unfinished"></translation>

@@ -1,4 +1,4 @@
-﻿//#include "MattermostQt.h"
+//#include "MattermostQt.h"
 #include <algorithm>
 #include <functional>
 
@@ -77,8 +77,8 @@
 #define P_CHANNEL_TYPE       "channel_type"
 #define P_TRUST_CERTIFICATE  "trust_certificate"
 #define P_DIRECT_CHANNEL     "direct_channel"
-#define P_CA_CERT_PATH       "ca_cert_path"
-#define P_CERT_PATH          "cert_path"
+//#define P_CA_CERT_PATH       "ca_cert_path"
+//#define P_CERT_PATH          "cert_path"
 #define P_NEED_SAVE_SETTINGS "save_settings"
 #define P_UPDATE_TIME        "update_time"
 #define P_EMOJI_NAME         "emoji_name"
@@ -475,19 +475,16 @@ void MattermostQt::set_server_enabled(int server_index, const bool enabled)
 
 void MattermostQt::post_login(QString server, QString login, QString password,
                               int api,QString display_name,
-                              bool trustCertificate, QString ca_cert_path, QString cert_path)
+                              bool trustCertificate, QString mfa_token)
 {
 	if(api <= 3)
 		api = 4;
 
-	// {"login_id":"someone@nowhere.com","password":"thisisabadpassword"}
+	// {"login_id":"someone@nowhere.com","password":"thisisabadpassword"[, "token" : "mfa_toekn"]}
 
 	QString urlString = QLatin1String("/api/v")
-						+ QString::number(api)
-						+ QLatin1String("/users/login");
-	//	QRegExp hasPort(":[0-9]+");
-	//	if( server.indexOf("https://") >= 0 && )
-	//		server.append(":443")
+	        + QString::number(api)
+	        + QLatin1String("/users/login");
 
 	QUrl url(server);
 	url.setPath(url.path() + urlString);
@@ -497,6 +494,9 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 
 	data["login_id"] = login;
 	data["password"] = password;
+
+	if (!mfa_token.isEmpty())
+		data["token"] = mfa_token;
 
 	json.setObject(data);
 
@@ -513,49 +513,11 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 	reply->setProperty(P_API, QVariant(api) );
 	reply->setProperty(P_SERVER_URL, server );
 	reply->setProperty(P_SERVER_NAME, display_name );
-	reply->setProperty(P_CA_CERT_PATH, ca_cert_path );
-	reply->setProperty(P_CERT_PATH, cert_path );
 	reply->setProperty(P_TRUST_CERTIFICATE, trustCertificate );
 
 	//	// Load previosly saved certificate
-	if( trustCertificate )
-	{
+	if (trustCertificate) {
 		QList<QSslError> errors;
-
-		if(ca_cert_path.isEmpty())
-			qInfo() << "Path to CA certificate file is empty";
-		else
-		{
-			QFile ca_cert_file(ca_cert_path);
-			if( ca_cert_file.open(QIODevice::ReadOnly) )
-			{
-				QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
-				errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
-				errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
-				errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
-				ca_cert_file.close();
-			}
-			else
-				qCritical() << "Cant open ca crt file " << ca_cert_path;
-		}
-
-		if(cert_path.isEmpty())
-			qInfo() << "Path to certificate file is empty";
-		else
-		{
-			QFile cert_file(cert_path);
-			if( cert_file.open(QIODevice::ReadOnly) )
-			{
-				QSslCertificate cert(&cert_file, QSsl::Pem);
-				errors << QSslError(QSslError::CertificateUntrusted, cert);
-				errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
-				errors << QSslError(QSslError::SelfSignedCertificate, cert);
-				cert_file.close();
-			}
-			else
-				qCritical() << "Cant open crt file " << cert_path;
-		}
-
 		errors << QSslError(QSslError::CertificateUntrusted);
 		errors << QSslError(QSslError::SelfSignedCertificateInChain);
 		errors << QSslError(QSslError::SelfSignedCertificate);
@@ -563,16 +525,13 @@ void MattermostQt::post_login(QString server, QString login, QString password,
 	}
 }
 
-void MattermostQt::post_login_by_token(QString url, QString token, int api, QString display_name, bool trustCertificate, QString ca_cert_path, QString cert_path)
+void MattermostQt::post_login_by_token(QString url, QString token, int api, QString display_name, bool trustCertificate)
 {
 	//	QString url = QString("%0")
 	ServerPtr server( new ServerContainer(url,token,api) );
 	server->m_trust_cert = trustCertificate;
 	server->m_display_name = display_name;
 	server->m_self_index = m_server.size();
-	server->m_ca_cert_path = ca_cert_path;
-	server->m_cert_path = cert_path;
-	//	server->m_user_id = user_id;
 	server->m_ping_timer.setInterval( m_ping_server_timeout );
 	qDebug() << QStringLiteral("Server[%0] (%1) set ping timer interval to %2.").arg(server->m_self_index).arg(server->m_display_name).arg(m_ping_server_timeout);
 	m_server.append(server);
@@ -588,7 +547,7 @@ void MattermostQt::get_login(MattermostQt::ServerPtr sc)
 		return;
 	sc->m_state = ServerStartLogin;
 	// fix api minimum version
-	if(sc->m_api <= 3)
+	if (sc->m_api <= 3)
 		sc->m_api = 4;
 
 	QString urlString = QLatin1String("/api/v")
@@ -3167,32 +3126,6 @@ void MattermostQt::websocket_connect(ServerPtr server)
 		errors << QSslError(QSslError::CertificateUntrusted);
 		errors << QSslError(QSslError::SelfSignedCertificateInChain);
 		errors << QSslError(QSslError::SelfSignedCertificate);
-
-		QFile ca_cert_file(server->m_ca_cert_path);
-		QFile cert_file(server->m_cert_path);
-		if(ca_cert_file.open(QIODevice::ReadOnly))
-		{
-			QSslCertificate ca_cert(&ca_cert_file, QSsl::Pem);
-			errors << QSslError(QSslError::CertificateUntrusted, ca_cert);
-			errors << QSslError(QSslError::SelfSignedCertificateInChain, ca_cert);
-			errors << QSslError(QSslError::SelfSignedCertificate, ca_cert);
-			ca_cert_file.close();
-		}
-		else
-			qWarning() << tr("Cant open CA certificate file: \"%0\"").arg(server->m_ca_cert_path);
-		if( cert_file.open(QIODevice::ReadOnly))
-		{
-			QSslCertificate cert(&cert_file, QSsl::Pem);
-			errors << QSslError(QSslError::CertificateUntrusted, cert);
-			errors << QSslError(QSslError::SelfSignedCertificateInChain, cert);
-			errors << QSslError(QSslError::SelfSignedCertificate, cert);
-			cert_file.close();
-		}
-		else
-			qWarning() << tr("Cant open certificate file: \"%0\"").arg(server->m_cert_path);
-		errors << QSslError(QSslError::CertificateUntrusted);
-		errors << QSslError(QSslError::SelfSignedCertificateInChain);
-		errors << QSslError(QSslError::SelfSignedCertificate);
 		socket->ignoreSslErrors(errors);
 	}
 
@@ -3286,12 +3219,9 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 	}
 	// first login, or update token
 	QList<QByteArray> headerList = reply->rawHeaderList();
-	foreach(QByteArray head, headerList)
-	{
-		//qDebug() << head << ":" << reply->rawHeader(head);
-		//search login token
-		if( strcmp(head.data(),"Token") == 0 )
-		{// yes, auth token founded!
+	for (QByteArray head : headerList) {
+		QString header = QString::fromLatin1(head).toLower();
+		if (strcmp(head.data(),"token") == 0) {
 			//add server to servers list
 			ServerPtr server;
 			server.reset(new ServerContainer());
@@ -3301,8 +3231,6 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 			server->m_token = reply->rawHeader(head).data();
 			server->m_bearer = bearer_string(server->m_token);
 			server->m_trust_cert = reply->property(P_TRUST_CERTIFICATE).toBool();
-			server->m_ca_cert_path = reply->property(P_CA_CERT_PATH).toString();
-			server->m_cert_path = reply->property(P_CERT_PATH).toString();
 			server->m_cert  = reply->sslConfiguration();
 			server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
 			server->m_self_index =  m_server.size();
@@ -4914,24 +4842,10 @@ void MattermostQt::reply_get_file_thumbnail(QNetworkReply *reply)
 	int message_index = file->m_message_index;
 
 	ChannelPtr channel = channelAt(server_index,team_index,channel_type,channel_index);
-	if(!channel) {
-		// try fix file 
+	if (!channel) {
 		qCritical() << QStringLiteral("Try use FilePtr (%0) with incorrect indexes.").arg(file->m_id);
-		//		file->m_post_id;
-
-		//		channel = id2message(ChannelPtr(), file->m_post_id);
 		return;
 	}
-	//	if(channel_type != ChannelDirect)
-	//	{
-	//		TeamPtr tc = sc->m_teams[team_index];
-	//		if( channel_type == ChannelType::ChannelPublic )
-	//			channel = tc->m_public_channels[channel_index];
-	//		else// if( channel_type == ChannelType::ChannelPublic )
-	//			channel = tc->m_private_channels[channel_index];
-	//	}
-	//	else
-	//		channel = sc->m_direct_channels[channel_index];
 
 	MessagePtr mc = channel->m_message[message_index];
 
@@ -6832,13 +6746,12 @@ void MattermostQt::onWebSocketError(QAbstractSocket::SocketError error)
 void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 {
 	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
-	if(!socket) // strange situation, if it happens
-	{
+	if (!socket) {// strange situation, if it happens
 		qCritical() << "Sender is not WebSocket! but WebSocket state changed: "<< state;
 		return;
 	}
 	QVariant sId = socket->property(P_SERVER_INDEX);
-	if(!sId.isValid()) {
+	if (!sId.isValid()) {
 		qCritical() << "Cant get server's Id! WebSocket state changed: "<< state;
 		return;// that too strange!!! that cant be!
 	}
@@ -7052,11 +6965,6 @@ void MattermostQt::slot_recconect_servers()
 				.replace("http://","ws://");
 			QUrl url(serUrl);
 			url.setPath(url.path() + urlString);
-			// disable forcing websocket port to 443
-//			if( url.toString().indexOf("wss://") >= 0 && (url.port() == 80 || url.port() == -1) ) {
-//				url.setPort(443);
-//				qWarning() << QStringLiteral("Force set port to 443 for WebSocket connection");
-//			}
 			m_server[i]->m_socket->open(url);
 		}
 	}
