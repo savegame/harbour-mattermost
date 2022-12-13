@@ -5,9 +5,11 @@ export PWD=`pwd`
 # export package_name="harbour-mattermost"
 export package_name="ru.sashikknox.wattermost"
 
+export tool="$HOME/AuroraOS/bin/sfdk"
 # uncomment right engine for your 
 # export engine="sfdk engine exec"
-export engine="docker exec -u mersdk -w `pwd` sailfish-sdk-build-engine_sashikknox"
+export engine="$tool engine exec"
+# export engine="docker exec -u mersdk -w `pwd` sailfish-sdk-build-engine_sashikknox"
 # export engine="docker exec --user mersdk -w `pwd` aurora-os-build-engine"
 
 build_dir="build_rpm"
@@ -18,14 +20,18 @@ version=`grep "Version:" rpm/harbour-mattermost.spec|sed "s/Version: \+\([^ ]\+\
 release_number=`grep "Release:" rpm/harbour-mattermost.spec|sed "s/Release: \+\([^ ]\+\)/\1/g"`
 archive_prefix="${package_name}-${version}"
 echo "version=\"${version}\""; 
-archive_path="${build_dir}/SOURCES/${archive_prefix}.tar.bz2"
+archive_name="${archive_prefix}.tar"
+archive_path="${build_dir}/${archive_name}"
 echo "Pack latest git cmmit to an archive: ${archive_path}"
+src_path=`pwd`
+build_dir_path="`pwd`/${build_dir}"
 rm -fr `pwd`/${build_dir}/{BUILD,SRPMS}
-mkdir -p `pwd`/${build_dir}/SOURCES
+mkdir -p `pwd`/${build_dir}/BUILD
 git archive --prefix "${archive_prefix}/" --output `pwd`/${archive_path} HEAD
+is_aurora="false"
 
-
-if [[ "${engine}" == *"aurora"* ]]; then
+if [[ "${tool} tools list" == *"AuroraOS"* ]]; then
+    is_aurora="true"
     for each in key cert; do
         if [ -f `pwd`/regular_${each}.pem ]; then 
             echo "Файл ключа regular_${each}.pem найден: OK"
@@ -43,40 +49,52 @@ if [[ "${engine}" == *"aurora"* ]]; then
     done
 fi
 
-build_dependencies=""
-for each in `grep "BuildRequires:" rpm/harbour-mattermost.spec|sed "s/BuildRequires: \+\([^ ]\+\).*/\1 /g"`; do build_dependencies=" ${build_dependencies} ${each}"; done
+# build_dependencies=""
+# for each in `grep "BuildRequires:" rpm/harbour-mattermost.spec|sed "s/BuildRequires: \+\([^ ]\+\).*/\1 /g"`; do build_dependencies=" ${build_dependencies} ${each}"; done
 
 # echo "build_dependencies=\"${build_dependencies}\""
 # exit
 
-sfdk_targets=`${engine} sb2-config -l|grep default|grep aarch`
+sfdk_targets="`${engine} sb2-config -l|grep -v default|grep arm`"
 [ $? -ne 0 ] && echo "FAIL" && exit 1 
 
 echo "WARNING: Build Mattermost Client for ALL your targets in SailfishSDK"
-for each in $sfdk_targets; do
+
+for each in ${sfdk_targets}; do
+    echo "$each"
     target_arch=${each##*-}
     echo "Build for '$each' target with '$target_arch' architecture"
     # clean build folder
-    if [ -d `pwd`/${build_dir}/BUILD ]; then
-        rm -fr `pwd`/${build_dir}/BUILD
+    if [ -d `pwd`/${build_dir}/${archive_prefix} ]; then
+        rm -fr `pwd`/${build_dir}/${archive_prefix}
     fi
+    # mkdir -p $PWD/${build_dir}/BUILD
     target="${engine} sb2 -t $each"
-    #install deps for current target
-    ${target} -R -m sdk-install zypper in -y ${build_dependencies}
     
-    # build RPM for current target
-    ${target} rpmbuild --define "_topdir `pwd`/${build_dir}" --define "_arch $target_arch" --define "_special_name $package_name" -ba `pwd`/rpm/harbour-mattermost.spec
+    cd `pwd`/${build_dir}/
+    tar xf ${build_dir_path}/${archive_name}
+    cd ${archive_prefix}
+    ${tool} config target="${each}"
+    if [ "$is_aurora" == "true" ]; then
+        ${tool} build --define "_special_name $package_name" --define "_arch $target_arch"
+    else
+        ${tool} build --define "_arch $target_arch"
+    fi
     if [ $? -ne 0 ] ; then 
         echo "Build RPM for ${each} : FAIL"
         continue; 
     fi
 
-    result_rpm_path=`pwd`/${build_dir}/RPMS/${target_arch}/${archive_prefix}-${release_number}.
+    result_rpm_path="`pwd`/RPMS/`ls RPMS`"
+
+    echo "result_rpm_path = $result_rpm_path"
 
     # sign RPM packacge 
-    if [[ "${engine}" == *"aurora"* ]]; then
+    cd RPMS
+    if [[ "${is_aurora}" == "true" ]]; then
         echo -n "Signing RPMs: "
-        ${target} rpmsign-external sign --key `pwd`/regular_key.pem --cert `pwd`/regular_cert.pem ${result_rpm_path}*
+        
+        ${target} rpmsign-external sign --key ${src_path}/regular_key.pem --cert ${src_path}/regular_cert.pem ${result_rpm_path}*
         if [ $? -ne 0 ] ; then 
             echo "FAIL"
             break; 
@@ -89,7 +107,7 @@ for each in $sfdk_targets; do
             break; 
         fi
         echo "OK"
-    elif [[ "${engine}" == "sfdk "* ]] ;then
+    elif [[ "${is_aurora}" == "false" ]] ;then
         echo -n "Validate RPM: "
         sfdk config target=${each/.default/}
         sfdk check ${result_rpm_path}*
