@@ -15,15 +15,22 @@ TeamsModel::TeamsModel(QObject *parent)
 
 int TeamsModel::rowCount(const QModelIndex &) const
 {
-	return m_team.size();
+	return m_server.isNull() ? 0 : m_server->m_teams.size();
 }
 
 QVariant TeamsModel::data(const QModelIndex &index, int role) const
 {
-	if(index.row() < 0 || index.row() >= m_team.size()) {
+	if (!m_mattermost)
+		return QVariant();
+
+	MattermostQt::ServerPtr server = m_mattermost->serverAt(m_server_index);
+	if (!server)
+		return QVariant();
+
+	if(index.row() < 0 || index.row() >= server->m_teams.size()) {
 		return QVariant();
 	}
-	MattermostQt::TeamPtr team = m_team[index.row()];
+	MattermostQt::TeamPtr team = server->m_teams[index.row()];
 
 	if(role == DataRoles::DisplayName) {
 		return QVariant(team->m_display_name);
@@ -95,7 +102,8 @@ QHash<int, QByteArray> TeamsModel::roleNames() const
 
 void TeamsModel::activate(const int i)
 {
-	if(i < 0 || i >= m_team.size()) {
+	Q_ASSERT(!m_server.isNull());
+	if(i < 0 || i >= m_server->m_teams.size()) {
 		return;
 	}
 
@@ -126,6 +134,12 @@ void TeamsModel::setServerName(QString name)
 
 void TeamsModel::setServerIndex(int id)
 {
+	Q_ASSERT(!m_mattermost.isNull());
+	m_server = m_mattermost->serverAt(id);
+	if (!m_server) {
+		qDebug() << QStringLiteral("Wrong server index: %1").arg(id);
+		return;
+	}
 	m_server_index = id;
 	emit serverIndexChanged();
 }
@@ -158,15 +172,19 @@ void TeamsModel::setMattermostQt(MattermostQt* mattermost)
 
 QString TeamsModel::getTeamId(int index) const
 {
-	if(index >= 0 && index < m_team.size())
-		return m_team[index]->m_id;
+	Q_ASSERT(!m_server.isNull());
+
+	if(index >= 0 && index < m_server->m_teams.size())
+		return m_server->m_teams[index]->m_id;
 	return QString::Null();
 }
 
 int TeamsModel::getTeamIndex(int index) const
 {
-	if(index >= 0 && index < m_team.size())
-		return m_team[index]->m_self_index;
+	Q_ASSERT(!m_server.isNull());
+
+	if(index >= 0 && index < m_server->m_teams.size())
+		return m_server->m_teams[index]->m_self_index;
 	return -1;
 }
 
@@ -182,12 +200,15 @@ void TeamsModel::waitAllTeams(bool wait)
 
 void TeamsModel::setTeamsList(QList<MattermostQt::TeamPtr> teams)
 {
+	Q_UNUSED(teams)
+	Q_ASSERT(!m_mattermost.isNull() && !m_server.isNull());
+
 	disconnect(m_mattermost, &MattermostQt::onReplyAllTeams, this, &TeamsModel::setTeamsList );
 	beginResetModel();
-	m_team.clear();
-	for( auto each : teams ) {
-		m_team << each;
-	}
+//	m_server->m_teams.clear();
+//	for( auto each : teams ) {
+//		m_team << each;
+//	}
 	endResetModel();
 }
 
@@ -200,17 +221,25 @@ void TeamsModel::setTeamsList(QList<MattermostQt::TeamPtr> teams)
 
 void TeamsModel::slot_teamAdded(MattermostQt::TeamPtr team)
 {
-	beginInsertRows(QModelIndex(), m_team.size(), m_team.size());
+	if (m_server_index != team->m_server_index) {
+		return;
+	}
+
+	MattermostQt::ServerPtr s = m_mattermost->serverAt(m_server_index);
+	if (!s) {
+
+	}
+	beginInsertRows(QModelIndex(), s->m_teams.size() - 1, s->m_teams.size() - 1);
 //	m_msg_count.append(0);
 //	m_mention_count.append(0);
-	m_team.append(team);
+//	m_team.append(team);
 	endInsertRows();
 }
 
 void TeamsModel::slot_teamsExists(const QVector<MattermostQt::TeamPtr> &teams)
 {
 	beginResetModel();
-	m_team = teams;
+//	m_team = teams;
 //	m_msg_count.fill(0,teams.size());
 //	m_mention_count.fill(0,teams.size());
 	endResetModel();
@@ -218,9 +247,10 @@ void TeamsModel::slot_teamsExists(const QVector<MattermostQt::TeamPtr> &teams)
 
 void TeamsModel::slot_teamUnread(QString team_id, int msg, int mention)
 {
-	for(int i = 0; i < m_team.size(); i++)
+	Q_ASSERT(!m_server.isNull());
+	for(int i = 0; i < m_server->m_teams.size(); i++)
 	{
-		if( m_team[i]->m_id.compare(team_id) == 0 )
+		if( m_server->m_teams[i]->m_id.compare(team_id) == 0 )
 		{
 			QModelIndex tl = index(i);
 			dataChanged(tl,tl,QVectorInt() << RoleUnreadMentionCount << RoleUnreadMessageCount);
@@ -231,9 +261,10 @@ void TeamsModel::slot_teamUnread(QString team_id, int msg, int mention)
 
 void TeamsModel::slot_teamChanged(MattermostQt::TeamPtr team, QVectorInt roles)
 {
-	for(int i = 0; i < m_team.size(); i++)
+	Q_ASSERT(!m_server.isNull());
+	for(int i = 0; i < m_server->m_teams.size(); i++)
 	{
-		if( m_team[i] == team )
+		if( m_server->m_teams[i] == team )
 		{
 			QModelIndex tl = index(i);
 			dataChanged(tl,tl,roles);

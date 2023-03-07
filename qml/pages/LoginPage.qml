@@ -7,7 +7,7 @@ import "../model"
 
 //Dialog {
 Page {
-    id: loginpage
+    id: loginPage
     property Context context
 
     property string server_url
@@ -87,7 +87,7 @@ Page {
                                                   {
                                                       server_index: server_index,
                                                       servername: MattermostQt.get_server_name(server_index),
-                                                      context: loginpage.context
+                                                      context: loginPage.context
                                                   })
             }
         })
@@ -95,7 +95,6 @@ Page {
         MattermostQt.onConnectionError.connect( function onConnectionError(id,message,server_index){
             specialmessage.text = message;
             specialmessage.opacity = 1.0;
-//            connectionStatus = status_server_unconnected
         })
     }
 
@@ -106,11 +105,22 @@ Page {
 
         VerticalScrollDecorator {}
 
+        PullDownMenu {
+            MenuItem {
+                onClicked: pageStack.push(Qt.resolvedUrl("AboutPage.qml"),{context: loginPage.context})
+                text: qsTr("About")
+            }
+        }
 
         Column {
             id: column
+
+            anchors {
+                left: parent.left
+                right: parent.right
+            }
+
             spacing: Theme.paddingSmall
-            anchors {left: parent.left; right: parent.right; }
             width: parent.width
 
             PageHeader {
@@ -169,13 +179,10 @@ Page {
                 id: use_token_switcher
                 text: qsTr("use authentication token")
                 onCheckedChanged: {
-                    if(checked)
-                    {
+                    if(checked) {
                         login_id.label = qsTr("Authentication token")
                         passwordRow.visible = false
-                    }
-                    else
-                    {
+                    } else {
                         login_id.label = qsTr("Username or Email address")
                         passwordRow.visible = true
                     }

@@ -300,18 +300,14 @@ Page {
 
         onOpenChanged: {
             if( !open ) {
-                if( isCloseByButton ) {
-                    console.log("Is close by button")
-                }
-                else if ( isCloseBySwipe ) {
-//                    console.log("Is close by swipe")
+                // if( isCloseByButton ) {
+                //     console.log("Is close by button")
+                // }
+                // else
+                if ( isCloseBySwipe ) {
                     messageEditor.softwareInputPanelEnabled = true
-//                    console.log("Disable focus")
                     messageEditor.textFocus = false
                 }
-//                else {
-//                    console.log("Is close by focus out")
-//                }
                 messageEditor.emojiPanelChecked = false
                 isCloseByButton = false
                 isCloseBySwipe = false
@@ -325,34 +321,24 @@ Page {
 
     MessageEditorBar {
         id: messageEditor
+
+        onHideEmoji: {
+            emojiDock.isCloseByButton = true;
+            emojiDock.hide()
+        }
+
+        onShowEmoji: emojiDock.show()
+
+        anchors {
+            left: messagesPage.left
+            right: messagesPage.right
+            bottom: emojiDock.top
+        }
+
         context: messagesPage.context
         server_index: messagesPage.server_index
         team_index: messagesPage.team_index
         channel_index: messagesPage.channel_index
         channel_type: messagesPage.channel_type
-        anchors {
-            left: messagesPage.left
-            right: messagesPage.right
-            bottom: emojiDock.top
-        } //an
-
-        onHideEmoji: {
-//            messageEditor.emojiPanelChecked = false
-//            if(!emojiDock.isCloseBySwipe)
-            emojiDock.isCloseByButton = true;
-            emojiDock.hide()
-        }
-
-        onShowEmoji: {
-//            messageEditor.softwareInputPanelEnabled = false
-//            messageEditor.emojiPanelChecked = true
-            emojiDock.show()
-//            messageEditor.textFocus = true;
-        }
     } // MessageEditorBar
-
-
-//    function remove(server_index, team_index, channel_type, channel_index, message_index) {
-//        MattermostQt.delete_message(server_index,team_index,channel_type,channel_index,message_index)
-//    }
 }

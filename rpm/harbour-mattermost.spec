@@ -14,7 +14,7 @@ Name:  harbour-mattermost
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 
 Summary:    Mattermost Sailfish client
-Version:    0.1.9
+Version:    0.1.10
 Release:    7
 Group:      Qt/Qt
 License:    LICENSE

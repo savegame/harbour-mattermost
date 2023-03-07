@@ -233,6 +233,10 @@
         <source>MFA token</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>About</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MattermostQt</name>

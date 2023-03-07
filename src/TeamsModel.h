@@ -88,7 +88,7 @@ private:
 //	 QVectorInt     m_mention_count;
 //	 QVectorInt     m_active_users;
 //	 QVectorInt     m_user_count;
-	QVector<MattermostQt::TeamPtr> m_team;
+//	QVector<MattermostQt::TeamPtr> m_team;
 //	QVector<QString> m_id;
 	MattermostQt::ServerPtr m_server;
 	QPointer<MattermostQt>  m_mattermost;

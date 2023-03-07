@@ -2553,8 +2553,10 @@ void MattermostQt::notificationActivated(int server_index, int team_index, int c
 QString MattermostQt::parseMD(const QString &input, int server_index) const
 {
 	//    ServerPtr server = serverAt(server_index);
-	if(!m_mdParser)
+	if(!m_mdParser) {
+		qCritical() << QStringLiteral("MD parser not created!");
 		return QString::Null();
+	}
 	return m_mdParser->parse(input, QString::number(server_index));
 }
 
@@ -3116,7 +3118,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	qDebug() << QStringLiteral("Configure WebSocket connetion for server[%0] %1").arg(server->m_self_index).arg(server->m_display_name);
 	//	QString origin( QUuid::createUuid().toString() );
 	// server get us authentificztion token, time to open WebSocket!
-	QSharedPointer<QWebSocket> socket(new QWebSocket( QString(), QWebSocketProtocol::VersionLatest, this));
+	QSharedPointer<QWebSocket> socket(new QWebSocket(server->m_url, QWebSocketProtocol::VersionLatest, this));
 	server->m_socket = socket;
 	socket->setProperty(P_SERVER_INDEX, server->m_self_index);
 
@@ -3145,7 +3147,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 
 	QString urlString = QLatin1String("/api/v")
 						+ QString::number(server->m_api)
-						+ QLatin1String("/websocket");
+	        + QLatin1String("/websocket");
 
 	QString serUrl = server->m_url;
 	if( serUrl.indexOf("https://") >= 0 )
@@ -3156,14 +3158,13 @@ void MattermostQt::websocket_connect(ServerPtr server)
 		serUrl.replace("https://","wss://")
 			.replace("http://","ws://");
 
-	/// fix #31
 	QUrl url(serUrl);
 	url.setPath(url.path() + urlString);
 
-	if( url.toString().indexOf("wss://") >= 0 && (url.port() == 80 || url.port() == -1) ) {
-		url.setPort(443);
-		qWarning() << QStringLiteral("Force set port to 443 for WebSocket connection");
-	}
+//	if( url.toString().indexOf("wss://") >= 0 && (url.port() == 80 || url.port() == -1) ) {
+//		url.setPort(443);
+//		qWarning() << QStringLiteral("Force set port to 443 for WebSocket connection");
+//	}
 
 	qDebug() << QStringLiteral("Try connect to websocket: %0").arg(url.toString());
 	socket->open(url);
@@ -3221,7 +3222,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 	QList<QByteArray> headerList = reply->rawHeaderList();
 	for (QByteArray head : headerList) {
 		QString header = QString::fromLatin1(head).toLower();
-		if (strcmp(head.data(),"token") == 0) {
+		if (header == QStringLiteral("token")) {
 			//add server to servers list
 			ServerPtr server;
 			server.reset(new ServerContainer());
@@ -3384,9 +3385,8 @@ void MattermostQt::reply_get_team(QNetworkReply *reply)
 		TeamPtr tc_old = m_server[server_index]->m_teams[team_index];
 		if( tc->m_update_at > tc_old->m_update_at )
 		{// team is updated
-			//			TODO   that when the team is changed? like header and other
+			//TODO   that when the team is changed? like header and other
 			qDebug() << "Need update Team info";
-
 			///users/{user_id}/teams/unread get_teams_unread
 		}
 		//		tc->m_server_index = server_index;
@@ -3446,15 +3446,15 @@ void MattermostQt::reply_get_team_icon(QNetworkReply *reply)
 {
 	bool is_ok;
 	int server_index = reply->property(P_SERVER_INDEX).toInt(&is_ok);
-	//	Q_UNUSED(server_index)
+
 	if(!is_ok)
 		return;
 	int team_index = reply->property(P_TEAM_INDEX).toInt(&is_ok);
 	if(!is_ok)
 		return;
-	if(server_index < 0 || server_index >= m_server.size())
+	ServerPtr server = serverAt(server_index);
+	if (!server)
 		return;
-	ServerPtr server = m_server[server_index];
 	TeamPtr team;
 	if(team_index < 0 || team_index >= server->m_teams.size() ) {
 		team = reply->property(P_TEAM_PTR).value<TeamPtr>();
@@ -4685,12 +4685,14 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 					ServerPtr server = serverAt(server_index);
 
 					ReplyType type = reply->property(P_REPLY_TYPE).value<ReplyType>();
-					if( reply->dynamicPropertyNames().contains(P_REPEATED_REQUEST) ) {
+					bool send_request_again  = false;
+
+					if( reply->dynamicPropertyNames().contains(P_REPEATED_REQUEST) || !send_request_again) {
 						qCritical() << QStringLiteral("REPEATED REQUEST DECTECTED: %0").arg( QVariant::fromValue<ReplyType>(type).toString() );
 						emit onConnectionError(ConnectionError::SessionExpired, message, server_index);
 						return;
 					}
-					// output request authorisation header
+					// output request authorization header
 					QNetworkRequest request = reply->request();
 					QList<QByteArray> headers = request.rawHeaderList();
 					QString authheader("Authorization");
@@ -4700,7 +4702,7 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 						if( authheader.indexOf(header) != -1 )
 						{
 							if( !server ) {
-								qCritical() << QStringLiteral("No server ith index: %0").arg(server_index);
+								qCritical() << QStringLiteral("No server with index: %0").arg(server_index);
 								qDebug() << QStringLiteral("  RawHeader[ %0 ]: %1").arg( QString(header) ).arg( QString(header_data) );
 								continue;
 							}
@@ -4708,25 +4710,19 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 							qDebug() << QString("  Header token: ") + token;
 							qDebug() <<  QString("\n  Stored token: ") + server->m_bearer + QStringLiteral("\n");
 							if( token == server->m_bearer ) {
-								// try repeat request again
-								bool send_request_again  = false;
-								if( send_request_again )
-								{
 									qCritical() << QStringLiteral("Try send same request again: %0").arg( QVariant::fromValue<ReplyType>(reply_type).toString() );
 									QNetworkRequest repeatRequest(request);
 									QNetworkReply *newReply = nullptr;
 									switch( reply->operation() ) {
-									case QNetworkAccessManager::Operation::PostOperation:
-									{
+								case QNetworkAccessManager::Operation::PostOperation: {
 										QByteArray prevData = reply->property(P_POST_DATA).toByteArray();
 										newReply = m_networkManager->post(reply->request(), prevData);
-									}
 										break;
+								}
 									case QNetworkAccessManager::Operation::GetOperation:
 										newReply = m_networkManager->get(reply->request());
 										break;
-									case QNetworkAccessManager::Operation::PutOperation:
-									{
+								case QNetworkAccessManager::Operation::PutOperation: {
 										QByteArray prevData = reply->property(P_POST_DATA).toByteArray();
 										newReply = m_networkManager->put(reply->request(), prevData);
 									}
@@ -4737,11 +4733,6 @@ void MattermostQt::reply_error(QNetworkReply *reply)
 											newReply->setProperty(propName, reply->property(propName) );
 										}
 										newReply->setProperty(P_REPEATED_REQUEST, true);
-									}
-								}
-								else {
-									qCritical() << QStringLiteral("Try test request with user status");
-									post_users_status(server_index, QStringList() << server->m_current_user->m_id );
 								}
 							}
 						}
