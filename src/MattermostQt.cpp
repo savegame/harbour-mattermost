@@ -1,4 +1,4 @@
-//#include "MattermostQt.h"
+﻿//#include "MattermostQt.h"
 #include <algorithm>
 #include <functional>
 
@@ -3140,8 +3140,10 @@ void MattermostQt::websocket_connect(ServerPtr server)
 
 	connect(socket.data(), SIGNAL(stateChanged(QAbstractSocket::SocketState)),
 	        SLOT(onWebSocketStateChanged(QAbstractSocket::SocketState)) );
-	connect(socket.data(), SIGNAL(textMessageReceived(QString)),
-	        SLOT(onWebSocketTextMessageReceived(QString)) );
+	connect(socket.data(), SIGNAL(textMessageReceived(const QString &)),
+	        SLOT(onWebSocketTextMessageReceived(const QString &)) );
+	connect(socket.data(), SIGNAL(textFrameReceived(const QString &, bool)),
+	        SLOT(onWebSocketTextFrameReceived(const QString &, bool)) );
 	connect(socket.data(), SIGNAL(pong(quint64,QByteArray)),
 	        SLOT(onWebSocketPong(quint64,QByteArray)) );
 
@@ -3161,12 +3163,13 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	QUrl url(serUrl);
 	url.setPath(url.path() + urlString);
 
-//	if( url.toString().indexOf("wss://") >= 0 && (url.port() == 80 || url.port() == -1) ) {
-//		url.setPort(443);
-//		qWarning() << QStringLiteral("Force set port to 443 for WebSocket connection");
-//	}
-
 	qDebug() << QStringLiteral("Try connect to websocket: %0").arg(url.toString());
+	if (server->m_trust_cert) {
+		if (!server->m_cert.isNull())
+			socket->setSslConfiguration( server->m_cert );
+		else
+			qCritical() << QStringLiteral("Can't set SSL configuration for websocket connection.");
+	}
 	socket->open(url);
 }
 
@@ -3182,7 +3185,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 		int server_id = reply->property(P_SERVER_INDEX).toInt();
 		server = m_server[server_id];
 
-		server->m_cert  = reply->sslConfiguration();
+		server->m_cert = reply->sslConfiguration();
 		server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
 		QString version = QString(reply->rawHeader("X-Version-ID"));
 		{
@@ -3232,7 +3235,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 			server->m_token = reply->rawHeader(head).data();
 			server->m_bearer = bearer_string(server->m_token);
 			server->m_trust_cert = reply->property(P_TRUST_CERTIFICATE).toBool();
-			server->m_cert  = reply->sslConfiguration();
+			server->m_cert = reply->sslConfiguration();
 			server->m_cookie= reply->header(QNetworkRequest::CookieHeader).toString();
 			server->m_self_index =  m_server.size();
 			server->m_ping_timer.setInterval( m_ping_server_timeout );
@@ -6808,19 +6811,18 @@ void MattermostQt::onWebSocketStateChanged(QAbstractSocket::SocketState state)
 
 void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 {
-	//	qDebug() << message;
-
 	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
 	if(!socket) // strange situation, if it happens
 		return;
-	QVariant sId = socket->property(P_SERVER_INDEX);
-	if(!sId.isValid()) // that too strange!!! that cant be!
+	int server_index = socket->property(P_SERVER_INDEX).toInt();
+
+	ServerPtr sc = serverAt(server_index);
+	if (!sc) {
+		emit onConnectionError(UnknownError, "ServerPtr broken", server_index);
+		qCritical() << QStringLiteral("ServerPtr broken: %0").arg(server_index);
 		return;
-	int server_index = sId.toInt();
-	//	QMap<int,ServerPtr>::iterator it = m_server.find(server_index);
-	//	if( it == m_server.end() ) // that really strange! whats wrong? how it could be?
-	//		return;
-	ServerPtr sc = m_server[server_index];
+	}
+
 	QJsonDocument json = QJsonDocument::fromJson(message.toUtf8());
 	QJsonObject object = json.object();
 	QString event = object["event"].toString();
@@ -6834,17 +6836,14 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 		//m_user_status_timer.setSingleShot(false);
 		m_user_status_timer.start();
 		emit serverConnected(sc->m_self_index);
-	}
-	else if (!event.isEmpty() )
-	{
+	} else if (!event.isEmpty() ) {
 		bool skip_event = false;
 		if( !broadcast.isEmpty() ) {
 			QJsonObject omit_users = broadcast["omit_users"].toObject();
 			if( !omit_users.isEmpty() ) {
 				QStringList ids = omit_users.keys();
 				auto it = omit_users.constBegin(), end = omit_users.constEnd();
-				for(/*auto it = ids.constBegin(), end = ids.constEnd()*/; it != end; it++ )
-				{
+				for(/*auto it = ids.constBegin(), end = ids.constEnd()*/; it != end; it++ ) {
 					//QJsonObject current = *it;
 					if( it.key() == sc->m_user_id ) {
 						if( (*it).toBool(false) ) {
@@ -6855,16 +6854,13 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 				}
 			}
 		}
-		if ( !skip_event )
-		{
+		if ( !skip_event ) {
 			QVariant variant(QStringLiteral("et_") + event);
 			int event_num = variant.value<EventType>();
-			if ( event_num > 0 && event_num < EventTypeCount && m_event_func[event_num] != 0 )
-			{
+			if ( event_num > 0 && event_num < EventTypeCount && m_event_func[event_num] != 0 ) {
 				qDebug() << QStringLiteral("Run event handler for: %0").arg(event);
 				(this->*m_event_func[event_num])(sc, object);
-			}
-			else {
+			} else {
 				qWarning() << QStringLiteral("Unhandled event(%0) : %1").arg(event).arg(message);
 			}
 		}
@@ -6906,30 +6902,33 @@ void MattermostQt::onWebSocketTextMessageReceived(const QString &message)
 	//config_changed
 }
 
-void MattermostQt::onWebSocketPong(quint64 elapsedTime, QByteArray payload)
+void MattermostQt::onWebSocketTextFrameReceived(const QString &frame, bool isLastFrame)
 {
-	// here is we can logging pings
+	qDebug() << QStringLiteral("WebSocket recieve frame (isLastFrame = %1): ").arg(isLastFrame) << frame;
 	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
 	if(!socket) // strange situation, if it happens
 		return;
-	QVariant sId = socket->property(P_SERVER_INDEX);
-	if(!sId.isValid()) // that too strange!!! that cant be!
+}
+
+void MattermostQt::onWebSocketPong(quint64 elapsedTime, QByteArray payload)
+{
+	if (m_settings && m_settings->debug())
+		qDebug() << QStringLiteral("Server recieve pong: elapsed = %1; payload = %2").arg(elapsedTime).arg(QString::fromLatin1(payload));
+	// here is we can logging pings
+	QWebSocket * socket = qobject_cast<QWebSocket*>(sender());
+	if (!socket) // strange situation, if it happens
 		return;
-	int server_index = sId.toInt();
-	if( server_index < 0 || server_index >= m_server.size() )
-	{
-		qCritical() << "Wrong server index onWebSocketPong;";
+	int server_index = socket->property(P_SERVER_INDEX).toInt();
+	ServerPtr sc = serverAt(server_index);
+	if (!sc) {
+		qCritical() << "Wrong server_index onWebSocketPong;" << server_index;
 		return;
 	}
-	ServerPtr sc = m_server[server_index];
-	if(m_settings && m_settings->debug())
-		qDebug() << "All right, server is online";
 }
 
 void MattermostQt::slot_get_teams_unread()
 {
-	foreach(ServerPtr server, m_server)
-	{
+	for(ServerPtr server : m_server) {
 		get_teams_unread(server);
 	}
 }

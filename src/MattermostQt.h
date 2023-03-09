@@ -1075,6 +1075,7 @@ protected Q_SLOTS:
 	void onWebSocketStateChanged(QAbstractSocket::SocketState state);
 	//	void onWebSocketTextFrameReceived(const QString &frame, bool isLastFrame);
 	void onWebSocketTextMessageReceived(const QString &message);
+	void onWebSocketTextFrameReceived(const QString &frame, bool isLastFrame);
 	void onWebSocketPong(quint64 elapsedTime,QByteArray payload);
 
 	/** slot for QTimer */
