@@ -1,4 +1,4 @@
-﻿//#include "MattermostQt.h"
+//#include "MattermostQt.h"
 #include <algorithm>
 #include <functional>
 
@@ -477,6 +477,7 @@ void MattermostQt::post_login(QString server, QString login, QString password,
                               int api,QString display_name,
                               bool trustCertificate, QString mfa_token)
 {
+	qDebug() << QStringLiteral("Send post_login request to: %1").arg(server);
 	if(api <= 3)
 		api = 4;
 
@@ -846,7 +847,7 @@ void MattermostQt::get_team_public_channels(int server_index, QString team_id)
 
 void MattermostQt::get_channel(int server_index, QString channel_id)
 {
-	ServerPtr sc = get_server(server_index);
+	ServerPtr sc = serverAt(server_index);
 
 	if(!sc) {
 		qWarning() << "Wrong server index";
@@ -1687,7 +1688,7 @@ void MattermostQt::post_add_user_to_channel(int server_index, int team_index, QS
 void MattermostQt::delete_user_from_channel(int server_index, QString channel_id, QString user_id)
 {
 	//channels/{channel_id}/members/{user_id}
-	ServerPtr sc = get_server(server_index);
+	ServerPtr sc = serverAt(server_index);
 	if(!sc) {
 		qCritical() << QStringLiteral("Wrong server index: %0").arg(server_index);
 		return;
@@ -1725,7 +1726,7 @@ void MattermostQt::post_create_channel(int server_index, int team_index,
 {
 	// 
 	///channels/{channel_id}/members
-	ServerPtr sc = get_server(server_index);
+	ServerPtr sc = serverAt(server_index);
 	TeamPtr team = teamAt(server_index, team_index);
 	if(!sc || !team) {
 		qCritical() << QStringLiteral("Wrong server index: %0").arg(server_index);
@@ -1775,7 +1776,7 @@ void MattermostQt::post_create_channel(int server_index, int team_index,
 void MattermostQt::post_create_direct_channel(int server_index, QString user_id)
 {
 	// TODO
-	ServerPtr sc = get_server(server_index);
+	ServerPtr sc = serverAt(server_index);
 	if(!sc ) {
 		qCritical() << QStringLiteral("Wrong server index: %0").arg(server_index);
 		return;
@@ -2985,13 +2986,6 @@ MattermostQt::TeamPtr MattermostQt::find_team_by_id(MattermostQt::ServerPtr sc, 
 	return TeamPtr();
 }
 
-MattermostQt::ServerPtr MattermostQt::get_server(int server_index) const
-{
-	if( server_index<0 || server_index >= m_server.size() )
-		return ServerPtr();
-	return m_server[server_index];
-}
-
 MattermostQt::TeamPtr MattermostQt::teamAt(int server_index, int team_index)
 {
 	if(  server_index < 0 || server_index >= m_server.size() )
@@ -3118,7 +3112,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	qDebug() << QStringLiteral("Configure WebSocket connetion for server[%0] %1").arg(server->m_self_index).arg(server->m_display_name);
 	//	QString origin( QUuid::createUuid().toString() );
 	// server get us authentificztion token, time to open WebSocket!
-	QSharedPointer<QWebSocket> socket(new QWebSocket(server->m_url, QWebSocketProtocol::VersionLatest, this));
+	QSharedPointer<QWebSocket> socket(new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this));
 	server->m_socket = socket;
 	socket->setProperty(P_SERVER_INDEX, server->m_self_index);
 
@@ -3163,14 +3157,16 @@ void MattermostQt::websocket_connect(ServerPtr server)
 	QUrl url(serUrl);
 	url.setPath(url.path() + urlString);
 
+	QNetworkRequest request;
+	request.setUrl(url);
+	request.setRawHeader("Authorization", server->m_bearer.toUtf8());
+
 	qDebug() << QStringLiteral("Try connect to websocket: %0").arg(url.toString());
-	if (server->m_trust_cert) {
 		if (!server->m_cert.isNull())
-			socket->setSslConfiguration( server->m_cert );
+		socket->setSslConfiguration(server->m_cert);
 		else
 			qCritical() << QStringLiteral("Can't set SSL configuration for websocket connection.");
-	}
-	socket->open(url);
+	socket->open(request);
 }
 
 void MattermostQt::reply_login(QNetworkReply *reply)
@@ -3283,6 +3279,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 			return;
 		}
 	}
+	qCritical() << QStringLiteral("Failed find token in server reply.");
 	return;
 }
 
@@ -4083,7 +4080,7 @@ void MattermostQt::reply_get_team_public_channels(QNetworkReply *reply)
 	QJsonArray array = json.array();
 	int si = reply->property(P_SERVER_INDEX).toInt();
 	int ti = reply->property(P_TEAM_INDEX).toInt();
-	ServerPtr server = get_server(si);
+	ServerPtr server = serverAt(si);
 	TeamPtr team = teamAt(si,ti);
 	
 	if( !server || !team  ) {
@@ -6401,6 +6398,9 @@ void MattermostQt::replyFinished(QNetworkReply *reply)
 	else {
 		//failure
 		qWarning() << "Failure: " << reply->error() << reply->errorString();
+		if (replyType == rt_login) {
+			emit onConnectionError(UnknownError, reply->errorString(), 0);
+		}
 		qDebug() << reply;
 		reply_error(reply);
 		switch(reply->error() )
@@ -6955,7 +6955,10 @@ void MattermostQt::slot_recconect_servers()
 				.replace("http://","ws://");
 			QUrl url(serUrl);
 			url.setPath(url.path() + urlString);
-			m_server[i]->m_socket->open(url);
+			QNetworkRequest request;
+			request.setUrl(url);
+			request.setRawHeader("Authorization", m_server[i]->m_bearer.toUtf8());
+			m_server[i]->m_socket->open(request);
 		}
 	}
 }

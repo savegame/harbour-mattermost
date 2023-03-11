@@ -22,8 +22,7 @@ Page {
     readonly property int status_server_unconnected: MattermostQt.ServerUnconnected
 
     property int connectionStatus: status_server_unconnected
-
-
+    property bool start_connecting: false
     property bool canAccept : server_name.isComplete &
                               server.isComplete &
                               login_id.isComplete &
@@ -73,6 +72,7 @@ Page {
                                     trust_certificate_switcher.checked,
                                     use_mfa_token.checked ? mfa_token.text : "")
         }
+        start_connecting = true
     }
 
     onContextChanged:{
@@ -93,6 +93,7 @@ Page {
         })
 
         MattermostQt.onConnectionError.connect( function onConnectionError(id,message,server_index){
+            start_connecting = false
             specialmessage.text = message;
             specialmessage.opacity = 1.0;
         })
@@ -393,7 +394,7 @@ Page {
         id: loading
         size: BusyIndicatorSize.Large
         anchors.centerIn: parent
-        running: connectionStatus == status_server_connecting
+        running: connectionStatus == status_server_connecting || start_connecting
         visible: running
     }
 }

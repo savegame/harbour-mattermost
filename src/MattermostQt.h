@@ -841,18 +841,18 @@ public:
 	bool load_settings();
 
 	/** */
-	TeamPtr teamAt(int server_index, int team_index);
+	inline TeamPtr teamAt(int server_index, int team_index);
 
-	ChannelPtr channelAt(int server_index, int team_index,
+	inline ChannelPtr channelAt(int server_index, int team_index,
 	                     int channel_type, int channel_index);
 
-	MessagePtr messageAt(int server_index, int team_index,
+	inline MessagePtr messageAt(int server_index, int team_index,
 	                     int channel_type, int channel_index,
 	                     int message_index);
 
-	UserPtr  userAt(int server_index, int user_index);
+	inline UserPtr  userAt(int server_index, int user_index);
 	
-	ServerPtr serverAt(int server_index);
+	inline ServerPtr serverAt(int server_index);
 	
 	// helper functions
 	inline UserStatus str2status(const QString &s) const;
@@ -989,8 +989,6 @@ protected:
 	 * @return  empty or valid team ptr
 	 */
 	TeamPtr find_team_by_id(ServerPtr sc, QString team_id) const;
-
-	inline ServerPtr get_server(int server_index) const;
 
 	void get_teams_unread(ServerPtr server);
 
