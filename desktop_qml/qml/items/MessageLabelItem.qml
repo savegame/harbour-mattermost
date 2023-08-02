@@ -9,10 +9,7 @@ import "../items"
 
 Item {
     id: messageItem
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.topMargin: Theme.paddingSmall
-    anchors.bottomMargin: Theme.paddingSmall
+
     height: Math.max(avatarIcon.height,  Math.max(Theme.iconSizeSmall, contentColumn.height + Theme.paddingMedium) )
 
     property int    server_index  : -1
@@ -63,18 +60,22 @@ Item {
 
         CLabel {
             id: userLabel
-            font.pixelSize: Theme.fontSizeSmall
-            text: messageItem.user_name
+
             anchors.left: role_type != MattermostQt.MessageMine ? parent.left : undefined
             anchors.right: role_type != MattermostQt.MessageMine ? undefined : parent.right
+
+            font.pixelSize: Theme.fontSizeSmall
+            text: messageItem.user_name
             height: visible ? contentHeight : 0
             visible: role_type != MattermostQt.MessageSystem
         }
 
         Item {
             id: messagePanel
+
             anchors.left: role_type != MattermostQt.MessageMine ? parent.left : undefined
             anchors.right: role_type != MattermostQt.MessageMine ? undefined : parent.right
+
             height: Math.max(Theme.iconSizeSmall, messageAttachmentLoader.height + messageText.height + Theme.paddingSmall * 2)
             width: contentColumn.width - avatarIcon.width //(role_type != MattermostQt.MessageMine ? avatarIcon.width * 2: avatarIcon.width)
 
@@ -88,15 +89,16 @@ Item {
 
             Panel {
                 id: mesasgeBlob
-                visible: role_type != MattermostQt.MessageSystem
+
                 anchors.left: role_type != MattermostQt.MessageMine ? messageText.left : undefined
                 anchors.right: role_type != MattermostQt.MessageMine ? undefined : messageText.right
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
                 anchors.leftMargin: role_type != MattermostQt.MessageMine  ? -Theme.paddingMedium : 0
                 anchors.topMargin: -Theme.paddingSmall
-//                anchors.bottomMargin: Theme.paddingSmall
                 anchors.rightMargin: role_type == MattermostQt.MessageMine  ? -Theme.paddingMedium : 0
+
+                visible: role_type != MattermostQt.MessageSystem
                 radius: Theme.paddingLarge
                 width: Math.min(messageText.implicitWidth + Theme.paddingMedium * 2, parent.width )
             } // messageBlob

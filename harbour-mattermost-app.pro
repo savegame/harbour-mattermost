@@ -1,5 +1,8 @@
-TARGET = harbour-mattermost
-
+contains(CONFIG,auroraos): {
+    TARGET = ru.sashikknox.wattermost
+} else : {
+    TARGET = harbour-mattermost
+}
 # get version from yaml file
 VER_VERSION=0.1.8
 VER_RELEASE=1
@@ -22,12 +25,12 @@ DEFINES += MATTERMOSTQT_VERSION=\\\"$${VERSION}\\\"
 DEFINES += EMOJI_PATH=\\\"/usr/share/$$TARGET/emoji\\\"
 DEFINES += _DEBUG_POST_REQUEST
 
-dbus.files = dbus/sashikknox.mattermost.service
+dbus.files = dbus/$${TARGET}.service
 dbus.path = /usr/share/dbus-1/services/
 #INSTALLS += dbus
 
 
-CONFIG += sailfishapp warnoff
+CONFIG += sailfishapp
 CONFIG += qt
 
 debug {
@@ -78,7 +81,24 @@ DISTFILES += \
     LICENSE \
     rpm/harbour-mattermost.changes
 
-SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
+_SAILFISHAPP_ICONS = 86x86 108x108 128x128 172x172
+
+
+contains(CONFIG,auroraos): {
+    desktopfile.files = $$OUT_PWD/$${TARGET}.desktop
+    desktopfile.extra = sed "s/harbour-mattermost/ru.sashikknox.wattermost/g" $$PWD/harbour-mattermost.desktop > $$OUT_PWD/$${TARGET}.desktop
+    desktopfile.path = /usr/share/applications/
+    INSTALLS += desktopfile
+}
+
+for(_icon_size, _SAILFISHAPP_ICONS) {
+    icon$${_icon_size}.files = $$OUT_PWD/icons/$${_icon_size}/$${TARGET}.png
+    contains(CONFIG,auroraos): {
+        icon$${_icon_size}.extra = mkdir -p $$OUT_PWD/icons/$${_icon_size}; cp $$PWD/icons/$${_icon_size}/harbour-mattermost.png $$OUT_PWD/icons/$${_icon_size}/$${TARGET}.png
+    }
+    icon$${_icon_size}.path = /usr/share/icons/hicolor/$${_icon_size}/apps
+    INSTALLS += icon$${_icon_size}
+}
 
 CONFIG += sailfishapp_i18n
 

@@ -1,10 +1,14 @@
-%if "0%{?_special_name}" != "0"
-Name:  %_special_name
+%define _aurora_os_build ru.sashikknox.wattermost
+
+%if "0%{?_aurora_os_build}" != "0"
+Name:  ru.sashikknox.wattermost
+%define qmake_flags -r CONFIG+=auroraos CONFIG+=static_websocket
 %else
 Name:  harbour-mattermost
+%define qmake_flags -r
 %endif
 # >> macros
-# % define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*|libQt5WebSockets.so.5(Qt_5)|libgcrypt*$
+%define __requires_exclude ^libQt5Core.so.5(Qt_5_PRIVATE_API)|libQt5Core.so.*|libQt5WebSockets.so.5(Qt_5)|libgcrypt*$
 # % define __requires_exclude ^|libQt5WebSockets.so.*$
 # << macros
 
@@ -29,7 +33,7 @@ BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Svg)
-BuildRequires:  pkgconfig(Qt5WebSockets)
+#BuildRequires:  pkgconfig(Qt5WebSockets)
 BuildRequires:  pkgconfig(nemonotifications-qt5)
 BuildRequires:  desktop-file-utils
 
@@ -45,24 +49,10 @@ Mattermost native client for SailfishOS
 
 %build
 # >> build pre
-%if "0%{?_special_name}" != "0"
-mv harbour-mattermost.pro %{name}.pro
-sed -i '1s/.*/TARGET=%{name}/g' harbour-mattermost-app.pro
-
-for each in 86 108 128 172; do 
-  icon_path="/icons/${each}x${each}"
-  mv .${icon_path}/harbour-mattermost.png  .${icon_path}/%{name}.png
-done
-
-mv harbour-mattermost.desktop %{name}.desktop
-sed -i "s/harbour-mattermost/%{name}/g" %{name}.desktop
-%endif
 # << build pre
-
-#%qtc_qmake5 %{name}.pro
-qmake -r %{name}.pro
-%qtc_make %{?_smp_mflags}
-
+#%qtc_qmake5 %qmake_flags harbour-mattermost.pro
+qmake %qmake_flags harbour-mattermost.pro
+%qtc_make
 # >> build post
 # << build post
 
@@ -70,13 +60,14 @@ qmake -r %{name}.pro
 rm -rf %{buildroot}
 # >> install pre
 # << install pre
-%qmake5_install
+#%qmake5_install
+make INSTALL_ROOT=%{buildroot} install
 # >> install post
 # << install post
 
-desktop-file-install --delete-original       \
-  --dir %{buildroot}%{_datadir}/applications             \
-   %{buildroot}%{_datadir}/applications/*.desktop
+#desktop-file-install --delete-original       \
+#  --dir %{buildroot}%{_datadir}/applications             \
+#   %{buildroot}%{_datadir}/applications/*.desktop
 
 %files
 %defattr(-,root,root,-)
@@ -85,5 +76,5 @@ desktop-file-install --delete-original       \
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/icons/hicolor/*/apps/%{name}.png
 # >> files
-#%{_datadir}/dbus-1/services
+# % {_datadir}/dbus-1/services
 # << files

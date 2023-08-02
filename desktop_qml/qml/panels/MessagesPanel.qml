@@ -49,7 +49,7 @@ Item {
             leftMargin: Theme.paddingMedium
             rightMargin: Theme.paddingMedium
         }
-        //            anchors.fill: parent
+
 
         footer: Item {
             height: messageEditorBar.height
@@ -65,10 +65,16 @@ Item {
                 }
             }
         }
-
 //        verticalLayoutDirection: ListView.BottomToTop
 
         delegate: MessageLabelItem {
+            anchors {
+                topMargin: Theme.paddingSmall
+                bottomMargin: Theme.paddingSmall
+            }
+
+            width: messagesList.width
+
             server_index  : role_server_index
             team_index    : role_team_index
             channel_index : role_channel_index

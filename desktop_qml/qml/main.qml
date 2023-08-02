@@ -9,26 +9,26 @@ import "../qml/items"
 
 Item {
     id: mainView
-    width: 800
-    height: 600
-    readonly property real lineEditWidth: 400
 
+    readonly property real lineEditWidth: 400
     readonly property string statePortrait  : "portrait"
     readonly property string stateLandscape : "landscape"
+    property int server_index: -1
 
-    property int server_id: 0
-
+    width: 800
+    height: 600
 
     Connections {
         target: MattermostQt
 
         onServerStateChanged : function (server_index, state){
-            if( server_index !== server_id )
+            if( server_index !== server_index )
                 console.debug("Server index is " + server_index )
             if(state === MattermostQt.ServerConnected) {
                 loginPanel.buttonEnabled = false
                 loginPanel.opacity = 0
-                MattermostQt.get_teams(server_id)
+                mainView.server_index = server_index
+                MattermostQt.get_teams(server_index)
                 console.log("Server connected")
             }
         }
@@ -83,10 +83,10 @@ Item {
 
         Component.onCompleted:  {
             if ( MattermostQt.get_server_count() === 1 ) {
-                server_id = 0
-                serverName = MattermostQt.get_server_name(server_id)
-                serverUrl  = MattermostQt.get_server_url(server_id)
-                trustCertificate = MattermostQt.get_server_trust_certificate(server_id);
+                server_index = 0
+                serverName = MattermostQt.get_server_name(server_index)
+                serverUrl  = MattermostQt.get_server_url(server_index)
+                trustCertificate = MattermostQt.get_server_trust_certificate(server_index);
             }
         }
         z: 2

@@ -105,7 +105,7 @@
 #	define NM_SAVE_POST_DATA(reply,data)
 #endif
 
-#define bearer_string(token) QString("Bearer %0").arg(token)
+#define bearer_string(token) QStringLiteral("Bearer %0").arg(token)
 
 #define request_urlencoded(requset) \
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-urlencoded")
@@ -3166,7 +3166,7 @@ void MattermostQt::websocket_connect(ServerPtr server)
 		socket->setSslConfiguration(server->m_cert);
 		else
 			qCritical() << QStringLiteral("Can't set SSL configuration for websocket connection.");
-	socket->open(request);
+	socket->open(url);
 }
 
 void MattermostQt::reply_login(QNetworkReply *reply)
@@ -3211,6 +3211,7 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 			server->m_data_path = m_data_path + QDir::separator() +  server_dir;
 		if( server->m_cache_path.isEmpty() || server->m_cache_path != m_cache_path + QDir::separator() +  server_dir )
 			server->m_cache_path = m_cache_path + QDir::separator() +  server_dir;
+		save_settings();
 		websocket_connect(server);
 		// TODO add singnal server Added
 		//		emit serverConnected(server->m_self_index);
@@ -3271,6 +3272,10 @@ void MattermostQt::reply_login(QNetworkReply *reply)
 				m_server.append( server );
 			get_user_info(server->m_self_index,server->m_user_id, GET_USER_INFO_current_user);
 			//get_login(server);
+
+			//first, save current configuration and token
+			save_settings();
+			// then try connect to websockert
 			websocket_connect(server);
 
 			if(is_new_account)
@@ -6958,7 +6963,7 @@ void MattermostQt::slot_recconect_servers()
 			QNetworkRequest request;
 			request.setUrl(url);
 			request.setRawHeader("Authorization", m_server[i]->m_bearer.toUtf8());
-			m_server[i]->m_socket->open(request);
+			m_server[i]->m_socket->open(url);
 		}
 	}
 }

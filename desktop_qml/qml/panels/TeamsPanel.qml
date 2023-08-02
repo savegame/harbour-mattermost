@@ -9,16 +9,18 @@ import "../items"
 
 Panel {
     id: teamsPanel
+
     radius: 0
 
     ListView {
         anchors.fill: parent
         anchors.leftMargin:  Theme.paddingMedium
         anchors.rightMargin: Theme.paddingMedium
+
         model: TeamsModel {
             id: teamsModel
             mattermost: MattermostQt
-            server_index: server_id
+            server_index: mainView.server_index
         }
 
         header: Item {
@@ -35,11 +37,13 @@ Panel {
 
             Image {
                 id: teamIcon
-                source: Qt.resolvedUrl("file://" + role_team_icon)
+
                 anchors.fill: parent
                 anchors.margins: Theme.paddingSmall * 0.3
-                asynchronous: true
 
+                visible: role_team_icon !== ""
+                source: visible ? Qt.resolvedUrl("file://" + role_team_icon) : ""
+                asynchronous: true
                 layer.enabled: true
                 layer.effect: OpacityMask {
                     maskSource: maskRect
@@ -57,7 +61,13 @@ Panel {
                 anchors.fill: parent
 
                 onClicked: {
-                    MattermostQt.get_public_channels(server_id, role_team_id)
+                    MattermostQt.get_public_channels(server_index, role_team_id)
+                }
+            }
+
+            Component.onCompleted: {
+                if (index == 0) {
+                    MattermostQt.get_public_channels(server_index, role_team_id)
                 }
             }
         }

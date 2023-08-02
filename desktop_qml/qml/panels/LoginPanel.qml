@@ -57,6 +57,7 @@ Panel {
                 width: flickable.currentLineEditWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 inputMethodHints: Qt.ImhUrlCharactersOnly
+                text: "omp"
             }
 
             CLabel {
@@ -72,6 +73,7 @@ Panel {
                 width: flickable.currentLineEditWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 inputMethodHints: Qt.ImhUrlCharactersOnly
+                text: "https://mattermost.omp.ru"
             }
 
             CLabel {
@@ -87,6 +89,7 @@ Panel {
                 width: flickable.currentLineEditWidth
                 anchors.horizontalCenter: parent.horizontalCenter
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+                text: "y.andreev"
             }
 
             CLabel {
@@ -105,6 +108,7 @@ Panel {
                 echoMode: TextInput.Password
                 passwordCharacter: "\u2022"
                 passwordMaskDelay: 400
+                text: "bPPh-V4Zh-87xE"
             }
 
             Item {

@@ -12,6 +12,7 @@
 #include <SettingsContainer.h>
 #include "AppWindow.h"
 #include "theme.h"
+#include <Md4cParser.h>
 //#include "SailNotify.h"
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -66,6 +67,8 @@ int main(int argc, char** argv)
 	qmlRegisterSingletonType<SettingsContainer>("ru.sashikknox", 1, 0, "Settings",     SettingsContainer_singletontype_provider );
 	qmlRegisterSingletonType<MattermostQt>     ("ru.sashikknox", 1, 0, "MattermostQt", MattermostQt_singletontype_provider );
 	qmlRegisterSingletonType<Theme>            ("ru.sashikknox", 1, 0, "Theme",        Theme_singletontype_provider );
+
+	MattermostQt::getInstance()->replaceMdParser( new Md4cMdParser() );
 
 	AppWindow mainWindow;
 	mainWindow.show();

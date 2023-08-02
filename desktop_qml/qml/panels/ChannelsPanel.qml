@@ -12,16 +12,18 @@ Panel {
     radius: 0
 
     /// When we click on channel item? this properties hold its data
-    property string channel_id: ""
-    property string channel_name: ""
-    property int team_index: -1
-    property int server_index: -1
+    property string channel_id
+    property string channel_name
+    property int team_index   : -1
+    property int server_index : -1
     property int channel_index: -1
-    property int channel_type: -1
+    property int channel_type : -1
 
     signal channelClicked
 
     ListView {
+        id: listView
+
         anchors.fill: parent
         anchors.margins: Theme.paddingSmall
         model:ChannelsFilterProxy {
@@ -33,18 +35,20 @@ Panel {
 
         delegate: Rectangle {
             id: delegateItem
+
+            readonly property bool isChannel: m_type === ChannelsModel.Channel
+
             anchors {
-                left: parent.left
-                right: parent.right
+                left: parent ? parent.left : undefined
+                right: parent ? parent.right : undefined
                 leftMargin: -Theme.paddingSmall + Theme.borderWidth
                 rightMargin: -Theme.paddingSmall + Theme.borderWidth
             }
 
-            height: Theme.iconSizeSmall + (( m_type != ChannelsModel.Channel ) ? 0 : Theme.paddingMedium)
-
-            color: ( channelsPanel.channel_id == role_channel_id && m_type == ChannelsModel.Channel) ? Theme.highlightBackgroundColor : Theme.overlayBackgroundColor
-
-            readonly property bool isChannel: m_type == ChannelsModel.Channel
+            height: Theme.iconSizeSmall + (( m_type !== ChannelsModel.Channel ) ? 0 : Theme.paddingMedium)
+            color: ( channelsPanel.channel_id === role_channel_id && m_type === ChannelsModel.Channel)
+                   ? Theme.highlightBackgroundColor
+                   : Theme.overlayBackgroundColor
 
             Component {
                 id: channelIcon
