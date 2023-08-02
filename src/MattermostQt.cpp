@@ -5230,7 +5230,7 @@ void MattermostQt::reply_get_user_image(QNetworkReply *reply)
 	{
 		if( m_cache_path.isEmpty() || m_cache_path != generateCachePath() )
 		{
-			qCritical() << QStringLiteral("Wrong cache path. %0").arg(m_cache_path);
+			qCritical() << QStringLiteral("Wrong cache path. %0 != %1").arg(m_cache_path).arg(generateCachePath());
 			m_cache_path = generateCachePath();
 		}
 		// strange, check m_cache_path
@@ -6221,17 +6221,21 @@ MattermostQt::MessagePtr MattermostQt::id2message(MattermostQt::ChannelPtr chann
 
 const QString MattermostQt::generateCachePath(bool *isOk) const
 {
-	QString cache_path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-	if( cache_path.indexOf( QStringLiteral(".cache/%0").arg(QCoreApplication::organizationName()) ) != -1 )
-	{	// this wrong path, try fix it
-		// its /home/nemo/.local/share/sashikknox/harbour-mattermost
-		cache_path.remove( cache_path.lastIndexOf(QCoreApplication::organizationName().append("/")) , QCoreApplication::organizationName().append("/").length() );
-		if(isOk)
-			*isOk = false;
-	}
+//	QString cache_path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+//	 with new sailjail rules, this cache path now good!
+//	if( cache_path.indexOf( QStringLiteral(".cache/%0").arg(QCoreApplication::organizationName()) ) == -1 )
+//	{	// this wrong path, try fix it
+//		// its /home/nemo/.local/share/{orgname}/{appname}
+//		cache_path = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+//		cache_path += QStringLiteral("%0").arg(QCoreApplication::applicationName().replace(QCoreApplication::organizationName(), QStringLiteral("%0/").arg(QCoreApplication::organizationName())));
+////		cache_path.remove( cache_path.lastIndexOf(QCoreApplication::organizationName().append("/")) , QCoreApplication::organizationName().append("/").length() );
+////		if(isOk)
+////			*isOk = false;
+////	}
 	if(isOk)
 		*isOk = true;
-	return cache_path;
+//	return cache_path;
+	return QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
 }
 
 void MattermostQt::event_post_deleted(MattermostQt::ServerPtr sc, QJsonObject object)

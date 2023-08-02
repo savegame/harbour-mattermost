@@ -8,6 +8,6 @@ Name[de]=Wattermost
 Name[ru]=Wattermost
 
 [X-Sailjail]
-Permissions=Internet;UserDirs;RemovableMedia;Camera;WebView;Videos;PublicDir;Pictures;Documents
+Permissions=Internet;UserDirs;RemovableMedia;Camera;WebView;MediaIndexing;PublicDir;
 OrganizationName=ru.sashikknox
 ApplicationName=wattermost

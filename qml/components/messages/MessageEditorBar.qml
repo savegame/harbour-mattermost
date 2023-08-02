@@ -55,9 +55,6 @@ Item {
     property alias textFocus: textEdit.focus
     property string stateString: "text_focus"
 
-//    property string stateTextFocus : "text_focus"
-//    property string stateTextFocus : "text_focus"
-
     Component {
         id: imagepicker
         ImagePickerPage {

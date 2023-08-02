@@ -554,6 +554,7 @@ bool ChannelsFilterProxy::filterAcceptsRow(int source_row, const QModelIndex &so
 	QRegExp regEx = filterRegExp();
 	if( regEx.pattern().isEmpty() )
 		return true;
+
 	QString pattern = regEx.pattern().toLower();
 	pattern.replace( QStringLiteral("\\"), QStringLiteral("\\\\") );
 	pattern.replace( QStringLiteral("+"), QStringLiteral("\\+") );
@@ -564,17 +565,12 @@ bool ChannelsFilterProxy::filterAcceptsRow(int source_row, const QModelIndex &so
 	pattern.replace( QStringLiteral("("), QStringLiteral("\\(") );
 	pattern.replace( QStringLiteral(")"), QStringLiteral("\\)") );
 	pattern.replace( QStringLiteral("?"), QStringLiteral("\\?") );
-//	QRegExp shieldExpSymbols("([\\\.\*\+\[\]\(\)\?])");
-//	int pos = shieldExpSymbols.indexIn(pattern, pos);
-//	if( pos != -1 && shieldExpSymbols.captureCount() > 0) {
-//		for( int i = 1; i < shieldExpSymbols.captureCount(); i++ ) {
-//			shieldExpSymbols.cap(1);
-//		}
-//	}
+
 	regEx.setPattern( QStringLiteral(".*%0.*").arg(pattern) );
 	return index0.data(ChannelsModel::DataRoles::Type).toInt() == ChannelsModel::ItemType::Channel &&
 	    (
-	        index0.data(ChannelsModel::DataRoles::DisplayName).toString().toLower().contains( regEx )
+	        index0.data(ChannelsModel::DataRoles::DisplayName).toString().toLower().contains( regEx ) ||
+	        index0.data(ChannelsModel::DataRoles::RoleUserNickname).toString().toLower().contains( regEx )
 	    );
 }
 
