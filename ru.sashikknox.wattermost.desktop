@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=ru.sashikknox.wattermost
+Exec=ru.sashikknox.wattermost
+Name=Wattermost
+Name[de]=Wattermost
+Name[ru]=Wattermost
+
+[X-Sailjail]
+Permissions=Internet;UserDirs;RemovableMedia;Camera;WebView;MediaIndexing;PublicDir;
+OrganizationName=ru.sashikknox
+ApplicationName=wattermost
